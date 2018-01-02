@@ -59,13 +59,13 @@ let
             if n == 0
                 P[2*(n+1) : 2*(n+1)+1] = - DT_0 * (B_0 - G_0) * P[1]
             elseif n == 1
-                P[2*(n+1) : 2*(n+1)+1] = - DT_n * (B_n - G_n) * P[2*n : 2*n+1] - DT_n * C_1 * P[1]
+                P[2*(n+1) : 2*(n+1)+1] = - DT_n * (B_n - G_n) * view(P, 2*n:2*n+1) - DT_n * C_1 * P[1]
             else
-                P[2*(n+1) : 2*(n+1)+1] = - DT_n * (B_n - G_n) * P[2*n : 2*n+1] - DT_n * C_n * P[2*(n-1) : 2*(n-1)+1]
+                P[2*(n+1) : 2*(n+1)+1] = - DT_n * (B_n - G_n) * view(P, 2*n:2*n+1) - DT_n * C_n * view(P, 2*(n-1):2*(n-1)+1)
             end
         end
 
-        return P[2*N : 2*N+1]
+        return view(P, 2*N:2*N+1)
 
     end
 
@@ -116,13 +116,13 @@ let
         gamma = zeros(M+(2*2))
         # Complete the reverse recurrance to gain gamma_1, gamma_2
         for n = M:-2:2
-            gamma[n-1 : n] = f[n-1 : n] + alpha * gamma[n+1 : n+2] + beta * gamma[n+3 : n+4]
+            gamma[n-1 : n] = view(f, n-1:n) + alpha * view(gamma, n+1:n+2) + beta * view(gamma, n+3:n+4)
         end
 
         # Calculate the evaluation of f using gamma_1, gamma_2
         beta = - DT_n * C_1
         P_1 = [y; x]
-        return f[1] + vecdot(P_1, gamma[2 : 3]) + vecdot(beta, gamma[4 : 5])
+        return f[1] + vecdot(P_1, view(gamma, 2:3)) + vecdot(beta, view(gamma, 4:5))
 
     end
 
@@ -146,6 +146,6 @@ fxy = funcEval(f, x, y)
 fxy_actual = zeros(length(f))
 fxy_actual = f[1]
 for i = 1:N
-    fxy_actual += vecdot(f[2*i:2*i+1], OPeval(i, x, y))
+    fxy_actual += vecdot(view(f, 2*i:2*i+1), OPeval(i, x, y))
 end
 @test fxy ≈ fxy_actual
