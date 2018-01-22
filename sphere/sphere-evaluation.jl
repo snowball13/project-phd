@@ -18,7 +18,7 @@ let
             m = abs(m)
             ctilde = (-1.0)^m * gamma(l - m + 1) / gamma(l + m + 1)
         end
-        chat = gamma(l + m + 1) / (gamma(l + 2) * (-2.0)^m)
+        chat = gamma(l + m + 1) / (gamma(l + 1) * (-2.0)^m)
         return c * chat * ctilde
     end
 
@@ -62,7 +62,7 @@ let
 
     global function GtildeVal(l, m)
         G = 1.0
-        if (abs(m) < l - 1)
+        if (abs(m) <= l - 1)
             G = l / (2*l + 1)
         else
             G = 0.0
@@ -83,22 +83,22 @@ let
 
     global function coeff_B(l, m)
         B = 1.0
-        if (l - abs(m) - 2 > 0)
-            if (m >= 0)
+        if (m >= 0)
+            if (l - abs(m) - 2 > 0)
                 B = BtildeVal(l, m)
             else
-                B = EtildeVal(l, abs(m))
+                B = 0.0
             end
-            B *= alphaVal(l, m) / (2 * alphaVal(l-1, m+1))
         else
-            B = 0.0
+            B = EtildeVal(l, abs(m))
         end
+        B *= alphaVal(l, m) / (2 * alphaVal(l-1, m+1))
         return B
     end
 
     global function coeff_D(l, m)
         D = 1.0
-        if (m >= 0)
+        if (m > 0)
             D = DtildeVal(l, m)
         else
             D = AtildeVal(l, abs(m))
@@ -109,10 +109,14 @@ let
 
     global function coeff_E(l, m)
         E = 1.0
-        if (m >= 0)
+        if (m > 0)
             E = EtildeVal(l, m)
         else
-            E = BtildeVal(l, abs(m))
+            if (l - abs(m) - 2 > 0)
+                E = BtildeVal(l, abs(m))
+            else
+                E = 0.0
+            end
         end
         E *= alphaVal(l, m) / (2 * alphaVal(l-1, m-1))
         return E
@@ -135,6 +139,33 @@ let
     the OPs on the sphere
     =#
 
+    global function systemMatrix_A(n)
+        A = 0
+        if n == 0
+            d_00 = coeff_D(0, 0)
+            a_00 = coeff_A(0, 0)
+            f_00 = coeff_F(0, 0)
+            A = [d_00 0 a_00; im*d_00 0 -im*a_00; 0 f_00 0]
+        else
+            # We proceed by creating diagonal matrices using the coefficients of
+            # the 3-term relations for the spherical harmonic OPs, and then combining
+            zerosVec = zeros(2*n + 1)
+            leftdiag = copy(zerosVec)
+            rightdiag = copy(zerosVec)
+            lowerdiag = copy(zerosVec)
+            for k = -n:n
+                leftdiag[k+n+1] = coeff_D(n, k)
+                rightdiag[k+n+1] = coeff_A(n, k)
+                lowerdiag[k+n+1] = coeff_F(n, k)
+            end
+            left = [Diagonal(leftdiag) zeros(2*n+1, 2)]
+            right = [zeros(2*n+1, 2) Diagonal(rightdiag)]
+            lower = [zeros(2*n+1, 1) Diagonal(lowerdiag) zeros(2*n+1, 1)]
+            A = [left + right; -im*(-left + right); lower]
+        end
+        return A
+    end
+
     global function systemMatrix_B(n)
         return zeros(3*(2*n + 1), 2*n + 1)
     end
@@ -146,14 +177,14 @@ let
             b_11 = coeff_B(1, -1)
             e_11 = coeff_E(1, 1)
             g_10 = coeff_G(1, 0)
-            return [b_11; 0; e_11; b_11; 0; -e_11; 0; g_10; 0]
+            return [b_11; 0; e_11; -im*b_11; 0; im*e_11; 0; g_10; 0]
         end
         # We proceed by creating diagonal matrices using the coefficients of
         # the 3-term relations for the spherical harmonic OPs, and then combining
         zerosVec = zeros(2*n - 1)
-        upperdiag = zerosVec
-        lowerdiag = zerosVec
-        diag_z = zerosVec
+        upperdiag = copy(zerosVec)
+        lowerdiag = copy(zerosVec)
+        diag_z = copy(zerosVec)
         for k = -n:n-2
             upperdiag[k+n+1] = coeff_B(n, k)
             lowerdiag[k+n+1] = coeff_E(n, k+2)
@@ -163,6 +194,7 @@ let
         lower = Diagonal(lowerdiag)
         C_x = [upper; zerosVec'; zerosVec'] + [zerosVec'; zerosVec'; lower]
         C_y = [upper; zerosVec'; zerosVec'] - [zerosVec'; zerosVec'; lower]
+        C_y = -im * C_y
         C_z = [zerosVec'; Diagonal(diag_z); zerosVec']
         return [C_x; C_y; C_z]
     end
@@ -178,7 +210,7 @@ let
             d_00 = coeff_D(0, 0)
             a_00 = coeff_A(0, 0)
             f_00 = coeff_F(0, 0)
-            DT = [1./(2*d_00) -1./(2*d_00) 0; 0 0 1./f_00; 1./(2*a_00) 1./(2*a_00) 0]
+            DT = [1./(2*d_00) -im/(2*d_00) 0; 0 0 1./f_00; 1./(2*a_00) im/(2*a_00) 0]
         else
             # We proceed by creating diagonal matrices using the coefficients of
             # the 3-term relations for the spherical harmonic OPs, and then combining
@@ -186,12 +218,12 @@ let
             for k = -n:n
                 upperdiag[k+n+1] = 1./(2 * coeff_D(n, k))
             end
-            upper = [Diagonal(upperdiag) Diagonal(-upperdiag) zeros(2*n+1, 2*n+1)]
-            lower = zeros(2, 3*(2*n+1))
+            upper = [Diagonal(upperdiag) Diagonal(-im*upperdiag) zeros(2*n+1, 2*n+1)]
+            lower = im*zeros(2, 3*(2*n+1))
             lower[1, 2*n] = 1./(2 * coeff_A(n, n-1))
             lower[2, 2*n+1] = 1./(2 * coeff_A(n, n))
-            lower[1, 2*(2*n+1)-1] = lower[1, 2*n]
-            lower[2, 2*(2*n+1)] = lower[2, 2*n+1]
+            lower[1, 2*(2*n+1)-1] = im*lower[1, 2*n]
+            lower[2, 2*(2*n+1)] = im*lower[2, 2*n+1]
             DT = [upper; lower]
         end
         return DT
@@ -202,8 +234,8 @@ let
 
 
     #=
-    Function to obtain the point evaluation of the Nth OP at the point on the
-    unit sphere (x, y, z)
+    Function to obtain the point evaluation of the Nth set of OPs (order N) at
+    the point on the unit sphere (x, y, z)
     =#
     global function opEval(N, x, y, z)
 
@@ -230,60 +262,53 @@ let
             P_nplus1 = - DT_n * (B_n - G_n) * P_n - DT_n * C_n * P_nminus1
 
             # Re-label for the next step
-            P_nminus1 = P_n
-            P_n = P_nplus1
+            P_nminus1 = copy(P_n)
+            P_n = copy(P_nplus1)
         end
 
         return P_n
 
     end
 
-end
+
+    #====#
 
 
+    #=
+    Function to obtain a point evaluation of a function f(x,y,z) where f is input as
+    the coefficients of its expansion in the basis of the OPs for the sphere, i.e.
+        f(x, y) = sum(vecdot(f_n, P_n))
+    where the {P_n} are the OPs on the sphere (spherical harmonics)
 
-#=
-Function to obtain a point evaluation of a function f(x,y) where f is input as
-the coefficients of its expansion in the basis of the OPs for the circle, i.e.
-    f(x, y) = sum(vecdot(f_n, P_n))
-where the {P_n} are the OPs on the circle, P_0 = 1 and P_n in R^2 for n>0.
-
-We note the structure of the input f is then a vector of length M=2N+1 where N is
-the number of OP sets that are used in the expansion, i.e. n = 0,...,N, and where
-f_0=f[1] and f_n=f[2*n : 2*n+1] in R^2 for n>0.
-
-Uses the Clenshaw Algorithm.
-=#
-let
-
-    global function funcEval(f, x, y)
+    Uses the Clenshaw Algorithm.
+    =#
+    global function funcEval(f, x, y, z)
 
         # Check that x and y are on the unit circle
         delta = 0.001
-        @assert (x^2 + y^2 < 1 + delta &&  x^2 + y^2 > 1 - delta) "the point (x, y) must be on unit circle"
+        @assert (x^2 + y^2 + z^2 < 1 + delta &&  x^2 + y^2 + z^2 > 1 - delta) "the point (x, y, z) must be on unit sphere"
 
         M = length(f)
-        N = (M - 1) / 2
-        @assert (M % 2 == 1) "invalid length of f - should be odd number"
+        N = round(Int, sqrt(M) - 1)
+        # assert (M % 2 == 0) "invalid length of f"
 
-        # Define the matrices used in our 3-term relation
-        G_0 = [x; y]
-        G_n = [x 0; 0 x; y 0; 0 y]
-        alpha = - DT_n * (B_n - G_n)
-        beta = - DT_n * C_n
-
-        # Define a zeros vector to store the gammas.
-        # Note that we add in gamma_(N+1) = gamma_(N+2) = [0;0]
-        gamma = zeros(M+(2*2))
         # Complete the reverse recurrance to gain gamma_1, gamma_2
-        for n = M:-2:2
-            gamma[n-1 : n] = view(f, n-1:n) + alpha * view(gamma, n+1:n+2) + beta * view(gamma, n+3:n+4)
+        # Note that gamma_(N+1) = 0, gamma_(N+2) = 0
+        gamma_nplus2 = 0.0
+        gamma_nplus1 = zeros((N+3)^2-(N+2)^2)'
+        gamma_n = zeros((N+2)^2-(N+1)^2)'
+        for n = N:-1:1
+            a = - systemMatrix_DT(n) * (systemMatrix_B(n) - systemMatrix_G(n, x, y, z))
+            b = - systemMatrix_DT(n+1) * systemMatrix_C(n+1)
+            gamma_nplus2 = copy(gamma_nplus1)
+            gamma_nplus1 = copy(gamma_n)
+            gamma_n = view(f, n^2+1:(n+1)^2)' + gamma_nplus1 * a + gamma_nplus2 * b
         end
 
         # Calculate the evaluation of f using gamma_1, gamma_2
-        beta = - DT_n * C_1
-        P_1 = [y; x]
-        return f[1] + vecdot(P_1, view(gamma, 2:3)) + vecdot(beta, view(gamma, 4:5))
+        b = - systemMatrix_DT(1) * systemMatrix_C(1)
+        P_1 = opEval(1, x, y, z)
+        return (f[1] + gamma_n * P_1 + gamma_nplus1 * b)[1]
 
     end
 
@@ -295,22 +320,18 @@ end
 x = 0.1
 y = 0.8
 z = sqrt(1 - x^2 - y^2)
-N = 1
+N = 2
 p = opEval(N, x, y, z)
-println(p)
 
-theta = acos(z)
-phi = acos(x / sin(theta))
-# p_actual = alphaVal(2, 0) * 0.5 * (3*z^2 - 1)
-p_actual = alphaVal(1, 0) * z
-@test p[N+1] ≈ p_actual
+p_actual = alphaVal(2, 0) * 0.5 * (3*z^2 - 1)
+# p_actual = alphaVal(2,2) * (x + im*y)^2
+#@test p[N + 1] ≈ p_actual
 
-# N = 5
-# f = 1:(2*N+1)
-# fxy = funcEval(f, x, y)
-# fxy_actual = zeros(length(f))
-# fxy_actual = f[1]
-# for i = 1:N
-#     fxy_actual += vecdot(view(f, 2*i:2*i+1), OPeval(i, x, y))
-# end
-# @test fxy ≈ fxy_actual
+N = 3
+f = 1:(N+1)^2
+fxy = funcEval(f, x, y, z)
+fxy_actual = 0.0
+for i = 0:N
+    fxy_actual += vecdot(view(f, i^2+1:(i+1)^2), opEval(i, x, y, z))
+end
+@test fxy ≈ fxy_actual
