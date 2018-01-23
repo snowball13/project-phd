@@ -42,17 +42,14 @@ let
     end
 
     global function DtildeVal(l, m)
-        D = (l - m + 1) / (2*m + 0.5)
-        D *= (l - m + 2) / (l + 1.5)
+        D = - ((l - m + 1) * (l - m + 2)) / (2 * (m - 0.5) * (l + 0.5))
         D *= (2*m - 1) / (l + 1)
         return D
     end
 
     global function EtildeVal(l, m)
-        E = (l + m + 1) / (2*m + 0.5)
-        E *= (l + m + 2) / (l + 1.5)
-        E *= (2*m - 1) / (l + m)
-        E *= l / (l + m - 1)
+        E = ((l + m - 1) * (l + m)) / (2 * (m - 0.5) * (l + 0.5))
+        E *= (l * (2*m - 1)) / ((l + m) * (l + m - 1))
         return E
     end
 
@@ -249,7 +246,7 @@ let
         # We initialise P_(-1) = 0, P_0 = 1, and an empty vector for P_1
         P_nminus1 = 0
         P_n = alphaVal(0, 0)
-        P_nplus1 = [0; 0]
+        P_nplus1 = 0
 
         for n = 0:N-1
             # Define the matrices in the 3-term relation
@@ -324,8 +321,8 @@ N = 2
 p = opEval(N, x, y, z)
 
 p_actual = alphaVal(2, 0) * 0.5 * (3*z^2 - 1)
-# p_actual = alphaVal(2,2) * (x + im*y)^2
-#@test p[N + 1] ≈ p_actual
+p_actual = alphaVal(2,2) * (x + im*y)^2
+@test p[2N + 1] ≈ p_actual
 
 N = 3
 f = 1:(N+1)^2
