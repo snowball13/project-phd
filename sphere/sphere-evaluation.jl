@@ -1,4 +1,4 @@
-# Script to obtain a point evaluation of the Nth set of OPs for the unit circle
+# Script to obtain a point evaluation of the Nth set of OPs for the unit sphere
 
 using ApproxFun
 using Base.Test
@@ -7,10 +7,13 @@ using Base.LinAlg
 
 let
 
-    #= Functions to obtain the coefficients used in the matrices for
+    #=
+    Functions to obtain the coefficients used in the matrices for
     J^x, J^y, J^z
     =#
 
+    # Function outputting the constant for the (l,m) spherical harmonic
+    # polynomial
     global function alphaVal(l, m)
         c = sqrt((2*l + 1) * gamma(l - m + 1) / (4*pi*gamma(l + m + 1)))
         ctilde = 1.0
@@ -20,10 +23,6 @@ let
         end
         chat = gamma(l + m + 1) / (gamma(l + 1) * (-2.0)^m)
         return c * chat * ctilde
-    end
-
-    global function bhatVal(l, m)
-        return gamma(l+1) * gamma(2*m+1) / (gamma(l+m+1) * gamma(m+1))
     end
 
     global function AtildeVal(l, m)
@@ -67,6 +66,10 @@ let
         return G
     end
 
+    # The following coeff functions give the coefficients used in the
+    # relations for x*Y^m_l, y*Y^m_l and z*Y^m_l where Y^m_l is the l,m
+    # spherical harmonic polynomial. These are then used as the non-zero entries
+    # in our system matrices.
     global function coeff_A(l, m)
         A = 1.0
         if (m >= 0)
@@ -191,7 +194,7 @@ let
         lower = Diagonal(lowerdiag)
         C_x = [upper; zerosVec'; zerosVec'] + [zerosVec'; zerosVec'; lower]
         C_y = [upper; zerosVec'; zerosVec'] - [zerosVec'; zerosVec'; lower]
-        C_y = -im * C_y
+        C_y *= -im
         C_z = [zerosVec'; Diagonal(diag_z); zerosVec']
         return [C_x; C_y; C_z]
     end
@@ -202,6 +205,7 @@ let
     end
 
     global function systemMatrix_DT(n)
+        # Note DT_n is a right inverse matrix of A_n
         DT = 0
         if n == 0
             d_00 = coeff_D(0, 0)
