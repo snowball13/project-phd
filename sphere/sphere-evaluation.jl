@@ -235,6 +235,133 @@ let
 
 
     #=
+    Functions to obtain the matrices corresponding to multiplication of the OPs
+    by x, y and z respectively (called J^x, J^y and J^z)
+    =#
+
+    global function systemMatrix_Ax(n)
+        zerosVec = zeros(2*n + 1)
+        leftdiag = copy(zerosVec)
+        rightdiag = copy(zerosVec)
+        for k = -n:n
+            leftdiag[k+n+1] = coeff_D(n, k)
+            rightdiag[k+n+1] = coeff_A(n, k)
+        end
+        left = [Diagonal(leftdiag) zeros(2*n+1, 2)]
+        right = [zeros(2*n+1, 2) Diagonal(rightdiag)]
+        return left + right
+    end
+
+    global function systemMatrix_Ay(n)
+        zerosVec = zeros(2*n + 1)
+        leftdiag = copy(zerosVec)
+        rightdiag = copy(zerosVec)
+        for k = -n:n
+            leftdiag[k+n+1] = coeff_D(n, k)
+            rightdiag[k+n+1] = coeff_A(n, k)
+        end
+        left = [Diagonal(leftdiag) zeros(2*n+1, 2)]
+        right = [zeros(2*n+1, 2) Diagonal(rightdiag)]
+        return -im*(left + right)
+    end
+
+    global function systemMatrix_Az(n)
+        zerosVec = zeros(2*n + 1)
+        d = copy(zerosVec)
+        for k = -n:n
+            d[k+n+1] = coeff_F(n, k)
+        end
+        return [zeros(2*n+1, 1) Diagonal(d) zeros(2*n+1, 1)]
+    end
+
+    global function systemMatrix_Bx(n)
+        return zeros(2*n+1, 2*n+1)
+    end
+
+    global function systemMatrix_By(n)
+        return zeros(2*n+1, 2*n+1)
+    end
+
+    global function systemMatrix_Bz(n)
+        return zeros(2*n+1, 2*n+1)
+    end
+
+    global function systemMatrix_Cx(n)
+        zerosVec = zeros(2*n - 1)
+        upperdiag = copy(zerosVec)
+        lowerdiag = copy(zerosVec)
+        for k = -n:n-2
+            upperdiag[k+n+1] = coeff_B(n, k)
+            lowerdiag[k+n+1] = coeff_E(n, k+2)
+        end
+        upper = Diagonal(upperdiag)
+        lower = Diagonal(lowerdiag)
+        return [upper; zerosVec'; zerosVec'] + [zerosVec'; zerosVec'; lower]
+    end
+
+    global function systemMatrix_Cy(n)
+        zerosVec = zeros(2*n - 1)
+        upperdiag = copy(zerosVec)
+        lowerdiag = copy(zerosVec)
+        for k = -n:n-2
+            upperdiag[k+n+1] = coeff_B(n, k)
+            lowerdiag[k+n+1] = coeff_E(n, k+2)
+        end
+        upper = Diagonal(upperdiag)
+        lower = Diagonal(lowerdiag)
+        return - im * ([upper; zerosVec'; zerosVec'] - [zerosVec'; zerosVec'; lower])
+    end
+
+    global function systemMatrix_Cz(n)
+        zerosVec = zeros(2*n - 1)
+        d = copy(zerosVec)
+        for k = -n:n-2
+            d[k+n+1] = coeff_G(n, k+1)
+        end
+        return [zerosVec'; Diagonal(d); zerosVec']
+    end
+
+    global function Jx(N)
+        M = (N+1)^2
+        J = sparse(zeros(M,M))
+        J[1,2:4] = systemMatrix_Ax(0)
+        for n = 1:N-1
+            rows = n^2+1:(n+1)^2
+            J[rows, (n-1)^2+1:n^2] = systemMatrix_Cx(n)
+            J[rows, (n+1)^2+1:(n+2)^2] = systemMatrix_Ax(n)
+        end
+        J[N^2+1:end,(N-1)^2+1:N^2] = systemMatrix_Cx(N)
+        return J
+    end
+
+    global function Jy(N)
+        M = (N+1)^2
+        J = sparse(zeros(M,M))
+        J[1,2:4] = systemMatrix_Ay(0)
+        for n = 1:N-1
+            rows = n^2+1:(n+1)^2
+            J[rows, (n-1)^2+1:n^2] = systemMatrix_Cy(n)
+            J[rows, (n+1)^2+1:(n+2)^2] = systemMatrix_Ay(n)
+        end
+        J[N^2+1:end,(N-1)^2+1:N^2] = systemMatrix_Cy(N)
+        return J
+    end
+
+    global function Jz(N)
+        M = (N+1)^2
+        J = sparse(zeros(M,M))
+        J[1,2:4] = systemMatrix_Az(0)
+        for n = 1:N-1
+            rows = n^2+1:(n+1)^2
+            J[rows, (n-1)^2+1:n^2] = systemMatrix_Cz(n)
+            J[rows, (n+1)^2+1:(n+2)^2] = systemMatrix_Az(n)
+        end
+        J[N^2+1:end,(N-1)^2+1:N^2] = systemMatrix_Cz(N)
+        return J
+    end
+
+
+    #=
     Function to obtain the point evaluation of the Nth set of OPs (order N) at
     the point on the unit sphere (x, y, z)
     =#
