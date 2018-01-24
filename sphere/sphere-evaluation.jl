@@ -81,7 +81,7 @@ let
     global function coeff_B(l, m)
         B = 1.0
         if (m >= 0)
-            if (l - abs(m) - 2 > 0)
+            if (l - abs(m) - 2 >= 0)
                 B = BtildeVal(l, m)
             else
                 B = 0.0
@@ -109,7 +109,7 @@ let
         if (m > 0)
             E = EtildeVal(l, m)
         else
-            if (l - abs(m) - 2 > 0)
+            if (l - abs(m) - 2 >= 0)
                 E = BtildeVal(l, abs(m))
             else
                 E = 0.0
@@ -287,25 +287,28 @@ let
 
         M = length(f)
         N = round(Int, sqrt(M) - 1)
-        # assert (M % 2 == 0) "invalid length of f"
+        @assert (M > 0 && sqrt(M) - 1 == N) "invalid length of f"
 
         # Complete the reverse recurrance to gain gamma_1, gamma_2
         # Note that gamma_(N+1) = 0, gamma_(N+2) = 0
-        gamma_nplus2 = 0.0
-        gamma_nplus1 = zeros((N+3)^2-(N+2)^2)'
-        gamma_n = zeros((N+2)^2-(N+1)^2)'
+        gamma_nplus2 = zeros((N+3)^2-(N+2)^2)
+        gamma_nplus1 = zeros((N+2)^2-(N+1)^2)
+        gamma_n = 0.0
         for n = N:-1:1
-            a = - systemMatrix_DT(n) * (systemMatrix_B(n) - systemMatrix_G(n, x, y, z))
-            b = - systemMatrix_DT(n+1) * systemMatrix_C(n+1)
+            a = - (systemMatrix_DT(n) * (systemMatrix_B(n) - systemMatrix_G(n, x, y, z))).'
+            b = - (systemMatrix_DT(n+1) * systemMatrix_C(n+1)).'
+            gamma_n = view(f, n^2+1:(n+1)^2) + a * gamma_nplus1 + b * gamma_nplus2
             gamma_nplus2 = copy(gamma_nplus1)
             gamma_nplus1 = copy(gamma_n)
-            gamma_n = view(f, n^2+1:(n+1)^2)' + gamma_nplus1 * a + gamma_nplus2 * b
         end
 
         # Calculate the evaluation of f using gamma_1, gamma_2
-        b = - systemMatrix_DT(1) * systemMatrix_C(1)
+        # f(x,y,z) = P_0*f_0 + gamma_1^T * P_1 - (DT_1*C_1)^T * gamma_2
+        b = - (systemMatrix_DT(1) * systemMatrix_C(1)).'
         P_1 = opEval(1, x, y, z)
-        return (f[1] + gamma_n * P_1 + gamma_nplus1 * b)[1]
+        P_0 = opEval(0, x, y, z)
+        #return P_0 * f[1] + vecdot(gamma_nplus1, P_1) + P_0 * b * gamma_nplus2
+        return P_0 * f[1] + (P_1.' * gamma_nplus1)[1] + P_0 * b * gamma_nplus2
 
     end
 
@@ -317,18 +320,18 @@ end
 x = 0.1
 y = 0.8
 z = sqrt(1 - x^2 - y^2)
-N = 2
+N = 3
 p = opEval(N, x, y, z)
 
-p_actual = alphaVal(2, 0) * 0.5 * (3*z^2 - 1)
-p_actual = alphaVal(2,2) * (x + im*y)^2
-@test p[2N + 1] ≈ p_actual
+p_actual = alphaVal(3, -1) * (x - im*y) * ((z-1)^2 * 15/4 + (z-1) * 15/2 + 3)
+# p_actual = alphaVal(2,2) * (x + im*y)^2
+@test p[N] ≈ p_actual
 
-N = 3
+N = 10
 f = 1:(N+1)^2
-fxy = funcEval(f, x, y, z)
-fxy_actual = 0.0
-for i = 0:N
-    fxy_actual += vecdot(view(f, i^2+1:(i+1)^2), opEval(i, x, y, z))
+fxyz = funcEval(f, x, y, z)
+fxyz_actual = 0.0
+for k = 0:N
+    fxyz_actual += vecdot(view(f, k^2+1:(k+1)^2), opEval(k, x, y, z))
 end
-@test fxy ≈ fxy_actual
+@test fxyz ≈ fxyz_actual
