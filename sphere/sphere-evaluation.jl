@@ -323,7 +323,7 @@ let
 
     global function Jx(N)
         M = (N+1)^2
-        J = sparse(zeros(M,M))
+        J = sparse(zeros(M,M)) + 0im
         J[1,2:4] = systemMatrix_Ax(0)
         for n = 1:N-1
             rows = n^2+1:(n+1)^2
@@ -336,7 +336,7 @@ let
 
     global function Jy(N)
         M = (N+1)^2
-        J = sparse(zeros(M,M))
+        J = sparse(zeros(M,M)) + 0im
         J[1,2:4] = systemMatrix_Ay(0)
         for n = 1:N-1
             rows = n^2+1:(n+1)^2
@@ -349,7 +349,7 @@ let
 
     global function Jz(N)
         M = (N+1)^2
-        J = sparse(zeros(M,M))
+        J = sparse(zeros(M,M)) + 0im
         J[1,2:4] = systemMatrix_Az(0)
         for n = 1:N-1
             rows = n^2+1:(n+1)^2
