@@ -106,27 +106,111 @@ let
         @assert (M % 2 == 1) "invalid length of f - should be odd number"
 
         # Define the matrices used in our 3-term relation
-        G_0 = [x; y]
-        G_n = [x 0; 0 x; y 0; 0 y]
+        G_0 = [x, y]   # [Jx ; Jy]
+        G_n = [x 0; 0 x; y 0; 0 y]   # [Jx 0I ; 0I Jx ; Jy 0; 0 Jy]
         alpha = - DT_n * (B_n - G_n)
         beta = - DT_n * C_n
 
         # Define a zeros vector to store the gammas.
         # Note that we add in gamma_(N+1) = gamma_(N+2) = [0;0]
-        gamma = zeros(M+(2*2))
+        gamma = Vector{Float64}(M+(2*2))    # OPERATOR VERSION: Vector{Matrix{Float64}}(M+(2*2)) or PseudoBlockArray(uninitialized,
+        gamma[end-4:4] = 0                  # OPERATOR VERSION: gamma[end-4:4] = zeros(Jx)
         # Complete the reverse recurrance to gain gamma_1, gamma_2
         for n = M:-2:2
-            gamma[n-1 : n] = view(f, n-1:n) + alpha * view(gamma, n+1:n+2) + beta * view(gamma, n+3:n+4)
+            gamma[n-1 : n] = view(f, n-1:n) + alpha * view(gamma, n+1:n+2) + beta * view(gamma, n+3:n+4)  # Operator version view(f, n-1:n).*I
         end
 
         # Calculate the evaluation of f using gamma_1, gamma_2
         beta = - DT_n * C_1
-        P_1 = [y; x]
+        P_1 = [y; x]  #[Jy ; Jx]
         return f[1] + vecdot(P_1, view(gamma, 2:3)) + vecdot(beta, view(gamma, 4:5))
 
     end
 
 end
+
+
+using BlockArrays, GPUArrays
+
+x = rand(3,3)
+y = rand(3,3)
+
+G_0 = [x, y]
+G_n = Matrix{Matrix{Float64}}(4,2)
+    for kj in eachindex(G_n)
+            G_n[kj] = zeros(x)
+    end
+    G_n[1,1] = G_n[2,2] = x
+    G_n[3,1] = G_n[4,2] = y
+
+B_n = Matrix{typeof(I)}(4,2)
+    B_n .= 0I
+
+DT_n = [2 0 0 0;
+        0 2 0 0]
+
+alpha = - DT_n * (B_n - G_n)
+
+G_n
+
+
+v = Vector{Matrix{Float64}}(2)
+    for k in eachindex(v) v[k] = rand(3,3) end
+
+
+@which G_n * v
+A = G_n; x = v; TS = Matrix{Float64}
+@which A_mul_B!(similar(x,TS,size(A,1)),A,x)
+
+y = similar(x,TS,size(A,1))
+@which Base.LinAlg.generic_matvecmul!(y, 'N', A, x)
+
+G_n * v
+
+
+gamma
+
+
+
+[1,2,3,4,5,6,7]
+
+n = 3 # size(Jx,1)
+
+PseudoBlockArray{Float64}(uninitialized, [n;fill(2n,3)], [n])
+
+@which PseudoBlockArray([1,2,3,4,5,6,7], [1;fill(2,3)])
+
+M = 10
+
+[x ; y] # concats
+x = [1,2]
+y = [3,4]
+[x ; y]
+
+
+
+
+
+[x,y]
+
+
+
+[[1,2], [3,4]]
+
+A = rand(2,2)
+
+A*[[1 2; 3 4], [3 4; 5 6]]
+
+
+I + [3 3; 4 4]
+
+
+
+[3,4] .*I
+
+
+A*[[1 2; 3 4], [3 4; 5 6]]    + [3I,4I]
+
 
 #-----
 # Testing
