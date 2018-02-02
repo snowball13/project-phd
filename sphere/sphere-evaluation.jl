@@ -1,6 +1,8 @@
 # Script to obtain a point evaluation of the Nth set of OPs for the unit sphere
 
-using ApproxFun
+#using ApproxFun
+using BlockBandedMatrices
+using BlockArrays
 using Base.Test
 using Base.LinAlg
 
@@ -200,7 +202,7 @@ let
     end
 
     global function systemMatrix_G(n, x, y, z)
-        Iden = eye(2*n + 1)
+        Iden = speye(2*n + 1)
         return [x*Iden; y*Iden; z*Iden]
     end
 
@@ -231,12 +233,96 @@ let
     end
 
 
+    #===#
+
+
+    #=
+    Functions to obtain the matrices used in Clenshaw Algorithm when evaluating
+    a function at the Jacobi operator matrices Jx,Jy,Jz. These are required to
+    not be sparse due to Julia constraints/errors thrown when using multiplying
+    sparse matrices with type Matrix{Matrix{Float64}}.
+    =#
+
+    global function systemMatrix_C_operator(n)
+        if n == 0
+            return zeros(3, 1)
+        elseif n == 1
+            b_11 = coeff_B(1, -1)
+            e_11 = coeff_E(1, 1)
+            g_10 = coeff_G(1, 0)
+            return [b_11; 0; e_11; -im*b_11; 0; im*e_11; 0; g_10; 0]
+        end
+        # We proceed by creating diagonal matrices using the coefficients of
+        # the 3-term relations for the spherical harmonic OPs, and then combining
+        zerosVec = zeros(2*n - 1)
+        upperdiag = copy(zerosVec)
+        lowerdiag = copy(zerosVec)
+        diag_z = copy(zerosVec)
+        for k = -n:n-2
+            upperdiag[k+n+1] = coeff_B(n, k)
+            lowerdiag[k+n+1] = coeff_E(n, k+2)
+            diag_z[k+n+1] = coeff_G(n, k+1)
+        end
+        upper = diagm(upperdiag)
+        lower = diagm(lowerdiag)
+        C_x = [upper; zerosVec'; zerosVec'] + [zerosVec'; zerosVec'; lower]
+        C_y = [upper; zerosVec'; zerosVec'] - [zerosVec'; zerosVec'; lower]
+        C_y *= -im
+        C_z = [zerosVec'; diagm(diag_z); zerosVec']
+        return [C_x; C_y; C_z]
+    end
+
+    global function systemMatrix_DT_operator(n)
+        # Note DT_n is a right inverse matrix of A_n
+        DT = 0
+        if n == 0
+            d_00 = coeff_D(0, 0)
+            a_00 = coeff_A(0, 0)
+            f_00 = coeff_F(0, 0)
+            DT = [1./(2*d_00) -im/(2*d_00) 0; 0 0 1./f_00; 1./(2*a_00) im/(2*a_00) 0]
+        else
+            # We proceed by creating diagonal matrices using the coefficients of
+            # the 3-term relations for the spherical harmonic OPs, and then combining
+            upperdiag = zeros(2*n + 1)
+            for k = -n:n
+                upperdiag[k+n+1] = 1./(2 * coeff_D(n, k))
+            end
+            upper = [diagm(upperdiag) diagm(-im*upperdiag) zeros(2*n+1, 2*n+1)]
+            lower = im*zeros(2, 3*(2*n+1))
+            lower[1, 2*n] = 1./(2 * coeff_A(n, n-1))
+            lower[2, 2*n+1] = 1./(2 * coeff_A(n, n))
+            lower[1, 2*(2*n+1)-1] = im*lower[1, 2*n]
+            lower[2, 2*(2*n+1)] = im*lower[2, 2*n+1]
+            DT = [upper; lower]
+        end
+        return DT
+    end
+
+    global function systemMatrix_G_operator(n, J_x, J_y, J_z)
+        G = Matrix{Matrix{Complex{Float64}}}(3*(2n+1),2n+1)
+        for i=1:2n+1
+            for j=1:2n+1
+                if i == j
+                    G[i,j] = J_x
+                    G[i+2n+1,j] = J_y
+                    G[i+4n+2,j] = J_z
+                else
+                    G[i,j] = zeros(J_x)
+                    G[i+2n+1,j] = zeros(J_y)
+                    G[i+4n+2,j] = zeros(J_z)
+                end
+            end
+        end
+        return G
+    end
+
+
     #====#
 
 
     #=
     Functions to obtain the matrices corresponding to multiplication of the OPs
-    by x, y and z respectively (called J^x, J^y and J^z)
+    by x, y and z respectively (i.e. the Jacobi operators J^x, J^y and J^z)
     =#
 
     global function systemMatrix_Ax(n)
@@ -361,6 +447,9 @@ let
     end
 
 
+    #====#
+
+
     #=
     Function to obtain the point evaluation of the Nth set of OPs (order N) at
     the point on the unit sphere (x, y, z)
@@ -443,7 +532,58 @@ let
 
     end
 
+    #=
+    Function to obtain the matrix evaluation of a function f(x,y,z) with inputs
+    (Jx,Jy,Jz) where f is input as the coefficients of its expansion in the
+    basis of the OPs for the sphere, i.e.
+        f(x, y) = sum(vecdot(f_n, P_n))
+    where the {P_n} are the OPs on the sphere (spherical harmonics)
+
+    Uses the Clenshaw Algorithm.
+    =#
+    global function funcOperatorEval(f)
+
+        M = length(f)
+        N = round(Int, sqrt(M) - 1)
+        @assert (M > 0 && sqrt(M) - 1 == N) "invalid length of f"
+
+        # Define the Jacobi operator matrices
+        J_x = Jx(N)
+        J_y = Jy(N)
+        J_z = Jz(N)
+
+        # Define a zeros vector to store the gammas.
+        # Note that we add in gamma_(N+1) = 0, gamma_(N+2) = 0
+        gamma_nplus2 = Vector{Matrix{Float64}}(2N+5)
+        gamma_nplus1 = Vector{Matrix{Float64}}(2N+3)
+        gamma_n = Vector{Matrix{Float64}}(2N+1)
+        for k in eachindex(gamma_nplus1)
+            gamma_nplus2[k] = zeros(J_x)
+            gamma_nplus1[k] = zeros(J_x)
+        end
+        gamma_nplus2[end-1] = zeros(J_x)
+        gamma_nplus2[end] = zeros(J_x)
+
+        # Complete the reverse recurrance to gain gamma_1, gamma_2
+        for n = N:-1:1
+            a = systemMatrix_B(n) - systemMatrix_G_operator(n,J_x,J_y,J_z)
+            a = - systemMatrix_DT_operator(n) * a
+            b = - systemMatrix_DT_operator(n+1) * systemMatrix_C_operator(n+1)
+            gamma_n = view(f, n^2+1:(n+1)^2).*I + a.' * gamma_nplus1 + b.' * gamma_nplus2
+            gamma_nplus2 = copy(gamma_nplus1)
+            gamma_nplus1 = copy(gamma_n)
+        end
+
+        # Calculate the evaluation of f using gamma_1, gamma_2
+        b = - systemMatrix_DT_operator(1) * systemMatrix_C_operator(1)
+        P_1 = [alphaVal(1,-1)*(J_x-im*J_y), alphaVal(1,0)*J_z, alphaVal(1,1)*(J_x+im*J_y)]
+        P_0 = alphaVal(0,0)
+        return P_0 * f[1].*I + P_1.' * gamma_nplus1 + P_0 * b.' * gamma_nplus2
+
+    end
+
 end
+
 
 #-----
 # Testing
@@ -453,7 +593,6 @@ y = 0.8
 z = sqrt(1 - x^2 - y^2)
 N = 3
 p = opEval(N, x, y, z)
-
 p_actual = alphaVal(3, -1) * (x - im*y) * ((z-1)^2 * 15/4 + (z-1) * 15/2 + 3)
 # p_actual = alphaVal(2,2) * (x + im*y)^2
 @test p[N] ≈ p_actual
@@ -466,3 +605,7 @@ for k = 0:N
     fxyz_actual += vecdot(view(f, k^2+1:(k+1)^2), opEval(k, x, y, z))
 end
 @test fxyz ≈ fxyz_actual
+
+N = 5
+f = 1:(N+1)^2
+fxyz = funcOperatorEval(f)
