@@ -1,7 +1,9 @@
 # Script to obtain a point evaluation of the Nth set of OPs for the unit circle
 
-using ApproxFun
+# using ApproxFun
 using Base.Test
+using BlockArrays
+using BlockBandedMatrices
 
 
 #=
@@ -95,6 +97,64 @@ let
     const C_1 = [0; 0.5; 0.5; 0]
     const C_n = [0.5 0; 0 0.5; 0 0.5; -0.5 0]
 
+    const Ax_0 = [0 1]
+    const Ax_n = [0.5 0; 0 0.5]
+    const Cx_1 = [0; 0.5]
+    const Cx_n = [0.5 0; 0 0.5]
+
+    const Ay_0 = [1 0]
+    const Ay_n = [0 -0.5; 0.5 0]
+    const Cy_1 = [0.5; 0]
+    const Cy_n = [0 0.5; -0.5 0]
+
+    global function Jx(N)
+        l,u = 1,1          # block bandwidths
+        λ,μ = 1,1          # sub-block bandwidths: the bandwidths of each block
+        cols = rows = [1; round.(Int,2*ones(N))]  # block sizes
+        J = BandedBlockBandedMatrix(0.0I, (rows,cols), (l,u), (λ,μ))
+        if N == 0
+            return J
+        end
+        J[1,2:3] = Ax_0
+        J[2:3,1] = Cx_1
+        if N == 1
+            return J
+        end
+        rows = 4:5
+        cols = 4:5
+        for n = 2:N
+            J[rows-2,cols] = Ax_n
+            J[rows,cols-2] = Cx_n
+            rows += 2
+            cols += 2
+        end
+        return J
+    end
+
+    global function Jy(N)
+        l,u = 1,1          # block bandwidths
+        λ,μ = 1,1          # sub-block bandwidths: the bandwidths of each block
+        cols = rows = [1; round.(Int,2*ones(N))]  # block sizes
+        J = BandedBlockBandedMatrix(0.0I, (rows,cols), (l,u), (λ,μ))
+        if N == 0
+            return J
+        end
+        J[1,2:3] = Ay_0
+        J[2:3,1] = Cy_1
+        if N == 1
+            return J
+        end
+        rows = 4:5
+        cols = 4:5
+        for n = 2:N
+            J[rows-2,cols] = Ay_n
+            J[rows,cols-2] = Cy_n
+            rows += 2
+            cols += 2
+        end
+        return J
+    end
+
     global function funcEval(f, x, y)
 
         # Check that x and y are on the unit circle
@@ -127,109 +187,162 @@ let
 
     end
 
-end
 
+    global function funcOperatorEval(f)
 
-using BlockArrays, GPUArrays
+        M = length(f)
+        N = round(Int, (M - 1) / 2)
+        @assert (M % 2 == 1) "invalid length of f - should be odd number"
 
-x = rand(3,3)
-y = rand(3,3)
+        # Define the Jacobi operator matrices
+        J_x = Jx(N)
+        J_y = Jy(N)
 
-G_0 = [x, y]
-G_n = Matrix{Matrix{Float64}}(4,2)
-    for kj in eachindex(G_n)
-            G_n[kj] = zeros(x)
+        # Define the matrices used in our 3-term relation
+        G_n = Matrix{Matrix{Float64}}(4,2)
+        for kj in eachindex(G_n)
+            G_n[kj] = zeros(J_x)
+        end
+        G_n[1,1] = G_n[2,2] = J_x
+        G_n[3,1] = G_n[4,2] = J_y
+        a = - DT_n * (B_n - G_n)
+        b = - DT_n * C_n
+
+        # Define a zeros vector to store the gammas.
+        # Note that we add in gamma_(N+1) = gamma_(N+2) = [0;0]
+        gamma_nplus2 = Vector{Matrix{Float64}}(2)
+        gamma_nplus1 = Vector{Matrix{Float64}}(2)
+        gamma_n = Vector{Matrix{Float64}}(2)
+        for k in eachindex(gamma_nplus2)
+            gamma_nplus2[k] = zeros(J_x)
+            gamma_nplus1[k] = zeros(J_x)
+            gamma_n[k] = zeros(J_x)
+        end
+
+        # Complete the reverse recurrance to gain gamma_1, gamma_2
+        for n = N:-1:1
+            gamma_n = view(f, 2n:2n+1).*I + a * gamma_nplus1 + b * gamma_nplus2
+            gamma_nplus2 = copy(gamma_nplus1)
+            gamma_nplus1 = copy(gamma_n)
+        end
+
+        # Calculate the evaluation of f using gamma_1, gamma_2
+        b = - DT_n * C_1
+        P_1 = [J_y, J_x]
+        return f[1].*I + P_1.' * gamma_nplus1 + b.' * gamma_nplus2
+
     end
-    G_n[1,1] = G_n[2,2] = x
-    G_n[3,1] = G_n[4,2] = y
 
-B_n = Matrix{typeof(I)}(4,2)
-    B_n .= 0I
-
-DT_n = [2 0 0 0;
-        0 2 0 0]
-
-alpha = - DT_n * (B_n - G_n)
-
-G_n
-
-
-v = Vector{Matrix{Float64}}(2)
-    for k in eachindex(v) v[k] = rand(3,3) end
-
-
-@which G_n * v
-A = G_n; x = v; TS = Matrix{Float64}
-@which A_mul_B!(similar(x,TS,size(A,1)),A,x)
-
-y = similar(x,TS,size(A,1))
-@which Base.LinAlg.generic_matvecmul!(y, 'N', A, x)
-
-G_n * v
-
-
-gamma
-
-
-
-[1,2,3,4,5,6,7]
-
-n = 3 # size(Jx,1)
-
-PseudoBlockArray{Float64}(uninitialized, [n;fill(2n,3)], [n])
-
-@which PseudoBlockArray([1,2,3,4,5,6,7], [1;fill(2,3)])
-
-M = 10
-
-[x ; y] # concats
-x = [1,2]
-y = [3,4]
-[x ; y]
-
-
-
-
-
-[x,y]
-
-
-
-[[1,2], [3,4]]
-
-A = rand(2,2)
-
-A*[[1 2; 3 4], [3 4; 5 6]]
-
-
-I + [3 3; 4 4]
-
-
-
-[3,4] .*I
-
-
-A*[[1 2; 3 4], [3 4; 5 6]]    + [3I,4I]
-
-
-#-----
-# Testing
-
-x = 0.1
-y = sqrt(1 - x^2)
-N = 1000
-p = OPeval(N, x, y)
-
-theta = acos(x)
-p_actual = [sin(N*theta); cos(N*theta)]
-@test p ≈ p_actual
+end
 
 N = 5
 f = 1:(2*N+1)
-fxy = funcEval(f, x, y)
-fxy_actual = zeros(length(f))
-fxy_actual = f[1]
-for i = 1:N
-    fxy_actual += vecdot(view(f, 2*i:2*i+1), OPeval(i, x, y))
-end
-@test fxy ≈ fxy_actual
+fj = funcOperatorEval(f)
+
+
+
+#
+# using BlockArrays#, GPUArrays
+#
+# x = rand(3,3)
+# y = rand(3,3)
+#
+# G_0 = [x, y]
+# G_n = Matrix{Matrix{Float64}}(4,2)
+# for kj in eachindex(G_n)
+#         G_n[kj] = zeros(x)
+# end
+# G_n[1,1] = G_n[2,2] = x
+# G_n[3,1] = G_n[4,2] = y
+# G_n
+#
+# B_n = Matrix{typeof(I)}(4,2)
+#     B_n .= 0I
+#
+# DT_n = [2 0 0 0;
+#         0 2 0 0]
+#
+# alpha = - DT_n * (B_n - G_n)
+#
+#
+#
+# v = Vector{Matrix{Float64}}(2)
+#     for k in eachindex(v) v[k] = rand(3,3) end
+# v
+#
+#
+# @which G_n * v
+# A = G_n; x = v; TS = Matrix{Float64}
+# @which A_mul_B!(similar(x,TS,size(A,1)),A,x)
+#
+# y = similar(x,TS,size(A,1))
+# @which Base.LinAlg.generic_matvecmul!(y, 'N', A, x)
+#
+# G_n * v
+#
+#
+# gamma
+#
+#
+#
+# [1,2,3,4,5,6,7]
+#
+# n = 3 # size(Jx,1)
+#
+# PseudoBlockArray{Float64}(uninitialized, [n;fill(2n,3)], [n])
+#
+# @which PseudoBlockArray([1,2,3,4,5,6,7], [1;fill(2,3)])
+#
+# M = 10
+#
+# [x ; y] # concats
+# x = [1,2]
+# y = [3,4]
+# [x ; y]
+#
+#
+#
+#
+#
+# [x,y]
+#
+#
+#
+# [[1,2], [3,4]]
+#
+# A = rand(2,2)
+#
+# A*[[1 2; 3 4], [3 4; 5 6]]
+#
+#
+# I + [3 3; 4 4]
+#
+#
+#
+# [3,4] .*I
+#
+#
+# A*[[1 2; 3 4], [3 4; 5 6]]    + [3I,4I]
+#
+#
+# #-----
+# # Testing
+#
+# x = 0.1
+# y = sqrt(1 - x^2)
+# N = 1000
+# p = OPeval(N, x, y)
+#
+# theta = acos(x)
+# p_actual = [sin(N*theta); cos(N*theta)]
+# @test p ≈ p_actual
+#
+# N = 5
+# f = 1:(2*N+1)
+# fxy = funcEval(f, x, y)
+# fxy_actual = zeros(length(f))
+# fxy_actual = f[1]
+# for i = 1:N
+#     fxy_actual += vecdot(view(f, 2*i:2*i+1), OPeval(i, x, y))
+# end
+# @test fxy ≈ fxy_actual
