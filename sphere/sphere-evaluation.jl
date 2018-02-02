@@ -348,7 +348,7 @@ let
         end
         left = [Diagonal(leftdiag) zeros(2*n+1, 2)]
         right = [zeros(2*n+1, 2) Diagonal(rightdiag)]
-        return -im*(left + right)
+        return -im*(-left + right)
     end
 
     global function systemMatrix_Az(n)
@@ -408,41 +408,65 @@ let
     end
 
     global function Jx(N)
-        M = (N+1)^2
-        J = sparse(zeros(M,M)) + 0im
-        J[1,2:4] = systemMatrix_Ax(0)
-        for n = 1:N-1
-            rows = n^2+1:(n+1)^2
-            J[rows, (n-1)^2+1:n^2] = systemMatrix_Cx(n)
-            J[rows, (n+1)^2+1:(n+2)^2] = systemMatrix_Ax(n)
+        l,u = 1,1          # block bandwidths
+        λ,μ = 2,2         # sub-block bandwidths: the bandwidths of each block
+        cols = rows = 1:2:2N+1  # block sizes
+        J = BandedBlockBandedMatrix(0.0im*I, (rows,cols), (l,u), (λ,μ))
+        if N == 0
+            return J
         end
-        J[N^2+1:end,(N-1)^2+1:N^2] = systemMatrix_Cx(N)
+        J[1,2:4] = systemMatrix_Ax(0)
+        J[2:4,1] = systemMatrix_Cx(1)
+        if N == 1
+            return J
+        end
+        for n = 2:N
+            n^2+1:(n+1)^2
+            J[(n-1)^2+1:n^2,n^2+1:(n+1)^2] = systemMatrix_Ax(n-1)
+            J[n^2+1:(n+1)^2,(n-1)^2+1:n^2] = systemMatrix_Cx(n)
+        end
         return J
     end
 
     global function Jy(N)
-        M = (N+1)^2
-        J = sparse(zeros(M,M)) + 0im
-        J[1,2:4] = systemMatrix_Ay(0)
-        for n = 1:N-1
-            rows = n^2+1:(n+1)^2
-            J[rows, (n-1)^2+1:n^2] = systemMatrix_Cy(n)
-            J[rows, (n+1)^2+1:(n+2)^2] = systemMatrix_Ay(n)
+        l,u = 1,1          # block bandwidths
+        λ,μ = 2,2         # sub-block bandwidths: the bandwidths of each block
+        cols = rows = 1:2:2N+1  # block sizes
+        J = BandedBlockBandedMatrix(0.0im*I, (rows,cols), (l,u), (λ,μ))
+        if N == 0
+            return J
         end
-        J[N^2+1:end,(N-1)^2+1:N^2] = systemMatrix_Cy(N)
+        J[1,2:4] = systemMatrix_Ay(0)
+        J[2:4,1] = systemMatrix_Cy(1)
+        if N == 1
+            return J
+        end
+        for n = 2:N
+            n^2+1:(n+1)^2
+            J[(n-1)^2+1:n^2,n^2+1:(n+1)^2] = systemMatrix_Ay(n-1)
+            J[n^2+1:(n+1)^2,(n-1)^2+1:n^2] = systemMatrix_Cy(n)
+        end
         return J
     end
 
     global function Jz(N)
-        M = (N+1)^2
-        J = sparse(zeros(M,M)) + 0im
-        J[1,2:4] = systemMatrix_Az(0)
-        for n = 1:N-1
-            rows = n^2+1:(n+1)^2
-            J[rows, (n-1)^2+1:n^2] = systemMatrix_Cz(n)
-            J[rows, (n+1)^2+1:(n+2)^2] = systemMatrix_Az(n)
+        l,u = 1,1          # block bandwidths
+        λ,μ = 2,2         # sub-block bandwidths: the bandwidths of each block
+        cols = rows = 1:2:2N+1  # block sizes
+        J = BandedBlockBandedMatrix(0.0im*I, (rows,cols), (l,u), (λ,μ))
+        if N == 0
+            return J
         end
-        J[N^2+1:end,(N-1)^2+1:N^2] = systemMatrix_Cz(N)
+        J[1,2:4] = systemMatrix_Az(0)
+        J[2:4,1] = systemMatrix_Cz(1)
+        if N == 1
+            return J
+        end
+        for n = 2:N
+            n^2+1:(n+1)^2
+            J[(n-1)^2+1:n^2,n^2+1:(n+1)^2] = systemMatrix_Az(n-1)
+            J[n^2+1:(n+1)^2,(n-1)^2+1:n^2] = systemMatrix_Cz(n)
+        end
         return J
     end
 
@@ -451,7 +475,7 @@ let
 
 
     #=
-    Function to obtain the point evaluation of the Nth set of OPs (order N) at
+    Functions to obtain the point evaluation of the Nth set of OPs (order N) at
     the point on the unit sphere (x, y, z)
     =#
     global function opEval(N, x, y, z)
@@ -467,6 +491,8 @@ let
         P_nminus1 = 0
         P_n = alphaVal(0, 0)
         P_nplus1 = 0
+        P = zeros((N+1)^2)+0im
+        P[1] = P_n
 
         for n = 0:N-1
             # Define the matrices in the 3-term relation
@@ -481,10 +507,17 @@ let
             # Re-label for the next step
             P_nminus1 = copy(P_n)
             P_n = copy(P_nplus1)
+            P[(n+1)^2+1:(n+2)^2] = P_n
         end
 
-        return P_n
+        return P
 
+    end
+
+    global function opEval(l, m, x, y, z)
+        # Only return the l,m spherical harmonic OP evaluation.
+        P = opEval(l,x,y,z)
+        return P[l^2+l+1+m] 
     end
 
 
@@ -526,9 +559,9 @@ let
         # f(x,y,z) = P_0*f_0 + gamma_1^T * P_1 - (DT_1*C_1)^T * gamma_2
         b = - (systemMatrix_DT(1) * systemMatrix_C(1)).'
         P_1 = opEval(1, x, y, z)
-        P_0 = opEval(0, x, y, z)
+        P_0 = opEval(0, 0, x, y, z)
         #return P_0 * f[1] + vecdot(gamma_nplus1, P_1) + P_0 * b * gamma_nplus2
-        return P_0 * f[1] + (P_1.' * gamma_nplus1)[1] + P_0 * b * gamma_nplus2
+        return P_0 * f[1] + (P_1[2:end].' * gamma_nplus1)[1] + P_0 * b * gamma_nplus2
 
     end
 
@@ -591,21 +624,27 @@ end
 x = 0.1
 y = 0.8
 z = sqrt(1 - x^2 - y^2)
-N = 3
-p = opEval(N, x, y, z)
-p_actual = alphaVal(3, -1) * (x - im*y) * ((z-1)^2 * 15/4 + (z-1) * 15/2 + 3)
+l,m = 3,-1
+p = opEval(l, m, x, y, z)
+p_actual = alphaVal(l,m) * (x - im*y) * ((z-1)^2 * 15/4 + (z-1) * 15/2 + 3)
 # p_actual = alphaVal(2,2) * (x + im*y)^2
-@test p[N] ≈ p_actual
+@test p ≈ p_actual
 
 N = 10
 f = 1:(N+1)^2
 fxyz = funcEval(f, x, y, z)
+p = opEval(N, x, y, z)
 fxyz_actual = 0.0
 for k = 0:N
-    fxyz_actual += vecdot(view(f, k^2+1:(k+1)^2), opEval(k, x, y, z))
+    fxyz_actual += vecdot(view(f, k^2+1:(k+1)^2), view(p, k^2+1:(k+1)^2))
 end
+fxyz_actual
 @test fxyz ≈ fxyz_actual
 
 N = 5
 f = 1:(N+1)^2
 fxyz = funcOperatorEval(f)
+
+a = y*opEval(N,x,y,z)
+b = Jy(N)*opEval(N,x,y,z)
+@test a[1:N^2]≈b[1:N^2]
