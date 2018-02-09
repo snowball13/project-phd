@@ -14,19 +14,46 @@ let
         end
     end
 
+    function clebsch_gordan_coeff_calc(j1, j2, m1, m2, J, M)
+        if M == m1+m2
+            cg = (2J+1)*factorial(J+j1-j2)*factorial(J-j1+j2)*factorial(-J+j1+j2)/factorial(J+j1+j2+1)
+            cg *= factorial(J+M)*factorial(J-M)*factorial(j1-m1)*factorial(j1+m1)*factorial(j2-m2)*factorial(j2+m2)
+            cg = sqrt(cg)
+            S = 0.0
+            check = 0
+            k = 0
+            while check < 5
+                if j1+j2-J-k<0 || j1-m1-k<0 || j2+m2-k<0 || J-j2+m1+k<0 || J-j1-m2+k<0
+                    check += 1
+                    k += 1
+                    continue
+                end
+                S += ((-1.0)^k)/(factorial(k)*factorial(j1+j2-J-k)
+                                 *factorial(j1-m1-k)*factorial(j2+m2-k)
+                                 *factorial(J-j2+m1+k)*factorial(J-j1-m2+k))
+                k += 1
+            end
+            return S*cg
+        end
+        return 0.0
+    end
+
     function clebsch_gordan_coeff(j1, j2, m1, m2, J, M)
-        # A Wiki page with a (long) formula for C-G coeffs exists that I assume is correct
-        return 1.0
-        # if M == m1+m2
-        #     cg = (2J+1)*factorial(J+j1-j2)*factorial(J-j1+j2)*factorial(-J+j1+j2)/factorial(J+j1+j2+1)
-        #     cg *= factorial(J+M)*factorial(J-M)*factorial(j1-m1)*factorial(j1+m1)*factorial(j2-m2)*factorial(j2+m2)
-        #     cg = sqrt(cg)
-        #     # needs finishing
-        # end
+        # A Wiki page with a (long) formula for C-G coeffs exists that I assume
+        # is correct
+        # return 1.0
+        if M < 0 && j1 < j2
+            return clebsch_gordan_coeff_calc(j2,j1,-m2,-m1,J,-M) * (-1.0)^(J-j1-j2)
+        elseif M < 0
+            return clebsch_gordan_coeff_calc(j1,j2,-m1,-m2,J,-M) * (-1.0)^(J-j1-j2)
+        elseif j1 < j2
+            return clebsch_gordan_coeff_calc(j2,j1,m2,m1,J,M) * (-1.0)^(J-j1-j2)
+        else
+            return clebsch_gordan_coeff_calc(j1,j2,m1,m2,J,M)
+        end
     end
 
     function spin_func(r)
-
         if r == 1 || r == -1
             return [-r, -im, 0] / sqrt(2)
         elseif r == 0
@@ -229,24 +256,25 @@ let
 end
 
 
-N = 5
+N = 3
 Dx = grad_sh(N, 1)
 Dy = grad_sh(N, 2)
 Dz = grad_sh(N, 3)
-# I would expect this to just be diagonal (like the Laplacian), but it is not...
+# I would expect this to just be diagonal (like the Laplacian), but it isnt...
 D2 = Dx^2 + Dy^2 + Dz^2
 k = 0
-for ij in eachindex(D2)
-    if D2[ij] ≈ 0
-        k += 1
-    else
-        println(ij)
+Lap = laplacian_sh(N)
+B = D2 - Lap
+for i=1:size(B)[1]
+    for j=1:size(B)[2]
+        if B[i,j] ≈ 0
+            k += 1
+        else
+            println(i,j)
+        end
     end
 end
-
-Lap = laplacian_sh(N)
-
-
+B[14,4]
 
 # Polynomial degree to use for approximating u
 N = 6
