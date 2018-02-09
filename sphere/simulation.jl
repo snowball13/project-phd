@@ -6,9 +6,141 @@ using PlotlyJS
 
 let
 
+    function betaVal(l, r)
+        if r < 0
+            return (l+1)*sqrt(l/(2l+1))
+        else
+            return l*sqrt((l+1)/(2l+1))
+        end
+    end
+
+    function clebsch_gordan_coeff(j1, j2, m1, m2, J, M)
+        # A Wiki page with a (long) formula for C-G coeffs exists that I assume is correct
+        return 1.0
+        # if M == m1+m2
+        #     cg = (2J+1)*factorial(J+j1-j2)*factorial(J-j1+j2)*factorial(-J+j1+j2)/factorial(J+j1+j2+1)
+        #     cg *= factorial(J+M)*factorial(J-M)*factorial(j1-m1)*factorial(j1+m1)*factorial(j2-m2)*factorial(j2+m2)
+        #     cg = sqrt(cg)
+        #     # needs finishing
+        # end
+    end
+
+    function spin_func(r)
+
+        if r == 1 || r == -1
+            return [-r, -im, 0] / sqrt(2)
+        elseif r == 0
+            return [0, 0, 1]
+        else
+            return [0, 0, 0]
+        end
+    end
+
+    function grad_coeff_A(l, m, k)
+        if l == 0
+            return 0
+        else
+            return betaVal(l, 1) * clebsch_gordan_coeff(l+1, m+1, 1, -1, l, m) * spin_func(-1)[k]
+        end
+    end
+
+    function grad_coeff_B(l, m, k)
+        return betaVal(l, -1) * clebsch_gordan_coeff(l-1, m+1, 1, -1, l, m) * spin_func(-1)[k]
+    end
+
+    function grad_coeff_D(l, m, k)
+        return betaVal(l, 1) * clebsch_gordan_coeff(l+1, m-1, 1, 1, l, m) * spin_func(1)[k]
+    end
+
+    function grad_coeff_E(l, m, k)
+        return betaVal(l, -1) * clebsch_gordan_coeff(l-1, m-1, 1, 1, l, m) * spin_func(1)[k]
+    end
+
+    function grad_coeff_F(l, m, k)
+        return betaVal(l, 1) * clebsch_gordan_coeff(l+1, m, 1, 0, l, m) * spin_func(0)[k]
+    end
+
+    function grad_coeff_G(l, m, k)
+        return betaVal(l, -1) * clebsch_gordan_coeff(l-1, m, 1, 0, l, m) * spin_func(0)[k]
+    end
+
+    function grad_matrix_Ak(n, k)
+        zerosVec = zeros(2*n + 1) + 0.0im
+        if k == 3
+            d = copy(zerosVec)
+            for j = -n:n
+                d[j+n+1] = grad_coeff_F(n, j, k)
+            end
+            return [zeros(2*n+1, 1) Diagonal(d) zeros(2*n+1, 1)]
+        else
+            leftdiag = copy(zerosVec)
+            rightdiag = copy(zerosVec)
+            for j = -n:n
+                leftdiag[j+n+1] = grad_coeff_D(n, j, k)
+                rightdiag[j+n+1] = grad_coeff_A(n, j, k)
+            end
+            left = [Diagonal(leftdiag) zeros(2*n+1, 2)]
+            right = [zeros(2*n+1, 2) Diagonal(rightdiag)]
+            return left + right
+        end
+    end
+
+    function grad_matrix_Ck(n, k)
+        zerosVec = zeros(2*n - 1) + 0.0im
+        if k == 3
+            d = copy(zerosVec)
+            for j = -n:n-2
+                d[j+n+1] = grad_coeff_G(n, j+1, k)
+            end
+            return [zerosVec'; Diagonal(d); zerosVec']
+        else
+            upperdiag = copy(zerosVec)
+            lowerdiag = copy(zerosVec)
+            for j = -n:n-2
+                upperdiag[j+n+1] = grad_coeff_B(n, j, k)
+                lowerdiag[j+n+1] = grad_coeff_E(n, j+2, k)
+            end
+            upper = Diagonal(upperdiag)
+            lower = Diagonal(lowerdiag)
+            return [upper; zerosVec'; zerosVec'] + [zerosVec'; zerosVec'; lower]
+        end
+    end
+
+    #=
+    Outputs the matrix corresponding to the operator ∂Y/∂x_k where k=1,2,3
+    and Y is a spherical harmonic.
+    The maths behind this stems from the gradient of a spherical harmonic (SH)
+    is the sum of two vector spherical harmoncs (VSH). A VSH can be written as a
+    sum of SHs with weights as Clebsch-Gorden coeffs times a vector (an
+    eigenvector of S3).
+    http://scipp.ucsc.edu/~haber/ph216/clebsch.pdf
+
+    Not sure this is all correct though.
+    =#
+    global function grad_sh(N, k)
+        l,u = 1,1          # block bandwidths
+        λ,μ = 2,2         # sub-block bandwidths: the bandwidths of each block
+        cols = rows = 1:2:2N+1  # block sizes
+        J = BandedBlockBandedMatrix(0.0im*I, (rows,cols), (l,u), (λ,μ))
+        if N == 0
+            return J
+        end
+        J[1,2:4] = grad_matrix_Ak(0,k)
+        J[2:4,1] = grad_matrix_Ck(1,k)
+        if N == 1
+            return J
+        end
+        for n = 2:N
+            n^2+1:(n+1)^2
+            J[(n-1)^2+1:n^2,n^2+1:(n+1)^2] = grad_matrix_Ak(n-1,k)
+            J[n^2+1:(n+1)^2,(n-1)^2+1:n^2] = grad_matrix_Ck(n,k)
+        end
+        return J
+    end
+
     # Matrix representing the Laplacian operator on the vector of the OPs
     # (shperical harmonic polynomials) up to order N
-    function laplacian_on_shs(N)
+    global function laplacian_sh(N)
         M = (N+1)^2
         id = Diagonal(ones(M))
         D = copy(id)
@@ -59,7 +191,7 @@ let
         @assert (M > 0 && sqrt(M) - 1 == N) "invalid length of u0"
 
         # Execute the backward Euler method
-        A = Diagonal(ones(M)) - h*laplacian_on_shs(N)
+        A = Diagonal(ones(M)) - h*laplacian_sh(N)
         u = copy(u0)
         for it=1:maxits
             u = A\u
@@ -82,7 +214,7 @@ let
         V = Jx(N)^2 + Jy(N)^2 + Jz(N)
 
         # Execute the backward Euler method
-        A = Diagonal(ones(M)) - h*(laplacian_on_shs(N) + V)
+        A = Diagonal(ones(M)) - h*(laplacian_sh(N) + V)
         u = copy(u0)
         for it=1:maxits
             u = A\u
@@ -95,6 +227,26 @@ let
 
 
 end
+
+
+N = 5
+Dx = grad_sh(N, 1)
+Dy = grad_sh(N, 2)
+Dz = grad_sh(N, 3)
+# I would expect this to just be diagonal (like the Laplacian), but it is not...
+D2 = Dx^2 + Dy^2 + Dz^2
+k = 0
+for ij in eachindex(D2)
+    if D2[ij] ≈ 0
+        k += 1
+    else
+        println(ij)
+    end
+end
+
+Lap = laplacian_sh(N)
+
+
 
 # Polynomial degree to use for approximating u
 N = 6
