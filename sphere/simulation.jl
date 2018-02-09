@@ -14,7 +14,7 @@ let
         end
     end
 
-    function clebsch_gordan_coeff_calc(j1, j2, m1, m2, J, M)
+    function clebsch_gordan_coeff_calc(j1, m1, j2, m2, J, M)
         if M == m1+m2
             cg = (2J+1)*factorial(J+j1-j2)*factorial(J-j1+j2)*factorial(-J+j1+j2)/factorial(J+j1+j2+1)
             cg *= factorial(J+M)*factorial(J-M)*factorial(j1-m1)*factorial(j1+m1)*factorial(j2-m2)*factorial(j2+m2)
@@ -38,18 +38,18 @@ let
         return 0.0
     end
 
-    function clebsch_gordan_coeff(j1, j2, m1, m2, J, M)
+    function clebsch_gordan_coeff(j1, m1, j2, m2, J, M)
         # A Wiki page with a (long) formula for C-G coeffs exists that I assume
         # is correct
         # return 1.0
         if M < 0 && j1 < j2
-            return clebsch_gordan_coeff_calc(j2,j1,-m2,-m1,J,-M) * (-1.0)^(J-j1-j2)
+            return clebsch_gordan_coeff_calc(j2,-m2,j1,-m1,J,-M) * (-1.0)^(J-j1-j2)
         elseif M < 0
-            return clebsch_gordan_coeff_calc(j1,j2,-m1,-m2,J,-M) * (-1.0)^(J-j1-j2)
+            return clebsch_gordan_coeff_calc(j1,-m1,j2,-m2,J,-M) * (-1.0)^(J-j1-j2)
         elseif j1 < j2
-            return clebsch_gordan_coeff_calc(j2,j1,m2,m1,J,M) * (-1.0)^(J-j1-j2)
+            return clebsch_gordan_coeff_calc(j2,m2,j1,m1,J,M) * (-1.0)^(J-j1-j2)
         else
-            return clebsch_gordan_coeff_calc(j1,j2,m1,m2,J,M)
+            return clebsch_gordan_coeff_calc(j1,m1,j2,m2,J,M)
         end
     end
 
@@ -141,8 +141,6 @@ let
     sum of SHs with weights as Clebsch-Gorden coeffs times a vector (an
     eigenvector of S3).
     http://scipp.ucsc.edu/~haber/ph216/clebsch.pdf
-
-    Not sure this is all correct though.
     =#
     global function grad_sh(N, k)
         l,u = 1,1          # block bandwidths
@@ -157,7 +155,7 @@ let
         if N == 1
             return J
         end
-        for n = 2:N
+        for n = 2:N+1
             n^2+1:(n+1)^2
             J[(n-1)^2+1:n^2,n^2+1:(n+1)^2] = grad_matrix_Ak(n-1,k)
             J[n^2+1:(n+1)^2,(n-1)^2+1:n^2] = grad_matrix_Ck(n,k)
@@ -169,9 +167,8 @@ let
     # (shperical harmonic polynomials) up to order N
     global function laplacian_sh(N)
         M = (N+1)^2
-        id = Diagonal(ones(M))
-        D = copy(id)
-        for l=1:N
+        D = speye(M)
+        for l=0:N
             entries = l^2+1:(l+1)^2
             D[entries, entries] *= -l*(l+1)
         end
@@ -256,25 +253,27 @@ let
 end
 
 
-N = 3
+N = 6
 Dx = grad_sh(N, 1)
 Dy = grad_sh(N, 2)
 Dz = grad_sh(N, 3)
-# I would expect this to just be diagonal (like the Laplacian), but it isnt...
+# I would expect this to just be diagonal (like the Laplacian)
 D2 = Dx^2 + Dy^2 + Dz^2
 k = 0
 Lap = laplacian_sh(N)
-B = D2 - Lap
+# D2 then matches Lap (ignoring the last 2N+1 rows/cols, since the matrices for
+# Dx are not true representations for derivatives at these entries)
+B = abs.(D2 - Lap)[1:end-(2N+1), 1:end-(2N+1)]
 for i=1:size(B)[1]
     for j=1:size(B)[2]
-        if B[i,j] ≈ 0
+        if B[i,j] < 1e-12
             k += 1
         else
             println(i,j)
         end
     end
 end
-B[14,4]
+println(B)
 
 # Polynomial degree to use for approximating u
 N = 6
