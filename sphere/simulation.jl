@@ -155,7 +155,7 @@ let
         if N == 1
             return J
         end
-        for n = 2:N+1
+        for n = 2:N
             n^2+1:(n+1)^2
             J[(n-1)^2+1:n^2,n^2+1:(n+1)^2] = grad_matrix_Ak(n-1,k)
             J[n^2+1:(n+1)^2,(n-1)^2+1:n^2] = grad_matrix_Ck(n,k)
