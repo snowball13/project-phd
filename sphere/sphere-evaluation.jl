@@ -73,6 +73,10 @@ let
     # spherical harmonic polynomial. These are then used as the non-zero entries
     # in our system matrices.
     global function coeff_A(l, m)
+        # Do we have a non-zero coeff?
+        if abs(m+1) > l+1
+            return 0.0
+        end
         A = 1.0
         if (m >= 0)
             A = AtildeVal(l, m)
@@ -84,12 +88,16 @@ let
     end
 
     global function coeff_B(l, m)
+        # Do we have a non-zero coeff?
+        if abs(m+1) > l-1
+            return 0.0
+        end
         B = 1.0
         if (m >= 0)
             if (l - abs(m) - 2 >= 0)
                 B = BtildeVal(l, m)
             else
-                B = 0.0
+                return 0.0
             end
         else
             B = EtildeVal(l, abs(m))
@@ -99,6 +107,10 @@ let
     end
 
     global function coeff_D(l, m)
+        # Do we have a non-zero coeff?
+        if abs(m-1) > l+1
+            return 0.0
+        end
         D = 1.0
         if (m > 0)
             D = DtildeVal(l, m)
@@ -110,6 +122,10 @@ let
     end
 
     global function coeff_E(l, m)
+        # Do we have a non-zero coeff?
+        if abs(m-1) > l-1
+            return 0.0
+        end
         E = 1.0
         if (m > 0)
             E = EtildeVal(l, m)
@@ -117,7 +133,7 @@ let
             if (l - abs(m) - 2 >= 0)
                 E = BtildeVal(l, abs(m))
             else
-                E = 0.0
+                return 0.0
             end
         end
         E *= alphaVal(l, m) / (2 * alphaVal(l-1, m-1))
@@ -125,10 +141,18 @@ let
     end
 
     global function coeff_F(l, m)
+        # Do we have a non-zero coeff?
+        if abs(m) > l+1
+            return 0.0
+        end
         return FtildeVal(l, abs(m)) * alphaVal(l, m) / alphaVal(l+1, m)
     end
 
     global function coeff_G(l, m)
+        # Do we have a non-zero coeff?
+        if abs(m) > l-1
+            return 0.0
+        end
         return GtildeVal(l, abs(m)) * alphaVal(l, m) / alphaVal(l-1, m)
     end
 
@@ -517,7 +541,7 @@ let
     global function opEval(l, m, x, y, z)
         # Only return the l,m spherical harmonic OP evaluation.
         P = opEval(l,x,y,z)
-        return P[l^2+l+1+m] 
+        return P[l^2+l+1+m]
     end
 
 
