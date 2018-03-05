@@ -55,7 +55,11 @@ let
     #     end
     # end
 
-    global function clebsch_gordan_coeff(L, p, s, ms, J, M)
+    #=
+    Function that returns the Clebsch-Gordan coefficient
+        <L, M-ms; 1, ms | J, M>
+    =#
+    global function clebsch_gordan_coeff(J, M, L, ms)
         out = 0.0
         if ms == 1
             if J == L+1
@@ -96,156 +100,184 @@ let
     end
 
     global function coeff_a(l, m)
-        a = 0
-        ms = 10
-        for i = 1:3
-            aa = coeff_A(l+1, m-i+2)
-            if abs(aa) > 1e-10
-                a = aa
-                ms = i-2
-                break
-            end
-        end
-        if ms < 2
-            a *= betaVal(l, 1) * clebsch_gordan_coeff(l+1, m-ms, 1, ms, l, m)
-            a /= (betaVal(l+1, 1) * clebsch_gordan_coeff(l+2, m+1-ms, 1, ms, l+1, m+1))
-        end
+        ms = 0
+        a = coeff_A(l+1, m-ms) * betaVal(l, 1) * clebsch_gordan_coeff(l, m, l+1, ms)
+        a /= (betaVal(l+1, 1) * clebsch_gordan_coeff(l+1, m+1, l+2, ms))
         return a
     end
 
     global function coeff_b(l, m)
         b = 0
-        ms = 10
-        for i = 1:3
-            bb = coeff_B(l-1, m-i+2)
-            if abs(bb) > 1e-10
-                b = bb
-                ms = i-2
-                break
+        diff = l - m
+        if l > 2 && diff > 1
+            ms = -1
+            if diff == 2
+                ms = 1
+            elseif diff == 3
+                ms = 0
             end
-        end
-        if ms < 2
-            b *= betaVal(l, -1) * clebsch_gordan_coeff(l-1, m-ms, 1, ms, l, m)
-            b /= (betaVal(l-1, -1) * clebsch_gordan_coeff(l-2, m+1-ms, 1, ms, l-1, m+1))
+            b = coeff_B(l-1, m-ms) * betaVal(l, -1) * clebsch_gordan_coeff(l, m, l-1, ms)
+            b /= (betaVal(l-1, -1) * clebsch_gordan_coeff(l-1, m+1, l-2, ms))
         end
         return b
     end
 
     global function coeff_d(l, m)
-        d = 0
-        ms = 10
-        for i = 1:3
-            dd = coeff_D(l+1, m-i+2)
-            if abs(dd) > 1e-10
-                d = dd
-                ms = i-2
-                break
-            end
-        end
-        if ms < 2
-            d *= betaVal(l, 1) * clebsch_gordan_coeff(l+1, m-ms, 1, ms, l, m)
-            d /= (betaVal(l+1, 1) * clebsch_gordan_coeff(l+2, m-1-ms, 1, ms, l+1, m-1))
-        end
+        ms = 0
+        d = coeff_D(l+1, m-ms) * betaVal(l, 1) * clebsch_gordan_coeff(l, m, l+1, ms)
+        d /= (betaVal(l+1, 1) * clebsch_gordan_coeff(l+1, m-1, l+2, ms))
         return d
     end
 
     global function coeff_e(l, m)
         e = 0
-        ms = 10
-        for i = 1:3
-            ee = coeff_E(l-1, m-i+2)
-            if abs(ee) > 1e-10
-                e = ee
-                ms = i-2
-                break
+        diff = l + m
+        if l > 1 && diff > 1
+            ms = 1
+            if diff == 2
+                ms = -1
+            elseif diff == 3
+                ms = 0
             end
-        end
-        if ms < 2
-            e *= betaVal(l, -1) * clebsch_gordan_coeff(l-1, m-ms, 1, ms, l, m)
-            e /= (betaVal(l-1, -1) * clebsch_gordan_coeff(l-2, m-1-ms, 1, ms, l-1, m-1))
+            e = coeff_E(l-1, m-ms) * betaVal(l, -1) * clebsch_gordan_coeff(l, m, l-1, ms)
+            e /= (betaVal(l-1, -1) * clebsch_gordan_coeff(l-1, m-1, l-2, ms))
         end
         return e
     end
 
     global function coeff_f(l, m)
-        f = 0
-        ms = 10
-        for i = 1:3
-            ff = coeff_F(l+1, m-i+2)
-            if abs(ff) > 1e-10
-                f = ff
-                ms = i-2
-                break
-            end
-        end
-        if ms < 2
-            f *= betaVal(l, 1) * clebsch_gordan_coeff(l+1, m-ms, 1, ms, l, m)
-            f /= (betaVal(l+1, 1) * clebsch_gordan_coeff(l+2, m-ms, 1, ms, l+1, m))
-        end
+        ms = 0
+        f = coeff_F(l+1, m-ms) * betaVal(l, 1) * clebsch_gordan_coeff(l, m, l+1, ms)
+        f /= (betaVal(l+1, 1) * clebsch_gordan_coeff(l+1, m, l+2, ms))
         return f
     end
 
     global function coeff_g(l, m)
         g = 0
-        ms = 10
-        for i = 1:3
-            gg = coeff_G(l-1, m-i+2)
-            if abs(gg) > 1e-10
-                g = gg
-                ms = i-2
-                break
+        diff = l - m
+        if l > 2 && diff > 0 && l+m > 0
+            ms = -1
+            if diff == 1
+                ms = 1
+            elseif diff == 2
+                ms = 0
             end
-        end
-        if ms < 2
-            g *= betaVal(l, -1) * clebsch_gordan_coeff(l-1, m-ms, 1, ms, l, m)
-            g /= (betaVal(l-1, -1) * clebsch_gordan_coeff(l-2, m-ms, 1, ms, l-1, m))
+            g = coeff_G(l-1, m-ms) * betaVal(l, -1) * clebsch_gordan_coeff(l, m, l-1, ms)
+            g /= (betaVal(l-1, -1) * clebsch_gordan_coeff(l-1, m, l-2, ms))
         end
         return g
     end
 
     global function coeff_h(l, m)
         h = 0
-        for ms = -1:1
-            h = coeff_A(l-1,m-ms)*betaVal(l,-1)*clebsch_gordan_coeff(l-1,m-ms,1,ms,l,m)
-            h += coeff_B(l+1,m-ms)*betaVal(l,1)*clebsch_gordan_coeff(l+1,m-ms,1,ms,l,m)
-            h -= coeff_a(l,m)*betaVal(l+1,-1)*clebsch_gordan_coeff(l,m+1-ms,1,ms,l+1,m+1)
-            h -= coeff_b(l,m)*betaVal(l-1,1)*clebsch_gordan_coeff(l,m+1-ms,1,ms,l-1,m+1)
-            h /= betaVal(l,0)*clebsch_gordan_coeff(l,m+1-ms,1,ms,l,m+1)
-            if abs(h) > 1e-10
-                break
+        if !(l == m || (l == 1 && m == 0))
+            ms = -1
+            if m > 0 && l - m == 1
+                ms = 0
             end
+            h = coeff_A(l-1,m-ms)*betaVal(l,-1)*clebsch_gordan_coeff(l,m,l-1,ms)
+            h += coeff_B(l+1,m-ms)*betaVal(l,1)*clebsch_gordan_coeff(l,m,l+1,ms)
+            h -= coeff_a(l,m)*betaVal(l+1,-1)*clebsch_gordan_coeff(l+1,m+1,l,ms)
+            h -= coeff_b(l,m)*betaVal(l-1,1)*clebsch_gordan_coeff(l-1,m+1,l,ms)
+            h /= betaVal(l,0)*clebsch_gordan_coeff(l,m+1,l,ms)
         end
         return h
     end
 
     global function coeff_j(l, m)
         j = 0
-        for ms = -1:1
-            j = coeff_D(l-1,m-ms)*betaVal(l,-1)*clebsch_gordan_coeff(l-1,m-ms,1,ms,l,m)
-            j += coeff_E(l+1,m-ms)*betaVal(l,1)*clebsch_gordan_coeff(l+1,m-ms,1,ms,l,m)
-            j -= coeff_d(l,m)*betaVal(l+1,-1)*clebsch_gordan_coeff(l,m-1-ms,1,ms,l+1,m-1)
-            j -= coeff_e(l,m)*betaVal(l-1,1)*clebsch_gordan_coeff(l,m-1-ms,1,ms,l-1,m-1)
-            j /= betaVal(l,0)*clebsch_gordan_coeff(l,m-1-ms,1,ms,l,m-1)
-            if abs(j) > 1e-10
-                break
+        if !(l == -m || (l == 1 && m == 0))
+            ms = 1
+            if m < 0 && l + m == 1
+                ms = 0
             end
+            j = coeff_D(l-1,m-ms)*betaVal(l,-1)*clebsch_gordan_coeff(l,m,l-1,ms)
+            j += coeff_E(l+1,m-ms)*betaVal(l,1)*clebsch_gordan_coeff(l,m,l+1,ms)
+            j -= coeff_d(l,m)*betaVal(l+1,-1)*clebsch_gordan_coeff(l+1,m-1,l,ms)
+            j -= coeff_e(l,m)*betaVal(l-1,1)*clebsch_gordan_coeff(l-1,m-1,l,ms)
+            j /= betaVal(l,0)*clebsch_gordan_coeff(l,m-1,l,ms)
         end
         return j
+        # mss = [10,10,10]
+        # for ms = 0:1
+        #     j = coeff_D(l-1,m-ms)*betaVal(l,-1)*clebsch_gordan_coeff(l,m,l-1,ms)
+        #     j += coeff_E(l+1,m-ms)*betaVal(l,1)*clebsch_gordan_coeff(l,m,l+1,ms)
+        #     j -= coeff_d(l,m)*betaVal(l+1,-1)*clebsch_gordan_coeff(l+1,m-1,l,ms)
+        #     j -= coeff_e(l,m)*betaVal(l-1,1)*clebsch_gordan_coeff(l-1,m-1,l,ms)
+        #     j /= betaVal(l,0)*clebsch_gordan_coeff(l,m-1,l,ms)
+        #     if abs(j) > 1e-12
+        #         mss[ms+2] = ms
+        #     end
+        # end
+        # return mss
     end
 
     global function coeff_k(l, m)
         k = 0
-        for ms = -1:1
-            k = coeff_F(l-1,m-ms)*betaVal(l,-1)*clebsch_gordan_coeff(l-1,m-ms,1,ms,l,m)
-            k += coeff_G(l+1,m-ms)*betaVal(l,1)*clebsch_gordan_coeff(l+1,m-ms,1,ms,l,m)
-            k -= coeff_f(l,m)*betaVal(l+1,-1)*clebsch_gordan_coeff(l,m-ms,1,ms,l+1,m)
-            k -= coeff_g(l,m)*betaVal(l-1,1)*clebsch_gordan_coeff(l,m-ms,1,ms,l-1,m)
-            k /= betaVal(l,0)*clebsch_gordan_coeff(l,m-ms,1,ms,l,m)
-            if abs(k) > 1e-10
-                break
-            end
+        if m != 0
+            ms = sign(m)
+            k = coeff_F(l-1,m-ms)*betaVal(l,-1)*clebsch_gordan_coeff(l,m,l-1,ms)
+            k += coeff_G(l+1,m-ms)*betaVal(l,1)*clebsch_gordan_coeff(l,m,l+1,ms)
+            k -= coeff_f(l,m)*betaVal(l+1,-1)*clebsch_gordan_coeff(l+1,m,l,ms)
+            k -= coeff_g(l,m)*betaVal(l-1,1)*clebsch_gordan_coeff(l-1,m,l,ms)
+            k /= betaVal(l,0)*clebsch_gordan_coeff(l,m,l,ms)
         end
         return k
+    end
+
+    global function perp_coeff_a(l, m)
+        return coeff_a(l, m)'
+    end
+
+    global function perp_coeff_b(l, m)
+        return coeff_b(l, m)'
+    end
+
+    global function perp_coeff_d(l, m)
+        return coeff_d(l, m)'
+    end
+
+    global function perp_coeff_e(l, m)
+        return coeff_e(l, m)'
+    end
+
+    global function perp_coeff_f(l, m)
+        return coeff_f(l, m)'
+        # ms = sign(m)
+        # f = betaVal(l, 0) * clebsch_gordan_coeff(l, m, l, ms) * coeff_F(l, m-ms)
+        # f -= perp_coeff_k(l, m) * betaVal(l, 1) * clebsch_gordan_coeff(l, m, l+1, ms)
+        # f /= (betaVal(l+1, 0) * clebsch_gordan_coeff(l+1, m, l+1, ms))
+        # return f
+    end
+
+    global function perp_coeff_g(l, m)
+        return coeff_g(l, m)'
+    end
+
+    global function perp_coeff_h(l, m)
+        return coeff_h(l, m)'
+    end
+
+    global function perp_coeff_j(l, m)
+        return coeff_j(l, m)'
+    end
+
+    global function perp_coeff_k(l, m)
+        return coeff_k(l, m)'
+        # k = 0
+        # if m != 0
+        #     ms = 0
+        #     mr = sign(m)
+        #     k = coeff_F(l,m-ms)*betaVal(l,0)*clebsch_gordan_coeff(l,m,l,ms)
+        #     k -= (coeff_F(l,m-mr)*betaVal(l,0)*clebsch_gordan_coeff(l+1,m,l+1,ms)
+        #             *clebsch_gordan_coeff(l,m,l,mr)
+        #             /clebsch_gordan_coeff(l+1,m,l+1,mr))
+        #     k /= (betaVal(l,1)*clebsch_gordan_coeff(l,m,l+1,ms)
+        #             -(betaVal(l,1)*clebsch_gordan_coeff(l+1,m,l+1,ms)
+        #                 *clebsch_gordan_coeff(l,m,l+1,mr)
+        #                 /clebsch_gordan_coeff(l+1,m,l+1,mr)))
+        # end
+        # return k
     end
 
 
@@ -253,43 +285,43 @@ let
         if l == 0
             return 0
         else
-            return betaVal(l, 1) * clebsch_gordan_coeff(l+1, m+1, 1, -1, l, m) * spin_func(-1)[k]
+            return betaVal(l, 1) * clebsch_gordan_coeff(l, m, l+1, -1) * spin_func(-1)[k]
         end
     end
 
     function grad_coeff_B(l, m, k)
-        return betaVal(l, -1) * clebsch_gordan_coeff(l-1, m+1, 1, -1, l, m) * spin_func(-1)[k]
+        return betaVal(l, -1) * clebsch_gordan_coeff(l, m, l-1, -1) * spin_func(-1)[k]
     end
 
     function grad_coeff_D(l, m, k)
-        return betaVal(l, 1) * clebsch_gordan_coeff(l+1, m-1, 1, 1, l, m) * spin_func(1)[k]
+        return betaVal(l, 1) * clebsch_gordan_coeff(l, m, l+1, 1) * spin_func(1)[k]
     end
 
     function grad_coeff_E(l, m, k)
-        return betaVal(l, -1) * clebsch_gordan_coeff(l-1, m-1, 1, 1, l, m) * spin_func(1)[k]
+        return betaVal(l, -1) * clebsch_gordan_coeff(l, m, l-1, 1) * spin_func(1)[k]
     end
 
     function grad_coeff_F(l, m, k)
-        return betaVal(l, 1) * clebsch_gordan_coeff(l+1, m, 1, 0, l, m) * spin_func(0)[k]
+        return betaVal(l, 1) * clebsch_gordan_coeff(l, m, l+1, 0) * spin_func(0)[k]
     end
 
     function grad_coeff_G(l, m, k)
-        return betaVal(l, -1) * clebsch_gordan_coeff(l-1, m, 1, 0, l, m) * spin_func(0)[k]
+        return betaVal(l, -1) * clebsch_gordan_coeff(l, m, l-1, 0) * spin_func(0)[k]
     end
 
     function grad_perp_coeff_A(l, m, k)
-        return betaVal(l, 0) * clebsch_gordan_coeff(l, m, 1, -1, l, m) * spin_func(-1)[k]
+        return betaVal(l, 0) * clebsch_gordan_coeff(l, m, l, -1) * spin_func(-1)[k]
     end
 
     function grad_perp_coeff_D(l, m, k)
-        return betaVal(l, 0) * clebsch_gordan_coeff(l, m, 1, 1, l, m) * spin_func(1)[k]
+        return betaVal(l, 0) * clebsch_gordan_coeff(l, m, l, 1) * spin_func(1)[k]
     end
 
     function grad_perp_coeff_F(l, m, k)
         if l == 0
             return 0.0
         end
-        return betaVal(l, 0) * clebsch_gordan_coeff(l, m, 1, 0, l, m) * spin_func(0)[k]
+        return betaVal(l, 0) * clebsch_gordan_coeff(l, m, l, 0) * spin_func(0)[k]
     end
 
     function grad_matrix_Ak(n, k)
@@ -492,123 +524,10 @@ end
 
 
 
-N = 6
-x, y = 0.8, 0.1
-z = sqrt(1 - x^2 - y^2)
-Dx = grad_sh(N, 1)
-DPerpx = grad_perp_sh(N, 1)
-Y = opEval(N, x, y, z)
-DxY = Dx*Y
-DPerpxY = DPerpx*Y
-
-l, m = 3, 0
-
-@test abs(x*DxY[l^2+l+1+m] - (coeff_a(l, m)*DxY[(l+1)^2+l+1+1+m+1]
-                                + coeff_b(l, m)*DxY[(l-1)^2+l-1+1+m+1]
-                                + coeff_d(l, m)*DxY[(l+1)^2+l+1+1+m-1]
-                                + coeff_e(l, m)*DxY[(l-1)^2+l-1+1+m-1]
-                                + coeff_h(l, m)*DPerpxY[l^2+l+1+m+1]
-                                + coeff_j(l, m)*DPerpxY[l^2+l+1+m-1])
-    ) < 1e-12
-
-@test abs(y*DxY[l^2+l+1+m] - (- im * coeff_a(l, m)*DxY[(l+1)^2+l+1+1+m+1]
-                                - im * coeff_b(l, m)*DxY[(l-1)^2+l-1+1+m+1]
-                                + im * coeff_d(l, m)*DxY[(l+1)^2+l+1+1+m-1]
-                                + im * coeff_e(l, m)*DxY[(l-1)^2+l-1+1+m-1]
-                                - im * coeff_h(l, m)*DPerpxY[l^2+l+1+m+1]
-                                + im * coeff_j(l, m)*DPerpxY[l^2+l+1+m-1])
-    ) < 1e-12
-
-@test abs(z*DxY[l^2+l+1+m] - (coeff_f(l, m)*DxY[(l+1)^2+l+1+1+m]
-                                + coeff_g(l, m)*DxY[(l-1)^2+l-1+1+m]
-                                + coeff_k(l, m)*DPerpxY[l^2+l+1+m])
-    ) < 1e-12
 
 
-#
-# l = 3
-# ratios = zeros(3, 2l+1)
-# i, j = 1, 1
-# for m = -l:l
-#     for ms = -1:1
-#         if abs(m-ms) > l
-#             i += 1
-#             continue
-#         end
-#
-#         b = betaVal(l, 1)
-#         cff = coeff_F(l+1,m-ms)
-#         j1,m1,j2,m2,J,M = l+1,m-ms,1,ms,l,m
-#         C = clebsch_gordan_coeff(j1,m1,j2,m2,J,M)
-#         lhs = b*C*cff
-#
-#         b = betaVal(l+1, 1)
-#         j1,m1,j2,m2,J,M = l+2,m-ms,1,ms,l+1,m
-#         C = clebsch_gordan_coeff(j1,m1,j2,m2,J,M)
-#         rhs = b*C
-#
-#         ratios[i, j] = lhs/rhs
-#         i += 1
-#     end
-#     i = 1
-#     j += 1
-# end
-# ratios
-#
-#
-#
-#
-# l,m,ms = 3,0,0
-#
-# b = betaVal(l, 1)
-# cff = coeff_F(l+1,m-ms)
-# j1,m1,j2,m2,J,M = l+1,m-ms,1,ms,l,m
-# C = clebsch_gordan_coeff(j1,m1,j2,m2,J,M)
-# lhs = b*C*cff
-# b = betaVal(l+1, 1)
-# j1,m1,j2,m2,J,M = l+2,m-ms,1,ms,l+1,m
-# C = clebsch_gordan_coeff(j1,m1,j2,m2,J,M)
-# rhs = b*C
-# flm = lhs/rhs
-#
-# b = betaVal(l, -1)
-# cff = coeff_G(l-1,m-ms)
-# j1,m1,j2,m2,J,M = l-1,m-ms,1,ms,l,m
-# C = clebsch_gordan_coeff(j1,m1,j2,m2,J,M)
-# lhs = b*C*cff
-# b = betaVal(l-1, -1)
-# j1,m1,j2,m2,J,M = l-2,m-ms,1,ms,l-1,m
-# C = clebsch_gordan_coeff(j1,m1,j2,m2,J,M)
-# rhs = b*C
-# glm = lhs/rhs
-#
-# # Check
-# b = betaVal(l, 1)
-# cff = coeff_G(l+1,m-ms)
-# j1,m1,j2,m2,J,M = l+1,m-ms,1,ms,l,m
-# C = clebsch_gordan_coeff(j1,m1,j2,m2,J,M)
-# lhs = b*C*cff
-# b = betaVal(l, -1)
-# cff = coeff_F(l-1,m-ms)
-# j1,m1,j2,m2,J,M = l-1,m-ms,1,ms,l,m
-# C = clebsch_gordan_coeff(j1,m1,j2,m2,J,M)
-# lhs += b*C*cff
-# b = betaVal(l+1, -1)
-# j1,m1,j2,m2,J,M = l,m-ms,1,ms,l+1,m
-# C = clebsch_gordan_coeff(j1,m1,j2,m2,J,M)
-# rhs = coeff_f(l,m)*b*C
-# b = betaVal(l-1, 1)
-# j1,m1,j2,m2,J,M = l,m-ms,1,ms,l-1,m
-# C = clebsch_gordan_coeff(j1,m1,j2,m2,J,M)
-# rhs += coeff_g(l,m)*b*C
-# b = betaVal(l, 0)
-# j1,m1,j2,m2,J,M = l,m-ms,1,ms,l,m
-# C = clebsch_gordan_coeff(j1,m1,j2,m2,J,M)
-# rhs += coeff_f_perp(l,m)*b*C
-#
-# ratio = lhs/rhs
-#
-#
+tol = 1e-12
+
 
 
 N = 6
@@ -617,33 +536,63 @@ Dy = grad_sh(N, 2)
 Dz = grad_sh(N, 3)
 # I would expect this to just be diagonal (like the Laplacian)
 D2 = Dx^2 + Dy^2 + Dz^2
-k = 0
 Lap = laplacian_sh(N)
 # D2 then matches Lap (ignoring the last 2N+1 rows/cols, since the matrices for
 # Dx are not true representations for derivatives at these entries)
 B = abs.(D2 - Lap)[1:end-(2N+1), 1:end-(2N+1)]
-for i=1:size(B)[1]
-    for j=1:size(B)[2]
-        if B[i,j] < 1e-12
-            k += 1
-        else
-            println(i,j)
-        end
-    end
-end
-println(B)
+@test count(i->i>tol, B) == 0
 
-# Polynomial degree to use for approximating u
-N = 6
+DPerpx = grad_perp_sh(N, 1)
+DPerpy = grad_perp_sh(N, 2)
+DPerpz = grad_perp_sh(N, 3)
+D2Perp = DPerpx^2 + DPerpy^2 + DPerpz^2
+# D2 then matches Lap (ignoring the last 2N+1 rows/cols, since the matrices for
+# Dx are not true representations for derivatives at these entries)
+B = abs.(D2Perp - Lap)[1:end-(2N+1), 1:end-(2N+1)]
+@test count(i->i>tol, B) == 0
 
-# Setup the initial condition
-M = (N+1)^2
-u0 = ones(M)
+######
 
-# Constants
-maxits = 10 # number of iterations
-h = 0.1 # Timestep
+l, m = 3,3
+x, y = 0.5, 0.1
+z = sqrt(1 - x^2 - y^2)
+Y = opEval(N, x, y, z)
+DxY = Dx*Y
+DPerpxY = DPerpx*Y
+@test abs(x*DxY[l^2+l+1+m] - (coeff_a(l, m)*DxY[(l+1)^2+l+1+1+m+1]
+                                + coeff_b(l, m)*DxY[(l-1)^2+l-1+1+m+1]
+                                + coeff_d(l, m)*DxY[(l+1)^2+l+1+1+m-1]
+                                + coeff_e(l, m)*DxY[(l-1)^2+l-1+1+m-1]
+                                + coeff_h(l, m)*DPerpxY[l^2+l+1+m+1]
+                                + coeff_j(l, m)*DPerpxY[l^2+l+1+m-1])
+    ) < tol
+@test abs(y*DxY[l^2+l+1+m] - (- im * coeff_a(l, m)*DxY[(l+1)^2+l+1+1+m+1]
+                                - im * coeff_b(l, m)*DxY[(l-1)^2+l-1+1+m+1]
+                                + im * coeff_d(l, m)*DxY[(l+1)^2+l+1+1+m-1]
+                                + im * coeff_e(l, m)*DxY[(l-1)^2+l-1+1+m-1]
+                                - im * coeff_h(l, m)*DPerpxY[l^2+l+1+m+1]
+                                + im * coeff_j(l, m)*DPerpxY[l^2+l+1+m-1])
+    ) < tol
+@test abs(z*DxY[l^2+l+1+m] - (coeff_f(l, m)*DxY[(l+1)^2+l+1+1+m]
+                                + coeff_g(l, m)*DxY[(l-1)^2+l-1+1+m]
+                                + coeff_k(l, m)*DPerpxY[l^2+l+1+m])
+    ) < tol
 
-# Execute the simulation for maxits timesteps
-u = offset_heat(u0, h, maxits)
-println(u)
+@test abs(x*DPerpxY[l^2+l+1+m] - (perp_coeff_a(l, m)*DPerpxY[(l+1)^2+l+1+1+m+1]
+                                + perp_coeff_b(l, m)*DPerpxY[(l-1)^2+l-1+1+m+1]
+                                + perp_coeff_d(l, m)*DPerpxY[(l+1)^2+l+1+1+m-1]
+                                + perp_coeff_e(l, m)*DPerpxY[(l-1)^2+l-1+1+m-1]
+                                + perp_coeff_h(l, m)*DxY[l^2+l+1+m+1]
+                                + perp_coeff_j(l, m)*DxY[l^2+l+1+m-1])
+    ) < tol
+@test abs(y*DPerpxY[l^2+l+1+m] - (- im * perp_coeff_a(l, m)*DPerpxY[(l+1)^2+l+1+1+m+1]
+                                    - im * perp_coeff_b(l, m)*DPerpxY[(l-1)^2+l-1+1+m+1]
+                                    + im * perp_coeff_d(l, m)*DPerpxY[(l+1)^2+l+1+1+m-1]
+                                    + im * perp_coeff_e(l, m)*DPerpxY[(l-1)^2+l-1+1+m-1]
+                                    - im * perp_coeff_h(l, m)*DxY[l^2+l+1+m+1]
+                                    + im * perp_coeff_j(l, m)*DxY[l^2+l+1+m-1])
+    ) < tol
+@test abs(z*DPerpxY[l^2+l+1+m] - (perp_coeff_f(l, m)*DPerpxY[(l+1)^2+l+1+1+m]
+                                    + perp_coeff_g(l, m)*DPerpxY[(l-1)^2+l-1+1+m]
+                                    + perp_coeff_k(l, m)*DxY[l^2+l+1+m])
+    ) < tol
