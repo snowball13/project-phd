@@ -415,17 +415,12 @@ let
         J = BlockBandedMatrix(0.0im*I, (rows,cols), (l,u))
         J[1:rows[1], 1:cols[1]] = grad_jacobi_Bx(0)
         if N > 0
-            row = rows[1]
-            col = cols[1]
-            J[1:row, col+1:col+cols[2]] = grad_jacobi_Ax(0)
-            J[row+1:row+rows[2], col+1:col+cols[2]] = grad_jacobi_Bx(1)
-            J[row+1:row+rows[2], 1:col] = grad_jacobi_Cx(1)
-            for n = 2:N
-                row = rows[n]
-                col = cols[n]
-                J[rows[n-1]+1:rows[n-1]+row, col+1:col+cols[n+1]] = grad_jacobi_Ax(n-1)
+            for n = 1:N
+                row = sum(rows[1:n])
+                col = sum(cols[1:n])
+                J[row-rows[n]+1:row, col+1:col+cols[n+1]] = grad_jacobi_Ax(n-1)
                 J[row+1:row+rows[n+1], col+1:col+cols[n+1]] = grad_jacobi_Bx(n)
-                J[row+1:row+rows[n+1], cols[n-1]+1:cols[n-1]+col] = grad_jacobi_Cx(n)
+                J[row+1:row+rows[n+1], col-cols[n]+1:col] = grad_jacobi_Cx(n)
             end
         end
         return J
@@ -657,11 +652,11 @@ end
 # Testing
 
 
-tol = 1e-12
+tol = 1e-10
 
 
 
-N = 20
+N = 10
 Dx = grad_sh(N, 1)
 Dy = grad_sh(N, 2)
 Dz = grad_sh(N, 3)
@@ -689,7 +684,7 @@ z = sqrt(1 - x^2 - y^2)
 Y = opEval(N, x, y, z)
 DxY = Dx*Y
 DPerpxY = DPerpx*Y
-for l = 1:10
+for l = 1:6
     for m = -l:l
         @test abs(x*DxY[l^2+l+1+m] - (coeff_a(l, m)*DxY[(l+1)^2+l+1+1+m+1]
                                         + coeff_b(l, m)*DxY[(l-1)^2+l-1+1+m+1]
@@ -732,3 +727,8 @@ for l = 1:10
 end
 
 #####
+
+a = x*tangent_basis_eval(N,x,y,z)
+b = grad_Jx(N)*tangent_basis_eval(N,x,y,z)
+c = abs.(a[1:6N^2] - b[1:6N^2])
+@test count(i->i>tol, c) == 0
