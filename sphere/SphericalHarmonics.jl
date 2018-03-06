@@ -165,7 +165,7 @@ let
     the OPs on the sphere
     =#
 
-    global function systemMatrix_A(n)
+    function systemMatrix_A(n)
         A = 0
         if n == 0
             d_00 = coeff_D(0, 0)
@@ -192,11 +192,11 @@ let
         return A
     end
 
-    global function systemMatrix_B(n)
+    function systemMatrix_B(n)
         return zeros(3*(2*n + 1), 2*n + 1)
     end
 
-    global function systemMatrix_C(n)
+    function systemMatrix_C(n)
         if n == 0
             return zeros(3, 1)
         elseif n == 1
@@ -225,12 +225,12 @@ let
         return [C_x; C_y; C_z]
     end
 
-    global function systemMatrix_G(n, x, y, z)
+    function systemMatrix_G(n, x, y, z)
         Iden = speye(2*n + 1)
         return [x*Iden; y*Iden; z*Iden]
     end
 
-    global function systemMatrix_DT(n)
+    function systemMatrix_DT(n)
         # Note DT_n is a right inverse matrix of A_n
         DT = 0
         if n == 0
@@ -267,7 +267,7 @@ let
     sparse matrices with type Matrix{Matrix{Float64}}.
     =#
 
-    global function systemMatrix_C_operator(n)
+    function systemMatrix_C_operator(n)
         if n == 0
             return zeros(3, 1)
         elseif n == 1
@@ -296,7 +296,7 @@ let
         return [C_x; C_y; C_z]
     end
 
-    global function systemMatrix_DT_operator(n)
+    function systemMatrix_DT_operator(n)
         # Note DT_n is a right inverse matrix of A_n
         DT = 0
         if n == 0
@@ -322,7 +322,7 @@ let
         return DT
     end
 
-    global function systemMatrix_G_operator(n, J_x, J_y, J_z)
+    function systemMatrix_G_operator(n, J_x, J_y, J_z)
         G = Matrix{Matrix{Complex{Float64}}}(3*(2n+1),2n+1)
         for i=1:2n+1
             for j=1:2n+1
@@ -349,7 +349,7 @@ let
     by x, y and z respectively (i.e. the Jacobi operators J^x, J^y and J^z)
     =#
 
-    global function systemMatrix_Ax(n)
+    function systemMatrix_Ax(n)
         zerosVec = zeros(2*n + 1)
         leftdiag = copy(zerosVec)
         rightdiag = copy(zerosVec)
@@ -362,7 +362,7 @@ let
         return left + right
     end
 
-    global function systemMatrix_Ay(n)
+    function systemMatrix_Ay(n)
         zerosVec = zeros(2*n + 1)
         leftdiag = copy(zerosVec)
         rightdiag = copy(zerosVec)
@@ -375,7 +375,7 @@ let
         return -im*(-left + right)
     end
 
-    global function systemMatrix_Az(n)
+    function systemMatrix_Az(n)
         zerosVec = zeros(2*n + 1)
         d = copy(zerosVec)
         for k = -n:n
@@ -384,19 +384,19 @@ let
         return [zeros(2*n+1, 1) Diagonal(d) zeros(2*n+1, 1)]
     end
 
-    global function systemMatrix_Bx(n)
+    function systemMatrix_Bx(n)
         return zeros(2*n+1, 2*n+1)
     end
 
-    global function systemMatrix_By(n)
+    function systemMatrix_By(n)
         return zeros(2*n+1, 2*n+1)
     end
 
-    global function systemMatrix_Bz(n)
+    function systemMatrix_Bz(n)
         return zeros(2*n+1, 2*n+1)
     end
 
-    global function systemMatrix_Cx(n)
+    function systemMatrix_Cx(n)
         zerosVec = zeros(2*n - 1)
         upperdiag = copy(zerosVec)
         lowerdiag = copy(zerosVec)
@@ -409,7 +409,7 @@ let
         return [upper; zerosVec'; zerosVec'] + [zerosVec'; zerosVec'; lower]
     end
 
-    global function systemMatrix_Cy(n)
+    function systemMatrix_Cy(n)
         zerosVec = zeros(2*n - 1)
         upperdiag = copy(zerosVec)
         lowerdiag = copy(zerosVec)
@@ -422,7 +422,7 @@ let
         return - im * ([upper; zerosVec'; zerosVec'] - [zerosVec'; zerosVec'; lower])
     end
 
-    global function systemMatrix_Cz(n)
+    function systemMatrix_Cz(n)
         zerosVec = zeros(2*n - 1)
         d = copy(zerosVec)
         for k = -n:n-2
