@@ -445,7 +445,6 @@ let
             return J
         end
         for n = 2:N
-            n^2+1:(n+1)^2
             J[(n-1)^2+1:n^2,n^2+1:(n+1)^2] = systemMatrix_Ax(n-1)
             J[n^2+1:(n+1)^2,(n-1)^2+1:n^2] = systemMatrix_Cx(n)
         end
@@ -466,7 +465,6 @@ let
             return J
         end
         for n = 2:N
-            n^2+1:(n+1)^2
             J[(n-1)^2+1:n^2,n^2+1:(n+1)^2] = systemMatrix_Ay(n-1)
             J[n^2+1:(n+1)^2,(n-1)^2+1:n^2] = systemMatrix_Cy(n)
         end
@@ -487,7 +485,6 @@ let
             return J
         end
         for n = 2:N
-            n^2+1:(n+1)^2
             J[(n-1)^2+1:n^2,n^2+1:(n+1)^2] = systemMatrix_Az(n-1)
             J[n^2+1:(n+1)^2,(n-1)^2+1:n^2] = systemMatrix_Cz(n)
         end
@@ -671,4 +668,5 @@ fxyz = funcOperatorEval(f)
 
 a = y*opEval(N,x,y,z)
 b = Jy(N)*opEval(N,x,y,z)
+(a - b)[1:N^2]
 @test a[1:N^2]≈b[1:N^2]
