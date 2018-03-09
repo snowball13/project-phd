@@ -31,14 +31,74 @@ let
         RHSF = abs2.(RHSF)
 
         # Plot
-        s = surface(x=x, y=y, z=z, colorscale = "Viridis", surfacecolor = RHSF, cmin = minimum(RHSF), cmax = maximum(RHSF), showscale = false)
+        s = surface(x=x, y=y, z=z, colorscale = "Viridis", surfacecolor = RHSF,
+                    cmin = minimum(RHSF), cmax = maximum(RHSF),
+                    showscale = false)
         ax = attr(visible = false)
-        cam = attr(up = attr(x=0,y=0,z=1), center = attr(x=0,y=0,z=0), eye = attr(x=0.75,y=0.75,z=0.75))
-        layout = Layout(width = 500, height = 500, autosize = false, margin = attr(l = 0, r = 0, b = 0, t = 0), scene = attr(xaxis = ax, yaxis = ax, zaxis = ax, camera = cam))
+        cam = attr(up = attr(x=0,y=0,z=1), center = attr(x=0,y=0,z=0),
+                    eye = attr(x=0.75,y=0.75,z=0.75))
+        layout = Layout(width = 500, height = 500, autosize = false,
+                        margin = attr(l = 0, r = 0, b = 0, t = 0),
+                        scene = attr(xaxis = ax, yaxis = ax, zaxis = ax,
+                        camera = cam))
         p = plot(s, layout)
         savefig(p, filename)
 
     end
+
+
+    # Operator matrix K corresponding to the cross product of k acting on u,
+    # vector of coeffs for expansion in grad (tangent space) basis.
+    global function outward_normal_cross_product(N)
+        l,u = 0,0          # block bandwidths
+        λ,μ = 0,0          # sub-block bandwidths: the bandwidths of each block
+        cols = rows = 2:4:2(2N+1)  # block sizes
+        K = BandedBlockBandedMatrix(I, (rows,cols), (l,u), (λ,μ))
+        for n = 0:N
+            r = sum(rows[1:n])
+            c = sum(cols[1:n])
+            rend = round(Int, r + rows[n+1]/2)
+            cend = round(Int, r + rows[n+1]/2)
+            K[r+1:rend, c+1:cend] *= -1
+        end
+        return K
+    end
+
+    # Operator matrix corresponding to the divergence of u, vector of coeffs
+    # for expansion in grad (tangent space) basis.
+    global function div_sh(N)
+        l,u = 0,0          # block bandwidths
+        λ,μ = 0,0          # sub-block bandwidths: the bandwidths of each block
+        rows = 1:2:(2N+1)  # block sizes
+        cols = 2*rows
+        D = BandedBlockBandedMatrix(zeros(sum(rows),sum(cols)), (rows,cols), (l,u), (λ,μ))
+        L = laplacian_sh(round(Int, N))
+        for n=0:N
+            r = sum(rows[1:n])
+            c = sum(cols[1:n])
+            rend = r + rows[n+1]
+            cend = c + rows[n+1]
+            D[r+1:rend, c+1:cend] = L[n^2+1:(n+1)^2, n^2+1:(n+1)^2]
+        end
+        return D
+    end
+
+    global function grad_sh_2(N)
+        l,u = 0,0          # block bandwidths
+        λ,μ = 0,0          # sub-block bandwidths: the bandwidths of each block
+        cols = 1:2:(2N+1)  # block sizes
+        rows = 2*cols
+        G = BandedBlockBandedMatrix(zeros(sum(rows),sum(cols)), (rows,cols), (l,u), (λ,μ))
+        for n=0:N
+            r = sum(rows[1:n])
+            c = sum(cols[1:n])
+            rend = r + cols[n+1]
+            cend = c + cols[n+1]
+            G[r+1:rend, c+1:cend] = eye(2n+1)
+        end
+        return G
+    end
+
 
     # Heat equation simulation
     global function heat_eqn(u0, h, maxits)
@@ -79,6 +139,47 @@ let
 
         plot_on_sphere(u)
         return u
+
+    end
+
+    # Linearised Shallow Water Equations.
+    # u0, h0 should be given as vectors containing coefficients of their
+    # expansion in the tangent basis (∇Y, ∇⟂Y)
+    # We start with h ≡ h0 := 1
+    global function linear_SWE(u0, h0, dt, maxits)
+
+        # Our eqn is u_t + f k x u = 0 where k is the outward normal vector.
+
+        M1 = length(h0)
+        M2 = length(u0)
+        N = round(Int, sqrt(M1) - 1)
+        @assert (M1 > 0 && sqrt(M1) - 1 == N) "invalid length of u0 and/or h0"
+        @assert M2 == 2M1 "length of u0 should be double that of h0"
+
+        # Parameters
+        f = 1
+        H = 1
+
+        # Operator matrices
+        K = outward_normal_cross_product(N)
+        D = div_sh(N)
+        G = grad_sh_2(N)
+
+        # Execute the backward Euler method
+        rows = cols = 2:4:2(2N+1)
+        A = BandedBlockBandedMatrix(I, (rows,cols), (0,0), (0,0))
+        A += dt*f*K + dt^2*H*G*D
+        B = dt*H*D
+        C = dt*G
+        u = copy(u0)
+        h = copy(h0)
+        for it=1:maxits
+            u = A\(u + C*h)
+            h -= B*u
+        end
+
+        # plot_on_sphere(u)
+        return u, h
 
     end
 
