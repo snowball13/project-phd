@@ -232,19 +232,17 @@ let
     Sub-Matrices for the Jacobi operator matrices
     =#
     global function grad_jacobi_Ax(n)
-        len = 3(2n+1)
+        len = 2n+1
         leftdiag = zeros(len) + 0.0im
         rightdiag = copy(leftdiag)
         # Gather non-zero entries
-        index = 1
         for k = -n:n
-            leftdiag[index:index+2] = coeff_d(n, k)
-            rightdiag[index:index+2] = coeff_a(n, k)
-            index += 3
+            leftdiag[k+n+1] = coeff_d(n, k)
+            rightdiag[k+n+1] = coeff_a(n, k)
         end
         # Create the sub-sub-matrix
-        left = [Diagonal(leftdiag) zeros(len, 6)]
-        right = [zeros(len, 6) Diagonal(rightdiag)]
+        left = [Diagonal(leftdiag) zeros(len, 2)]
+        right = [zeros(len, 2) Diagonal(rightdiag)]
         A = left + right
         # Assemble full sub matrix, exploiting the symmetry of the system
         zerosMatrix = zeros(size(A))
@@ -252,19 +250,17 @@ let
     end
 
     global function grad_jacobi_Ay(n)
-        len = 3(2n+1)
+        len = 2n+1
         leftdiag = zeros(len) + 0.0im
         rightdiag = copy(leftdiag)
         # Gather non-zero entries
-        index = 1
         for k = -n:n
-            leftdiag[index:index+2] = coeff_d(n, k)
-            rightdiag[index:index+2] = coeff_a(n, k)
-            index += 3
+            leftdiag[k+n+1] = coeff_d(n, k)
+            rightdiag[k+n+1] = coeff_a(n, k)
         end
         # Create the sub-sub-matrix
-        left = [Diagonal(leftdiag) zeros(len, 6)]
-        right = [zeros(len, 6) Diagonal(rightdiag)]
+        left = [Diagonal(leftdiag) zeros(len, 2)]
+        right = [zeros(len, 2) Diagonal(rightdiag)]
         A = left - right
         # Assemble full sub matrix, exploiting the symmetry of the system
         zerosMatrix = zeros(size(A))
@@ -272,16 +268,15 @@ let
     end
 
     global function grad_jacobi_Az(n)
-        len = 3(2n+1)
-        d = zeros(len) + 0.0im
+        len = 2n+1
+        zerosVec = zeros(len) + 0.0im
+        d = copy(zerosVec)
         # Gather non-zero entries
-        index = 1
         for k = -n:n
-            d[index:index+2] = coeff_f(n, k)
-            index += 3
+            d[k+n+1] = coeff_f(n, k)
         end
         # Create the sub-sub-matrix
-        A = [zeros(len,3) Diagonal(d) zeros(len,3)]
+        A = [zerosVec Diagonal(d) zerosVec]
         # Assemble full sub matrix, exploiting the symmetry of the system
         zerosMatrix = zeros(size(A))
         return [A zerosMatrix; zerosMatrix conj(A)]
@@ -289,24 +284,22 @@ let
 
     global function grad_jacobi_Bx(n)
         if n == 0
-            return zeros(6,6)+0.0im
+            return zeros(2,2)+0.0im
         end
-        len = 3(2n)
+        len = 2n
         superdiag = zeros(len)+0.0im
         subdiag = copy(superdiag)
         # Gather non-zero entries
-        superdiag[1:3] = coeff_h(n, -n)
+        superdiag[1] = coeff_h(n, -n)
         index = 1
         for k = -n+1:n-1
-            superdiag[index+3:index+5] = coeff_h(n, k)
-            subdiag[index:index+2] = coeff_j(n, k)
-            index += 3
+            superdiag[index+1] = coeff_h(n, k)
+            subdiag[index] = coeff_j(n, k)
+            index += 1
         end
-        subdiag[end-2:end] = coeff_j(n, n)
+        subdiag[end] = coeff_j(n, n)
         # Create the sub-sub-matrix
-        super = [zeros(len,3) Diagonal(superdiag); zeros(3,len+3)]
-        sub = [zeros(3,len+3); Diagonal(subdiag) zeros(len,3)]
-        B = super + sub
+        B = Tridiagonal(subdiag, zeros(2n+1), superdiag)
         # Assemble full sub matrix, exploiting the symmetry of the system
         zerosMatrix = zeros(size(B))
         return [zerosMatrix B; conj(B) zerosMatrix]
@@ -314,24 +307,22 @@ let
 
     global function grad_jacobi_By(n)
         if n == 0
-            return zeros(6,6)+0.0im
+            return zeros(2,2)+0.0im
         end
-        len = 3(2n)
+        len = 2n
         superdiag = zeros(len)+0.0im
         subdiag = copy(superdiag)
         # Gather non-zero entries
-        superdiag[1:3] = coeff_h(n, -n)
+        superdiag[1] = coeff_h(n, -n)
         index = 1
         for k = -n+1:n-1
-            superdiag[index+3:index+5] = coeff_h(n, k)
-            subdiag[index:index+2] = coeff_j(n, k)
-            index += 3
+            superdiag[index+1] = coeff_h(n, k)
+            subdiag[index] = coeff_j(n, k)
+            index += 1
         end
-        subdiag[end-2:end] = coeff_j(n, n)
+        subdiag[end] = coeff_j(n, n)
         # Create the sub-sub-matrix
-        super = [zeros(len,3) Diagonal(superdiag); zeros(3,len+3)]
-        sub = [zeros(3,len+3); Diagonal(subdiag) zeros(len,3)]
-        B = -super + sub
+        B = Tridiagonal(subdiag, zeros(2n+1), -superdiag)
         # Assemble full sub matrix, exploiting the symmetry of the system
         zerosMatrix = zeros(size(B))
         return [zerosMatrix im*B; im*conj(B) zerosMatrix]
@@ -339,15 +330,13 @@ let
 
     global function grad_jacobi_Bz(n)
         if n == 0
-            return zeros(6,6)+0.0im
+            return zeros(2,2)+0.0im
         end
-        len = 3(2n+1)
+        len = 2n+1
         d = zeros(len)+0.0im
         # Gather non-zero entries
-        index = 1
         for k = -n:n
-            d[index:index+2] = coeff_k(n, k)
-            index += 3
+            d[k+n+1] = coeff_k(n, k)
         end
         # Create the sub-sub-matrix
         B = Diagonal(d)
@@ -357,19 +346,17 @@ let
     end
 
     global function grad_jacobi_Cx(n)
-        len = 3(2n-1)
+        len = 2n-1
         upperdiag = zeros(len)+0.0im
         lowerdiag = copy(upperdiag)
         # Gather non-zero entries
-        index = 1
         for k = -n:n-2
-            upperdiag[index:index+2] = coeff_b(n, k)
-            lowerdiag[index:index+2] = coeff_e(n, k+2)
-            index += 3
+            upperdiag[k+n+1] = coeff_b(n, k)
+            lowerdiag[k+n+1] = coeff_e(n, k+2)
         end
         # Create the sub-sub-matrix
-        upper = [Diagonal(upperdiag); zeros(6, len)]
-        lower = [zeros(6, len); Diagonal(lowerdiag)]
+        upper = [Diagonal(upperdiag); zeros(2, len)]
+        lower = [zeros(2, len); Diagonal(lowerdiag)]
         C = upper + lower
         # Assemble full sub matrix, exploiting the symmetry of the system
         zerosMatrix = zeros(size(C))
@@ -377,19 +364,17 @@ let
     end
 
     global function grad_jacobi_Cy(n)
-        len = 3(2n-1)
+        len = 2n-1
         upperdiag = zeros(len)+0.0im
         lowerdiag = copy(upperdiag)
         # Gather non-zero entries
-        index = 1
         for k = -n:n-2
-            upperdiag[index:index+2] = coeff_b(n, k)
-            lowerdiag[index:index+2] = coeff_e(n, k+2)
-            index += 3
+            upperdiag[k+n+1] = coeff_b(n, k)
+            lowerdiag[k+n+1] = coeff_e(n, k+2)
         end
         # Create the sub-sub-matrix
-        upper = [Diagonal(upperdiag); zeros(6, len)]
-        lower = [zeros(6, len); Diagonal(lowerdiag)]
+        upper = [Diagonal(upperdiag); zeros(2, len)]
+        lower = [zeros(2, len); Diagonal(lowerdiag)]
         C = -upper + lower
         # Assemble full sub matrix, exploiting the symmetry of the system
         zerosMatrix = zeros(size(C))
@@ -397,16 +382,16 @@ let
     end
 
     global function grad_jacobi_Cz(n)
-        len = 3(2n-1)
+        len = 2n-1
         d = zeros(len)+0.0im
         # Gather non-zero entries
         index = 1
         for k = -n+1:n-1
-            d[index:index+2] = coeff_g(n, k)
-            index += 3
+            d[index] = coeff_g(n, k)
+            index += 1
         end
         # Create the sub-sub-matrix
-        C = [zeros(3,len); Diagonal(d); zeros(3,len)]
+        C = [zeros(1,len); Diagonal(d); zeros(1,len)]
         # Assemble full sub matrix, exploiting the symmetry of the system
         zerosMatrix = zeros(size(C))
         return [C zerosMatrix; zerosMatrix conj(C)]
@@ -417,7 +402,7 @@ let
     =#
     global function grad_Jx(N)
         l,u = 1,1          # block bandwidths
-        cols = rows = 6:12:6(2N+1)  # block sizes
+        cols = rows = 2:4:2(2N+1)  # block sizes
         J = BlockBandedMatrix(0.0im*I, (rows,cols), (l,u))
         J[1:rows[1], 1:cols[1]] = grad_jacobi_Bx(0)
         if N > 0
@@ -434,7 +419,7 @@ let
 
     global function grad_Jy(N)
         l,u = 1,1          # block bandwidths
-        cols = rows = 6:12:6(2N+1)  # block sizes
+        cols = rows = 2:4:2(2N+1)  # block sizes
         J = BlockBandedMatrix(0.0im*I, (rows,cols), (l,u))
         J[1:rows[1], 1:cols[1]] = grad_jacobi_By(0)
         if N > 0
@@ -451,7 +436,7 @@ let
 
     global function grad_Jz(N)
         l,u = 1,1          # block bandwidths
-        cols = rows = 6:12:6(2N+1)  # block sizes
+        cols = rows = 2:4:2(2N+1)  # block sizes
         J = BlockBandedMatrix(0.0im*I, (rows,cols), (l,u))
         J[1:rows[1], 1:cols[1]] = grad_jacobi_Bz(0)
         if N > 0
@@ -663,20 +648,16 @@ let
         DPerpxY = DPerpx*Y
         DPerpyY = DPerpy*Y
         DPerpzY = DPerpz*Y
-        out = Vector{Complex{Float64}}(6*(N+1)^2)
+        out = Vector{Vector{Complex{Float64}}}(2(N+1)^2)
         index = 1
         for l = 0:N
             for m = -l:l
-                out[index] = DxY[l^2+l+m+1]
-                out[index+1] = DyY[l^2+l+m+1]
-                out[index+2] = DzY[l^2+l+m+1]
-                index += 3
+                out[index] = [DxY[l^2+l+m+1], DyY[l^2+l+m+1], DzY[l^2+l+m+1]]
+                index += 1
             end
             for m = -l:l
-                out[index] = DPerpxY[l^2+l+m+1]
-                out[index+1] = DPerpyY[l^2+l+m+1]
-                out[index+2] = DPerpzY[l^2+l+m+1]
-                index += 3
+                out[index] = [DPerpxY[l^2+l+m+1], DPerpyY[l^2+l+m+1], DPerpzY[l^2+l+m+1]]
+                index += 1
             end
         end
 
@@ -684,7 +665,6 @@ let
     end
 
 end
-
 
 
 
@@ -768,15 +748,49 @@ end
 
 #####
 
+# Need to find out out to do the Matrix - Vector{Vector} multiplication without
+# the for loop
 a = x*tangent_basis_eval(N,x,y,z)
-b = grad_Jx(N)*tangent_basis_eval(N,x,y,z)
-c = abs.(a[1:6N^2] - b[1:6N^2])
+b = copy(a)
+J = grad_Jx(N)
+p = tangent_basis_eval(N,x,y,z)
+for i=1:length(b)
+    b[i] = sum([J[i,j]*p[j] for j=1:length(b)])
+end
+c = zeros(6N^2)
+for i=1:2N^2
+    c[(i-1)*3+1:(i-1)*3+3] = abs.(a[i] - b[i])
+end
 @test count(i->i>tol, c) == 0
 a = y*tangent_basis_eval(N,x,y,z)
-b = grad_Jy(N)*tangent_basis_eval(N,x,y,z)
-c = abs.(a[1:6N^2] - b[1:6N^2])
+b = copy(a)
+J = grad_Jy(N)
+p = tangent_basis_eval(N,x,y,z)
+for i=1:length(b)
+    b[i] = sum([J[i,j]*p[j] for j=1:length(b)])
+end
+c = zeros(6N^2)
+for i=1:2N^2
+    c[(i-1)*3+1:(i-1)*3+3] = abs.(a[i] - b[i])
+end
 @test count(i->i>tol, c) == 0
 a = z*tangent_basis_eval(N,x,y,z)
-b = grad_Jz(N)*tangent_basis_eval(N,x,y,z)
-c = abs.(a[1:6N^2] - b[1:6N^2])
+b = copy(a)
+J = grad_Jz(N)
+p = tangent_basis_eval(N,x,y,z)
+for i=1:length(b)
+    b[i] = sum([J[i,j]*p[j] for j=1:length(b)])
+end
+c = zeros(6N^2)
+for i=1:2N^2
+    c[(i-1)*3+1:(i-1)*3+3] = abs.(a[i] - b[i])
+end
 @test count(i->i>tol, c) == 0
+# a = y*tangent_basis_eval(N,x,y,z)
+# b = grad_Jy(N)*tangent_basis_eval(N,x,y,z)
+# c = abs.(a[1:6N^2] - b[1:6N^2])
+# @test count(i->i>tol, c) == 0
+# a = z*tangent_basis_eval(N,x,y,z)
+# b = grad_Jz(N)*tangent_basis_eval(N,x,y,z)
+# c = abs.(a[1:6N^2] - b[1:6N^2])
+# @test count(i->i>tol, c) == 0
