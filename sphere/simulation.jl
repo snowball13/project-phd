@@ -51,15 +51,15 @@ let
     # vector of coeffs for expansion in grad (tangent space) basis.
     global function outward_normal_cross_product(N)
         l,u = 0,0          # block bandwidths
-        λ,μ = 0,0          # sub-block bandwidths: the bandwidths of each block
+        λ,μ = 1,1          # sub-block bandwidths: the bandwidths of each block
         cols = rows = 2:4:2(2N+1)  # block sizes
-        K = BandedBlockBandedMatrix(I, (rows,cols), (l,u), (λ,μ))
+        K = BandedBlockBandedMatrix(0.0I, (rows,cols), (l,u), (λ,μ))
         for n = 0:N
             r = sum(rows[1:n])
-            c = sum(cols[1:n])
-            rend = round(Int, r + rows[n+1]/2)
-            cend = round(Int, r + rows[n+1]/2)
-            K[r+1:rend, c+1:cend] *= -1
+            for i=r+1:2:r+rows[n+1]
+                K[i,i+1] = -1.0
+                K[i+1,i] = 1.0
+            end
         end
         return K
     end
@@ -68,33 +68,34 @@ let
     # for expansion in grad (tangent space) basis.
     global function div_sh(N)
         l,u = 0,0          # block bandwidths
-        λ,μ = 0,0          # sub-block bandwidths: the bandwidths of each block
+        λ,μ = 0,2N          # sub-block bandwidths: the bandwidths of each block
         rows = 1:2:(2N+1)  # block sizes
         cols = 2*rows
         D = BandedBlockBandedMatrix(zeros(sum(rows),sum(cols)), (rows,cols), (l,u), (λ,μ))
-        L = laplacian_sh(round(Int, N))
         for n=0:N
-            r = sum(rows[1:n])
             c = sum(cols[1:n])
-            rend = r + rows[n+1]
-            cend = c + rows[n+1]
-            D[r+1:rend, c+1:cend] = L[n^2+1:(n+1)^2, n^2+1:(n+1)^2]
+            i = sum(rows[1:n]) + 1
+            for j=c+1:2:c+cols[n+1]
+                D[i,j] = -n*(n+1)
+                i += 1
+            end
         end
         return D
     end
 
     global function grad_sh_2(N)
         l,u = 0,0          # block bandwidths
-        λ,μ = 0,0          # sub-block bandwidths: the bandwidths of each block
+        λ,μ = 2N,0          # sub-block bandwidths: the bandwidths of each block
         cols = 1:2:(2N+1)  # block sizes
         rows = 2*cols
         G = BandedBlockBandedMatrix(zeros(sum(rows),sum(cols)), (rows,cols), (l,u), (λ,μ))
         for n=0:N
             r = sum(rows[1:n])
-            c = sum(cols[1:n])
-            rend = r + cols[n+1]
-            cend = c + cols[n+1]
-            G[r+1:rend, c+1:cend] = eye(2n+1)
+            j = sum(cols[1:n]) + 1
+            for i=r+1:2:r+rows[n+1]
+                G[i,j] = 1.0
+                j += 1
+            end
         end
         return G
     end
@@ -166,9 +167,7 @@ let
         G = grad_sh_2(N)
 
         # Execute the backward Euler method
-        rows = cols = 2:4:2(2N+1)
-        A = BandedBlockBandedMatrix(I, (rows,cols), (0,0), (0,0))
-        A += dt*f*K + dt^2*H*G*D
+        A = dt*f*K + dt^2*H*G*D
         B = dt*H*D
         C = dt*G
         u = copy(u0)

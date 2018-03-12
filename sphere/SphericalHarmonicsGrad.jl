@@ -609,8 +609,10 @@ let
     (shperical harmonic polynomials) up to order N
     =#
     global function laplacian_sh(N)
-        M = (N+1)^2
-        D = speye(M)
+        l,u = 0,0
+        λ,μ = 0,0
+        rows = cols = 1:2:2N+1
+        D = BandedBlockBandedMatrix(I, (rows, cols), (l,u), (λ,μ))
         for l=0:N
             entries = l^2+1:(l+1)^2
             D[entries, entries] *= -l*(l+1)
@@ -633,33 +635,35 @@ let
         DPerpz = grad_perp_sh(N+1, 3)
         Y = opEval(N+1, x, y, z)
 
-        # entries = 1:6:(6(N+1)^2)
-        # out = Vector{Complex{Float64}}(6*(N+1)^2)
-        # out[entries] = (Dx*Y)[1:end-(2N+3)]
-        # out[entries+1] = (Dy*Y)[1:end-(2N+3)]
-        # out[entries+2] = (Dz*Y)[1:end-(2N+3)]
-        # out[entries+3] = (DPerpx*Y)[1:end-(2N+3)]
-        # out[entries+4] = (DPerpy*Y)[1:end-(2N+3)]
-        # out[entries+5] = (DPerpz*Y)[1:end-(2N+3)]
+        len = 6(N+1)^2
+        entries = 1:6:len
+        out = PseudoBlockArray(Vector{Complex{Float64}}(len), [3 for i=1:2(N+1)^2])
+        out[entries] = (Dx*Y)[1:end-(2N+3)]
+        out[entries+1] = (Dy*Y)[1:end-(2N+3)]
+        out[entries+2] = (Dz*Y)[1:end-(2N+3)]
+        out[entries+3] = (DPerpx*Y)[1:end-(2N+3)]
+        out[entries+4] = (DPerpy*Y)[1:end-(2N+3)]
+        out[entries+5] = (DPerpz*Y)[1:end-(2N+3)]
 
-        DxY = Dx*Y
-        DyY = Dy*Y
-        DzY = Dz*Y
-        DPerpxY = DPerpx*Y
-        DPerpyY = DPerpy*Y
-        DPerpzY = DPerpz*Y
-        out = Vector{Vector{Complex{Float64}}}(2(N+1)^2)
-        index = 1
-        for l = 0:N
-            for m = -l:l
-                out[index] = [DxY[l^2+l+m+1], DyY[l^2+l+m+1], DzY[l^2+l+m+1]]
-                index += 1
-            end
-            for m = -l:l
-                out[index] = [DPerpxY[l^2+l+m+1], DPerpyY[l^2+l+m+1], DPerpzY[l^2+l+m+1]]
-                index += 1
-            end
-        end
+        # DxY = Dx*Y
+        # DyY = Dy*Y
+        # DzY = Dz*Y
+        # DPerpxY = DPerpx*Y
+        # DPerpyY = DPerpy*Y
+        # DPerpzY = DPerpz*Y
+        # out = Vector{Complex{Float64}}(6(N+1)^2)
+        # index = 1
+        # for l = 0:N
+        #     for m = -l:l
+        #         out[index:index+2] = [DxY[l^2+l+m+1], DyY[l^2+l+m+1], DzY[l^2+l+m+1]]
+        #         index += 3
+        #     end
+        #     for m = -l:l
+        #         out[index:index+2] = [DPerpxY[l^2+l+m+1], DPerpyY[l^2+l+m+1], DPerpzY[l^2+l+m+1]]
+        #         index += 3
+        #     end
+        # end
+        # out = PseudoBlockArray(out, [3 for i=1:2(N+1)^2])
 
         return out
     end
@@ -748,44 +752,11 @@ end
 
 #####
 
-# Need to find out out to do the Matrix - Vector{Vector} multiplication without
-# the for loop
-a = x*tangent_basis_eval(N,x,y,z)
-b = copy(a)
-J = grad_Jx(N)
-p = tangent_basis_eval(N,x,y,z)
-for i=1:length(b)
-    b[i] = sum([J[i,j]*p[j] for j=1:length(b)])
-end
-c = zeros(6N^2)
-for i=1:2N^2
-    c[(i-1)*3+1:(i-1)*3+3] = abs.(a[i] - b[i])
-end
-@test count(i->i>tol, c) == 0
-a = y*tangent_basis_eval(N,x,y,z)
-b = copy(a)
-J = grad_Jy(N)
-p = tangent_basis_eval(N,x,y,z)
-for i=1:length(b)
-    b[i] = sum([J[i,j]*p[j] for j=1:length(b)])
-end
-c = zeros(6N^2)
-for i=1:2N^2
-    c[(i-1)*3+1:(i-1)*3+3] = abs.(a[i] - b[i])
-end
-@test count(i->i>tol, c) == 0
-a = z*tangent_basis_eval(N,x,y,z)
-b = copy(a)
-J = grad_Jz(N)
-p = tangent_basis_eval(N,x,y,z)
-for i=1:length(b)
-    b[i] = sum([J[i,j]*p[j] for j=1:length(b)])
-end
-c = zeros(6N^2)
-for i=1:2N^2
-    c[(i-1)*3+1:(i-1)*3+3] = abs.(a[i] - b[i])
-end
-@test count(i->i>tol, c) == 0
+#
+# a = x*tangent_basis_eval(N,x,y,z)
+# b = grad_Jx(N)*tangent_basis_eval(N,x,y,z)
+# c = abs.(a[1:6N^2] - b[1:6N^2])
+# @test count(i->i>tol, c) == 0
 # a = y*tangent_basis_eval(N,x,y,z)
 # b = grad_Jy(N)*tangent_basis_eval(N,x,y,z)
 # c = abs.(a[1:6N^2] - b[1:6N^2])
