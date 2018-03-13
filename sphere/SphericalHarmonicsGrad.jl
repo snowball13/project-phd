@@ -232,169 +232,162 @@ let
     Sub-Matrices for the Jacobi operator matrices
     =#
     global function grad_jacobi_Ax(n)
-        len = 2n+1
-        leftdiag = zeros(len) + 0.0im
-        rightdiag = copy(leftdiag)
+        dim = 2(2n+1)
+        subdiag = zeros(dim) + 0.0im
+        superdiag = copy(subdiag)
         # Gather non-zero entries
+        index = 1
         for k = -n:n
-            leftdiag[k+n+1] = coeff_d(n, k)
-            rightdiag[k+n+1] = coeff_a(n, k)
+            view(subdiag, index:index+1) .= coeff_d(n, k), perp_coeff_d(n, k)
+            view(superdiag, index:index+1) .= coeff_a(n, k), perp_coeff_a(n, k)
+            index += 2
         end
-        # Create the sub-sub-matrix
-        left = [Diagonal(leftdiag) zeros(len, 2)]
-        right = [zeros(len, 2) Diagonal(rightdiag)]
-        A = left + right
         # Assemble full sub matrix, exploiting the symmetry of the system
-        zerosMatrix = zeros(size(A))
-        return [A zerosMatrix; zerosMatrix conj(A)]
+        zerosMatrix = zeros(dim,4)
+        return [Diagonal(superdiag) zerosMatrix] + [zerosMatrix Diagonal(subdiag)]
     end
 
     global function grad_jacobi_Ay(n)
-        len = 2n+1
-        leftdiag = zeros(len) + 0.0im
-        rightdiag = copy(leftdiag)
+        dim = 2(2n+1)
+        subdiag = zeros(dim) + 0.0im
+        superdiag = copy(subdiag)
         # Gather non-zero entries
+        index = 1
         for k = -n:n
-            leftdiag[k+n+1] = coeff_d(n, k)
-            rightdiag[k+n+1] = coeff_a(n, k)
+            view(subdiag, index:index+1) .= coeff_d(n, k), perp_coeff_d(n, k)
+            view(superdiag, index:index+1) .= coeff_a(n, k), perp_coeff_a(n, k)
+            index += 2
         end
-        # Create the sub-sub-matrix
-        left = [Diagonal(leftdiag) zeros(len, 2)]
-        right = [zeros(len, 2) Diagonal(rightdiag)]
-        A = left - right
         # Assemble full sub matrix, exploiting the symmetry of the system
-        zerosMatrix = zeros(size(A))
-        return [im*A zerosMatrix; zerosMatrix im*conj(A)]
+        zerosMatrix = zeros(dim,4)
+        return im*(-[Diagonal(superdiag) zerosMatrix] + [zerosMatrix Diagonal(subdiag)])
     end
 
     global function grad_jacobi_Az(n)
-        len = 2n+1
-        zerosVec = zeros(len) + 0.0im
-        d = copy(zerosVec)
+        dim = 2(2n+1)
+        d = zeros(dim)+0.0im
         # Gather non-zero entries
+        index = 1
         for k = -n:n
-            d[k+n+1] = coeff_f(n, k)
+            view(d, index:index+1) .= coeff_f(n, k), perp_coeff_f(n, k)
+            index += 2
         end
-        # Create the sub-sub-matrix
-        A = [zerosVec Diagonal(d) zerosVec]
-        # Assemble full sub matrix, exploiting the symmetry of the system
-        zerosMatrix = zeros(size(A))
-        return [A zerosMatrix; zerosMatrix conj(A)]
+        # Assemble full sub matrix
+        zerosMatrix = zeros(dim, 2)
+        return [zerosMatrix Diagonal(d) zerosMatrix]
     end
 
     global function grad_jacobi_Bx(n)
         if n == 0
             return zeros(2,2)+0.0im
         end
-        len = 2n
-        superdiag = zeros(len)+0.0im
-        subdiag = copy(superdiag)
+        dim = 2(2n)
+        u = zeros(dim-1)+0.0im
+        uperp = zeros(dim+1)+0.0im
+        l = copy(uperp)
+        lperp = copy(u)
         # Gather non-zero entries
-        superdiag[1] = coeff_h(n, -n)
+        view(u, 1) .= coeff_h(n, -n)
+        view(uperp, 2) .= perp_coeff_h(n, -n)
         index = 1
         for k = -n+1:n-1
-            superdiag[index+1] = coeff_h(n, k)
-            subdiag[index] = coeff_j(n, k)
-            index += 1
+            view(lperp, index) .= perp_coeff_j(n, k)
+            view(l, index+1) .= coeff_j(n, k)
+            view(u, index+2) .= coeff_h(n, k)
+            view(uperp, index+3) .= perp_coeff_h(n, k)
+            index += 2
         end
-        subdiag[end] = coeff_j(n, n)
-        # Create the sub-sub-matrix
-        B = Tridiagonal(subdiag, zeros(2n+1), superdiag)
-        # Assemble full sub matrix, exploiting the symmetry of the system
-        zerosMatrix = zeros(size(B))
-        return [zerosMatrix B; conj(B) zerosMatrix]
+        view(lperp, index) .= perp_coeff_j(n, n)
+        view(l, index+1) .= coeff_j(n, n)
+        # Assemble full sub matrix
+        return diagm(u, 3) + diagm(uperp, 1) + diagm(l, -1) + diagm(lperp, -3)
     end
 
     global function grad_jacobi_By(n)
         if n == 0
             return zeros(2,2)+0.0im
         end
-        len = 2n
-        superdiag = zeros(len)+0.0im
-        subdiag = copy(superdiag)
+        dim = 2(2n)
+        u = zeros(dim-1)+0.0im
+        uperp = zeros(dim+1)+0.0im
+        l = copy(uperp)
+        lperp = copy(u)
         # Gather non-zero entries
-        superdiag[1] = coeff_h(n, -n)
+        view(u, 1) .= coeff_h(n, -n)
+        view(uperp, 2) .= perp_coeff_h(n, -n)
         index = 1
         for k = -n+1:n-1
-            superdiag[index+1] = coeff_h(n, k)
-            subdiag[index] = coeff_j(n, k)
-            index += 1
+            view(lperp, index) .= perp_coeff_j(n, k)
+            view(l, index+1) .= coeff_j(n, k)
+            view(u, index+2) .= coeff_h(n, k)
+            view(uperp, index+3) .= perp_coeff_h(n, k)
+            index += 2
         end
-        subdiag[end] = coeff_j(n, n)
-        # Create the sub-sub-matrix
-        B = Tridiagonal(subdiag, zeros(2n+1), -superdiag)
-        # Assemble full sub matrix, exploiting the symmetry of the system
-        zerosMatrix = zeros(size(B))
-        return [zerosMatrix im*B; im*conj(B) zerosMatrix]
+        view(lperp, index) .= perp_coeff_j(n, n)
+        view(l, index+1) .= coeff_j(n, n)
+        # Assemble full sub matrix
+        return im*(-diagm(u, 3) - diagm(uperp, 1) + diagm(l, -1) + diagm(lperp, -3))
     end
 
     global function grad_jacobi_Bz(n)
-        if n == 0
-            return zeros(2,2)+0.0im
-        end
-        len = 2n+1
-        d = zeros(len)+0.0im
+        dim = 2(2n+1)
+        superdiag = zeros(dim-1)+0.0im
+        subdiag = copy(superdiag)
         # Gather non-zero entries
+        index = 1
         for k = -n:n
-            d[k+n+1] = coeff_k(n, k)
+            view(superdiag, index) .= coeff_k(n, k)
+            view(subdiag, index) .= perp_coeff_k(n, k)
+            index += 2
         end
-        # Create the sub-sub-matrix
-        B = Diagonal(d)
-        # Assemble full sub matrix, exploiting the symmetry of the system
-        zerosMatrix = zeros(size(B))
-        return [zerosMatrix B; conj(B) zerosMatrix]
+        # Assemble full sub matrix
+        return Tridiagonal(subdiag, zeros(dim), superdiag)
     end
 
     global function grad_jacobi_Cx(n)
-        len = 2n-1
-        upperdiag = zeros(len)+0.0im
-        lowerdiag = copy(upperdiag)
+        dim = 2(2n-1)
+        subdiag = zeros(dim) + 0.0im
+        superdiag = copy(subdiag)
         # Gather non-zero entries
+        index = 1
         for k = -n:n-2
-            upperdiag[k+n+1] = coeff_b(n, k)
-            lowerdiag[k+n+1] = coeff_e(n, k+2)
+            view(superdiag, index:index+1) .= coeff_b(n, k), perp_coeff_b(n, k)
+            view(subdiag, index:index+1) .= coeff_e(n, k+2), perp_coeff_e(n, k+2)
+            index += 2
         end
-        # Create the sub-sub-matrix
-        upper = [Diagonal(upperdiag); zeros(2, len)]
-        lower = [zeros(2, len); Diagonal(lowerdiag)]
-        C = upper + lower
         # Assemble full sub matrix, exploiting the symmetry of the system
-        zerosMatrix = zeros(size(C))
-        return [C zerosMatrix; zerosMatrix conj(C)]
+        zerosMatrix = zeros(4,dim)
+        return [Diagonal(superdiag); zerosMatrix] + [zerosMatrix; Diagonal(subdiag)]
     end
 
     global function grad_jacobi_Cy(n)
-        len = 2n-1
-        upperdiag = zeros(len)+0.0im
-        lowerdiag = copy(upperdiag)
+        dim = 2(2n-1)
+        subdiag = zeros(dim) + 0.0im
+        superdiag = copy(subdiag)
         # Gather non-zero entries
+        index = 1
         for k = -n:n-2
-            upperdiag[k+n+1] = coeff_b(n, k)
-            lowerdiag[k+n+1] = coeff_e(n, k+2)
+            view(superdiag, index:index+1) .= coeff_b(n, k), perp_coeff_b(n, k)
+            view(subdiag, index:index+1) .= coeff_e(n, k+2), perp_coeff_e(n, k+2)
+            index += 2
         end
-        # Create the sub-sub-matrix
-        upper = [Diagonal(upperdiag); zeros(2, len)]
-        lower = [zeros(2, len); Diagonal(lowerdiag)]
-        C = -upper + lower
         # Assemble full sub matrix, exploiting the symmetry of the system
-        zerosMatrix = zeros(size(C))
-        return [im*C zerosMatrix; zerosMatrix im*conj(C)]
+        zerosMatrix = zeros(4,dim)
+        return im*(-[Diagonal(superdiag); zerosMatrix] + [zerosMatrix; Diagonal(subdiag)])
     end
 
     global function grad_jacobi_Cz(n)
-        len = 2n-1
-        d = zeros(len)+0.0im
+        dim = 2(2n-1)
+        d = zeros(dim)+0.0im
         # Gather non-zero entries
         index = 1
         for k = -n+1:n-1
-            d[index] = coeff_g(n, k)
-            index += 1
+            view(d, index:index+1) .= coeff_g(n, k), perp_coeff_g(n, k)
+            index += 2
         end
-        # Create the sub-sub-matrix
-        C = [zeros(1,len); Diagonal(d); zeros(1,len)]
-        # Assemble full sub matrix, exploiting the symmetry of the system
-        zerosMatrix = zeros(size(C))
-        return [C zerosMatrix; zerosMatrix conj(C)]
+        # Assemble full sub matrix
+        zerosMatrix = zeros(2,dim)
+        return [zerosMatrix; Diagonal(d); zerosMatrix]
     end
 
     #=
@@ -402,8 +395,9 @@ let
     =#
     global function grad_Jx(N)
         l,u = 1,1          # block bandwidths
+        λ,μ = 4,4          # sub-block bandwidths: the bandwidths of each block
         cols = rows = 2:4:2(2N+1)  # block sizes
-        J = BlockBandedMatrix(0.0im*I, (rows,cols), (l,u))
+        J = BandedBlockBandedMatrix(0.0im*I, (rows,cols), (l,u), (λ,μ))
         J[1:rows[1], 1:cols[1]] = grad_jacobi_Bx(0)
         if N > 0
             for n = 1:N
@@ -419,8 +413,9 @@ let
 
     global function grad_Jy(N)
         l,u = 1,1          # block bandwidths
+        λ,μ = 4,4          # sub-block bandwidths: the bandwidths of each block
         cols = rows = 2:4:2(2N+1)  # block sizes
-        J = BlockBandedMatrix(0.0im*I, (rows,cols), (l,u))
+        J = BandedBlockBandedMatrix(0.0im*I, (rows,cols), (l,u), (λ,μ))
         J[1:rows[1], 1:cols[1]] = grad_jacobi_By(0)
         if N > 0
             for n = 1:N
@@ -436,8 +431,9 @@ let
 
     global function grad_Jz(N)
         l,u = 1,1          # block bandwidths
+        λ,μ = 2,2          # sub-block bandwidths: the bandwidths of each block
         cols = rows = 2:4:2(2N+1)  # block sizes
-        J = BlockBandedMatrix(0.0im*I, (rows,cols), (l,u))
+        J = BandedBlockBandedMatrix(0.0im*I, (rows,cols), (l,u), (λ,μ))
         J[1:rows[1], 1:cols[1]] = grad_jacobi_Bz(0)
         if N > 0
             for n = 1:N
@@ -624,7 +620,7 @@ let
     #=
     Ouputs the tangent basis vectors (∇Y, ∇⟂Y) up to order N evaluated at a
     point x,y,z on the unit sphere.Returns the vector [∇P_0,...,∇P_N]
-    where ∇P_l = [∇Y_l^-l,...,∇Y_l^l,∇⟂Y_l^-l,...,∇⟂Y_l^l].
+    where ∇P_l = [∇Y_l^-l,∇⟂Y_l^-l,...,∇Y_l^l,∇⟂Y_l^l].
     =#
     global function tangent_basis_eval(N, x, y, z)
         Dx = grad_sh(N+1, 1)
@@ -644,26 +640,6 @@ let
         out[entries+3] = (DPerpx*Y)[1:end-(2N+3)]
         out[entries+4] = (DPerpy*Y)[1:end-(2N+3)]
         out[entries+5] = (DPerpz*Y)[1:end-(2N+3)]
-
-        # DxY = Dx*Y
-        # DyY = Dy*Y
-        # DzY = Dz*Y
-        # DPerpxY = DPerpx*Y
-        # DPerpyY = DPerpy*Y
-        # DPerpzY = DPerpz*Y
-        # out = Vector{Complex{Float64}}(6(N+1)^2)
-        # index = 1
-        # for l = 0:N
-        #     for m = -l:l
-        #         out[index:index+2] = [DxY[l^2+l+m+1], DyY[l^2+l+m+1], DzY[l^2+l+m+1]]
-        #         index += 3
-        #     end
-        #     for m = -l:l
-        #         out[index:index+2] = [DPerpxY[l^2+l+m+1], DPerpyY[l^2+l+m+1], DPerpzY[l^2+l+m+1]]
-        #         index += 3
-        #     end
-        # end
-        # out = PseudoBlockArray(out, [3 for i=1:2(N+1)^2])
 
         return out
     end
