@@ -233,34 +233,34 @@ let
     =#
     global function grad_jacobi_Ax(n)
         dim = 2(2n+1)
-        subdiag = zeros(dim) + 0.0im
-        superdiag = copy(subdiag)
+        leftdiag = zeros(dim) + 0.0im
+        rightdiag = copy(leftdiag)
         # Gather non-zero entries
         index = 1
         for k = -n:n
-            view(subdiag, index:index+1) .= coeff_d(n, k), perp_coeff_d(n, k)
-            view(superdiag, index:index+1) .= coeff_a(n, k), perp_coeff_a(n, k)
+            view(leftdiag, index:index+1) .= coeff_d(n, k), perp_coeff_d(n, k)
+            view(rightdiag, index:index+1) .= coeff_a(n, k), perp_coeff_a(n, k)
             index += 2
         end
         # Assemble full sub matrix, exploiting the symmetry of the system
         zerosMatrix = zeros(dim,4)
-        return [Diagonal(superdiag) zerosMatrix] + [zerosMatrix Diagonal(subdiag)]
+        return [Diagonal(leftdiag) zerosMatrix] + [zerosMatrix Diagonal(rightdiag)]
     end
 
     global function grad_jacobi_Ay(n)
         dim = 2(2n+1)
-        subdiag = zeros(dim) + 0.0im
-        superdiag = copy(subdiag)
+        leftdiag = zeros(dim) + 0.0im
+        rightdiag = copy(leftdiag)
         # Gather non-zero entries
         index = 1
         for k = -n:n
-            view(subdiag, index:index+1) .= coeff_d(n, k), perp_coeff_d(n, k)
-            view(superdiag, index:index+1) .= coeff_a(n, k), perp_coeff_a(n, k)
+            view(leftdiag, index:index+1) .= coeff_d(n, k), perp_coeff_d(n, k)
+            view(rightdiag, index:index+1) .= coeff_a(n, k), perp_coeff_a(n, k)
             index += 2
         end
         # Assemble full sub matrix, exploiting the symmetry of the system
         zerosMatrix = zeros(dim,4)
-        return im*(-[Diagonal(superdiag) zerosMatrix] + [zerosMatrix Diagonal(subdiag)])
+        return im*([Diagonal(leftdiag) zerosMatrix] - [zerosMatrix Diagonal(rightdiag)])
     end
 
     global function grad_jacobi_Az(n)
@@ -346,34 +346,34 @@ let
 
     global function grad_jacobi_Cx(n)
         dim = 2(2n-1)
-        subdiag = zeros(dim) + 0.0im
-        superdiag = copy(subdiag)
+        upperdiag = zeros(dim) + 0.0im
+        lowerdiag = copy(upperdiag)
         # Gather non-zero entries
         index = 1
         for k = -n:n-2
-            view(superdiag, index:index+1) .= coeff_b(n, k), perp_coeff_b(n, k)
-            view(subdiag, index:index+1) .= coeff_e(n, k+2), perp_coeff_e(n, k+2)
+            view(upperdiag, index:index+1) .= coeff_b(n, k), perp_coeff_b(n, k)
+            view(lowerdiag, index:index+1) .= coeff_e(n, k+2), perp_coeff_e(n, k+2)
             index += 2
         end
         # Assemble full sub matrix, exploiting the symmetry of the system
         zerosMatrix = zeros(4,dim)
-        return [Diagonal(superdiag); zerosMatrix] + [zerosMatrix; Diagonal(subdiag)]
+        return [Diagonal(upperdiag); zerosMatrix] + [zerosMatrix; Diagonal(lowerdiag)]
     end
 
     global function grad_jacobi_Cy(n)
         dim = 2(2n-1)
-        subdiag = zeros(dim) + 0.0im
-        superdiag = copy(subdiag)
+        upperdiag = zeros(dim) + 0.0im
+        lowerdiag = copy(upperdiag)
         # Gather non-zero entries
         index = 1
         for k = -n:n-2
-            view(superdiag, index:index+1) .= coeff_b(n, k), perp_coeff_b(n, k)
-            view(subdiag, index:index+1) .= coeff_e(n, k+2), perp_coeff_e(n, k+2)
+            view(upperdiag, index:index+1) .= coeff_b(n, k), perp_coeff_b(n, k)
+            view(lowerdiag, index:index+1) .= coeff_e(n, k+2), perp_coeff_e(n, k+2)
             index += 2
         end
         # Assemble full sub matrix, exploiting the symmetry of the system
         zerosMatrix = zeros(4,dim)
-        return im*(-[Diagonal(superdiag); zerosMatrix] + [zerosMatrix; Diagonal(subdiag)])
+        return im*(-[Diagonal(upperdiag); zerosMatrix] + [zerosMatrix; Diagonal(lowerdiag)])
     end
 
     global function grad_jacobi_Cz(n)
@@ -644,6 +644,99 @@ let
         return out
     end
 
+
+    #=
+    Functions to output the matrices used in the Clenshaw Algorithm for
+    evaluation of a function given by its coefficients of its expansion in the
+    tangent basis.
+
+    Note these could be made faster by not calling each grad_jacobi_Bx() etc.
+    function (i.e. repeating for loops), and possibly by storing the matrix
+    clenshaw_matrix_B(N) and cutting it down to return clenshaw_matrix_B(n) etc.
+    =#
+    global function clenshaw_matrix_B(n)
+        return [grad_jacobi_Bx(n); grad_jacobi_By(n); grad_jacobi_Bz(n)]
+    end
+
+    global function clenshaw_matrix_G(n, x, y, z)
+        iden = speye(2(2n+1))
+        return [x*iden; y*iden; z*iden]
+    end
+
+    global function clenshaw_matrix_C(n)
+        return [grad_jacobi_Cx(n); grad_jacobi_Cy(n); grad_jacobi_Cz(n)]
+    end
+
+    global function clenshaw_matrix_DT(n)
+        if n == 0
+            return 0.0
+        end
+        d = zeros(2(2n+1))
+        a = zeros(4)
+        index = 1
+        for k=-n:n
+            view(d, index:index+1) .= 0.5/coeff_d(n,k), 0.5/perp_coeff_d(n,k)
+            index += 2
+        end
+        index = 1
+        for k=n-1:n
+            view(a, index:index+1) .= 0.5/coeff_a(n,k), 0.5/perp_coeff_a(n,k)
+            index += 2
+        end
+        zerosMatrix = zeros(4,2(2n-1))
+        Ahat = [Diagonal(d) Diagonal(-im*d); zerosMatrix Diagonal(a) zerosMatrix Diagonal(im*a)]
+        return [Ahat zeros(2(2n+3),2(2n+1))]
+    end
+
+    #=
+    Function to obtain the matrix evaluation of a function f(x,y,z) where f is
+    input as the coefficients of its expansion in thetangent space basis for
+    the sphere, i.e.
+        f(x, y, z) = sum(vecdot(f_n, ∇P_n))
+    where the {∇P_n} are the basis vectors for the tangent space (gradient and
+    perpendicular gradient of the spherical harmonics)
+
+    Uses the Clenshaw Algorithm.
+    =#
+    global function tangent_func_eval(f, x, y, z)
+
+        # Check that x and y are on the unit circle
+        delta = 0.001
+        @assert (x^2 + y^2 + z^2 < 1 + delta &&  x^2 + y^2 + z^2 > 1 - delta) "the point (x, y, z) must be on unit sphere"
+
+        M = length(f)
+        N = round(Int, sqrt(M/2) - 1)
+        @assert (M > 0 && sqrt(M/2) - 1 == N) "invalid length of f"
+
+        # Complete the reverse recurrance to gain gamma_1, gamma_2
+        # Note that gamma_(N+1) = 0, gamma_(N+2) = 0
+        gamma_nplus2 = zeros(1,2(2N+5))
+        gamma_nplus1 = zeros(1,2(2N+3))
+        gamma_n = 0.0
+        for n = N:-1:1
+            range = 2n^2+1:2(n+1)^2
+            a = - (clenshaw_matrix_DT(n) * (clenshaw_matrix_B(n) - clenshaw_matrix_G(n, x, y, z)))
+            b = - (clenshaw_matrix_DT(n+1) * clenshaw_matrix_C(n+1))
+            gamma_n = view(f, range).' + gamma_nplus1 * a + gamma_nplus2 * b
+            gamma_nplus2 = copy(gamma_nplus1)
+            gamma_nplus1 = copy(gamma_n)
+        end
+
+        # Calculate the evaluation of f using gamma_1, gamma_2
+        # f(x,y,z) = f_0^T * ∇P_0 + gamma_1 * ∇P_1 - gamma_2 * (DT_1*C_1) * ∇P_0
+        # Note ∇P0 = 0
+        ∇P1 = tangent_basis_eval(1, x, y, z)
+        feval = zeros(3)+0.0im
+        Pblock = 3
+        for m = -1:1
+            feval += gamma_nplus1[Pblock-2] * view(∇P1, Block(Pblock))
+            feval += gamma_nplus1[Pblock-1] * view(∇P1, Block(Pblock+1))
+            Pblock += 2
+        end
+        return feval
+
+    end
+
 end
 
 
@@ -726,9 +819,10 @@ for l = 1:6
     end
 end
 
+
 #####
 
-#
+
 # a = x*tangent_basis_eval(N,x,y,z)
 # b = grad_Jx(N)*tangent_basis_eval(N,x,y,z)
 # c = abs.(a[1:6N^2] - b[1:6N^2])
@@ -741,3 +835,17 @@ end
 # b = grad_Jz(N)*tangent_basis_eval(N,x,y,z)
 # c = abs.(a[1:6N^2] - b[1:6N^2])
 # @test count(i->i>tol, c) == 0
+
+
+#####
+
+
+N = 5
+f = 2*ones(2(N+1)^2)
+∇P1 = tangent_basis_eval(N,x,y,z)
+feval = tangent_func_eval(f,x,y,z)
+feval_actual = zeros(3)
+for i=1:length(f)
+        feval_actual += f[i] * view(∇P1, Block(i))
+end
+@test feval_actual ≈ feval
