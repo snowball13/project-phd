@@ -4,51 +4,80 @@ include("SphericalHarmonics.jl")
 include("SphericalHarmonicsGrad.jl")
 # using ApproxFun
 # using PlotlyJS
+using Makie, GeometryTypes
 
 
 let
 
+    function sphere_streamline(linebuffer, ∇ˢf, pt, h=0.01f0, n=5)
+        push!(linebuffer, pt)
+        df = normalize(abs.(tangent_func_eval(∇ˢf, pt[1], pt[2], pt[3])))
+        push!(linebuffer, normalize(pt .+ h*df))
+        for k=2:n
+            cur_pt = last(linebuffer)
+            push!(linebuffer, cur_pt)
+            df = normalize(abs.(tangent_func_eval(∇ˢf, cur_pt...)))
+            push!(linebuffer, normalize(cur_pt .+ h*df))
+        end
+        return
+    end
+
+    function streamlines(
+            scene, ∇ˢf, pts::AbstractVector{T};
+            h=0.01f0, n=5, color = :black, linewidth = 1
+        ) where T
+        linebuffer = T[]
+        sub = Scene(
+            scene,
+            h = h, n = 5, color = :black, linewidth = 1
+        )
+        lines = lift_node(to_node(∇ˢf), to_node(pts), sub[:h], sub[:n]) do ∇ˢf, pts, h, n
+            empty!(linebuffer)
+            for point in pts
+                sphere_streamline(linebuffer, ∇ˢf, point, h, n)
+            end
+            linebuffer
+        end
+        linesegment(sub, lines, color = sub[:color], linewidth = sub[:linewidth])
+        sub
+    end
+
     # Plotting function for a function (coeff vector) f
-    global function plot_on_sphere(f, filename="plot.pdf")
+    global function plot_on_sphere(f, as_streamlines=true)
 
         # Create arrays of (x,y,z) points
-        n = 50
+        n = 20
         θ = [0;(0.5:n-0.5)/n;1]
         φ = [(0:2n-2)*2/(2n-1);2]
         x = [cospi(φ)*sinpi(θ) for θ in θ, φ in φ]
         y = [sinpi(φ)*sinpi(θ) for θ in θ, φ in φ]
         z = [cospi(θ) for θ in θ, φ in φ]
+        pts = vec(Point3f0.(x, y, z))
 
-        # For each (x,y,z) point, evaluate the function f
-        w = size(x)[1]
-        h = size(x)[2]
-        RHSF = zeros(w, h) + 0im
-        for i in 1:w
-            for j in 1:h
-                RHSF[i,j] = funcEval(f, x[i,j], y[i,j], z[i,j])
+        if as_streamlines
+
+            # Plot
+            scene = Scene()
+            lns = streamlines(scene, f, pts)
+            # those can be changed interactively:
+            lns[:color] = :black
+            lns[:h] = 0.06
+            lns[:linewidth] = 1.0
+            for i = linspace(0.01, 0.1, 100)
+                lns[:h] = i
+                yield()
             end
-        end
-        RHSF = abs2.(RHSF)
 
-        # Plot
-        s = surface(x=x, y=y, z=z, colorscale = "Viridis", surfacecolor = RHSF,
-                    cmin = minimum(RHSF), cmax = maximum(RHSF),
-                    showscale = false)
-        ax = attr(visible = false)
-        cam = attr(up = attr(x=0,y=0,z=1), center = attr(x=0,y=0,z=0),
-                    eye = attr(x=0.75,y=0.75,z=0.75))
-        layout = Layout(width = 500, height = 500, autosize = false,
-                        margin = attr(l = 0, r = 0, b = 0, t = 0),
-                        scene = attr(xaxis = ax, yaxis = ax, zaxis = ax,
-                        camera = cam))
-        p = plot(s, layout)
-        savefig(p, filename)
+        else
+            # Implement plotting h
+        end
 
     end
 
 
-    # Operator matrix K corresponding to the cross product of k acting on u,
-    # vector of coeffs for expansion in grad (tangent space) basis.
+    # Operator matrix K corresponding to the cross product of k (outward unit
+    # normal vector, (x,y,z)) acting on u given as a vector of coeffs for
+    # expansion in grad (tangent space) basis.
     global function outward_normal_cross_product(N)
         l,u = 0,0          # block bandwidths
         λ,μ = 1,1          # sub-block bandwidths: the bandwidths of each block
@@ -100,9 +129,14 @@ let
         return G
     end
 
+    global function coriolis_freq(N)
+        T = 60*60*24
+        return 2*(2*pi/T)*grad_Jz(N)
+    end
+
 
     # Heat equation simulation
-    global function heat_eqn(u0, h, maxits)
+    global function heat_eqn(u0, h, maxits, plot=false)
 
         M = length(u0)
         N = round(Int, sqrt(M) - 1)
@@ -115,13 +149,15 @@ let
             u = A\u
         end
 
-        plot_on_sphere(u)
+        if plot
+            plot_on_sphere(u)
+        end
         return u
 
     end
 
     # Offset heat equation simulation
-    global function offset_heat(u0, h, maxits)
+    global function offset_heat(u0, h, maxits, plot=false)
 
         M = length(u0)
         N = round(Int, sqrt(M) - 1)
@@ -138,7 +174,9 @@ let
             u = A\u
         end
 
-        plot_on_sphere(u)
+        if plot
+            plot_on_sphere(u)
+        end
         return u
 
     end
@@ -147,7 +185,7 @@ let
     # u0, h0 should be given as vectors containing coefficients of their
     # expansion in the tangent basis (∇Y, ∇⟂Y)
     # We start with h ≡ h0 := 1
-    global function linear_SWE(u0, h0, dt, maxits)
+    global function linear_SWE(u0, h0, dt, maxits, plot=false)
 
         # Our eqn is u_t + f k x u = 0 where k is the outward normal vector.
 
@@ -157,17 +195,17 @@ let
         @assert (M1 > 0 && sqrt(M1) - 1 == N) "invalid length of u0 and/or h0"
         @assert M2 == 2M1 "length of u0 should be double that of h0"
 
-        # Parameters
-        f = 1
-        H = 1
+        # Constants
+        H = norm(abs.(funcEval(h0, 1, 0, 0))) # Base/reference height
 
         # Operator matrices
         K = outward_normal_cross_product(N)
         D = div_sh(N)
         G = grad_sh_2(N)
+        F = coriolis_freq(N)
 
         # Execute the backward Euler method
-        A = dt*f*K + dt^2*H*G*D
+        A = I + dt*F*K + dt^2*H*G*D
         B = dt*H*D
         C = dt*G
         u = copy(u0)
@@ -177,7 +215,9 @@ let
             h -= B*u
         end
 
-        # plot_on_sphere(u)
+        if plot
+            plot_on_sphere(u)
+        end
         return u, h
 
     end
