@@ -11,7 +11,6 @@ function sphere_streamline(linebuffer, ∇ˢf, pt, h=0.01f0, n=5)
         cur_pt = last(linebuffer)
         push!(linebuffer, cur_pt)
         df = normalize(∇ˢf(cur_pt...))
-        println(cur_pt...)
         push!(linebuffer, normalize(cur_pt .+ h*df))
     end
     return
