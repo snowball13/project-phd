@@ -739,15 +739,16 @@ let
 
     #=
     Function to obtain the matrix evaluation of a function f(x,y,z) with inputs
-    (J^x_∇,J^y_∇,J^z_∇) where f is input as the coefficients of its expansion in the
-    basis of the OPs for the sphere, i.e.
+    (J^x_∇,J^y_∇,J^z_∇) where f is input as the coefficients of its expansion
+    in the basis of the OPs for the sphere, i.e.
         f(x, y) = sum(vecdot(f_n, P_n))
     where the {P_n} are the OPs on the sphere (spherical harmonics)
 
     Uses the Clenshaw Algorithm.
     =#
-    global function tangent_func_operator_eval(f, x, y, z)
-
+    global function func_eval_grad_jacobi(f)
+        # Define the Jacobi operator matrices and pass to evaluation function
+        return func_eval_operator(f, grad_Jx(N), grad_Jy(N), grad_Jz(N))
     end
 
 end

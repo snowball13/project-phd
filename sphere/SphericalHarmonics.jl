@@ -595,16 +595,11 @@ let
 
     Uses the Clenshaw Algorithm.
     =#
-    global function funcOperatorEval(f)
+    global function func_eval_operator(f, J_x, J_y, J_z)
 
         M = length(f)
         N = round(Int, sqrt(M) - 1)
         @assert (M > 0 && sqrt(M) - 1 == N) "invalid length of f"
-
-        # Define the Jacobi operator matrices
-        J_x = Jx(N)
-        J_y = Jy(N)
-        J_z = Jz(N)
 
         # Define a zeros vector to store the gammas.
         # Note that we add in gamma_(N+1) = 0, gamma_(N+2) = 0
@@ -634,6 +629,11 @@ let
         P_0 = alphaVal(0,0)
         return P_0 * f[1].*I + P_1.' * gamma_nplus1 + P_0 * b.' * gamma_nplus2
 
+    end
+
+    global function func_eval_jacobi(f)
+        # Define the Jacobi operator matrices and pass to evaluation function
+        return func_eval_operator(f, Jx(N), Jy(N), Jz(N))
     end
 
 end
