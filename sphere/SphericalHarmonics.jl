@@ -17,14 +17,16 @@ let
     # Function outputting the constant for the (l,m) spherical harmonic
     # polynomial
     global function alphaVal(l, m)
-        c = sqrt((2*l + 1) * gamma(l - m + 1) / (4*pi*gamma(l + m + 1)))
-        ctilde = 1.0
-        if m < 0
+        α = 0
+        if m == 0
+            α = sqrt((2l+1)/(4pi))
+        elseif m > 0
+            α = sqrt((2l+1)/(4pi) * gamma(big(l+m+1)) * gamma(big(l-m+1))) / (gamma(big(l+1)) * (-2.0)^m)
+        else
             m = abs(m)
-            ctilde = (-1.0)^m * gamma(l - m + 1) / gamma(l + m + 1)
+            α = sqrt((2l+1)/(4pi) * gamma(big(l+m+1)) * gamma(big(l-m+1))) / (gamma(big(l+1)) * (2.0)^m)
         end
-        chat = gamma(l + m + 1) / (gamma(l + 1) * (-2.0)^m)
-        return c * chat * ctilde
+        return Float64(α)
     end
 
     global function AtildeVal(l, m)
