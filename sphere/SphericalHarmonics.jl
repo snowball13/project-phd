@@ -594,6 +594,9 @@ let
     where the {P_n} are the OPs on the sphere (spherical harmonics)
 
     Uses the Clenshaw Algorithm.
+
+    Here, J_x etc can be either the jacobi matrices acting on the SHs or the
+    jacobi matrices acting on the grad (tangent) basis.
     =#
     global function func_eval_operator(f, J_x, J_y, J_z)
 
@@ -631,6 +634,15 @@ let
 
     end
 
+    #=
+    Function to obtain the matrix evaluation of a function f(x,y,z) with inputs
+    (Jx,Jy,Jz) where f is input as the coefficients of its expansion in the
+    basis of the OPs for the sphere, i.e.
+        f(x, y) = sum(vecdot(f_n, P_n))
+    where the {P_n} are the OPs on the sphere (spherical harmonics)
+
+    Uses the Clenshaw Algorithm.
+    =#
     global function func_eval_jacobi(f)
         # Define the Jacobi operator matrices and pass to evaluation function
         return func_eval_operator(f, Jx(N), Jy(N), Jz(N))
@@ -664,7 +676,7 @@ fxyz_actual
 
 N = 5
 f = 1:(N+1)^2
-fxyz = funcOperatorEval(f)
+fxyz = func_eval_jacobi(f)
 
 a = y*opEval(N,x,y,z)
 b = Jy(N)*opEval(N,x,y,z)
