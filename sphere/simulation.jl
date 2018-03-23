@@ -11,7 +11,9 @@ let
 
     function sphere_streamline(linebuffer, ∇ˢf, pt, h=0.01f0, n=5)
         push!(linebuffer, pt)
-        df = normalize(abs.(tangent_func_eval(∇ˢf, pt[1], pt[2], pt[3])))
+        ∇ˢfeval = abs.(tangent_func_eval(∇ˢf, pt[1], pt[2], pt[3]))
+        mag = norm(∇ˢfeval)
+        df = ∇ˢfeval/mag
         push!(linebuffer, normalize(pt .+ h*df))
         for k=2:n
             cur_pt = last(linebuffer)
@@ -55,7 +57,6 @@ let
         pts = vec(Point3f0.(x, y, z))
 
         if as_streamlines
-
             # Plot
             scene = Scene()
             lns = streamlines(scene, f, pts)
@@ -67,9 +68,19 @@ let
                 lns[:h] = i
                 yield()
             end
-
         else
-            # Implement plotting h
+            # Scalar valued function (density type plot)
+            gridw = size(x)[1]
+            gridh = size(x)[2]
+            F = zeros(gridw, gridh) + 0im
+            for i in 1:gridw
+                for j in 1:gridh
+                    F[i,j] = funcEval(f, x[i,j], y[i,j], z[i,j])
+                end
+            end
+            F = abs2.(F)
+            scene = Scene()
+            s = Makie.surface(x, y, z, image = F, colormap = :viridis, colornorm = (-1.0, 1.0))
         end
 
     end
@@ -112,6 +123,12 @@ let
         return D
     end
 
+    #=
+    Operator matrix corresponding to the gradient of h, where h is given as a
+    vector of coeffs for expansion in the SH basis. The output matrix is given
+    so that the action of G*h yeilds the vector of ceofficients in the
+    expansion in the tangent basis.
+    =#
     global function grad_sh_2(N)
         l,u = 0,0          # block bandwidths
         λ,μ = 2N,0          # sub-block bandwidths: the bandwidths of each block
@@ -129,6 +146,11 @@ let
         return G
     end
 
+    #=
+    Operator matrix corresponding to the coriolis frequency f=2Ωcos(θ)=2Ωz.
+    We use the gradient jacobi operator for z here, as f acts on u which is
+    given in the tangent space.
+    =#
     global function coriolis_freq(N)
         T = 60*60*24
         return 2*(2*pi/T)*grad_Jz(N)
@@ -184,7 +206,6 @@ let
     # Linearised Shallow Water Equations.
     # u0, h0 should be given as vectors containing coefficients of their
     # expansion in the tangent basis (∇Y, ∇⟂Y)
-    # We start with h ≡ h0 := 1
     global function linear_SWE(u0, h0, dt, maxits, plot=false)
 
         # Our eqn is u_t + f k x u = 0 where k is the outward normal vector.
@@ -216,7 +237,7 @@ let
         end
 
         if plot
-            plot_on_sphere(u)
+            plot_on_sphere(h, false)
         end
         return u, h
 
