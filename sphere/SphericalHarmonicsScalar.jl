@@ -1,12 +1,5 @@
 # Script to obtain a point evaluation of the OPs for the unit sphere (spherical harmonics)
 
-
-using BlockBandedMatrices
-using BlockArrays
-using Base.Test
-using Base.LinAlg
-
-
 let
 
     #=

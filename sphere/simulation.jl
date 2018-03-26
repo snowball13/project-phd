@@ -3,7 +3,7 @@
 using SphericalHarmonics
 # using ApproxFun
 # using PlotlyJS
-using Makie, GeometryTypes
+using BlockBandedMatrices, Makie, GeometryTypes
 
 
 let
@@ -216,7 +216,7 @@ let
         @assert M2 == 2M1 "length of u0 should be double that of h0"
 
         # Constants
-        H = norm(abs.(funcEval(h0, 1, 0, 0))) # Base/reference height
+        H = norm(abs.(func_eval(h0, 1, 0, 0))) # Base/reference height
 
         # Operator matrices
         K = outward_normal_cross_product(N)
