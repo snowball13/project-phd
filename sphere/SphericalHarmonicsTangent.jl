@@ -11,7 +11,7 @@ http://scipp.ucsc.edu/~haber/ph216/clebsch.pdf
 
 =#
 
-include("SphericalHarmonics.jl")
+# include("SphericalHarmonicsScalar.jl")
 
 
 let
@@ -629,7 +629,7 @@ let
         DPerpx = grad_perp_sh(N+1, 1)
         DPerpy = grad_perp_sh(N+1, 2)
         DPerpz = grad_perp_sh(N+1, 3)
-        Y = opEval(N+1, x, y, z)
+        Y = sh_eval(N+1, x, y, z)
 
         len = 6(N+1)^2
         entries = 1:6:len
@@ -726,7 +726,7 @@ let
         # f(x,y,z) = f_0^T * ∇P_0 + gamma_1 * ∇P_1 - gamma_2 * (DT_1*C_1) * ∇P_0
         # Note ∇P0 = 0
         ∇P1 = tangent_basis_eval(1, x, y, z)
-        feval = zeros(3)+0.0im
+        feval = zeros(Complex128,3)
         Pblock = 3
         for m = -1:1
             feval += gamma_nplus1[Pblock-2] * view(∇P1, Block(Pblock))
@@ -788,7 +788,7 @@ B = abs.(D2Perp - Lap)[1:end-(2N+1), 1:end-(2N+1)]
 
 x, y = 0.5, 0.1
 z = sqrt(1 - x^2 - y^2)
-Y = opEval(N, x, y, z)
+Y = sh_eval(N, x, y, z)
 DxY = Dx*Y
 DPerpxY = DPerpx*Y
 for l = 1:6

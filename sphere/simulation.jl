@@ -1,7 +1,6 @@
 
 
-include("SphericalHarmonics.jl")
-include("SphericalHarmonicsGrad.jl")
+using SphericalHarmonics
 # using ApproxFun
 # using PlotlyJS
 using Makie, GeometryTypes
@@ -69,6 +68,8 @@ let
                 yield()
             end
         else
+            # RDG from Color package, RDG(0.1,0.2,0.3) for example gives a colour on the red-green-blue scale (look up colors.jl)
+
             # Scalar valued function (density type plot)
             gridw = size(x)[1]
             gridh = size(x)[2]
@@ -208,8 +209,6 @@ let
     # expansion in the tangent basis (∇Y, ∇⟂Y)
     global function linear_SWE(u0, h0, dt, maxits, plot=false)
 
-        # Our eqn is u_t + f k x u = 0 where k is the outward normal vector.
-
         M1 = length(h0)
         M2 = length(u0)
         N = round(Int, sqrt(M1) - 1)
@@ -237,7 +236,7 @@ let
         end
 
         if plot
-            plot_on_sphere(h, false)
+            plot_on_sphere(u)
         end
         return u, h
 
