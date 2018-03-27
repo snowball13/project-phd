@@ -277,10 +277,7 @@ let
         return [zerosMatrix Diagonal(d) zerosMatrix]
     end
 
-    global function grad_jacobi_Bx(n)
-        if n == 0
-            return zeros(Complex128, 2, 2)
-        end
+    function get_Bx_submatrices(n)
         dim = 2(2n)
         u = zeros(Complex128, dim-1)
         uperp = zeros(Complex128, dim+1)
@@ -304,39 +301,25 @@ let
         j = coeff_j(n, n)
         view(lperp, index) .= j'
         view(l, index+1) .= j
+        return diagm(u, 3), diagm(uperp, 1), diagm(l, -1), diagm(lperp, -3)
+    end
+
+    global function grad_jacobi_Bx(n)
+        if n == 0
+            return zeros(Complex128, 2, 2)
+        end
+        u, uperp, l, lperp = get_Bx_submatrices(n)
         # Assemble full sub matrix
-        return sparse(diagm(u, 3) + diagm(uperp, 1) + diagm(l, -1) + diagm(lperp, -3))
+        return sparse(u + uperp + l + lperp)
     end
 
     global function grad_jacobi_By(n)
         if n == 0
             return zeros(Complex128, 2,2)
         end
-        dim = 2(2n)
-        u = zeros(Complex128, dim-1)
-        uperp = zeros(Complex128, dim+1)
-        l = copy(uperp)
-        lperp = copy(u)
-        # Gather non-zero entries
-        j = im
-        h = coeff_h(n, -n)
-        view(u, 1) .= h
-        view(uperp, 2) .= h'
-        index = 1
-        for k = -n+1:n-1
-            j = coeff_j(n, k)
-            h = coeff_h(n, k)
-            view(lperp, index) .= j'
-            view(l, index+1) .= j
-            view(u, index+2) .= h
-            view(uperp, index+3) .= h'
-            index += 2
-        end
-        j = coeff_j(n, n)
-        view(lperp, index) .= j'
-        view(l, index+1) .= j
+        u, uperp, l, lperp = get_Bx_submatrices(n)
         # Assemble full sub matrix
-        return sparse(im*(-diagm(u, 3) - diagm(uperp, 1) + diagm(l, -1) + diagm(lperp, -3)))
+        return sparse(im*(-u - uperp + l + lperp))
     end
 
     global function grad_jacobi_Bz(n)
@@ -668,7 +651,8 @@ let
     clenshaw_matrix_B(N) and cutting it down to return clenshaw_matrix_B(n) etc.
     =#
     global function clenshaw_matrix_B(n)
-        return [grad_jacobi_Bx(n); grad_jacobi_By(n); grad_jacobi_Bz(n)]
+        u, uperp, l, lperp = get_Bx_submatrices(n)
+        return [sparse(u + uperp + l + lperp); sparse(im*(-u - uperp + l + lperp)); grad_jacobi_Bz(n)]
     end
 
     global function clenshaw_matrix_G(n, x, y, z)
