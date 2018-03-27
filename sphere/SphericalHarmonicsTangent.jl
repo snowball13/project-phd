@@ -233,7 +233,7 @@ let
     =#
     global function grad_jacobi_Ax(n)
         dim = 2(2n+1)
-        leftdiag = zeros(dim) + 0.0im
+        leftdiag = zeros(Complex128, dim)
         rightdiag = copy(leftdiag)
         # Gather non-zero entries
         index = 1
@@ -249,7 +249,7 @@ let
 
     global function grad_jacobi_Ay(n)
         dim = 2(2n+1)
-        leftdiag = zeros(dim) + 0.0im
+        leftdiag = zeros(Complex128, dim)
         rightdiag = copy(leftdiag)
         # Gather non-zero entries
         index = 1
@@ -265,7 +265,7 @@ let
 
     global function grad_jacobi_Az(n)
         dim = 2(2n+1)
-        d = zeros(dim)+0.0im
+        d = zeros(Complex128, dim)
         # Gather non-zero entries
         index = 1
         for k = -n:n
@@ -279,65 +279,77 @@ let
 
     global function grad_jacobi_Bx(n)
         if n == 0
-            return zeros(2,2)+0.0im
+            return zeros(Complex128, 2, 2)
         end
         dim = 2(2n)
-        u = zeros(dim-1)+0.0im
-        uperp = zeros(dim+1)+0.0im
+        u = zeros(Complex128, dim-1)
+        uperp = zeros(Complex128, dim+1)
         l = copy(uperp)
         lperp = copy(u)
         # Gather non-zero entries
-        view(u, 1) .= coeff_h(n, -n)
-        view(uperp, 2) .= perp_coeff_h(n, -n)
+        j = im
+        h = coeff_h(n, -n)
+        view(u, 1) .= h
+        view(uperp, 2) .= h'
         index = 1
         for k = -n+1:n-1
-            view(lperp, index) .= perp_coeff_j(n, k)
-            view(l, index+1) .= coeff_j(n, k)
-            view(u, index+2) .= coeff_h(n, k)
-            view(uperp, index+3) .= perp_coeff_h(n, k)
+            j = coeff_j(n, k)
+            h = coeff_h(n, k)
+            view(lperp, index) .= j'
+            view(l, index+1) .= j
+            view(u, index+2) .= h
+            view(uperp, index+3) .= h'
             index += 2
         end
-        view(lperp, index) .= perp_coeff_j(n, n)
-        view(l, index+1) .= coeff_j(n, n)
+        j = coeff_j(n, n)
+        view(lperp, index) .= j'
+        view(l, index+1) .= j
         # Assemble full sub matrix
-        return diagm(u, 3) + diagm(uperp, 1) + diagm(l, -1) + diagm(lperp, -3)
+        return sparse(diagm(u, 3) + diagm(uperp, 1) + diagm(l, -1) + diagm(lperp, -3))
     end
 
     global function grad_jacobi_By(n)
         if n == 0
-            return zeros(2,2)+0.0im
+            return zeros(Complex128, 2,2)
         end
         dim = 2(2n)
-        u = zeros(dim-1)+0.0im
-        uperp = zeros(dim+1)+0.0im
+        u = zeros(Complex128, dim-1)
+        uperp = zeros(Complex128, dim+1)
         l = copy(uperp)
         lperp = copy(u)
         # Gather non-zero entries
-        view(u, 1) .= coeff_h(n, -n)
-        view(uperp, 2) .= perp_coeff_h(n, -n)
+        j = im
+        h = coeff_h(n, -n)
+        view(u, 1) .= h
+        view(uperp, 2) .= h'
         index = 1
         for k = -n+1:n-1
-            view(lperp, index) .= perp_coeff_j(n, k)
-            view(l, index+1) .= coeff_j(n, k)
-            view(u, index+2) .= coeff_h(n, k)
-            view(uperp, index+3) .= perp_coeff_h(n, k)
+            j = coeff_j(n, k)
+            h = coeff_h(n, k)
+            view(lperp, index) .= j'
+            view(l, index+1) .= j
+            view(u, index+2) .= h
+            view(uperp, index+3) .= h'
             index += 2
         end
-        view(lperp, index) .= perp_coeff_j(n, n)
-        view(l, index+1) .= coeff_j(n, n)
+        j = coeff_j(n, n)
+        view(lperp, index) .= j'
+        view(l, index+1) .= j
         # Assemble full sub matrix
-        return im*(-diagm(u, 3) - diagm(uperp, 1) + diagm(l, -1) + diagm(lperp, -3))
+        return sparse(im*(-diagm(u, 3) - diagm(uperp, 1) + diagm(l, -1) + diagm(lperp, -3)))
     end
 
     global function grad_jacobi_Bz(n)
         dim = 2(2n+1)
-        superdiag = zeros(dim-1)+0.0im
+        superdiag = zeros(Complex128, dim-1)
         subdiag = copy(superdiag)
         # Gather non-zero entries
         index = 1
-        for k = -n:n
-            view(superdiag, index) .= coeff_k(n, k)
-            view(subdiag, index) .= perp_coeff_k(n, k)
+        k = im
+        for r = -n:n
+            k = coeff_k(n, r)
+            view(superdiag, index) .= k
+            view(subdiag, index) .= k'
             index += 2
         end
         # Assemble full sub matrix
@@ -346,7 +358,7 @@ let
 
     global function grad_jacobi_Cx(n)
         dim = 2(2n-1)
-        upperdiag = zeros(dim) + 0.0im
+        upperdiag = zeros(Complex128, dim)
         lowerdiag = copy(upperdiag)
         # Gather non-zero entries
         index = 1
@@ -362,7 +374,7 @@ let
 
     global function grad_jacobi_Cy(n)
         dim = 2(2n-1)
-        upperdiag = zeros(dim) + 0.0im
+        upperdiag = zeros(Complex128, dim)
         lowerdiag = copy(upperdiag)
         # Gather non-zero entries
         index = 1
@@ -378,7 +390,7 @@ let
 
     global function grad_jacobi_Cz(n)
         dim = 2(2n-1)
-        d = zeros(dim)+0.0im
+        d = zeros(Complex128, dim)
         # Gather non-zero entries
         index = 1
         for k = -n+1:n-1
@@ -502,13 +514,14 @@ let
     =#
 
     function grad_matrix_Ak(n, k)
-        zerosVec = zeros(2*n + 1) + 0.0im
+        dim = 2n+1
+        zerosVec = zeros(Complex128, dim)
         if k == 3
             d = copy(zerosVec)
             for j = -n:n
                 d[j+n+1] = grad_coeff_F(n, j, k)
             end
-            return [zeros(2*n+1, 1) Diagonal(d) zeros(2*n+1, 1)]
+            return [zeros(dim, 1) Diagonal(d) zeros(dim, 1)]
         else
             leftdiag = copy(zerosVec)
             rightdiag = copy(zerosVec)
@@ -516,14 +529,14 @@ let
                 leftdiag[j+n+1] = grad_coeff_D(n, j, k)
                 rightdiag[j+n+1] = grad_coeff_A(n, j, k)
             end
-            left = [Diagonal(leftdiag) zeros(2*n+1, 2)]
-            right = [zeros(2*n+1, 2) Diagonal(rightdiag)]
+            left = [Diagonal(leftdiag) zeros(dim, 2)]
+            right = [zeros(dim, 2) Diagonal(rightdiag)]
             return left + right
         end
     end
 
     function grad_matrix_Ck(n, k)
-        zerosVec = zeros(2*n - 1) + 0.0im
+        zerosVec = zeros(Complex128, 2n-1)
         if k == 3
             d = copy(zerosVec)
             for j = -n:n-2
@@ -547,9 +560,9 @@ let
         if n == 0
             return grad_perp_coeff_F(0, 0, k)
         end
-        upperdiag = zeros(2n) + 0.0im
+        upperdiag = zeros(Complex128, 2n)
         lowerdiag = copy(upperdiag)
-        d = zeros(2n+1) + 0.0im
+        d = zeros(Complex128, 2n+1)
         for j = -n:n-1
             upperdiag[j+n+1] = grad_perp_coeff_A(n, j, k)
             d[j+n+1] = grad_perp_coeff_F(n, j, k)
@@ -710,16 +723,22 @@ let
 
         # Complete the reverse recurrance to gain gamma_1, gamma_2
         # Note that gamma_(N+1) = 0, gamma_(N+2) = 0
-        gamma_nplus2 = zeros(1,2(2N+5))
-        gamma_nplus1 = zeros(1,2(2N+3))
-        gamma_n = 0.0
-        for n = N:-1:1
-            range = 2n^2+1:2(n+1)^2
-            a = - (clenshaw_matrix_DT(n) * (clenshaw_matrix_B(n) - clenshaw_matrix_G(n, x, y, z)))
-            b = - (clenshaw_matrix_DT(n+1) * clenshaw_matrix_C(n+1))
-            gamma_n = view(f, range).' + gamma_nplus1 * a + gamma_nplus2 * b
-            gamma_nplus2 = copy(gamma_nplus1)
-            gamma_nplus1 = copy(gamma_n)
+        if N == 0
+            return zeros(Complex128,3)
+        elseif N == 1
+            gamma_nplus1 = view(f, 2N^2+1:2(N+1)^2).'
+        else
+            gamma_nplus2 = view(f, 2N^2+1:2(N+1)^2).'
+            DT = clenshaw_matrix_DT(N-1)
+            gamma_nplus1 = view(f, 2(N-1)^2+1:2N^2).' - gamma_nplus2 * (DT * (clenshaw_matrix_B(N-1) - clenshaw_matrix_G(N-1, x, y, z)))
+            for n = N-2:-1:1
+                b = DT * clenshaw_matrix_C(n+1)
+                DT = clenshaw_matrix_DT(n)
+                a = DT * (clenshaw_matrix_B(n) - clenshaw_matrix_G(n, x, y, z))
+                gamma_n = view(f, 2n^2+1:2(n+1)^2).' - gamma_nplus1 * a - gamma_nplus2 * b
+                gamma_nplus2 = copy(gamma_nplus1)
+                gamma_nplus1 = copy(gamma_n)
+            end
         end
 
         # Calculate the evaluation of f using gamma_1, gamma_2
