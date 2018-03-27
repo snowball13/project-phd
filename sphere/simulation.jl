@@ -10,14 +10,14 @@ let
 
     function sphere_streamline(linebuffer, ∇ˢf, pt, h=0.01f0, n=5)
         push!(linebuffer, pt)
-        ∇ˢfeval = abs.(tangent_func_eval(∇ˢf, pt[1], pt[2], pt[3]))
+        ∇ˢfeval = abs2.(tangent_func_eval(∇ˢf, pt[1], pt[2], pt[3]))
         mag = norm(∇ˢfeval)
         df = ∇ˢfeval/mag
         push!(linebuffer, normalize(pt .+ h*df))
         for k=2:n
             cur_pt = last(linebuffer)
             push!(linebuffer, cur_pt)
-            df = normalize(abs.(tangent_func_eval(∇ˢf, cur_pt...)))
+            df = normalize(abs2.(tangent_func_eval(∇ˢf, cur_pt...)))
             push!(linebuffer, normalize(cur_pt .+ h*df))
         end
         return

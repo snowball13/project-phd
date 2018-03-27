@@ -339,36 +339,34 @@ let
         return Tridiagonal(subdiag, zeros(dim), superdiag)
     end
 
-    global function grad_jacobi_Cx(n)
+    function get_Cx_submatrices(n)
         dim = 2(2n-1)
         upperdiag = zeros(Complex128, dim)
         lowerdiag = copy(upperdiag)
         # Gather non-zero entries
         index = 1
+        b = e = im
         for k = -n:n-2
-            view(upperdiag, index:index+1) .= coeff_b(n, k), perp_coeff_b(n, k)
-            view(lowerdiag, index:index+1) .= coeff_e(n, k+2), perp_coeff_e(n, k+2)
+            b = coeff_b(n,k)
+            e = coeff_e(n,k+2)
+            view(upperdiag, index:index+1) .= b, b'
+            view(lowerdiag, index:index+1) .= e, e'
             index += 2
         end
-        # Assemble full sub matrix, exploiting the symmetry of the system
         zerosMatrix = zeros(4,dim)
-        return [Diagonal(upperdiag); zerosMatrix] + [zerosMatrix; Diagonal(lowerdiag)]
+        return [Diagonal(upperdiag); zerosMatrix], [zerosMatrix; Diagonal(lowerdiag)]
+    end
+
+    global function grad_jacobi_Cx(n)
+        uppermat, lowermat = get_Cx_submatrices(n)
+        # Assemble full sub matrix, exploiting the symmetry of the system
+        return uppermat + lowermat
     end
 
     global function grad_jacobi_Cy(n)
-        dim = 2(2n-1)
-        upperdiag = zeros(Complex128, dim)
-        lowerdiag = copy(upperdiag)
-        # Gather non-zero entries
-        index = 1
-        for k = -n:n-2
-            view(upperdiag, index:index+1) .= coeff_b(n, k), perp_coeff_b(n, k)
-            view(lowerdiag, index:index+1) .= coeff_e(n, k+2), perp_coeff_e(n, k+2)
-            index += 2
-        end
+        uppermat, lowermat = get_Cx_submatrices(n)
         # Assemble full sub matrix, exploiting the symmetry of the system
-        zerosMatrix = zeros(4,dim)
-        return im*(-[Diagonal(upperdiag); zerosMatrix] + [zerosMatrix; Diagonal(lowerdiag)])
+        return im*(-uppermat + lowermat)
     end
 
     global function grad_jacobi_Cz(n)
@@ -376,8 +374,10 @@ let
         d = zeros(Complex128, dim)
         # Gather non-zero entries
         index = 1
+        g = im
         for k = -n+1:n-1
-            view(d, index:index+1) .= coeff_g(n, k), perp_coeff_g(n, k)
+            g = coeff_g(n,k)
+            view(d, index:index+1) .= g, g'
             index += 2
         end
         # Assemble full sub matrix
@@ -661,27 +661,36 @@ let
     end
 
     global function clenshaw_matrix_C(n)
-        return [grad_jacobi_Cx(n); grad_jacobi_Cy(n); grad_jacobi_Cz(n)]
+        uppermat, lowermat = get_Cx_submatrices(n)
+        return [uppermat+lowermat; im*(-uppermat+lowermat); grad_jacobi_Cz(n)]
     end
 
     global function clenshaw_matrix_DT(n)
         if n == 0
             return 0.0
         end
-        d = zeros(2(2n+1))
-        a = zeros(4)
+        dvec = zeros(2(2n+1))
+        avec = zeros(4)
         index = 1
-        for k=-n:n
-            view(d, index:index+1) .= 0.5/coeff_d(n,k), 0.5/perp_coeff_d(n,k)
+        index2 = 1
+        a = d = im
+        for k=-n:n-2
+            d = coeff_d(n,k)
+            view(dvec, index:index+1) .= 0.5/d, 0.5/(d')
             index += 2
         end
-        index = 1
         for k=n-1:n
-            view(a, index:index+1) .= 0.5/coeff_a(n,k), 0.5/perp_coeff_a(n,k)
+            a = coeff_a(n,k)
+            d = coeff_d(n,k)
+            view(avec, index2:index2+1) .= 0.5/a, 0.5/(a')
+            view(dvec, index:index+1) .= 0.5/d, 0.5/(d')
             index += 2
+            index2 += 2
         end
         zerosMatrix = zeros(4,2(2n-1))
-        Ahat = [Diagonal(d) Diagonal(-im*d); zerosMatrix Diagonal(a) zerosMatrix Diagonal(im*a)]
+        amat = Diagonal(avec)
+        dmat = Diagonal(dvec)
+        Ahat = [dmat -im*dmat; zerosMatrix amat zerosMatrix im*amat]
         return [Ahat zeros(2(2n+3),2(2n+1))]
     end
 
