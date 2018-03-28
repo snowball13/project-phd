@@ -231,45 +231,45 @@ let
     #=
     Sub-Matrices for the Jacobi operator matrices
     =#
-    global function grad_jacobi_Ax(n)
+    function get_Ax_submatrices(n)
         dim = 2(2n+1)
         leftdiag = zeros(Complex128, dim)
         rightdiag = copy(leftdiag)
         # Gather non-zero entries
+        d = a = im
         index = 1
         for k = -n:n
-            view(leftdiag, index:index+1) .= coeff_d(n, k), perp_coeff_d(n, k)
-            view(rightdiag, index:index+1) .= coeff_a(n, k), perp_coeff_a(n, k)
+            a = coeff_a(n, k)
+            d = coeff_d(n, k)
+            view(leftdiag, index:index+1) .= d, d'
+            view(rightdiag, index:index+1) .= a, a'
             index += 2
         end
-        # Assemble full sub matrix, exploiting the symmetry of the system
         zerosMatrix = zeros(dim,4)
-        return [Diagonal(leftdiag) zerosMatrix] + [zerosMatrix Diagonal(rightdiag)]
+        return [Diagonal(leftdiag) zerosMatrix], [zerosMatrix Diagonal(rightdiag)]
+    end
+
+    global function grad_jacobi_Ax(n)
+        leftmat, rightmat = get_Ax_submatrices(n)
+        # Assemble full sub matrix
+        return leftmat + rightmat
     end
 
     global function grad_jacobi_Ay(n)
-        dim = 2(2n+1)
-        leftdiag = zeros(Complex128, dim)
-        rightdiag = copy(leftdiag)
-        # Gather non-zero entries
-        index = 1
-        for k = -n:n
-            view(leftdiag, index:index+1) .= coeff_d(n, k), perp_coeff_d(n, k)
-            view(rightdiag, index:index+1) .= coeff_a(n, k), perp_coeff_a(n, k)
-            index += 2
-        end
-        # Assemble full sub matrix, exploiting the symmetry of the system
-        zerosMatrix = zeros(dim,4)
-        return im*([Diagonal(leftdiag) zerosMatrix] - [zerosMatrix Diagonal(rightdiag)])
+        leftmat, rightmat = get_Ax_submatrices(n)
+        # Assemble full sub matrix
+        return im*(leftmat - rightmat)
     end
 
     global function grad_jacobi_Az(n)
         dim = 2(2n+1)
         d = zeros(Complex128, dim)
         # Gather non-zero entries
+        f = im
         index = 1
         for k = -n:n
-            view(d, index:index+1) .= coeff_f(n, k), perp_coeff_f(n, k)
+            f = coeff_f(n, k)
+            view(d, index:index+1) .= f, f'
             index += 2
         end
         # Assemble full sub matrix
@@ -660,6 +660,12 @@ let
         return [x*iden; y*iden; z*iden]
     end
 
+    global function clenshaw_matrix_BminusG(n, x, y, z)
+        iden = speye(2(2n+1))
+        u, uperp, l, lperp = get_Bx_submatrices(n)
+        return [sparse(u + uperp + l + lperp) - x*iden; sparse(im*(-u - uperp + l + lperp)) - y*iden; grad_jacobi_Bz(n) - z*iden]
+    end
+
     global function clenshaw_matrix_C(n)
         uppermat, lowermat = get_Cx_submatrices(n)
         return [uppermat+lowermat; im*(-uppermat+lowermat); grad_jacobi_Cz(n)]
@@ -690,8 +696,7 @@ let
         zerosMatrix = zeros(4,2(2n-1))
         amat = Diagonal(avec)
         dmat = Diagonal(dvec)
-        Ahat = [dmat -im*dmat; zerosMatrix amat zerosMatrix im*amat]
-        return [Ahat zeros(2(2n+3),2(2n+1))]
+        return [dmat -im*dmat zeros(2(2n+1),2(2n+1)); zerosMatrix amat zerosMatrix im*amat zeros(4,2(2n+1))]
     end
 
     #=
@@ -723,11 +728,11 @@ let
         else
             gamma_nplus2 = view(f, 2N^2+1:2(N+1)^2).'
             DT = clenshaw_matrix_DT(N-1)
-            gamma_nplus1 = view(f, 2(N-1)^2+1:2N^2).' - gamma_nplus2 * (DT * (clenshaw_matrix_B(N-1) - clenshaw_matrix_G(N-1, x, y, z)))
+            gamma_nplus1 = view(f, 2(N-1)^2+1:2N^2).' - gamma_nplus2 * DT * clenshaw_matrix_BminusG(N-1, x, y, z)
             for n = N-2:-1:1
                 b = DT * clenshaw_matrix_C(n+1)
                 DT = clenshaw_matrix_DT(n)
-                a = DT * (clenshaw_matrix_B(n) - clenshaw_matrix_G(n, x, y, z))
+                a = DT * clenshaw_matrix_BminusG(n, x, y, z)
                 gamma_n = view(f, 2n^2+1:2(n+1)^2).' - gamma_nplus1 * a - gamma_nplus2 * b
                 gamma_nplus2 = copy(gamma_nplus1)
                 gamma_nplus1 = copy(gamma_n)
