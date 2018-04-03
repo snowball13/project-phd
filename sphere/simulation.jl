@@ -10,14 +10,12 @@ let
 
     function sphere_streamline(linebuffer, ∇ˢf, pt, h=0.01f0, n=5)
         push!(linebuffer, pt)
-        ∇ˢfeval = abs2.(tangent_func_eval(∇ˢf, pt[1], pt[2], pt[3]))
-        mag = norm(∇ˢfeval)
-        df = ∇ˢfeval/mag
+        df = normalize(Float32.(abs2.(tangent_func_eval(∇ˢf, pt[1], pt[2], pt[3]))))
         push!(linebuffer, normalize(pt .+ h*df))
         for k=2:n
             cur_pt = last(linebuffer)
             push!(linebuffer, cur_pt)
-            df = normalize(abs2.(tangent_func_eval(∇ˢf, cur_pt...)))
+            df = normalize(Float32.(abs2.(tangent_func_eval(∇ˢf, cur_pt...))))
             push!(linebuffer, normalize(cur_pt .+ h*df))
         end
         return
@@ -25,14 +23,14 @@ let
 
     function streamlines(
             scene, ∇ˢf, pts::AbstractVector{T};
-            h=0.01f0, n=5, color = :black, linewidth = 1
+            h=0.1f0, n=5, color = :black, linewidth = 1
         ) where T
         linebuffer = T[]
         sub = Scene(
-            scene,
+            scene, ∇ˢf = to_node(∇ˢf),
             h = h, n = 5, color = :black, linewidth = 1
         )
-        lines = lift_node(to_node(∇ˢf), to_node(pts), sub[:h], sub[:n]) do ∇ˢf, pts, h, n
+        lines = lift_node(sub[:∇ˢf], to_node(pts), sub[:h], sub[:n]) do ∇ˢf, pts, h, n
             empty!(linebuffer)
             for point in pts
                 sphere_streamline(linebuffer, ∇ˢf, point, h, n)
@@ -47,7 +45,7 @@ let
     global function plot_on_sphere(f, as_streamlines=true)
 
         # Create arrays of (x,y,z) points
-        n = 20
+        n = 5
         θ = [0;(0.5:n-0.5)/n;1]
         φ = [(0:2n-2)*2/(2n-1);2]
         x = [cospi(φ)*sinpi(θ) for θ in θ, φ in φ]
@@ -61,27 +59,28 @@ let
             lns = streamlines(scene, f, pts)
             # those can be changed interactively:
             lns[:color] = :black
-            lns[:h] = 0.06
-            lns[:linewidth] = 1.0
-            for i = linspace(0.01, 0.1, 100)
-                lns[:h] = i
-                yield()
-            end
-        else
-            # RDG from Color package, RDG(0.1,0.2,0.3) for example gives a colour on the red-green-blue scale (look up colors.jl)
-
-            # Scalar valued function (density type plot)
-            gridw = size(x)[1]
-            gridh = size(x)[2]
-            F = zeros(gridw, gridh) + 0im
-            for i in 1:gridw
-                for j in 1:gridh
-                    F[i,j] = funcEval(f, x[i,j], y[i,j], z[i,j])
-                end
-            end
-            F = abs2.(F)
-            scene = Scene()
-            s = Makie.surface(x, y, z, image = F, colormap = :viridis, colornorm = (-1.0, 1.0))
+            # lns[:h] = 0.06
+            # lns[:linewidth] = 1.0
+            # for i = linspace(0.01, 0.1, 100)
+            #     lns[:h] = i
+            #     yield()
+            # end
+            return scene, lns
+        # else
+        #     # RDG from Color package, RDG(0.1,0.2,0.3) for example gives a colour on the red-green-blue scale (look up colors.jl)
+        #
+        #     # Scalar valued function (density type plot)
+        #     gridw = size(x)[1]
+        #     gridh = size(x)[2]
+        #     F = zeros(gridw, gridh) + 0im
+        #     for i in 1:gridw
+        #         for j in 1:gridh
+        #             F[i,j] = funcEval(f, x[i,j], y[i,j], z[i,j])
+        #         end
+        #     end
+        #     F = abs2.(F)
+        #     scene = Scene()
+        #     s = Makie.surface(x, y, z, image = F, colormap = :viridis, colornorm = (-1.0, 1.0))
         end
 
     end
@@ -186,8 +185,7 @@ let
         N = round(Int, sqrt(M) - 1)
         @assert (M > 0 && sqrt(M) - 1 == N) "invalid length of u0"
 
-        # Create the matrix polynomial for V(x,y,z) = x^2 + y^2 + z as
-        # V(Jx,Jy,Jz) = Jx^2 + Jy^2 + Jz^2
+        # Create the matrix polynomial for V(x,y,z) = x^2 + y^2 + z
         V = Jx(N)^2 + Jy(N)^2 + Jz(N)
 
         # Execute the backward Euler method
@@ -230,14 +228,31 @@ let
         C = dt*G
         u = copy(u0)
         h = copy(h0)
-        for it=1:maxits
-            u = A\(u + C*h)
-            h -= B*u
+        if plot
+            scene, lns = plot_on_sphere(u)
+            # record a video
+            center!(scene)
+            io = VideoStream(scene, ".", "sphere/plots/linear_SWE")
+            recordframe!(io)
+            for it=1:maxits
+                if it % 50 == 0
+                    println("Iteration no. : ", it)
+                end
+                u = A\(u + C*h)
+                h -= B*u
+                lns[:∇ˢf] = to_node(u)
+                yield()
+                recordframe!(io)
+                sleep(1/30)
+            end
+            finish(io, "mp4") # could also be gif, webm or mkv
+        else
+            for it=1:maxits
+                u = A\(u + C*h)
+                h -= B*u
+            end
         end
 
-        if plot
-            plot_on_sphere(u)
-        end
         return u, h
 
     end
