@@ -23,40 +23,29 @@ let
     end
 
     global function AtildeVal(l, m)
-        A = (m + 0.5) / (l + 0.5)
-        A *= (l + m + 2) / (l + 1)
-        A *= (l + m + 1) / (2*m + 2)
-        A *= (m + 1) / (2*m + 1)
-        return A
+        return (l+m+2)*(l+m+1) / (2*(2l+1)*(l+1))
     end
 
     global function BtildeVal(l, m)
-        B = - (m + 0.5) / (l + 0.5)
-        B *= l / (2*m + 2)
-        B *= (m + 1) / (2*m + 1)
-        return B
+        return -l/(4l+2)
     end
 
     global function DtildeVal(l, m)
-        D = - ((l - m + 1) * (l - m + 2)) / (2 * (m - 0.5) * (l + 0.5))
-        D *= (2*m - 1) / (l + 1)
-        return D
+        return - 2*(l-m+2)*(l-m+1) / ((2l+1)*(l+1))
     end
 
     global function EtildeVal(l, m)
-        E = ((l + m - 1) * (l + m)) / (2 * (m - 0.5) * (l + 0.5))
-        E *= (l * (2*m - 1)) / ((l + m) * (l + m - 1))
-        return E
+        return 2l/(2l+1)
     end
 
     global function FtildeVal(l, m)
-        return (l - m + 1) * (l + m + 1) / ((2*l + 1) * (l + 1))
+        return (l-m+1)*(l+m+1) / ((2l+1)*(l+1))
     end
 
     global function GtildeVal(l, m)
         G = 1.0
         if (abs(m) <= l - 1)
-            G = l / (2*l + 1)
+            G = l / (2l + 1)
         else
             G = 0.0
         end
