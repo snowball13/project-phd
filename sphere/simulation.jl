@@ -42,46 +42,29 @@ let
     end
 
     # Plotting function for a function (coeff vector) f
-    global function plot_on_sphere(f, as_streamlines=true)
+    global function plot_on_sphere(f)
+        # Plot the streamlines on a solid sphere
 
         # Create arrays of (x,y,z) points
-        n = 5
+        n = 50
+        θ = [0;(0.5:n-0.5)/n;1]
+        φ = [(0:2n-2)*2/(2n-1);2]
+        x = [cospi(φ)*sinpi(θ) for θ in θ, φ in φ]
+        y = [sinpi(φ)*sinpi(θ) for θ in θ, φ in φ]
+        z = [cospi(θ) for θ in θ, φ in φ]
+        scene = Scene()
+        s = Makie.surface(x, y, z, colormap = :viridis, colornorm = (-1.0, 1.0))
+
+        n = 20
         θ = [0;(0.5:n-0.5)/n;1]
         φ = [(0:2n-2)*2/(2n-1);2]
         x = [cospi(φ)*sinpi(θ) for θ in θ, φ in φ]
         y = [sinpi(φ)*sinpi(θ) for θ in θ, φ in φ]
         z = [cospi(θ) for θ in θ, φ in φ]
         pts = vec(Point3f0.(x, y, z))
-
-        if as_streamlines
-            # Plot
-            scene = Scene()
-            lns = streamlines(scene, f, pts)
-            # those can be changed interactively:
-            lns[:color] = :black
-            # lns[:h] = 0.06
-            # lns[:linewidth] = 1.0
-            # for i = linspace(0.01, 0.1, 100)
-            #     lns[:h] = i
-            #     yield()
-            # end
-            return scene, lns
-        # else
-        #     # RDG from Color package, RDG(0.1,0.2,0.3) for example gives a colour on the red-green-blue scale (look up colors.jl)
-        #
-        #     # Scalar valued function (density type plot)
-        #     gridw = size(x)[1]
-        #     gridh = size(x)[2]
-        #     F = zeros(gridw, gridh) + 0im
-        #     for i in 1:gridw
-        #         for j in 1:gridh
-        #             F[i,j] = funcEval(f, x[i,j], y[i,j], z[i,j])
-        #         end
-        #     end
-        #     F = abs2.(F)
-        #     scene = Scene()
-        #     s = Makie.surface(x, y, z, image = F, colormap = :viridis, colornorm = (-1.0, 1.0))
-        end
+        lns = streamlines(scene, f, pts)
+        lns[:color] = :black
+        return scene, lns
 
     end
 
@@ -205,16 +188,13 @@ let
     # Linearised Shallow Water Equations.
     # u0, h0 should be given as vectors containing coefficients of their
     # expansion in the tangent basis (∇Y, ∇⟂Y)
-    global function linear_SWE(u0, h0, dt, maxits, plot=false)
+    global function linear_SWE(u0, h0, H, dt, maxits, plot=false, filename="")
 
         M1 = length(h0)
         M2 = length(u0)
         N = round(Int, sqrt(M1) - 1)
         @assert (M1 > 0 && sqrt(M1) - 1 == N) "invalid length of u0 and/or h0"
         @assert M2 == 2M1 "length of u0 should be double that of h0"
-
-        # Constants
-        H = norm(abs.(func_eval(h0, 1, 0, 0))) # Base/reference height
 
         # Operator matrices
         K = outward_normal_cross_product(N)
@@ -232,7 +212,7 @@ let
             scene, lns = plot_on_sphere(u)
             # record a video
             center!(scene)
-            io = VideoStream(scene, ".", "sphere/plots/linear_SWE")
+            io = VideoStream(scene, ".", filename)
             recordframe!(io)
             for it=1:maxits
                 if it % 50 == 0
