@@ -8,21 +8,21 @@ using BlockBandedMatrices, Makie, GeometryTypes
 
 let
 
-    function sphere_streamline(linebuffer, ∇ˢf, pt, h=0.01f0, n=5)
+    function sphere_streamline(linebuffer, ∇ˢf, DT, a, b, pt, h=0.01f0, n=5)
         push!(linebuffer, pt)
-        df = normalize(Float32.(abs2.(tangent_func_eval(∇ˢf, pt[1], pt[2], pt[3]))))
+        df = normalize(Float32.(abs2.(tangent_func_eval(∇ˢf, pt[1], pt[2], pt[3], DT, a, b))))
         push!(linebuffer, normalize(pt .+ h*df))
         for k=2:n
             cur_pt = last(linebuffer)
             push!(linebuffer, cur_pt)
-            df = normalize(Float32.(abs2.(tangent_func_eval(∇ˢf, cur_pt...))))
+            df = normalize(Float32.(abs2.(tangent_func_eval(∇ˢf, cur_pt..., DT, a, b))))
             push!(linebuffer, normalize(cur_pt .+ h*df))
         end
         return
     end
 
     function streamlines(
-            scene, ∇ˢf, pts::AbstractVector{T};
+            scene, ∇ˢf, DT, a, b, pts::AbstractVector{T};
             h=0.1f0, n=5, color = :black, linewidth = 1
         ) where T
         linebuffer = T[]
@@ -33,7 +33,7 @@ let
         lines = lift_node(sub[:∇ˢf], to_node(pts), sub[:h], sub[:n]) do ∇ˢf, pts, h, n
             empty!(linebuffer)
             for point in pts
-                sphere_streamline(linebuffer, ∇ˢf, point, h, n)
+                sphere_streamline(linebuffer, ∇ˢf, DT, a, b, point, h, n)
             end
             linebuffer
         end
@@ -42,7 +42,7 @@ let
     end
 
     # Plotting function for a function (coeff vector) f
-    global function plot_on_sphere(f)
+    global function plot_on_sphere(f, DT, a, b)
         # Plot the streamlines on a solid sphere
 
         # Create arrays of (x,y,z) points
@@ -62,7 +62,7 @@ let
         y = [sinpi(φ)*sinpi(θ) for θ in θ, φ in φ]
         z = [cospi(θ) for θ in θ, φ in φ]
         pts = vec(Point3f0.(x, y, z))
-        lns = streamlines(scene, f, pts)
+        lns = streamlines(scene, f, DT, a, b, pts)
         lns[:color] = :black
         return scene, lns
 
@@ -209,7 +209,9 @@ let
         u = copy(u0)
         h = copy(h0)
         if plot
-            scene, lns = plot_on_sphere(u)
+            # Get the clenshaw matrices now, to avoid calculating them repeatedly
+            DT, a, b = get_clenshaw_matrices(N)
+            scene, lns = plot_on_sphere(u, DT, a, b)
             # record a video
             center!(scene)
             io = VideoStream(scene, ".", filename)

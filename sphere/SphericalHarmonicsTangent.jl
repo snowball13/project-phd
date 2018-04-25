@@ -699,16 +699,79 @@ let
         return [dmat -im*dmat zeros(2(2n+1),2(2n+1)); zerosMatrix amat zerosMatrix im*amat zeros(4,2(2n+1))]
     end
 
+
     #=
-    Function to obtain the evaluation of a function f(x,y,z) where f is
-    input as the coefficients of its expansion in thetangent space basis for
-    the sphere, i.e.
+    Function to obtain for storage the coefficient matrices used in the Clenshaw
+    Algorithm when using N iterations. Once we have these, we can call the
+    tangent_func_eval() method passing in the arrays of matrices to access each
+    time, rather than calculating them each time we evaluate.
+    =#
+    global function get_clenshaw_matrices(N)
+        DT = Array{Matrix{Complex128}}(N-1)
+        a = copy(DT)
+        b = copy(DT)
+        for n = N-1:-1:1
+            DT[n] = clenshaw_matrix_DT(n)
+            a[n] = DT[n] * clenshaw_matrix_B(n)
+            b[n] = DT[n] * clenshaw_matrix_C(n)
+        end
+        return DT, a, b
+    end
+
+    #=
+    Function(s, overloaded) to obtain the evaluation of a function f(x,y,z)
+    where f is input as the coefficients of its expansion in thetangent space
+    basis for the sphere, i.e.
         f(x, y, z) = sum(vecdot(f_n, ∇P_n))
     where the {∇P_n} are the basis vectors for the tangent space (gradient and
     perpendicular gradient of the spherical harmonics)
 
     Uses the Clenshaw Algorithm.
     =#
+    global function tangent_func_eval(f, x, y, z, DT, a, b)
+
+        # Check that x and y are on the unit circle
+        delta = 0.001
+        @assert (x^2 + y^2 + z^2 < 1 + delta &&  x^2 + y^2 + z^2 > 1 - delta) "the point (x, y, z) must be on unit sphere"
+
+        M = length(f)
+        N = round(Int, sqrt(M/2) - 1)
+        @assert (M > 0 && sqrt(M/2) - 1 == N) "invalid length of f"
+
+        # Complete the reverse recurrance to gain gamma_1, gamma_2
+        # Note that gamma_(N+1) = 0, gamma_(N+2) = 0
+        if N == 0
+            return zeros(Complex128,3)
+        elseif N == 1
+            gamma_nplus1 = view(f, 2N^2+1:2(N+1)^2).'
+        else
+            gamma_nplus2 = view(f, 2N^2+1:2(N+1)^2).'
+            gamma_nplus1 = (view(f, 2(N-1)^2+1:2N^2).'
+                            - gamma_nplus2 * (a[N-1] - DT[N-1]*clenshaw_matrix_G(N-1, x, y, z)))
+            for n = N-2:-1:1
+                gamma_n = (view(f, 2n^2+1:2(n+1)^2).'
+                            - gamma_nplus1 * (a[n] - DT[n]*clenshaw_matrix_G(n, x, y, z))
+                            - gamma_nplus2 * b[n+1])
+                gamma_nplus2 = copy(gamma_nplus1)
+                gamma_nplus1 = copy(gamma_n)
+            end
+        end
+
+        # Calculate the evaluation of f using gamma_1, gamma_2
+        # f(x,y,z) = f_0^T * ∇P_0 + gamma_1 * ∇P_1 - gamma_2 * (DT_1*C_1) * ∇P_0
+        # Note ∇P0 = 0
+        ∇P1 = tangent_basis_eval(1, x, y, z)
+        feval = zeros(Complex128,3)
+        Pblock = 3
+        for m = -1:1
+            feval += gamma_nplus1[Pblock-2] * view(∇P1, Block(Pblock))
+            feval += gamma_nplus1[Pblock-1] * view(∇P1, Block(Pblock+1))
+            Pblock += 2
+        end
+        return feval
+
+    end
+
     global function tangent_func_eval(f, x, y, z)
 
         # Check that x and y are on the unit circle
