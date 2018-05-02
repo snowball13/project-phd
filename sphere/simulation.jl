@@ -32,8 +32,27 @@ let
         )
         lines = lift_node(sub[:∇ˢf], to_node(pts), sub[:h], sub[:n]) do ∇ˢf, pts, h, n
             empty!(linebuffer)
-            for point in pts
-                sphere_streamline(linebuffer, ∇ˢf, DT, a, b, point, h, n)
+            # for point in pts
+            #     sphere_streamline(linebuffer, ∇ˢf, DT, a, b, point, h, n)
+            # end
+            for i=1:length(pts)
+                point = pts[i]
+                check = true
+                if abs(point[3]) > 0.9
+                    for j=1:length(pts)
+                        if i == j
+                            continue
+                        else
+                            if norm(abs2.(point - pts[j])) < 2e-4
+                                check = false
+                                break
+                            end
+                        end
+                    end
+                end
+                if check
+                    sphere_streamline(linebuffer, ∇ˢf, DT, a, b, point, h, n)
+                end
             end
             linebuffer
         end
