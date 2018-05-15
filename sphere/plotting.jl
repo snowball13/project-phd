@@ -3,7 +3,7 @@ include("simulation.jl")
 
 using Makie, GeometryTypes
 
-function sphere_streamline(linebuffer, ∇ˢf, pt, h=0.01f0, n=5)
+function sphere_streamline(linebuffer, newpts, ∇ˢf, pt, h=0.01f0, n=5)
     push!(linebuffer, pt)
     df = normalize(∇ˢf(pt[1], pt[2], pt[3]))
     push!(linebuffer, normalize(pt .+ h*df))
@@ -13,6 +13,7 @@ function sphere_streamline(linebuffer, ∇ˢf, pt, h=0.01f0, n=5)
         df = normalize(∇ˢf(cur_pt...))
         push!(linebuffer, normalize(cur_pt .+ h*df))
     end
+    push!(newpts, last(linebuffer))
     return
 end
 
@@ -21,14 +22,16 @@ function streamlines(
         h=0.01f0, n=5, color = :black, linewidth = 1
     ) where T
     linebuffer = T[]
+    newpts = T[]
     sub = Scene(
-        scene,
+        scene, pts = to_node(pts),
         h = h, n = 5, color = :black, linewidth = 1
     )
-    lines = lift_node(to_node(∇ˢf), to_node(pts), sub[:h], sub[:n]) do ∇ˢf, pts, h, n
+    lines = lift_node(to_node(∇ˢf), sub[:pts], sub[:h], sub[:n]) do ∇ˢf, pts, h, n
         empty!(linebuffer)
+        empty!(newpts)
         for point in pts
-            sphere_streamline(linebuffer, ∇ˢf, point, h, n)
+            sphere_streamline(linebuffer, newpts, ∇ˢf, point, h, n)
         end
         linebuffer
     end
@@ -38,7 +41,7 @@ end
 
 # needs to be in a function for ∇ˢf to be fast and inferable
 function test()
-    n = 20
+    n = 1
     f   = (x,y,z) -> x*exp(cos(y)*z)
     ∇f  = (x,y,z) -> Point3f0(exp(cos(y)*z), -sin(y)*z*x*exp(cos(y)*z), x*cos(y)*exp(cos(y)*z))
     ∇ˢf = (x,y,z) -> ∇f(x,y,z) - Point3f0(x,y,z)*dot(Point3f0(x,y,z), ∇f(x,y,z))
@@ -55,7 +58,7 @@ function test()
     lns[:color] = :black
     lns[:h] = 0.06
     lns[:linewidth] = 1.0
-    for i = linspace(0.01, 0.1, 100)
+    for i = linspace(0.01, 0.1, 2)
         lns[:h] = i
         yield()
     end

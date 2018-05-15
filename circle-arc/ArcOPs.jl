@@ -8,7 +8,7 @@ let
     #=
     Setup
     =#
-    function innerTh(T, U, h)
+    global function innerTh(T, U, h)
         xmin = h
         xmax = 1
         x = Fun(identity, xmin..xmax)
@@ -16,7 +16,7 @@ let
         return sum(w*T*U)
     end
 
-    function innerUh(T, U, h)
+    global function innerUh(T, U, h)
         xmin = h
         xmax = 1
         x = Fun(identity, xmin..xmax)
@@ -25,7 +25,7 @@ let
     end
 
     global function initialise_arc_ops(N, h)
-        @assert (N > 3)
+        @assert (N > 1)
 
         # Get recurrance relation coefficients for the 1D OPs T_k^h(x), U_k^h(x)
         xmin = h
@@ -103,26 +103,6 @@ let
     end
 
     #=
-    Function to evaluate the order N OP set at the point (x,y) that lies on the
-    unit circle arc
-    =#
-    function arc_op_eval(N, h, x, y)
-        # We only deal with N = 0,1 for now (useful for Clenshaw)
-        X = Fun(identity, h..1)
-        w = (1/sqrt(1-X^2))
-        Tkh,α,β = lanczos(w,1)
-        if N == 0
-            return Tkh[1](x)
-        elseif N == 1
-            w = sqrt(1-X^2)
-            Ukh,a,b = lanczos(w,1)
-            return [Tkh[2](x); y*Ukh[1](x)]
-        else
-            return 0.0
-        end
-    end
-
-    #=
     Functions to output the matrices used in the Clenshaw Algorithm for
     evaluation of a function given by its coefficients of its expansion in the
     arc OPs.
@@ -144,18 +124,27 @@ let
         end
     end
 
-    global function clenshaw_matrix_C(n, β, δ, c, d)
+    function clenshaw_matrix_Gtilde(n, x, y)
+        if n == 0
+            return [-y; x]
+        else
+            iden = speye(2)
+            return [-y*iden; x*iden]
+        end
+    end
+
+    function clenshaw_matrix_C(n, β, δ, c, d)
         if n == 1
             out = zeros(4,1)
             out[1] = β[1]
-            out[4] = d[4]
+            out[4] = d[1]
             return out
         else
             return [β[n] 0; 0 δ[n-1]; 0 c[n]; d[n-1] 0]
         end
     end
 
-    global function clenshaw_matrix_DT(n, β, δ, a)
+    function clenshaw_matrix_DT(n, β, δ, a)
         if n == 0
             return [1./β[1] 0; 0 1./a[1]]
         else
@@ -181,6 +170,36 @@ let
         return DT, K, L
     end
 
+    #=
+    Function to evaluate the order N OP set at the point (x,y) that lies on the
+    unit circle arc
+    =#
+    global function arc_op_eval(N, h, x, y)
+        # We only deal with N = 0,1 for now (useful for Clenshaw)
+        X = Fun(identity, h..1)
+        w = (1/sqrt(1-X^2))
+        Tkh,α,β = lanczos(w,1)
+        if N == 0
+            return Tkh[1](x)
+        elseif N == 1
+            w = sqrt(1-X^2)
+            Ukh,a,b = lanczos(w,1)
+            return [Tkh[2](x); y*Ukh[1](x)]
+        else
+            α, β, γ, δ, a, b, c, d, e, f = initialise_arc_ops(N, h)
+            DT, K, L = get_arc_clenshaw_matrices(N, α, β, γ, δ, a, b, c, d, e, f)
+            P0 = (-clenshaw_matrix_DT(0, β, δ, a)
+                    *(clenshaw_matrix_B(0, α, γ, b, e)-clenshaw_matrix_G(0,x,y))*Tkh[1](x))
+            P1 = - (K[1] - DT[1]*clenshaw_matrix_G(1, x, y))*P0 - L[1]*Tkh[1](x)
+            P2 = zeros(2)
+            for n = 2:N-1
+                P2 = - (K[n] - DT[n]*clenshaw_matrix_G(n, x, y))*P1 - L[n]*P0
+                P0 = copy(P1)
+                P1 = copy(P2)
+            end
+            return P1
+        end
+    end
 
     #=
     Function to obtain the evaluation of a function f(x,y)
@@ -194,7 +213,7 @@ let
     global function arc_func_eval(F, h, α, β, γ, δ, a, b, c, d, e, f, x, y)
         # Check that x and y are on the unit circle
         delta = 1e-5
-        @assert (h > 0 && h < 1 && x^2 + y^2 < 1 + delta &&  x^2 + y^2 > 1 - delta && x >= h && x <= 1)
+        @assert (h >= 0 && h < 1 && x^2 + y^2 < 1 + delta &&  x^2 + y^2 > 1 - delta && x >= h && x <= 1)
             "the point (x, y) must be on unit circle on the arc defined by the x coord being in the range [h,1]"
 
         M = length(F)
@@ -228,26 +247,64 @@ let
         return F[1]*T0 + vecdot(P_1, gamma_nplus1) - T0*vecdot(L[1], gamma_nplus2)
     end
 
+
+    #=
+    Gather the coefficients of the expansion of an ApproxFun.Fun in the arc OP
+    basis.
+    =#
+    global function func_to_coeffs(F, N, h)
+        xmin = h
+        xmax = 1
+        X = Fun(identity, xmin..xmax)
+        w = sqrt(1-X^2)
+        Ukh,γ,δ = lanczos(w,N+1)
+        w = (1/sqrt(1-X^2))
+        Tkh,α,β = lanczos(w,N+1)
+
+        Y = sqrt(1-X^2)
+        Fe = (F.(X,Y) + F.(X,-Y))/2
+        Fo = (F.(X,Y) - F.(X,-Y))/2
+
+        Fcoeffs = zeros(2N+1)
+        Fcoeffs[1] = innerTh(Tkh[1],Fe,h)
+        for k = 1:N
+            Fcoeffs[2k] = sum(w*Tkh[k+1]*Fe)
+            Fcoeffs[2k+1] = sum(Ukh[k]*Fo)
+        end
+        return Fcoeffs
+    end
+
 end
 
+#=======#
 
-# Test
-N, h = 10, 0.5
+N, h = 30, 0
 α, β, γ, δ, a, b, c, d, e, f = initialise_arc_ops(N, h)
 x = 0.8
 y = sqrt(1-x^2)
+
+#=======#
+
+# Test for function evaluation method
 F = ones(2N+1)
 Feval = arc_func_eval(F, h, α, β, γ, δ, a, b, c, d, e, f, x, y)
-
 xmin = h
 xmax = 1
 X = Fun(identity, xmin..xmax)
 w = (1/sqrt(1-X^2))
-Tkh,α,β = lanczos(w,N+1)
+Tkh,_,_ = lanczos(w,N+1)
 w = sqrt(1-X^2)
-Ukh,γ,δ = lanczos(w,N+1)
+Ukh,_,_ = lanczos(w,N+1)
 Factual = Tkh[1](x)
 for n = 1:N
     Factual += F[2n]*Tkh[n+1](x) + F[2n+1]*y*Ukh[n](x)
 end
 @test Factual ≈ Feval
+
+#=======#
+
+# Test for ApproxFun.Fun to coefficients method
+
+F = Fun((x,y)->exp(x+y))
+Fcoeffs = func_to_coeffs(F, N, h)
+@test arc_func_eval(Fcoeffs, h, α, β, γ, δ, a, b, c, d, e, f, x, y) ≈ F(x,y)
