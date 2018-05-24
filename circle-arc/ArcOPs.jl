@@ -25,7 +25,7 @@ let
     end
 
     global function initialise_arc_ops(N, h)
-        @assert (N > 1)
+        # @assert (N > 1)
 
         # Get recurrance relation coefficients for the 1D OPs T_k^h(x), U_k^h(x)
         xmin = h
@@ -175,7 +175,11 @@ let
     unit circle arc
     =#
     global function arc_op_eval(N, h, x, y)
-        # We only deal with N = 0,1 for now (useful for Clenshaw)
+        # Check that x and y are on the unit circle
+        delta = 1e-5
+        @assert (h >= 0 && h < 1 && x^2 + y^2 < 1 + delta &&  x^2 + y^2 > 1 - delta && x >= h && x <= 1)
+            "the point (x, y) must be on unit circle on the arc defined by the x coord being in the range [h,1]"
+
         X = Fun(identity, h..1)
         w = (1/sqrt(1-X^2))
         Tkh,α,β = lanczos(w,1)
@@ -200,6 +204,63 @@ let
             return P1
         end
     end
+
+    #=
+    Function to evaluate the derivative of the order n OP at the point (x,y) on
+    the unit circle arc - ∂/∂s(P_n).
+    =#
+    global function arc_op_derivative_eval(N, h, x, y)
+        # Check that x and y are on the unit circle
+        delta = 1e-5
+        @assert (h >= 0 && h < 1 && x^2 + y^2 < 1 + delta &&  x^2 + y^2 > 1 - delta && x >= h && x <= 1)
+            "the point (x, y) must be on unit circle on the arc defined by the x coord being in the range [h,1]"
+
+        if N == 0
+            return 0.0
+        end
+
+        X = Fun(identity, h..1)
+        w = (1/sqrt(1-X^2))
+        Tkh,α,β = lanczos(w,1)
+        T0 = Tkh[1](x)
+
+        α, β, γ, δ, a, b, c, d, e, f = initialise_arc_ops(N, h)
+        DT, K, L = get_arc_clenshaw_matrices(N, α, β, γ, δ, a, b, c, d, e, f)
+        DT0 = clenshaw_matrix_DT(0, β, δ, a)
+        B0 = clenshaw_matrix_B(0, α, γ, b, e)
+
+        # n=0
+        Pnm1 = 0
+        Pn = T0
+        dPn = 0
+        dPnp1 = DT0*clenshaw_matrix_Gtilde(0,x,y)*T0
+        Pnm2 = copy(Pnm1)
+        Pnm1 = copy(Pn)
+        dPnm1 = copy(dPn)
+        dPn = copy(dPnp1)
+        # n=1
+        if N == 1
+            return dPn
+        end
+        Pn = - DT0*(B0-clenshaw_matrix_G(0,x,y))*Pnm1
+        dPnp1 = (-K[1]+DT[1]*clenshaw_matrix_G(1,x,y))*dPn + DT[1]*clenshaw_matrix_Gtilde(1,x,y)*Pn
+        Pnm2 = copy(Pnm1)
+        Pnm1 = copy(Pn)
+        dPnm1 = copy(dPn)
+        dPn = copy(dPnp1)
+        for n = 2:N-1
+            Pn = (-K[n-1]+DT[n-1]*clenshaw_matrix_G(n-1,x,y))*Pnm1 - L[n-1]*Pnm2
+            dPnp1 = ((-K[n]+DT[n]*clenshaw_matrix_G(n,x,y))*dPn
+                        - L[n]*dPnm1
+                        + DT[n]*clenshaw_matrix_Gtilde(n,x,y)*Pn)
+            Pnm2 = copy(Pnm1)
+            Pnm1 = copy(Pn)
+            dPnm1 = copy(dPn)
+            dPn = copy(dPnp1)
+        end
+        return dPn
+    end
+
 
     #=
     Function to obtain the evaluation of a function f(x,y)
@@ -266,12 +327,79 @@ let
         Fo = (F.(X,Y) - F.(X,-Y))/2
 
         Fcoeffs = zeros(2N+1)
-        Fcoeffs[1] = innerTh(Tkh[1],Fe,h)
+        Fcoeffs[1] = sum(w*Tkh[1]*Fe)
         for k = 1:N
             Fcoeffs[2k] = sum(w*Tkh[k+1]*Fe)
             Fcoeffs[2k+1] = sum(Ukh[k]*Fo)
         end
         return Fcoeffs
+    end
+
+    # Gain coeffs of ∂/∂s(P_N) in OP basis (coeffs are matrices)
+    global function get_derivative_op_basis_coeff_mats(N, h)
+        xmin = h
+        xmax = 1
+        X = Fun(identity, xmin..xmax)
+        w = sqrt(1-X^2)
+        Ukh,_,_ = lanczos(w,N+1)
+        w = 1/sqrt(1-X^2)
+        Tkh,_,_ = lanczos(w,N+1)
+        dP1 = (x,y)->arc_op_derivative_eval(N,h,x,y)[1]
+        dP2 = (x,y)->arc_op_derivative_eval(N,h,x,y)[2]
+        dP1e = Fun( x -> (dP1(x,sqrt(1-x^2)) + dP1(x, -sqrt(1-x^2)))/2, Chebyshev(xmin..xmax), 10)
+        dP1o = Fun( x -> (dP1(x,sqrt(1-x^2)) - dP1(x, -sqrt(1-x^2)))/2, JacobiWeight(0,1/2,Chebyshev(xmin..xmax)), 50)
+        dP2e = Fun( x -> (dP2(x,sqrt(1-x^2)) + dP2(x, -sqrt(1-x^2)))/2, Chebyshev(xmin..xmax), 50)
+        dP2o = Fun( x -> (dP2(x,sqrt(1-x^2)) - dP2(x, -sqrt(1-x^2)))/2, JacobiWeight(0,1/2,Chebyshev(xmin..xmax)), 10)
+        Ae = Vector{Matrix{Float64}}(N+1)
+        Ae[1] = zeros(1,1)
+        Ao = copy(Ae)
+        Ae[1][1] = sum(w*Tkh[1]*dP1e)
+        for j = 1:N
+            n = j+1
+            Ae[n] = zeros(2,2)
+            Ao[n] = zeros(2,2)
+            Ae[n][1,1] = sum(w*Tkh[n]*dP1e)
+            Ae[n][2,1] = sum(w*Tkh[n]*dP2e)
+            Ao[n][1,2] = sum(Ukh[n-1]*dP1o)
+            Ao[n][2,2] = sum(Ukh[n-1]*dP2o)
+        end
+        A = Ae .+ Ao
+        return A
+    end
+
+    #=
+    Find Q_N, Q_{N-1} s.t. ∂P_N/∂s = A_N*Q_N, B_N*Q_{N-1} for some 2x2 matrices
+    A_N, B_N. Note Q_k(x,y) = [T̃kh(x); y*Ũkh(x)]
+    =#
+    global function get_derivative_op_Q_coeff_mats(N, h)
+        xmin = h
+        xmax = 1
+        X = Fun(identity, xmin..xmax)
+        w = X * sqrt(1-X^2)
+        Ũkh,_,_ = lanczos(w,N+1)
+        w = X / sqrt(1-X^2)
+        T̃kh,_,_ = lanczos(w,N+1)
+        dP1 = (x,y)->arc_op_derivative_eval(N,h,x,y)[1]
+        dP2 = (x,y)->arc_op_derivative_eval(N,h,x,y)[2]
+        dP1e = Fun( x -> (dP1(x,sqrt(1-x^2)) + dP1(x, -sqrt(1-x^2)))/2, Chebyshev(xmin..xmax), 10)
+        dP1o = Fun( x -> (dP1(x,sqrt(1-x^2)) - dP1(x, -sqrt(1-x^2)))/2, JacobiWeight(0,1/2,Chebyshev(xmin..xmax)), 50)
+        dP2e = Fun( x -> (dP2(x,sqrt(1-x^2)) + dP2(x, -sqrt(1-x^2)))/2, Chebyshev(xmin..xmax), 50)
+        dP2o = Fun( x -> (dP2(x,sqrt(1-x^2)) - dP2(x, -sqrt(1-x^2)))/2, JacobiWeight(0,1/2,Chebyshev(xmin..xmax)), 10)
+        Ae = Vector{Matrix{Float64}}(N+1)
+        Ae[1] = zeros(1,1)
+        Ao = copy(Ae)
+        Ae[1][1] = sum(w*T̃kh[1]*dP1e)
+        for j = 1:N
+            n = j+1
+            Ae[n] = zeros(2,2)
+            Ao[n] = zeros(2,2)
+            Ae[n][1,1] = sum(w*T̃kh[n]*dP1e)
+            Ae[n][2,1] = sum(w*T̃kh[n]*dP2e)
+            Ao[n][1,2] = sum(X*Ũkh[n-1]*dP1o)
+            Ao[n][2,2] = sum(X*Ũkh[n-1]*dP2o)
+        end
+        A = Ae .+ Ao
+        return A
     end
 
 end
@@ -304,7 +432,123 @@ end
 #=======#
 
 # Test for ApproxFun.Fun to coefficients method
-
 F = Fun((x,y)->exp(x+y))
 Fcoeffs = func_to_coeffs(F, N, h)
+F(x,y)
+arc_func_eval(Fcoeffs, h, α, β, γ, δ, a, b, c, d, e, f, x, y)
 @test arc_func_eval(Fcoeffs, h, α, β, γ, δ, a, b, c, d, e, f, x, y) ≈ F(x,y)
+
+#=======#
+
+# N = 2
+#
+# dP1(cos(0.1),sin(0.1))
+# dP2(1,0)
+#
+# using Plots
+#
+# t = linspace(0, π/2, 100)
+# plot(t, dP1.(cos.(t),sin.(t)))
+#
+#
+# dt = 0.000001; (arc_op_eval(N,h,cos(0.1+dt),sin(0.1+dt)) - arc_op_eval(N,h,cos(0.1),sin(0.1)))/dt
+
+#=======#
+
+# Check the derivative evaluation function
+dP1 = (x,y)->arc_op_derivative_eval(N,h,x,y)[1]
+dP2 = (x,y)->arc_op_derivative_eval(N,h,x,y)[2]
+θ = acos(x); dt = 1e-9; findiff = (arc_op_eval(N,h,x,y)-arc_op_eval(N,h,cos(θ+dt),sin(θ+dt)))/dt
+tol = 1e-5
+@test (abs(-findiff[1] - dP1(x,y)) < tol && abs(-findiff[2] - dP2(x,y)) < tol)
+
+#=======#
+
+# Gain coeffs of ∂/∂s(P_N) in OP basis (coeffs are matrices)
+A = get_derivative_op_basis_coeff_mats(N, h)
+out = zeros(2)
+for j = 1:N
+    n = j+1
+    out += A[n]*[Tkh[n](x); Ukh[n-1](x)*y]
+end
+out
+[dP1(x,y); dP2(x,y)]
+
+w = 1/sqrt(1-X^2)
+dP1 = (x,y)->arc_op_derivative_eval(N,h,x,y)[1]
+dP2 = (x,y)->arc_op_derivative_eval(N,h,x,y)[2]
+dP1e = Fun( x -> (dP1(x,sqrt(1-x^2)) + dP1(x, -sqrt(1-x^2)))/2, Chebyshev(xmin..xmax), 10)
+dP1o = Fun( x -> (dP1(x,sqrt(1-x^2)) - dP1(x, -sqrt(1-x^2)))/2, JacobiWeight(0,1/2,Chebyshev(xmin..xmax)), 50)
+dP2e = Fun( x -> (dP2(x,sqrt(1-x^2)) + dP2(x, -sqrt(1-x^2)))/2, Chebyshev(xmin..xmax), 50)
+dP2o = Fun( x -> (dP2(x,sqrt(1-x^2)) - dP2(x, -sqrt(1-x^2)))/2, JacobiWeight(0,1/2,Chebyshev(xmin..xmax)), 10)
+Ae = Vector{Matrix{Float64}}(N+1)
+Ae[1] = zeros(1,1)
+Ao = copy(Ae)
+Ae[1][1] = sum(w*Tkh[1]*dP1e)
+for j = 1:N
+    n = j+1
+    Ae[n] = zeros(2,2)
+    Ao[n] = zeros(2,2)
+    #Ae[n][1,1] = sum(w*Tkh[n]*dP1e)
+    Ae[n][2,1] = sum(w*Tkh[n]*dP2e)
+    Ao[n][1,2] = sum(Ukh[n-1]*dP1o)
+    #Ao[n][2,2] = sum(Ukh[n-1]*dP2o)
+end
+A = Ae .+ Ao
+out = zeros(2)
+for j = 1:N
+    n = j+1
+    out += A[n]*[Tkh[n](x); Ukh[n-1](x)*y]
+end
+out
+[dP1(x,y); dP2(x,y)]
+
+#=======#
+
+# Find Q_N, Q_{N-1} s.t. ∂P_N/∂s = A_N*Q_N, B_N*Q_{N-1} for some 2x2 matrices
+# A_N, B_N. Note Q_k(x,y) = [T̃kh(x); y*Ũkh(x)]
+A = get_derivative_op_Q_coeff_mats(N, h)
+w = X / sqrt(1-X^2)
+T̃kh,_,_ = lanczos(w,N+1)
+w = X * sqrt(1-X^2)
+Ũkh,_,_ = lanczos(w,N+1)
+out = zeros(2)
+for j = N-1:N
+    n = j+1
+    out += A[n]*[T̃kh[n](x); Ũkh[n-1](x)*y]
+end
+out
+[dP1(x,y); dP2(x,y)]
+
+#=======#
+
+# Operator matrix for ∂/∂s
+cols = rows = [1; round.(Int,2*ones(N))]  # block sizes
+l,u = N,0          # block bandwidths
+λ,μ = 1,1          # sub-block bandwidths: the bandwidths of each block
+D = BandedBlockBandedMatrix(0.0I, (rows,cols), (l,u), (λ,μ))
+for k=1:N
+    println(k)
+    A = get_derivative_op_basis_coeff_mats(k, h)
+    for n = 1:k
+        view(D, Block(k+1,n+1)) .= A[n+1]
+    end
+end
+Ds = D
+l,u = 1,0
+D̃s = BandedBlockBandedMatrix(0.0I, (rows,cols), (l,u), (λ,μ))
+for k=1:N
+    println(k)
+    A = get_derivative_op_Q_coeff_mats(k, h)
+    for n = k-1:k
+        view(D̃s, Block(k+1,n+1)) .= A[n+1]
+    end
+end
+D̃s
+check = 0
+for ij in eachindex(D̃s)
+    if abs(D̃s[ij]) > 1e-5
+        check += 1
+    end
+end
+check
