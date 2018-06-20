@@ -825,6 +825,8 @@ let
     where the {P_n} are the OPs on the sphere (spherical harmonics)
 
     Uses the Clenshaw Algorithm.
+
+    # THIS IS WRONG
     =#
     global function func_eval_grad_jacobi(f)
         # Define the Jacobi operator matrices and pass to evaluation function

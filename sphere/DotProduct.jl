@@ -1,10 +1,3 @@
-
-include("simulation.jl")
-using FastTransforms
-using BlockBandedMatrices
-using BlockArrays
-using Base.Test
-
 # Get operator matrix for the dot product of each tangent OP (grad/gradperp Ylm)
 # acting on a function in the tangent space. The operator will be a matrix that
 # is applied to the coeffs vector of the tangent space function.
@@ -21,16 +14,15 @@ function function2sph(f)
     M = size(V,2)
     P = eye(Complex128,M)
     for k = 2:4:M
-        P[k:k+1,k:k+1] = [im im;
-                      1 -1]/sqrt(2)
+        P[k:k+1,k:k+1] = [im im; 1 -1]/sqrt(2)
      end
     for k = 4:4:M
-      P[k:k+1,k:k+1] = [im -im;
-                    1 1]/sqrt(2)
+        P[k:k+1,k:k+1] = [im -im; 1 1]/sqrt(2)
     end
     return (V |> fourier2sph) * P
 end
 function gradP1_dot_prodcuct_operators(N1, N2)
+    # Setup
     gradP1length = 6
     T1 = Vector{BandedBlockBandedMatrix}(gradP1length)
     N = N1 + N2
@@ -38,6 +30,7 @@ function gradP1_dot_prodcuct_operators(N1, N2)
     cols = 6:4:2(2N2+1)
     l,u = 3,1
     λ,μ = 2(2N+1),2(2N+1)
+    # There is an operator J for each ∇Y in ∇P_1
     for k = 1:gradP1length
         println("k = ", k)
         a = (θ,ϕ)->tangent_basis_eval(1,sin(θ)*cos(ϕ),sin(θ)*sin(ϕ),cos(θ))[Block(k+2)]
@@ -139,17 +132,18 @@ function tangent_space_dot_product(u, v, T1)
     return ret
 end
 
-
-
-# Test example
-x,y = 0.8,0.5
-z = sqrt(1-x^2-y^2)
-N1 = 2
-N2 = 2
-u = rand(2(N1+1)^2)
-v = rand(2(N2+1)^2)
-# T1 = gradP1_dot_prodcuct_operators(N1, N2)
-b = tangent_space_dot_product(u, v, T1)
-@test func_eval(b, x, y, z) ≈ tangent_func_eval(u, x, y, z).'*tangent_func_eval(v, x, y, z)
-
-#===#
+#
+# # Test example
+# x,y = 0.8,0.5
+# z = sqrt(1-x^2-y^2)
+# N1 = 3
+# N2 = 4
+# u = rand(2(N1+1)^2)
+# v = rand(2(N2+1)^2)
+# # T1 = gradP1_dot_prodcuct_operators(N1, N2)
+# @time b = tangent_space_dot_product(u, v, T1)
+# @test func_eval(b, x, y, z) ≈ tangent_func_eval(u, x, y, z).'*tangent_func_eval(v, x, y, z)
+#
+# #===#
+#
+# @time T1 = gradP1_dot_prodcuct_operators(N1, N2)
