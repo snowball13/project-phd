@@ -519,6 +519,89 @@ let
         return A
     end
 
+    # Operator matrix for conversion from P basis to Q basis
+    global function arc2Q(N, h)
+        cols = rows = [1; round.(Int,2*ones(N))]  # block sizes
+        l,u = 1,0
+        λ,μ = 1,1
+        C = BandedBlockBandedMatrix(0.0I, (rows,cols), (l,u), (λ,μ))
+        # k = 0
+        P1 = (x,y)->arc_op_eval(0, h, x, y)[1]
+        P1c = func_to_Q_coeffs(P1, 0, h)
+        view(C, Block(1,1)) .= [P1c[1]]
+        # k = 1
+        P1 = (x,y)->arc_op_eval(1, h, x, y)[1]
+        P2 = (x,y)->arc_op_eval(1, h, x, y)[2]
+        P1c = func_to_Q_coeffs(P1, 1, h)
+        P2c = func_to_Q_coeffs(P2, 1, h)
+        view(C, Block(2,1)) .= [P1c[1]; P2c[1]]
+        view(C, Block(2,2)) .= [P1c[2] P1c[3]; P2c[2] P2c[3]]
+        # k > 1
+        j = 2
+        for k=2:N
+            println(k)
+            P1 = (x,y)->arc_op_eval(k, h, x, y)[1]
+            P2 = (x,y)->arc_op_eval(k, h, x, y)[2]
+            P1c = func_to_Q_coeffs(P1, k, h)
+            P2c = func_to_Q_coeffs(P2, k, h)
+            view(C, Block(k+1,k)) .= [P1c[j] P1c[j+1]; P2c[j] P2c[j+1]]
+            view(C, Block(k+1,k+1)) .= [P1c[j+2] P1c[j+3]; P2c[j+2] P2c[j+3]]
+            j += 2
+        end
+        return C
+    end
+
+    # Operator matrix for conversion from Q basis to P basis
+    global function Q2arc(N, h)
+        cols = rows = [1; round.(Int,2*ones(N))]  # block sizes
+        l,u = N,0
+        λ,μ = 1,1
+        C = BandedBlockBandedMatrix(0.0I, (rows,cols), (l,u), (λ,μ))
+        view(C, Block(1,1)) .= get_op_in_Q_basis_coeff_mats(0, h)[1]
+        for k=1:N
+            println(k)
+            A = get_op_in_Q_basis_coeff_mats(k, h)
+            for n = 1:k+1
+                view(C, Block(k+1,n)) .= A[n]
+            end
+        end
+        return C
+    end
+
+    # Operator matrix for ∂/∂s. Acts on arc OP coeffs and results in arc OP coeffs.
+    global function arc_derivative_operator(N, h)
+        cols = rows = [1; round.(Int,2*ones(N))]  # block sizes
+        l,u = N,0          # block bandwidths
+        λ,μ = 1,1          # sub-block bandwidths: the bandwidths of each block
+        Ds = BandedBlockBandedMatrix(0.0I, (rows,cols), (l,u), (λ,μ))
+        for k=1:N
+            println(k)
+            A = get_derivative_op_basis_coeff_mats(k, h)
+            for n = 1:k
+                view(Ds, Block(k+1,n+1)) .= A[n+1]
+            end
+        end
+        return Ds
+    end
+
+    # Operator matrix for ∂/∂s. Acts on arc OP coeffs and results in Q coeffs.
+    global function arc_derivative_operator_in_Q(N, h)
+        cols = rows = [1; round.(Int,2*ones(N))]  # block sizes
+        l,u = 1,0          # block bandwidths
+        λ,μ = 1,1          # sub-block bandwidths: the bandwidths of each block
+        D̃s = BandedBlockBandedMatrix(0.0I, (rows,cols), (l,u), (λ,μ))
+        for k=1:N
+            println(k)
+            A = get_derivative_op_Q_coeff_mats(k, h)
+            j = 1
+            for n = k-1:k
+                view(D̃s, Block(k+1,n+1)) .= A[j]
+                j += 1
+            end
+        end
+        return D̃s
+    end
+
 end
 
 #=======#
@@ -565,56 +648,6 @@ tol = 1e-5
 
 #=======#
 
-# Gain coeffs of ∂/∂s(P_N) in OP basis (coeffs are matrices)
-A = get_derivative_op_basis_coeff_mats(N, h)
-t = zeros(length(0.1:0.1:0.9))
-k = 1
-out = zeros(2)
-for xx = 0.1:0.1:0.9
-    yy = sqrt(1-xx^2)
-    out = A[1]*Tkh[1](xx)
-    for j = 1:N
-        n = j+1
-        out += A[n]*[Tkh[n](xx); Ukh[n-1](xx)*yy]
-    end
-    t[k] = out[2]-dP2(xx,yy)
-    k += 1
-end
-t
-
-
-w = 1/sqrt(1-X^2)
-dP1 = (x,y)->arc_op_derivative_eval(N,h,x,y)[1]
-dP2 = (x,y)->arc_op_derivative_eval(N,h,x,y)[2]
-dP1e = Fun( x -> (dP1(x,sqrt(1-x^2)) + dP1(x, -sqrt(1-x^2)))/2, Chebyshev(xmin..xmax), 10)
-dP1o = Fun( x -> (dP1(x,sqrt(1-x^2)) - dP1(x, -sqrt(1-x^2)))/2, JacobiWeight(0,1/2,Chebyshev(xmin..xmax)), 50)
-dP2e = Fun( x -> (dP2(x,sqrt(1-x^2)) + dP2(x, -sqrt(1-x^2)))/2, Chebyshev(xmin..xmax), 50)
-dP2o = Fun( x -> (dP2(x,sqrt(1-x^2)) - dP2(x, -sqrt(1-x^2)))/2, JacobiWeight(0,1/2,Chebyshev(xmin..xmax)), 10)
-Ae = Vector{Matrix{Float64}}(N+1)
-Ae[1] = zeros(2,1)
-Ao = copy(Ae)
-Ae[1][2] = sum(w*Tkh[1]*dP2e)
-for j = 1:N
-    n = j+1
-    Ae[n] = zeros(2,2)
-    Ao[n] = zeros(2,2)
-    #Ae[n][1,1] = sum(w*Tkh[n]*dP1e)
-    Ae[n][2,1] = sum(w*Tkh[n]*dP2e)
-    Ao[n][1,2] = sum(Ukh[n-1]*dP1o)
-    #Ao[n][2,2] = sum(Ukh[n-1]*dP2o)
-end
-A = Ae .+ Ao
-out = zeros(2)
-out += A[1]*Tkh[1](x)
-for j = 1:N
-    n = j+1
-    out += A[n]*[Tkh[n](x); Ukh[n-1](x)*y]
-end
-out
-[dP1(x,y); dP2(x,y)]
-
-#=======#
-
 # Find Q_N, Q_{N-1} s.t. ∂P_N/∂s = A_N*Q_N, B_N*Q_{N-1} for some 2x2 matrices
 # A_N, B_N. Note Q_k(x,y) = [T̃kh(x); y*Ũkh(x)]
 A = get_derivative_op_Q_coeff_mats(N, h)
@@ -633,38 +666,6 @@ out
 
 #=======#
 
-# Operator matrix for ∂/∂s
-cols = rows = [1; round.(Int,2*ones(N))]  # block sizes
-l,u = N,0          # block bandwidths
-λ,μ = 1,1          # sub-block bandwidths: the bandwidths of each block
-Ds = BandedBlockBandedMatrix(0.0I, (rows,cols), (l,u), (λ,μ))
-for k=1:N
-    println(k)
-    A = get_derivative_op_basis_coeff_mats(k, h)
-    for n = 1:k
-        view(Ds, Block(k+1,n+1)) .= A[n+1]
-    end
-end
-Ds
-l,u = 1,0
-D̃s = BandedBlockBandedMatrix(0.0I, (rows,cols), (l,u), (λ,μ))
-for k=1:N
-    println(k)
-    A = get_derivative_op_Q_coeff_mats(k, h)
-    j = 1
-    for n = k-1:k
-        view(D̃s, Block(k+1,n+1)) .= A[j]
-        j += 1
-    end
-end
-D̃s
-
-view(D̃s, 3,1) .= view(D̃s, 3,1)/2
-k = 1
-A = get_derivative_op_Q_coeff_mats(k, h)
-
-#=======#
-
 # Gain the coeffs vec for a function in Q basis
 u = Fun((x,y)->exp(x+y))
 uc = func_to_Q_coeffs(u, N, h)
@@ -673,52 +674,8 @@ ueval = Q_func_eval(uc, h, x, y)
 
 #=======#
 
-# Operator matrix for conversion from P basis to Q basis
-cols = rows = [1; round.(Int,2*ones(N))]  # block sizes
-l,u = 1,0
-λ,μ = 1,1
-C = BandedBlockBandedMatrix(0.0I, (rows,cols), (l,u), (λ,μ))
-# k = 0
-P1 = (x,y)->arc_op_eval(0, h, x, y)[1]
-P1c = func_to_Q_coeffs(P1, 0, h)
-view(C, Block(1,1)) .= [P1c[1]]
-# k = 1
-P1 = (x,y)->arc_op_eval(1, h, x, y)[1]
-P2 = (x,y)->arc_op_eval(1, h, x, y)[2]
-P1c = func_to_Q_coeffs(P1, 1, h)
-P2c = func_to_Q_coeffs(P2, 1, h)
-view(C, Block(2,1)) .= [P1c[1]; P2c[1]]
-view(C, Block(2,2)) .= [P1c[2] P1c[3]; P2c[2] P2c[3]]
-# k > 1
-j = 2
-for k=2:N
-    println(k)
-    P1 = (x,y)->arc_op_eval(k, h, x, y)[1]
-    P2 = (x,y)->arc_op_eval(k, h, x, y)[2]
-    P1c = func_to_Q_coeffs(P1, k, h)
-    P2c = func_to_Q_coeffs(P2, k, h)
-    view(C, Block(k+1,k)) .= [P1c[j] P1c[j+1]; P2c[j] P2c[j+1]]
-    view(C, Block(k+1,k+1)) .= [P1c[j+2] P1c[j+3]; P2c[j+2] P2c[j+3]]
-    j += 2
-end
-P2Q = C
-
-#=======#
-
 # Operator matrix for conversion from Q basis to P basis
-cols = rows = [1; round.(Int,2*ones(N))]  # block sizes
-l,u = N,0
-λ,μ = 1,1
-Q2P = BandedBlockBandedMatrix(0.0I, (rows,cols), (l,u), (λ,μ))
-view(Q2P, Block(1,1)) .= get_op_in_Q_basis_coeff_mats(0, h)[1]
-for k=1:N
-    println(k)
-    A = get_op_in_Q_basis_coeff_mats(k, h)
-    for n = 1:k+1
-        view(Q2P, Block(k+1,n)) .= A[n]
-    end
-end
-Q2P
+Q2P = Q2arc(N, h)
 u = Fun((x,y)->exp(x+y))
 uc = func_to_coeffs(u, N, h)
 ucQ = func_to_Q_coeffs(u, N, h)
@@ -728,6 +685,7 @@ tol = 1e-4
 #=======#
 
 # Example
+D̃s = arc_derivative_operator_in_Q(N, h)
 u = Fun((x,y)->exp(x+y))
 dsu = (x,y)->(x-y)*exp(x+y)
 uc = func_to_coeffs(u, N, h)
