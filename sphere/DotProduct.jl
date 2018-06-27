@@ -28,7 +28,7 @@ function gradP1_dot_prodcuct_operators(N1, N2)
     N = N1 + N2
     rows = 1:2:2N+1
     cols = 6:4:2(2N2+1)
-    l,u = 3,1
+    l,u = 2,1
     λ,μ = 2(2N+1),2(2N+1)
     # There is an operator J for each ∇Y in ∇P_1
     for k = 1:gradP1length
@@ -132,15 +132,16 @@ function tangent_space_dot_product(u, v, T1)
     return ret
 end
 
-#
+
 # # Test example
+# using SphericalHarmonics
 # x,y = 0.8,0.5
 # z = sqrt(1-x^2-y^2)
 # N1 = 3
 # N2 = 4
 # u = rand(2(N1+1)^2)
 # v = rand(2(N2+1)^2)
-# # T1 = gradP1_dot_prodcuct_operators(N1, N2)
+# # T1 = gradP1_dot_prodcuct_operators(N1, N2)
 # @time b = tangent_space_dot_product(u, v, T1)
 # @test func_eval(b, x, y, z) ≈ tangent_func_eval(u, x, y, z).'*tangent_func_eval(v, x, y, z)
 #
