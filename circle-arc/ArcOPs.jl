@@ -1,8 +1,3 @@
-using ApproxFun
-using BlockBandedMatrices
-using BlockArrays
-using Base.Test
-
 let
 
     #=
@@ -390,7 +385,7 @@ let
         return Fcoeffs
     end
 
-    global function get_op_in_Q_basis_coeff_mats(N, h)
+    function get_op_in_Q_basis_coeff_mats(N, h)
         xmin = h
         xmax = 1
         X = Fun(identity, xmin..xmax)
@@ -422,7 +417,7 @@ let
         return A
     end
 
-    global function get_Q_in_op_basis_coeff_mats(N, h)
+    function get_Q_in_op_basis_coeff_mats(N, h)
         if N == 0
             P1 = (x,y)->arc_op_eval(0, h, x, y)
             P1c = func_to_coeffs(P1, 0, h)
@@ -447,7 +442,7 @@ let
     end
 
     # Gain coeffs of ∂/∂s(P_N) in OP basis (coeffs are matrices)
-    global function get_derivative_op_basis_coeff_mats(N, h)
+    function get_derivative_op_basis_coeff_mats(N, h)
         xmin = h
         xmax = 1
         X = Fun(identity, xmin..xmax)
@@ -483,7 +478,7 @@ let
     Find Q_N, Q_{N-1} s.t. ∂P_N/∂s = A_N*Q_N, B_N*Q_{N-1} for some 2x2 matrices
     A_N, B_N. Note Q_k(x,y) = [T̃kh(x); y*Ũkh(x)]
     =#
-    global function get_derivative_op_Q_coeff_mats(N, h)
+    function get_derivative_op_Q_coeff_mats(N, h)
         xmin = h
         xmax = 1
         X = Fun(identity, xmin..xmax)
@@ -604,95 +599,77 @@ let
 
 end
 
-#=======#
-
-N, h = 5, 0
-α, β, γ, δ, a, b, c, d, e, f = initialise_arc_ops(N, h)
-x = 0.8
-y = sqrt(1-x^2)
-
-#=======#
-
-# Test for function evaluation method
-F = rand(2N+1)
-Feval = arc_func_eval(F, h, α, β, γ, δ, a, b, c, d, e, f, x, y)
-xmin = h
-xmax = 1
-X = Fun(identity, xmin..xmax)
-w = (1/sqrt(1-X^2))
-Tkh,_,_ = lanczos(w,N+1)
-w = sqrt(1-X^2)
-Ukh,_,_ = lanczos(w,N+1)
-Factual = F[1]*Tkh[1](x)
-for n = 1:N
-    Factual += F[2n]*Tkh[n+1](x) + F[2n+1]*y*Ukh[n](x)
-end
-@test Factual ≈ Feval
-
-#=======#
-
-# Test for ApproxFun.Fun to coefficients method
-F = Fun((x,y)->exp(x+y))
-Fcoeffs = func_to_coeffs(F, N, h)
-tol = 1e-4
-@test abs(arc_func_eval(Fcoeffs, h, α, β, γ, δ, a, b, c, d, e, f, x, y) - F(x,y)) < tol
-
-#=======#
-
-# Check the derivative evaluation function
-dP1 = (x,y)->arc_op_derivative_eval(N,h,x,y)[1]
-dP2 = (x,y)->arc_op_derivative_eval(N,h,x,y)[2]
-θ = acos(x); dt = 1e-9; findiff = (arc_op_eval(N,h,cos(θ+dt),sin(θ+dt))-arc_op_eval(N,h,x,y))/dt
-tol = 1e-5
-@test (abs(findiff[1] - dP1(x,y)) < tol && abs(findiff[2] - dP2(x,y)) < tol)
-
-#=======#
-
-# Find Q_N, Q_{N-1} s.t. ∂P_N/∂s = A_N*Q_N, B_N*Q_{N-1} for some 2x2 matrices
-# A_N, B_N. Note Q_k(x,y) = [T̃kh(x); y*Ũkh(x)]
-A = get_derivative_op_Q_coeff_mats(N, h)
-w = X / sqrt(1-X^2)
-T̃kh,_,_ = lanczos(w,N+1)
-w = X * sqrt(1-X^2)
-Ũkh,_,_ = lanczos(w,N+1)
-out = zeros(2)
-j = 1
-for n = N-1:N
-    out += A[j]*[T̃kh[n+1](x); Ũkh[n](x)*y]
-    j += 1
-end
-out
-[dP1(x,y); dP2(x,y)]
-
-#=======#
-
-# Gain the coeffs vec for a function in Q basis
-u = Fun((x,y)->exp(x+y))
-uc = func_to_Q_coeffs(u, N, h)
-ueval = Q_func_eval(uc, h, x, y)
-@test abs(ueval - u(x,y)) < 1e-5
-
-#=======#
-
-# Operator matrix for conversion from Q basis to P basis (and back)
-Q2P = Q2arc(N, h)
-u = Fun((x,y)->exp(x+y))
-uc = func_to_coeffs(u, N, h)
-ucQ = func_to_Q_coeffs(u, N, h)
-tol = 1e-4
-@test norm(Q2P*ucQ - uc) < tol
-# P2Q = arc2Q(N, h)
-# @test norm(P2Q*uc - ucQ) < tol
-
-#=======#
-
-# Example
-D̃s = arc_derivative_operator_in_Q(N, h)
-u = Fun((x,y)->exp(x+y))
-dsu = (x,y)->(x-y)*exp(x+y)
-uc = func_to_coeffs(u, N, h)
-dsuc = Q2P.'*D̃s*uc
-dsu_eval = arc_func_eval(dsuc, h, α, β, γ, δ, a, b, c, d, e, f, x, y)
-dsu(x,y)
-tol = 1e-4
-@test abs(dsu(x,y) - dsu_eval) < tol
+# #=======#
+#
+# N, h = 5, 0
+# α, β, γ, δ, a, b, c, d, e, f = initialise_arc_ops(N, h)
+# x = 0.8
+# y = sqrt(1-x^2)
+#
+# #=======#
+#
+# # Test for function evaluation method
+# F = rand(2N+1)
+# Feval = arc_func_eval(F, h, α, β, γ, δ, a, b, c, d, e, f, x, y)
+# xmin = h
+# xmax = 1
+# X = Fun(identity, xmin..xmax)
+# w = (1/sqrt(1-X^2))
+# Tkh,_,_ = lanczos(w,N+1)
+# w = sqrt(1-X^2)
+# Ukh,_,_ = lanczos(w,N+1)
+# Factual = F[1]*Tkh[1](x)
+# for n = 1:N
+#     Factual += F[2n]*Tkh[n+1](x) + F[2n+1]*y*Ukh[n](x)
+# end
+# @test Factual ≈ Feval
+#
+# #=======#
+#
+# # Test for ApproxFun.Fun to coefficients method
+# F = Fun((x,y)->exp(x+y))
+# Fcoeffs = func_to_coeffs(F, N, h)
+# tol = 1e-4
+# @test abs(arc_func_eval(Fcoeffs, h, α, β, γ, δ, a, b, c, d, e, f, x, y) - F(x,y)) < tol
+#
+# #=======#
+#
+# # Check the derivative evaluation function
+# dP1 = (x,y)->arc_op_derivative_eval(N,h,x,y)[1]
+# dP2 = (x,y)->arc_op_derivative_eval(N,h,x,y)[2]
+# θ = acos(x); dt = 1e-9; findiff = (arc_op_eval(N,h,cos(θ+dt),sin(θ+dt))-arc_op_eval(N,h,x,y))/dt
+# tol = 1e-5
+# @test (abs(findiff[1] - dP1(x,y)) < tol && abs(findiff[2] - dP2(x,y)) < tol)
+#
+# #=======#
+#
+# # Gain the coeffs vec for a function in Q basis
+# u = Fun((x,y)->exp(x+y))
+# uc = func_to_Q_coeffs(u, N, h)
+# ueval = Q_func_eval(uc, h, x, y)
+# @test abs(ueval - u(x,y)) < 1e-5
+#
+# #=======#
+#
+# # Operator matrix for conversion from Q basis to P basis (and back)
+# Q2P = Q2arc(N, h)
+# u = Fun((x,y)->exp(x+y))
+# uc = func_to_coeffs(u, N, h)
+# ucQ = func_to_Q_coeffs(u, N, h)
+# tol = 1e-4
+# @test norm(Q2P*ucQ - uc) < tol
+# # P2Q = arc2Q(N, h)
+# # @test norm(P2Q*uc - ucQ) < tol
+#
+# #=======#
+#
+# # Example
+# D̃s = arc_derivative_operator_in_Q(N, h)
+# u = Fun((x,y)->exp(x+y))
+# dsu = (x,y)->(x-y)*exp(x+y)
+# uc = func_to_coeffs(u, N, h)
+# dsuc = Q2P*D̃s*uc
+# dsu_eval = arc_func_eval(dsuc, h, α, β, γ, δ, a, b, c, d, e, f, x, y)
+# dsu(x,y)
+# tol = 1e-4
+# @test abs(dsu(x,y) - dsu_eval) < tol
