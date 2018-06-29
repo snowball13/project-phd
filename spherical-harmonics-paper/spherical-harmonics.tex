@@ -947,7 +947,7 @@ Define \(\unitvec\) as the unit outward normal vector at the point on the sphere
 \unitvec = \begin{bmatrix} x \\ y \\ z \end{bmatrix}.
 \end{align}
 
-Let \(S := \{ \bold{x} := (x,y,z) \quad | \quad ||\bold{x}|| = 1\}\) be the unit sphere in \(\R^3\) and let \(T_x^S\) denote the tangent space at the point \(\bold{x} \in S\). Further, let \(\bold{u}(x,y,z)\), \(\bold{v}(x,y,z)\) be two vector valued functions for \((x,y,z)\) on the unit sphere (representing the tangential velocity of a flow for example) and let \(h(x,y,z)\) be a scalar function on the sphere.
+Let \(S := \{ \bold{x} := (x,y,z) \quad | \quad ||\bold{x}|| = 1\}\) be the unit sphere in \(\R^3\) and let \(T_x^S\) denote the tangent space at the point \(\bold{x} \in S\). Further, let \(\bold{u}(x,y,z)\), \(\bold{v}(x,y,z)\) be two vector valued functions for \((x,y,z)\) on the unit sphere with values in the tangent space (representing the tangential velocity of a flow for example) and let \(h(x,y,z)\) be a scalar function on the sphere.
 
 Then, 
 \begin{align}
@@ -1186,7 +1186,7 @@ Each \(J_{l,m}\), \(J^\perp_{l,m}\) will have the \((\tilde{N} \times N_2)\) blo
 		& & \ddots & \ddots \\
 	  \end{array}
 \end{align}
-i.e. a BandedBlockBandedMatrix\((J, (rows, cols), (2,1), (?,?))\) where 
+i.e. a BandedBlockBandedMatrix\((J, (rows, cols), (2,1), (?,?))\) [note: I am not sure what the sub-block bands should be] where 
 \begin{align}
 rows &= 1:2:2\tilde{N}+1 \\
 cols &= 6:4:2(2N_2+1).
@@ -1229,7 +1229,7 @@ where \(\bold{b}^c \in \R^{(\tilde{N}+1)^2}\) and is given by
 \end{align}
 
 
-\bibliography{spherical-harmonics-bib}
+% \bibliography{spherical-harmonics-bib}
 
 
 \end{document}
