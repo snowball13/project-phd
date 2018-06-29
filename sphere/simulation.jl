@@ -155,7 +155,7 @@ let
     =#
     global function coriolis_freq(N)
         T = 60*60*24
-        return 2*(2*pi/T)*grad_Jz(N)
+        return 2*(2*pi/T)*grad_Jz(N).'
     end
 
 
