@@ -17,6 +17,8 @@
 
 \newcommand{\sotodo}{\todo[color=green]}
 \newcommand{\sotodoinline}{\todo[color=green,inline=true]}
+\newcommand{\bstodo}{\todo[color=pink]}
+\newcommand{\bstodoinline}{\todo[color=pink,inline=true]}
 
 
 %SetFonts
@@ -25,7 +27,8 @@
 
 \usepackage{natbib}
 \usepackage{url}
-\bibliographystyle{elsarticle-harv}
+%\bibliographystyle{elsarticle-harv}
+\bibliographystyle{plain}
 
 \newcommand{\half}{\frac{1}{2}}
 \newcommand{\R}{\mathbb{R}}
@@ -70,8 +73,8 @@
 
 \newcommand{\bigP}{\mathbb{P}}
 \newcommand{\Pl}{\mathbb{P}_l}
-\newcommand{\gradP}{\nabla\mathbb{P}}
-\newcommand{\gradPl}{\nabla\mathbb{P}_l}
+\newcommand{\gradP}{T\mathbb{P}}
+\newcommand{\gradPl}{T\mathbb{P}_l}
 \newcommand{\gradY}{\nabla Y}
 \newcommand{\gradYlm}{\nabla Y^m_l}
 \newcommand{\gradpY}{\nabla^\perp Y}
@@ -108,6 +111,8 @@
 \newcommand{\unitvec}{\hat{\bm{k}}}
 
 
+\usepackage{media9}
+\graphicspath{ {../sphere/plots} }
 
 
 
@@ -128,16 +133,18 @@
 \sotodoinline{Give outline}
 \sotodoinline{Mention shallow water equation. Include plot.}
 
+We use spherical harmonics as orthogonal polynomials in three variables $x, y, z$  to evaluate functions on the sphere. We lay out our derivations behind how we can evaluate a function on the sphere given coefficients of its expansion in the spherical harmonic basis, as well as demonstrate similar work with vector valued functions in the tangent space of the sphere. Finally, we provide details on how these techniques are used in an example of the linear shallow water equations (SWE).
+
 \subsection{On the Unit Interval (1D)}
 
-On the unit interval, \([-1,1]\), we note that there is a hierarchy of orthogonal polynomials (OPs) in the sense that
+On the unit interval, \([-1,1]\), we note that there is a hierarchy of orthogonal polynomials (OPs) in the sense that \cite{DLMFJacobiDerivative}:
 \begin{align}
 & \ddx P^{(a,b)}_l (x) = \text{const.} \times P^{(a+1,b+1)}_{l-1}(x) \\
 \implies & \dmdxm P_l(x) = \text{const.} \times P^{(m,m)}_{l-m}(x)
 \end{align}
 where \(P^{(a,b)}_l (x)\) is the \(l\) degree Jacobi polynomial, orthogonal with weight \(w(x) = (1-x)^a(1+x)^b\), and \(P_l(x) := P^{(0,0)}_l (x)\) is the Legendre polynomial of degree \(l\).
 
-Further, we can define associated Legendre polynomials that are also orthogonal:
+Further, we can define associated Legendre polynomials that are also orthogonal \bstodo{Add reference}:
 \begin{align}
 \Plm(x) &:= (-1)^m (1-x^2)^\frac{m}{2} \dmdxm P_l(x) = \chat (1-x^2)^\frac{m}{2} P^{(m,m)}_{l-m}(x) \\
 P^{-m}_l(x) &:= \ctilde \Plm(x),
@@ -169,7 +176,7 @@ and
 	   \end{cases}.
 \end{align}
 
-We can the define the spherical harmonics, orthogonal on the unit sphere as:
+We can the define the spherical harmonics, orthogonal on the unit sphere as \cite{DLMFSphericalandSpheroidalHarmonics, DLMFFerrers, DLMFAssociatedLegendre}:
 \begin{align}
 \Ylmfull &:= \clm \eimphi \Plm (\costheta) \\
 &= \alphalm (1 - (\costheta)^2)^\frac{|m|}{2} \eimphi P^{(|m|,|m|)}_{l-|m|}(\costheta), \quad \text{where } 0 \le |m| \le l, \, l \in \No.
@@ -182,97 +189,17 @@ Note that we can then express \(\Ylm\) in terms of \(x,y,z\) instead of \(\theta
 
 \subsection{Deriving expressions for the multiplication by \(x, y, z\) of the spherical harmonics}
 
-We start by expressing \(x\,\Ylm(x,y,z)\), \(y\,\Ylm(x,y,z)\) , and \(z\,\Ylm(x,y,z)\)  in terms of \(Y^{m'}_{l'}(x,y,z)\) for any point \((x,y,z)\) on the unit circle.
+We start by expressing \(x\,\Ylm(x,y,z)\), \(y\,\Ylm(x,y,z)\) , and \(z\,\Ylm(x,y,z)\)  in terms of \(Y^{m'}_{l'}(x,y,z)\) for any point \((x,y,z)\) on the unit circle. For the derivation, see the appendix.
 
 \sotodoinline{Move the derivations to an appendix to make the text flow better}
 
-Using (7)--(9), we can write\sotodo{Add references to the DLMF. Be precise about which equation as it makes it easier for yourself to look up.}
+For \(l \in \No\), \(m \in \Z\) s.t. \(0 \le |m| \le l\):
 \begin{align}
-\Ylm(x,y,z) &= \alphalm (1 - z^2)^\frac{|m|}{2} \eimphi P^{(|m|,|m|)}_{l-|m|}(z), \quad \text{where } 0 \le |m| \le l, \, l \in \No.
-\end{align}
-
-Note that the recurrence relationship for the Jacobi polynomials satisfies
-\begin{align}
-z P^{(m,m)}_k(z) = \frac{1}{\kappa_{k,m}} \big[ P^{(m,m)}_{k+1}(z) - \lambda_{k,m} P^{(m,m)}_k(z) + \mu_{k,m} P^{(m,m)}_{k-1}(z) \big],
-\end{align}
-for \(k\ge0, \, m\in\Z\), where
-\begin{align}
-\kappa_{k,m} &:= \frac{(2k+2m+1)(k+m+1)}{(k+1)(k+2m+1)}, \\
-\lambda_{k,m} &:= 0\\
-\mu_{k,m} &:= \frac{k+m+1}{(k+1)(k+2m+1)}.
-\end{align}
-Thus,
-\begin{align}
-z P^{(m,m)}_{l-m}(z) = \Ftilde P^{(m,m)}_{l-m+1}(z) + \Gtilde P^{(m,m)}_{l-m-1}(z),
-\end{align}
-for \(k\ge0, \, m\in\Z\), where
-\begin{align}
-\Ftilde &:= \frac{(l-m+1)(l+m+1)}{(2l+1)(l+1)}, \\
-\Gtilde &:= \begin{cases}
-			\frac{l}{2l+1} \quad \text{if } l - m \ge 1 \\
-			\quad 0 \quad \quad \text{otherwise.}
-		\end{cases} .
-\end{align}
-
-Further, note that
-\begin{align}
-\cosphi \, \eimphi &= \frac{1}{2} (e^{i\varphi} + e^{-i\varphi}) \eimphi =  \frac{1}{2} (e^{i(m+1)\varphi} + e^{i(m-1)\varphi}) \\
-\sinphi \, \eimphi &= \frac{1}{2i} (e^{i\varphi} - e^{-i\varphi}) \eimphi =  \frac{-i}{2} (e^{i(m+1)\varphi} - e^{i(m-1)\varphi})
-\end{align}
-
-Finally, note the relationship between the Jacobi polynomials \(P^{(a,b)}_{l}(z)\) and the ultraspherical polynomials \(C^{(\lambda)}_{n}(z)\), as well as the three-term recurrence relation for the ultraspherical polynomials, i.e. for \(m \in \No\):
-\begin{align}
-\nu_{l,m} C^{(m+1/2)}_{l-m}(z) = P^{(m,m)}_{l-m}(z),
-\end{align}
-and
-\begin{align}
-C^{(\lambda)}_n(z) &= \xi^{(1)}_{n, \lambda} \big[ C^{(\lambda+1)}_n(z) - C^{(\lambda+1)}_{n-2}(z) \big]  \\
-(1-z^2) \, C^{(\lambda)}_n(z) &= \frac{1}{\xi^{(2)}_{n, \lambda}} \big[ \xi^{(3)}_{n, \lambda} C^{(\lambda-1)}_n(z) - \xi^{(4)}_{n, \lambda}C^{(\lambda-1)}_{n+2}(z) \big] ,
-\end{align}
-where
-\begin{align}
-\nu_{l,m} &:= \frac{\Gamma(l+1)\Gamma(2m+1)}{\Gamma(l+m+1)\Gamma(m+1)} \\
-\xione&:= \frac{\lambda}{n+\lambda} \\
-\xitwo &:= 4(\lambda-1)(n+\lambda) \\
-\xithree &:= (n+2\lambda-2)(n+2\lambda-1) \\
-\xifour &:= (n+1)(n+2).
-\end{align}
-
-Thus, we can write three-term recurrences for the Jacobi polynomials as:
-\begin{align}
-P^{(m,m)}_{l-m}(z) &= \Atilde P^{(m+1,m+1)}_{l-m}(z) + \Btilde P^{(m+1,m+1)}_{l-m-2}(z) \\
-(1-z^2) \, P^{(m,m)}_{l-m}(z) &= \Dtilde P^{(m-1,m-1)}_{l-m+2}(z) + \Etilde P^{(m-1,m-1)}_{l-m}(z),
-\end{align}
-for \(l, m \in \No\) s.t. \(0 \le m \le l\), where
-\begin{align}
-\Atilde &:= \frac{(l+m+2)(l+m+1)}{2(2l+1)(l+1)} \\
-\Btilde &:= \begin{cases}
-			- \frac{l}{2(2l+1)} \quad \text{if } l - m \ge 2 \\
-			\quad \quad 0 \quad \quad \text{otherwise.}
-		\end{cases} \\
-\Dtilde &:= - \frac{2(l-m+2)(l-m+1)}{(2l+1)(l+1)} \\
-\Etilde &:= \frac{2l}{2l+1} .
-\end{align}
-
-We can now write down expressions for the multiplication of \(\Ylm(x,y,z)\) by \(x, y \) or \(z\) for some point \((x,y,z)\) on the unit sphere for \(l \in \No\), \(m \in \Z\) s.t. \(0 \le |m| \le l\) as follows:
-\begin{align}
-x\,\Ylm(x,y,z) &= \alphalm \cosphi \eimphi \sintheta (1-z^2)^{|m|/2} P^{(|m|,|m|)}_{l-|m|}(z) \nonumber \\
-		     &= \half \alphalm (e^{i(m+1)\varphi} + e^{i(m-1)\varphi}) (1-z^2)^{\frac{|m|+1}{2}} P^{(|m|,|m|)}_{l-|m|}(z) \nonumber \\
-		     &= \half \alphalm e^{i(m+1)\varphi} (1-z^2)^{\frac{|m|+1}{2}} \big[ \Atilde P^{(|m|+1,|m|+1)}_{l-|m|}(z) + \Btilde P^{(|m|+1,|m|+1)}_{l-|m|-2}(z) \big] \nonumber \\
-		     &\quad \quad +  \half \alphalm e^{i(m-1)\varphi} (1-z^2)^{\frac{|m|-1}{2}} \big[ \Dtilde P^{(|m|-1,|m|-1)}_{l-|m|+2}(z) + \Etilde P^{(|m|-1,|m|-1)}_{l-|m|}(z) \big] \nonumber \\
-		     &= \Alm Y^{m+1}_{l+1}(x,y,z) +  \Blm Y^{m+1}_{l-1}(x,y,z) \nonumber \\
-		     & \quad \quad \quad + \Dlm Y^{m-1}_{l+1}(x,y,z) + \Elm Y^{m-1}_{l-1}(x,y,z),
-\end{align}
-\begin{align}
-y\,\Ylm(x,y,z) &= \alphalm \sinphi \eimphi \sintheta (1-z^2)^{|m|/2} P^{(|m|,|m|)}_{l-|m|}(z) \nonumber \\
-		     &= -\half i \alphalm (e^{i(m+1)\varphi} - e^{i(m-1)\varphi}) (1-z^2)^{\frac{|m|+1}{2}} P^{(|m|,|m|)}_{l-|m|}(z) \nonumber \\
-		     &= - i \, \big[\Alm Y^{m+1}_{l+1}(x,y,z) +  \Blm Y^{m+1}_{l-1}(x,y,z) \big] \nonumber \\
-		     &\quad \quad \quad + i \, \big[ \Dlm Y^{m-1}_{l+1}(x,y,z) + \Elm Y^{m-1}_{l-1}(x,y,z) \big],
-\end{align}
-\begin{align}
-z\,\Ylm(x,y,z) &= \alphalm \eimphi (1-z^2)^{|m|/2} z P^{(|m|,|m|)}_{l-|m|}(z) \nonumber \\
-		     &= \alphalm \eimphi (1-z^2)^{|m|/2} \big[ \Ftilde P^{(|m|,|m|)}_{l-|m|+1}(z) + \Gtilde P^{(|m|,|m|)}_{l-|m|-1}(z) \big]\nonumber \\
-		     &= \Flm Y^{m}_{l+1}(x,y,z) + \Glm Y^{m}_{l-1}(x,y,z) ,
+x\,\Ylm(x,y,z) &= \Alm Y^{m+1}_{l+1}(x,y,z) +  \Blm Y^{m+1}_{l-1}(x,y,z) \nonumber \\
+		     & \quad \quad \quad + \Dlm Y^{m-1}_{l+1}(x,y,z) + \Elm Y^{m-1}_{l-1}(x,y,z), \\
+y\,\Ylm(x,y,z) &= - i \, \big[\Alm Y^{m+1}_{l+1}(x,y,z) +  \Blm Y^{m+1}_{l-1}(x,y,z) \big] \nonumber \\
+		     &\quad \quad \quad + i \, \big[ \Dlm Y^{m-1}_{l+1}(x,y,z) + \Elm Y^{m-1}_{l-1}(x,y,z) \big], \\
+z\,\Ylm(x,y,z) &= \Flm Y^{m}_{l+1}(x,y,z) + \Glm Y^{m}_{l-1}(x,y,z) ,
 \end{align}
 where
 \begin{align}
@@ -297,7 +224,6 @@ where
 \Flm &:= \frac{\alphalm}{\alpha^{m}_{l+1}} \Ftilde \\
 \Glm &:= \frac{\alphalm}{\alpha^{m}_{l-1}} \Gtilde.
 \end{align}
-
 
 
 \subsection{Jacobi matrices}
@@ -470,14 +396,14 @@ Then our system (62) simply becomes
 
 \sotodoinline{Cite Dunkl and Xu here.}
 
-For each \(l \in \No\) let \(\Dlt\) be any matrix that is a left inverse of \(A_l\), i.e. such that \(\Dlt A_l = I_{2l+3}\). Multiplying our system by the preconditioner matrix that is given by the block diagonal matrix of the \(\Dlt\)'s, we obtain the lower triangular system
+For each \(l \in \No\) let \(\Dlt\) be any matrix that is a left inverse of \(A_l\), i.e. such that \(\Dlt A_l = I_{2l+3}\). Multiplying our system by the preconditioner matrix that is given by the block diagonal matrix of the \(\Dlt\)'s, we obtain the lower triangular system \citep{dunkl2014orthogonal}
 \begin{align}
 \renewcommand\arraystretch{1.3}
 \mleft[
 \begin{array}{cccc}
 		1  & & & \\
-		D^T_0(B_0-G_0) & I_1 & & \\
-		D^T_1 C_1 & D^T_1(B_1-G_1) & \quad I_3 \quad & \\
+		D^T_0(B_0-G_0) & I_3 & & \\
+		D^T_1 C_1 & D^T_1(B_1-G_1) & \quad I_5 \quad & \\
 		& D^T_2 C_2 & \ddots & \ddots \\
 		& & \ddots &
 \end{array}
@@ -537,13 +463,20 @@ The Clenshaw algorithm is then as follows:
 \begin{align*}
 \quad &\text{1) } \text{Set } \bm{\gamma}_{N+2} = \bold{0}, \: \bm{\gamma}_{N+2} = \bold{0}. \\
 \quad &\text{2) } \text{For } n = N:-1:1 \\
-\quad & \quad \quad \quad \text{set } \bm{\gamma}_{n}^T = \bold{f}_n^T - \bm{\gamma}_{n+1}^T D^T_n (B_n - G_n) -  \bm{\gamma}_{n+2}^T D^T_{n+1}C_{n+1} \\
+\quad & \quad \quad \quad \text{set } \bm{\gamma}_{n}^T = \bold{f}_n^T - \bm{\gamma}_{n+1}^T D^T_n (B_n - G_n(x,y,z)) -  \bm{\gamma}_{n+2}^T D^T_{n+1}C_{n+1} \\
 \quad &\text{3) } \text{Output: } f(x,y,z) \approx \bigP_0(x,y,z) f_0 + \bm{\gamma}_{1}^T \bigP_1(x,y,z) - \bigP_0(x,y,z) \bm{\gamma}_{2}^T D^T_1 C_1.
 \end{align*}
-
+where $\bigP_0 \equiv \alpha^0_0$.
 
 \sotodoinline{Mention $a(J^x, J^y, J^z)$ for variable coefficients here. Mention it is banded-block-banded.}
-
+We can use the same algorithm to output a matrix operator for a function, given we know the coefficients of its expansion in the SH basis. We simply make the adjustment that
+\begin{align*}
+\quad &\text{1) } \text{Set } \bm{\gamma}_{N+2} = \bold{0}, \: \bm{\gamma}_{N+2} = \bold{0}. \\
+\quad &\text{2) } \text{For } n = N:-1:1 \\
+\quad & \quad \quad \quad \text{set } \bm{\gamma}_{n}^T = (\bold{f}_n^T)I - \bm{\gamma}_{n+1}^T D^T_n (B_n - G_n(J^x,J^y,J^z)) -  \bm{\gamma}_{n+2}^T D^T_{n+1}C_{n+1} \\
+\quad &\text{3) } \text{Output: } f(x,y,z) \approx \alpha^0_0 f_0 + \bm{\gamma}_{1}^T \bigP_1(J^x,J^y,J^z) - \alpha^0_0 \bm{\gamma}_{2}^T D^T_1 C_1.
+\end{align*}
+where $\bigP_1(J^x,J^y,J^z)$ is a vector of matrices, $G_n(J^x,J^y,J^z)$ is a matrix of matrices, and so each $\bm{\gamma}_n$ is a vector of matrices.
 
 
 
@@ -565,32 +498,9 @@ Importantly,  \(\gradYlm\), \(\gradpYlm\) are in fact vector-valued orthogonal p
 
 \subsection{Spin-1 tensor spherical harmonics}
 
-The gradient and perpendicular gradient of a spherical harmonic \(\Ylm(x,y,z)\) can be expressed in terms of spin-1 tensor spherical harmonics, which in turn can each be expressed as a vector-weighted sum of spherical harmonics.
+The gradient and perpendicular gradient of a spherical harmonic \(\Ylm(x,y,z)\) can be expressed in terms of spin-1 tensor spherical harmonics, which in turn can each be expressed as a vector-weighted sum of spherical harmonics. For the derivation and more on vector spherical harmonics, see the appendix.
 
-\sotodoinline{I think the following should also be moved to appendix because it's technical details}
-
-We start by defining what we mean by a spin-1 tensor spherical harmonic. In general, the tensor spherical harmonic is given by, for \(2l, \, j, \, 2s \in \No\),
-\begin{align}
-\curlyy^{j,s}_{l,m}(x,y,z) = \sum_{m_s=-s}^s \langle j \quad m-m_s \; ; \; s \quad m_s \; | \; l \quad m \rangle \, Y^{m-m_s}_j (x,y,z) \, \bm{\chi}_{s, m_s},
-\end{align}
-where \(\bm{\chi}_{s, m_s}\) are the simultaneous eigenstates of the spin operators \(\bold{S}^2\) and \(S_z\), and where \(\langle j \quad m-m_s \; ; \; 1 \quad m_s \; | \; l \quad m \rangle\)\sotodo{This notation is hard to read.} is a Clebsch-Gordan coefficient. We note that a property of the Clebsch--Gordan coefficients means that they vanish unless \(|j - s| \le l \le j + s\). We further note that there are simple calculable expressions for the Clebsch--Gordan coefficients when the spin \(s=1\).
-
-Thus we have that the three spin-1 tensor spherical harmonics are given by
-\begin{align}
-\curlyy^{l \pm1,s}_{l,m}(x,y,z) &= \sum_{m_s=-1}^1 \langle l \pm 1 \quad m-m_s \; ; \; 1 \quad m_s \; | \; l \quad m \rangle \, Y^{m-m_s}_{l \pm 1} (x,y,z) \, \chivec, \\
-\curlyy^{l,s}_{l,m}(x,y,z) &= \sum_{m_s=-1}^1 \langle l \quad m-m_s \; ; \; 1 \quad m_s \; | \; l \quad m \rangle \, Y^{m-m_s}_l (x,y,z) \, \chivec.
-\end{align}
-
-Here, the vectors \(\chivec\) are the orthonormal eigenvectors of the spin-1spin\sotodo{Fix} matrix 
-\begin{align}
-S_3 = \begin{bmatrix} 0 & -i & 0 \\ i & 0 & 0 \\ 0 & 0 & 0 \end{bmatrix},
-\end{align}
-and so are given as
-\begin{align}
-\bm{\chi}_{1, \pm 1} = \frac{1}{\sqrt{2}} \begin{bmatrix} \mp 1 \\ -i \\ 0 \end{bmatrix}, \quad \bm{\chi}_{1,0} = \begin{bmatrix} 0 \\ 0 \\ 1 \end{bmatrix}.
-\end{align}
-
-Then, for any \(l \in \No\), \(m \in \Z\) s.t. \(0 \le |m| \le l\) we have that
+For any \(l \in \No\), \(m \in \Z\) s.t. \(0 \le |m| \le l\) we have that
 \begin{align}
 \nabla \Ylm &= \blmone \, \curlyy^{l-1,1}_{l,m} + \blone \curlyy^{l+1,1}_{l,m}, \\
 \nabla^\perp \Ylm &= \blzero \, \curlyy^{l,1}_{l,m},
@@ -602,15 +512,13 @@ where
 \blone := l \, \Big(\frac{l+1}{2l+1}\Big)^\half.
 \end{align}
 
+\sotodoinline{I think the following should also be moved to appendix because it's technical details}
+
+
 
 \subsection{Deriving expressions for the multiplication by \(x, y, z\) of \(\nabla \Ylm\), \(\nabla^\perp \Ylm\) }
 
-We start by establishing some equations to be used to find \(x \,\gradYlm (x,y,z)\), \(x \,\gradpYlm (x,y,z)\) etc. in terms of \(\gradY^{m'}_{l'} (x,y,z)\), \(\gradpY^{m'}_{l'} (x,y,z)\). First, for compactness of notation, we define
-\begin{align}
-\cgcoeff^{L, m_s}_{l, m} := \, \langle L \quad m-m_s \; ; \; 1 \quad m_s \; | \; l \quad m \rangle.
-\end{align}
-
-Now, we have that
+We start by establishing some equations to be used to find \(x \,\gradYlm (x,y,z)\), \(x \,\gradpYlm (x,y,z)\) etc. in terms of \(\gradY^{m'}_{l'} (x,y,z)\), \(\gradpY^{m'}_{l'} (x,y,z)\). First, we have that
 \begin{align}
 x \,\gradYlm 
 &= x \, \blmone \, \curlyy^{l-1,1}_{l,m} + x \, \blone \curlyy^{l+1,1}_{l,m} \nonumber
@@ -687,11 +595,62 @@ Define \(\gradP\) \sotodo{This notation could be confusing. I'd say use either $
 \gradP = \begin{bmatrix} \gradP_0 \\ \gradP_1 \\ \vdots \end{bmatrix}, \quad \text{where } \quad \gradP_l = \begin{bmatrix} \gradY^{-l}_l \\ \gradpY^{-l}_l \\ \vdots \\ \gradY^{l}_l \\ \gradpY^{l}_l  \end{bmatrix} \quad \forall \: l \in \No.
 \end{align}
 
-Then we can define the Jacobi operators \(J_\nabla^x, J_\nabla^y, J_\nabla^z\) by 
+Further, let
+\begin{align}
+\bold{u}^c = \begin{bmatrix}
+			\bold{u}_0^c \\
+			\bold{u}_1^c \\
+			\vdots \\
+		    \end{bmatrix},		  
+\quad
+\text{where}
+\quad
+\bold{u}^c_l &= \begin{bmatrix}
+				u_{l,-l} \\
+				u^{\perp}_{l,-l} \\
+				\vdots \\
+				u_{l,l} \\
+				u^{\perp}_{l,l}
+		        \end{bmatrix} \in \R^{2(2l+1)} \quad \forall l = 0,1,2,\dots
+\end{align}
+
+We can define the Jacobi operators \(J_\nabla^x, J_\nabla^y, J_\nabla^z\) as follows. Let $S := \{ \bold{x} := (x,y,z) \quad | \quad ||\bold{x}|| = 1\}$ be the unit sphere in $\R^3$ and $\mathbf{u}(x,y,z)$ be a function on $S$ with vector values in the tangent space. That is, there exist coefficients $\{u_{l,m}, u^\perp_{l,m}\}$ such that, $\forall (x,y,z) \in S$:
+\begin{align}
+\mathbf{u}(x,y,z) &= \sum_{l=0}^\infty \sum_{m=-l}^l \big( u_{l,m} \gradYlm(x,y,z) + u^\perp_{l,m} \gradpYlm(x,y,z) \big) \\
+&= (\mathbf{u}^c)^T \gradP(x,y,z)
+\end{align}
+
+Then \(J_\nabla^x\) is defined as the matrix such that 
+\begin{align}
+x \mathbf{u}(x,y,z) = \sum_{l=0}^\infty \sum_{m=-l}^l \big( \tilde{u}_{l,m} \gradYlm(x,y,z) + \tilde{u}^\perp_{l,m} \gradpYlm(x,y,z) \big), \quad \forall (x,y,z) \in S,
+\end{align}
+where
+\begin{align}
+(J_\nabla^x)^T \mathbf{u}^c = \mathbf{\tilde{u}}^c,
+\quad
+\bold{\tilde{u}}^c = \begin{bmatrix}
+			\bold{\tilde{u}}_0^c \\
+			\bold{\tilde{u}}_1^c \\
+			\vdots \\
+		    \end{bmatrix},		  
+\quad
+\text{and}
+\quad
+\bold{\tilde{u}}^c_l &= \begin{bmatrix}
+				\tilde{u}_{l,-l} \\
+				\tilde{u}^{\perp}_{l,-l} \\
+				\vdots \\
+				\tilde{u}_{l,l} \\
+				\tilde{u}^{\perp}_{l,l}
+		        \end{bmatrix} \quad \forall l = 0,1,2,\dots,
+\end{align}
+and \(J_\nabla^y, J_\nabla^z\) are defined similarly.
+
+In other words, abusing notation, we can write that
 \begin{align}
 J_\nabla^x \gradP = x \gradP, \quad J_\nabla^y \gradP = y \gradP, \quad J_\nabla^z \gradP = z \gradP,
 \end{align}
-where each entry \(\gradYlm\), \(\gradpYlm\) is pseudo-treated\sotodo{I don't know what this means} as a single element of the vector \(\gradP\).
+where each sub-vector entry \(\gradYlm\) and \(\gradpYlm\) of \(\gradP\) is treated as a single element of the vector \(\gradP\) in the matrix-vector calculation. \sotodo{I don't know what this means}
 
 The Jacobi matrices have the following form:
 \begin{align}
@@ -879,9 +838,9 @@ B_l &:= \begin{bmatrix}
 		B^z_l
 	    \end{bmatrix} \in \R^{6(2l+1)\times2(2l+1)}, \quad
 G_l(x,y,z) := \begin{bmatrix}
-		xI_{2l+1} \\
-		yI_{2l+1} \\
-		zI_{2l+1}
+		xI_{2(2l+1)} \\
+		yI_{2(2l+1)} \\
+		zI_{2(2l+1)}
 	    \end{bmatrix} \in \R^{6(2l+1)\times2(2l+1)}.
 \end{align}
 Then our system simply becomes
@@ -891,12 +850,12 @@ Then our system simply becomes
 \begin{array}{cccc}
 		I_2 \\
 		0 & I_6 & & \\
-		D^T_1 C_1 & D^1_1(B_1-G_1) & A_1 \quad & \\
-		& D^T_2 C_2 & \ddots & \ddots \\
+		C_1 & B_1-G_1 & A_1 \quad & \\
+		& C_2 & \ddots & \ddots \\
 		& & \ddots &
 \end{array}
 \mright]
-\bigP
+\gradP
 =
 \begin{bmatrix}
 	\underline{0}_3 \\ \underline{0}_3 \\ \gradP_1 \\ \underline{0}_3 \\ \\ \vdots \\
@@ -915,7 +874,7 @@ For each \(l \in \N\) let \(\Dlt\) be any matrix that is a left inverse of \(A_l
 		& & \ddots &
 \end{array}
 \mright]
-\bigP
+\gradP
 =
 \begin{bmatrix}
 	\underline{0}_3 \\ \underline{0}_3 \\ \gradP_1 \\ \underline{0}_3 \\ \\ \vdots \\
@@ -956,6 +915,24 @@ where \(0_{2(2l+3)\times2(2l+1)}\) the zero matrix in \(\R^{2(2l+3)\times2(2l+1)
 		0 & \hdots & \hdots & & 0 & \frac{1}{2a^\perp_{l,l}} & 0 & \hdots & 0 & \frac{i}{2a^\perp_{l,l}} \\
 	  \end{bmatrix}.
 \end{align}
+
+
+\subsection{Evaluation of a vector valued function in the tangent space on the sphere}
+
+We can use the Clenshaw algorithm again to evaluate a vector valued function in the tangent space at a point $(x,y,z) \in S$. Suppose
+\begin{align}
+\mathbf{u}(x,y,z) \approx \sum^N_{l=0} \sum^l_{m=-l} \big[u_{l,m} \, \gradYlm(x,y,z)  + u^\perp_{l,m} \, \gradpYlm(x,y,z) \big].
+\end{align}
+
+The Clenshaw algorithm is then as follows:
+\begin{align*}
+\quad &\text{1) } \text{Set } \bm{\gamma}_{N+2} = \bold{0}, \: \bm{\gamma}_{N+2} = \bold{0}. \\
+\quad &\text{2) } \text{For } n = N:-1:1 \\
+\quad & \quad \quad \quad \text{set } \bm{\gamma}_{n}^T = (\mathbf{u}^c_n)^T - \bm{\gamma}_{n+1}^T D^T_n (B_n - G_n) -  \bm{\gamma}_{n+2}^T D^T_{n+1}C_{n+1} \\
+\quad &\text{3) } \text{Output: } \mathbf{u}(x,y,z) \approx \bm{\gamma}_{1}^T \gradP_1(x,y,z) \\
+&\quad \quad \quad \quad \Big( = (\bm{\gamma}_{1})_1 \gradY_1^{-1} + (\bm{\gamma}_{1})_2 \gradpY_1^{-1} + (\bm{\gamma}_{1})_3 \gradY_1^{0} + (\bm{\gamma}_{1})_4 \gradpY_1^{0} + (\bm{\gamma}_{1})_5 \gradY_1^{1} + (\bm{\gamma}_{1})_6 \gradpY_1^{1} \Big)
+\end{align*}
+
 
 
 
@@ -1057,7 +1034,7 @@ We note that
 
 
 \sotodo{Isn't there a name for this Operator? Maybe "Unit Curl Operator"?}
-\subsubsection{Operator for``\(\unitvec \times \quad\)"}
+\subsubsection{Unit Curl Operator}
 \begin{align}
 \unitvec \times \bold{u} &= \unitvec \times \sum_{l=0}^{\infty} \sum_{m=-l}^{l} [ u_{l,m} \gradYlm + u^{\perp}_{l,m} \gradpYlm ] \\
 &= \sum_{l=0}^{\infty} \sum_{m=-l}^{l} [ u_{l,m} \unitvec \times \gradYlm + u^{\perp}_{l,m} \unitvec \times \gradpYlm ] \\
@@ -1214,8 +1191,8 @@ i.e. a {\tt BandedBlockBandedMatrix(J, (rows, cols), (2,1), (?,?))} [note: I am 
 
 Define
 \begin{align}
-T^\bigP_0 &:= 0, \quad
-T^\bigP_1 := \begin{bmatrix}
+\mathbb{T}^\bigP_0 &:= 0, \quad
+\mathbb{T}^\bigP_1 := \begin{bmatrix}
 			J_{1,-1} \\
 			J^\perp_{1,-1} \\
 			J_{1,0} \\
@@ -1224,13 +1201,13 @@ T^\bigP_1 := \begin{bmatrix}
 			J^\perp_{1,1}
 	  	\end{bmatrix}.
 \end{align}
-Then by linearity of the dot product, we can use the recurrence relation (122) for \(\gradPl\) to gain a recurrence for \(T^\bigP_l\):
+Then by linearity of the dot product, we can use the recurrence relation (122) for \(\gradPl\) to gain a recurrence for \(\mathbb{T}^\bigP_l\):
 \begin{align}
-T^\bigP_{l+1} = -\Dlt [B_l-G_l(J^x, J^y, J^z)] \: T^\bigP_l - \Dlt C_l  \, T^\bigP_{l-1}, \quad l \in \{1,\dots,N_1-1\},
+\mathbb{T}^\bigP_{l+1} = -\Dlt [B_l-G_l(J^x, J^y, J^z)] \: \mathbb{T}^\bigP_l - \Dlt C_l  \, \mathbb{T}^\bigP_{l-1}, \quad l \in \{1,\dots,N_1-1\},
 \end{align}
 where \(J^x, J^y, J^z\) are the \(\tilde{N} \times \tilde{N}\) Jacobi operator matrices for multiplication of the scalar spherical harmonic basis by \(x, y, z\) respectively. We then have that for each \(l \in {1,\dots,N_1}\),
 \begin{align}
-T^\bigP_l := \begin{bmatrix}
+\mathbb{T}^\bigP_l := \begin{bmatrix}
 			J_{l,-l} \\
 			J^\perp_{l,-l} \\
 			\vdots \\
@@ -1249,7 +1226,201 @@ where \(\bold{b}^c \in \R^{(\tilde{N}+1)^2}\) and is given by
 \end{align}
 
 
-% \bibliography{spherical-harmonics-bib}
+\subsection{Example}
+
+Let $\mathbf{u}(x,y,z)$ be the tangential velocity of the flow and $h(x,y,z)$ be the height of the water from some constant reference height $\mathcal{H}$. The linear SWEs are
+\begin{align}
+\begin{cases}
+\frac{\partial \mathbf{u}}{\partial t} + f \unitvec \times \mathbf{u} - \nabla h = \mathbf{0} \\
+\frac{\partial h}{\partial t} + \mathcal{H} \nabla \cdot \mathbf{u} = 0
+\end{cases}
+\end{align}
+where $f = 2 \Omega \cos(\theta) =  2 \Omega z$ is the Coriolis parameter (note that the operator on the coefficients vector for multiplication by this parameter would be $F = 2 \Omega (J^z_\nabla)^T$).
+
+Using backward Euler:
+\begin{align}
+\mathbf{u}_{n+1} &= \mathbf{u}_{n} + \Delta t \: (\nabla h_{n+1} - f \unitvec \times \mathbf{u}_{n+1}) \\
+h_{n+1} &= h_n - \Delta t \: \mathcal{H} \nabla \cdot \mathbf{u}_{n+1}
+\end{align}
+
+Then using the operators on the coefficient vectors, the timestepping method is: 
+\begin{align}
+\mathbf{u}^c_{n+1} &= \mathbf{u}^c_{n} + \Delta t \: (G \mathbf{h}^c_{n+1} - F K \mathbf{u}^c_{n+1}) \\
+\mathbf{h}^c_{n+1} &= \mathbf{h}^c_n - \Delta t \: \mathcal{H} D \mathbf{u}^c_{n+1}
+\end{align}
+$\iff$
+\begin{align}
+\mathbf{u}^c_{n+1} &= (I + \Delta t F K + \Delta t^2 \mathcal{H} G D)^{-1} \: (\mathbf{u}^c_{n} + \Delta t \: G \mathbf{h}^c_n) \\
+\mathbf{h}^c_{n+1} &= \mathbf{h}^c_n - \Delta t \: \mathcal{H} D \mathbf{u}^c_{n+1}
+\end{align}
+
+\bstodo{Image}
+
+
+
+
+\section{Appendix}
+
+\subsection{Derivation of multiplication by $x,y,z$ relationships for the spherical harmonics}
+
+Using (7)--(9), we can write \sotodo{Add references to the DLMF. Be precise about which equation as it makes it easier for yourself to look up.}
+\begin{align}
+\Ylm(x,y,z) &= \alphalm (1 - z^2)^\frac{|m|}{2} \eimphi P^{(|m|,|m|)}_{l-|m|}(z), \quad \text{where } 0 \le |m| \le l, \, l \in \No.
+\end{align}
+
+Note that the recurrence relationship for the Jacobi polynomials satisfies \cite{DLMFJacobiRecurrence}
+\begin{align}
+z P^{(m,m)}_k(z) = \frac{1}{\kappa_{k,m}} \big[ P^{(m,m)}_{k+1}(z) - \lambda_{k,m} P^{(m,m)}_k(z) + \mu_{k,m} P^{(m,m)}_{k-1}(z) \big],
+\end{align}
+for \(k\ge0, \, m\in\Z\), where
+\begin{align}
+\kappa_{k,m} &:= \frac{(2k+2m+1)(k+m+1)}{(k+1)(k+2m+1)}, \\
+\lambda_{k,m} &:= 0\\
+\mu_{k,m} &:= \frac{k+m+1}{(k+1)(k+2m+1)}.
+\end{align}
+Thus,
+\begin{align}
+z P^{(m,m)}_{l-m}(z) = \Ftilde P^{(m,m)}_{l-m+1}(z) + \Gtilde P^{(m,m)}_{l-m-1}(z),
+\end{align}
+for \(k\ge0, \, m\in\Z\), where
+\begin{align}
+\Ftilde &:= \frac{(l-m+1)(l+m+1)}{(2l+1)(l+1)}, \\
+\Gtilde &:= \begin{cases}
+			\frac{l}{2l+1} \quad \text{if } l - m \ge 1 \\
+			\quad 0 \quad \quad \text{otherwise.}
+		\end{cases} .
+\end{align}
+
+Further, note that
+\begin{align}
+\cosphi \, \eimphi &= \frac{1}{2} (e^{i\varphi} + e^{-i\varphi}) \eimphi =  \frac{1}{2} (e^{i(m+1)\varphi} + e^{i(m-1)\varphi}) \\
+\sinphi \, \eimphi &= \frac{1}{2i} (e^{i\varphi} - e^{-i\varphi}) \eimphi =  \frac{-i}{2} (e^{i(m+1)\varphi} - e^{i(m-1)\varphi})
+\end{align}
+
+Finally, note the relationship between the Jacobi polynomials \(P^{(a,b)}_{l}(z)\) and the ultraspherical polynomials \(C^{(\lambda)}_{n}(z)\) \cite{DLMFUltraJacobi}, as well as the three-term recurrence relation for the ultraspherical polynomials \cite{DLMFUltraRecurrence, DLMFUltraRecurrence2}, i.e. for \(m \in \No\):
+\begin{align}
+\nu_{l,m} C^{(m+1/2)}_{l-m}(z) = P^{(m,m)}_{l-m}(z),
+\end{align}
+and
+\begin{align}
+C^{(\lambda)}_n(z) &= \xi^{(1)}_{n, \lambda} \big[ C^{(\lambda+1)}_n(z) - C^{(\lambda+1)}_{n-2}(z) \big]  \\
+(1-z^2) \, C^{(\lambda)}_n(z) &= \frac{1}{\xi^{(2)}_{n, \lambda}} \big[ \xi^{(3)}_{n, \lambda} C^{(\lambda-1)}_n(z) - \xi^{(4)}_{n, \lambda}C^{(\lambda-1)}_{n+2}(z) \big] ,
+\end{align}
+where
+\begin{align}
+\nu_{l,m} &:= \frac{\Gamma(l+1)\Gamma(2m+1)}{\Gamma(l+m+1)\Gamma(m+1)} \\
+\xione&:= \frac{\lambda}{n+\lambda} \\
+\xitwo &:= 4(\lambda-1)(n+\lambda) \\
+\xithree &:= (n+2\lambda-2)(n+2\lambda-1) \\
+\xifour &:= (n+1)(n+2).
+\end{align}
+
+Thus, we can write three-term recurrences for the Jacobi polynomials as:
+\begin{align}
+P^{(m,m)}_{l-m}(z) &= \Atilde P^{(m+1,m+1)}_{l-m}(z) + \Btilde P^{(m+1,m+1)}_{l-m-2}(z) \\
+(1-z^2) \, P^{(m,m)}_{l-m}(z) &= \Dtilde P^{(m-1,m-1)}_{l-m+2}(z) + \Etilde P^{(m-1,m-1)}_{l-m}(z),
+\end{align}
+for \(l, m \in \No\) s.t. \(0 \le m \le l\), where
+\begin{align}
+\Atilde &:= \frac{(l+m+2)(l+m+1)}{2(2l+1)(l+1)} \\
+\Btilde &:= \begin{cases}
+			- \frac{l}{2(2l+1)} \quad \text{if } l - m \ge 2 \\
+			\quad \quad 0 \quad \quad \text{otherwise.}
+		\end{cases} \\
+\Dtilde &:= - \frac{2(l-m+2)(l-m+1)}{(2l+1)(l+1)} \\
+\Etilde &:= \frac{2l}{2l+1} .
+\end{align}
+
+We can now write down expressions for the multiplication of \(\Ylm(x,y,z)\) by \(x, y \) or \(z\) for some point \((x,y,z)\) on the unit sphere for \(l \in \No\), \(m \in \Z\) s.t. \(0 \le |m| \le l\) as follows:
+\begin{align}
+x\,\Ylm(x,y,z) &= \alphalm \cosphi \eimphi \sintheta (1-z^2)^{|m|/2} P^{(|m|,|m|)}_{l-|m|}(z) \nonumber \\
+		     &= \half \alphalm (e^{i(m+1)\varphi} + e^{i(m-1)\varphi}) (1-z^2)^{\frac{|m|+1}{2}} P^{(|m|,|m|)}_{l-|m|}(z) \nonumber \\
+		     &= \half \alphalm e^{i(m+1)\varphi} (1-z^2)^{\frac{|m|+1}{2}} \big[ \Atilde P^{(|m|+1,|m|+1)}_{l-|m|}(z) + \Btilde P^{(|m|+1,|m|+1)}_{l-|m|-2}(z) \big] \nonumber \\
+		     &\quad \quad +  \half \alphalm e^{i(m-1)\varphi} (1-z^2)^{\frac{|m|-1}{2}} \big[ \Dtilde P^{(|m|-1,|m|-1)}_{l-|m|+2}(z) + \Etilde P^{(|m|-1,|m|-1)}_{l-|m|}(z) \big] \nonumber \\
+		     &= \Alm Y^{m+1}_{l+1}(x,y,z) +  \Blm Y^{m+1}_{l-1}(x,y,z) \nonumber \\
+		     & \quad \quad \quad + \Dlm Y^{m-1}_{l+1}(x,y,z) + \Elm Y^{m-1}_{l-1}(x,y,z),
+\end{align}
+\begin{align}
+y\,\Ylm(x,y,z) &= \alphalm \sinphi \eimphi \sintheta (1-z^2)^{|m|/2} P^{(|m|,|m|)}_{l-|m|}(z) \nonumber \\
+		     &= -\half i \alphalm (e^{i(m+1)\varphi} - e^{i(m-1)\varphi}) (1-z^2)^{\frac{|m|+1}{2}} P^{(|m|,|m|)}_{l-|m|}(z) \nonumber \\
+		     &= - i \, \big[\Alm Y^{m+1}_{l+1}(x,y,z) +  \Blm Y^{m+1}_{l-1}(x,y,z) \big] \nonumber \\
+		     &\quad \quad \quad + i \, \big[ \Dlm Y^{m-1}_{l+1}(x,y,z) + \Elm Y^{m-1}_{l-1}(x,y,z) \big],
+\end{align}
+\begin{align}
+z\,\Ylm(x,y,z) &= \alphalm \eimphi (1-z^2)^{|m|/2} z P^{(|m|,|m|)}_{l-|m|}(z) \nonumber \\
+		     &= \alphalm \eimphi (1-z^2)^{|m|/2} \big[ \Ftilde P^{(|m|,|m|)}_{l-|m|+1}(z) + \Gtilde P^{(|m|,|m|)}_{l-|m|-1}(z) \big]\nonumber \\
+		     &= \Flm Y^{m}_{l+1}(x,y,z) + \Glm Y^{m}_{l-1}(x,y,z) ,
+\end{align}
+where
+\begin{align}
+\Alm &:= \begin{cases}
+			\frac{\alphalm}{2\alpha^{m+1}_{l+1}} \Atilde \quad \text{if } m\ge0 \\
+			\frac{\alphalm}{2\alpha^{m+1}_{l+1}} \tilde{D}_{l,|m|} \quad \text{if } m<0 
+	       \end{cases} \\
+\Blm &:= \begin{cases}
+			\frac{\alphalm}{2\alpha^{m+1}_{l-1}} \Btilde \quad \text{if } m\ge0, \, l - |m| \ge 2 \\
+			\frac{\alphalm}{2\alpha^{m+1}_{l-1}} \tilde{E}_{l,|m|} \quad \text{if } m<0 \\
+			\quad \quad 0 \quad \quad \quad \quad \text{otherwise.} 
+	        \end{cases} \\
+\Dlm &:= \begin{cases}
+			\frac{\alphalm}{2\alpha^{m-1}_{l+1}} \Dtilde \quad \text{if } m>0 \\
+			\frac{\alphalm}{2\alpha^{m-1}_{l+1}} \tilde{A}_{l,|m|} \quad \text{if } m\le0 
+	       \end{cases} \\
+\Elm &:= \begin{cases}
+			\frac{\alphalm}{2\alpha^{m-1}_{l-1}} \Etilde \quad \text{if } m>0 \\
+			\frac{\alphalm}{2\alpha^{m-1}_{l-1}} \tilde{B}_{l,|m|} \quad \text{if } m\le0 , \, l - |m| \ge 2 \\
+			\quad \quad 0 \quad \quad \quad \quad \text{otherwise.} 
+	        \end{cases} \\ 
+\Flm &:= \frac{\alphalm}{\alpha^{m}_{l+1}} \Ftilde \\
+\Glm &:= \frac{\alphalm}{\alpha^{m}_{l-1}} \Gtilde.
+\end{align}
+
+
+\subsection{Vector spherical harmonics}
+
+We start by defining what we mean by a spin-1 tensor spherical harmonic. In general, the tensor spherical harmonic is given by, for \(2l, \, j, \, 2s \in \No\),
+\begin{align}
+\curlyy^{j,s}_{l,m}(x,y,z) = \sum_{m_s=-s}^s \langle j \quad m-m_s \; ; \; s \quad m_s \; | \; l \quad m \rangle \, Y^{m-m_s}_j (x,y,z) \, \bm{\chi}_{s, m_s},
+\end{align}
+where \(\bm{\chi}_{s, m_s}\) are the simultaneous eigenstates of the spin operators \(\bold{S}^2\) and \(S_z\), and where \(\langle j \quad m-m_s \; ; \; s \quad m_s \; | \; l \quad m \rangle\) \sotodo{This notation is hard to read.} is a Clebsch-Gordan coefficient. We note that a property of the Clebsch--Gordan coefficients means that they vanish unless \(|j - s| \le l \le j + s\). We further note that there are simple calculable expressions for the Clebsch--Gordan coefficients when the spin \(s=1\).
+
+To simplify the notation, for spin $s=1$, we define
+\begin{align}
+\cgcoeff^{L, m_s}_{l, m} := \, \langle L \quad m-m_s \; ; \; 1 \quad m_s \; | \; l \quad m \rangle.
+\end{align}
+
+Thus we have that the three spin-1 tensor spherical harmonics are given by
+\begin{align}
+\curlyy^{l \pm1,s}_{l,m}(x,y,z) &= \sum_{m_s=-1}^1 \cgcoeff^{l\pm1, m_s}_{l, m} \, Y^{m-m_s}_{l \pm 1} (x,y,z) \, \chivec, \\
+\curlyy^{l,s}_{l,m}(x,y,z) &= \sum_{m_s=-1}^1 \cgcoeff^{l, m_s}_{l, m} \, Y^{m-m_s}_l (x,y,z) \, \chivec.
+\end{align}
+
+Here, the vectors \(\chivec\) are the orthonormal eigenvectors of the matrix  \sotodo{Fix}
+\begin{align}
+S_3 = \begin{bmatrix} 0 & -i & 0 \\ i & 0 & 0 \\ 0 & 0 & 0 \end{bmatrix},
+\end{align}
+and so are given as
+\begin{align}
+\bm{\chi}_{1, \pm 1} = \frac{1}{\sqrt{2}} \begin{bmatrix} \mp 1 \\ -i \\ 0 \end{bmatrix}, \quad \bm{\chi}_{1,0} = \begin{bmatrix} 0 \\ 0 \\ 1 \end{bmatrix}.
+\end{align}
+
+Then, for any \(l \in \No\), \(m \in \Z\) s.t. \(0 \le |m| \le l\) we have that
+\begin{align}
+\nabla \Ylm &= \blmone \, \curlyy^{l-1,1}_{l,m} + \blone \curlyy^{l+1,1}_{l,m}, \\
+\nabla^\perp \Ylm &= \blzero \, \curlyy^{l,1}_{l,m},
+\end{align}
+where
+\begin{align}
+\blmone &:= (l+1) \, \Big(\frac{l}{2l+1}\Big)^\half, \quad
+\blzero := i \, \big(l(l+1)\big)^\half, \quad
+\blone := l \, \Big(\frac{l+1}{2l+1}\Big)^\half.
+\end{align}
+
+
+
+
+
+\bibliography{spherical-harmonics-bib}
 
 
 \end{document}
