@@ -173,8 +173,12 @@ using the gamma function \(\Gamma(n) := (n-1)!\) for \(n \in \N\).
 \frame
 {
     \frametitle{Spherical Harmonics as OPs of three variables}
+    
+\begin{block}{Motivation}
+To look at creating a library for working with spherical harmonics (SHs) as orthogonal polynomials (OPs) in three variables on the unit sphere.
+\end{block}
 
-Let \((x,y,z)\) be a point on the unit sphere such that \(x^2+y^2+z^2 = 1\). Let \(\theta, \varphi\) denote the angles such that
+Let \((x,y,z)\) be a point on the unit sphere, \(\theta, \varphi\) denote the angles such that
 \begin{align}
 x &= \sintheta \cosphi \\
 y &= \sintheta \sinphi \\
@@ -397,7 +401,7 @@ The Clenshaw algorithm is then as follows:
 \begin{align*}
 \quad &\text{1) } \text{Set } \bm{\gamma}_{N+2} = \bold{0}, \: \bm{\gamma}_{N+2} = \bold{0}. \\
 \quad &\text{2) } \text{For } n = N:-1:1 \\
-\quad & \quad \quad \quad \text{set } \bm{\gamma}_{n}^T = \bold{f}_n^T - \bm{\gamma}_{n+1}^T D^T_n (B_n - G_n) -  \bm{\gamma}_{n+2}^T D^T_{n+1}C_{n+1} \\
+\quad & \quad \quad \quad \text{set } \bm{\gamma}_{n}^T = \bold{f}_n^T - \bm{\gamma}_{n+1}^T D^T_n (B_n - G_n(x,y,z)) -  \bm{\gamma}_{n+2}^T D^T_{n+1}C_{n+1} \\
 \quad &\text{3) } \text{Output: } f(x,y,z) \approx \bigP_0(x,y,z) f_0 + \bm{\gamma}_{1}^T \bigP_1(x,y,z) - \bigP_0(x,y,z) \bm{\gamma}_{2}^T D^T_1 C_1.
 \end{align*}
 
@@ -425,52 +429,6 @@ where \(\unitvec\) is the unit vector normal to the surface of the sphere at the
 
 \frame
 {
-    \frametitle{Vector Spherical Harmonics}
-    
-\begin{itemize}
-
-\item In general, the tensor spherical harmonic is given by, for \(2l, \, j, \, 2s \in \No\),
-\begin{align}
-\curlyy^{j,s}_{l,m}(x,y,z) &= \sum_{m_s=-s}^s \langle j \quad m-m_s \; ; \; s \quad m_s \; | \; l \quad m \rangle \: \: Y^{m-m_s}_j (x,y,z) \: \: \bm{\chi}_{s, m_s},
-\end{align}
-
-\item \(\bm{\chi}_{s, m_s}\) are the simultaneous eigenstates of the spin operators \(\bold{S}^2\) and \(S_z\).
-    
-\item \(\langle j \quad m-m_s \; ; \; s \quad m_s \; | \; l \quad m \rangle\) is a Clebsch-Gordan coefficient. 
-\begin{itemize}
-	\item C-G coefficients vanish unless \(|j - s| \le l \le j + s\). 
-	\item There are simple calculable expressions for the C-G coefficients when the spin \(s=1\).
-\end{itemize}
-
-\item Both \(\gradYlm\), \(\gradpYlm\) can be expressed in terms of spin-1 tensor spherical harmonics (vector SHs), which in turn can each be expressed as a vector-weighted sum of spherical harmonics.
-
-\end{itemize}
-
-}
-
-\frame
-{
-    \frametitle{Vector Spherical Harmonics}
-
-To simplify the notation, for spin $s=1$, we define
-\begin{align}
-\cgcoeff^{L, m_s}_{l, m} := \, \langle L \quad m-m_s \; ; \; 1 \quad m_s \; | \; l \quad m \rangle.
-\end{align}
-
-Thus we have that the three spin-1 tensor spherical harmonics are given by
-\begin{align}
-\curlyy^{l \pm1,s}_{l,m}(x,y,z) &= \sum_{m_s=-1}^1 \cgcoeff^{l\pm1, m_s}_{l, m} \, Y^{m-m_s}_{l \pm 1} (x,y,z) \, \chivec, \\
-\curlyy^{l,s}_{l,m}(x,y,z) &= \sum_{m_s=-1}^1 \cgcoeff^{l, m_s}_{l, m} \, Y^{m-m_s}_l (x,y,z) \, \chivec.
-\end{align}
-where
-\begin{align}
-\bm{\chi}_{1, \pm 1} = \frac{1}{\sqrt{2}} \begin{bmatrix} \mp 1 \\ -i \\ 0 \end{bmatrix}, \quad \bm{\chi}_{1,0} = \begin{bmatrix} 0 \\ 0 \\ 1 \end{bmatrix}.
-\end{align}
-
-}
-
-\frame
-{
     \frametitle{Orthogonal Polynomials on the Tangent Space}
 
 Then, for any \(l \in \No\), \(m \in \Z\) s.t. \(0 \le |m| \le l\) we have that
@@ -484,6 +442,11 @@ where
 \blzero := i \, \big(l(l+1)\big)^\half, \quad
 \blone := l \, \Big(\frac{l+1}{2l+1}\Big)^\half.
 \end{align}
+
+\begin{itemize}
+\item $\curlyy^{l-1,1}_{l,m}, \curlyy^{l,1}_{l,m}, \curlyy^{l+1,1}_{l,m}$ are spin-1 tensor spherical harmonics (vector SHs).
+\item VSHs can be expressed as a vector-weighted sum of spherical harmonics.
+\end{itemize}
 
 }
 
@@ -875,13 +838,18 @@ and so we define the truncated coefficient vectors for some \(N \in \N\) as
 {
     \frametitle{How does this work practically?}
  
-Operators act on the coefficients vectors.
+\begin{itemize}
 
-Easily derive operators for Grad, Div, curl with the unit vector, etc. as well as the multiplications by $x, y, z$.
+\item Operators act on the coefficients vectors.
 
-- BandedBlockBanded structures
+\item Easily derive operators for Grad, Div, curl with the unit vector, etc. as well as the multiplications by $x, y, z$.
+\begin{itemize}
+	\item BandedBlockBanded structures
+\end{itemize}
 
-Can calculate dot products simply.
+\item Can calculate dot products simply.
+
+\end{itemize}
     
 }
 
