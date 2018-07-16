@@ -167,7 +167,7 @@ end
 Function to evaluate the order N OP set at the point (x,y) that lies on the
 unit circle arc
 =#
-function arc_op_eval(N, h, x, y)
+function arc_op_eval(N, h, P, x, y)
     # Check that x and y are on the unit circle
     delta = 1e-5
     @assert (h >= 0 && h < 1 && x^2 + y^2 < 1 + delta &&  x^2 + y^2 > 1 - delta && x >= h && x <= 1)
@@ -183,7 +183,8 @@ function arc_op_eval(N, h, x, y)
         Ukh,a,b = lanczos(w,1)
         return [Tkh[2](x); y*Ukh[1](x)]
     else
-        α, β, γ, δ, a, b, c, d, e, f = initialise_arc_ops(N, h)
+        # α, β, γ, δ, a, b, c, d, e, f = initialise_arc_ops(N, h)
+        α, β, γ, δ, a, b, c, d, e, f = P
         DT, K, L = get_arc_clenshaw_matrices(N, α, β, γ, δ, a, b, c, d, e, f)
         P0 = (-clenshaw_matrix_DT(0, β, δ, a)
         *(clenshaw_matrix_B(0, α, γ, b, e)-clenshaw_matrix_G(0,x,y))*Tkh[1](x))
@@ -202,7 +203,7 @@ end
 Function to evaluate the derivative of the order n OP at the point (x,y) on
 the unit circle arc - ∂/∂s(P_n).
 =#
-function arc_op_derivative_eval(N, h, x, y)
+function arc_op_derivative_eval(N, h, P, x, y)
     # Check that x and y are on the unit circle
     delta = 1e-5
     @assert (h >= 0 && h < 1 && x^2 + y^2 < 1 + delta &&  x^2 + y^2 > 1 - delta && x >= h && x <= 1)
@@ -217,7 +218,8 @@ function arc_op_derivative_eval(N, h, x, y)
     Tkh,α,β = lanczos(w,1)
     T0 = Tkh[1](x)
 
-    α, β, γ, δ, a, b, c, d, e, f = initialise_arc_ops(N, h)
+    # α, β, γ, δ, a, b, c, d, e, f = initialise_arc_ops(N, h)
+    α, β, γ, δ, a, b, c, d, e, f = P
     DT, K, L = get_arc_clenshaw_matrices(N, α, β, γ, δ, a, b, c, d, e, f)
     DT0 = clenshaw_matrix_DT(0, β, δ, a)
     B0 = clenshaw_matrix_B(0, α, γ, b, e)
@@ -264,7 +266,7 @@ where the {P_n} are the order n OPs for the arc.
 
 Uses the Clenshaw Algorithm.
 =#
-function arc_func_eval(F, h, α, β, γ, δ, a, b, c, d, e, f, x, y)
+function arc_func_eval(F, h, P, x, y)
     # Check that x and y are on the unit circle
     delta = 1e-5
     @assert (h >= 0 && h < 1 && x^2 + y^2 < 1 + delta &&  x^2 + y^2 > 1 - delta && x >= h && x <= 1)
@@ -276,8 +278,8 @@ function arc_func_eval(F, h, α, β, γ, δ, a, b, c, d, e, f, x, y)
 
     # Complete the reverse recurrance to gain gamma_1, gamma_2
     # Note that gamma_(N+1) = 0, gamma_(N+2) = 0
-    T0 = arc_op_eval(0, h, x, y)
-    DT, K, L = get_arc_clenshaw_matrices(N, α, β, γ, δ, a, b, c, d, e, f)
+    T0 = arc_op_eval(0, h, P, x, y)
+    DT, K, L = get_arc_clenshaw_matrices(N, P...)
     if N == 0
         return T0*F
     elseif N == 1
@@ -297,7 +299,7 @@ function arc_func_eval(F, h, α, β, γ, δ, a, b, c, d, e, f, x, y)
     end
 
     # Calculate the evaluation of f using gamma_1, gamma_2
-    P_1 = arc_op_eval(1, h, x, y)
+    P_1 = arc_op_eval(1, h, P, x, y)
     return F[1]*T0 + vecdot(P_1, gamma_nplus1) - T0*vecdot(L[1], gamma_nplus2)
 end
 
@@ -492,7 +494,7 @@ function get_Q_in_op_basis_coeff_mats(N, h)
 end
 
 # Gain coeffs of ∂/∂s(P_N) in OP basis (coeffs are matrices)
-function get_derivative_op_basis_coeff_mats(N, h)
+function get_derivative_op_basis_coeff_mats(N, h, P)
     xmin = h
     xmax = 1
     X = Fun(identity, xmin..xmax)
@@ -500,8 +502,8 @@ function get_derivative_op_basis_coeff_mats(N, h)
     Ukh,_,_ = lanczos(w,N+1)
     w = 1/sqrt(1-X^2)
     Tkh,_,_ = lanczos(w,N+1)
-    dP1 = (x,y)->arc_op_derivative_eval(N,h,x,y)[1]
-    dP2 = (x,y)->arc_op_derivative_eval(N,h,x,y)[2]
+    dP1 = (x,y)->arc_op_derivative_eval(N,h,P,x,y)[1]
+    dP2 = (x,y)->arc_op_derivative_eval(N,h,P,x,y)[2]
     dP1e = Fun( x -> (dP1(x,sqrt(1-x^2)) + dP1(x, -sqrt(1-x^2)))/2, Chebyshev(xmin..xmax), 10)
     dP1o = Fun( x -> (dP1(x,sqrt(1-x^2)) - dP1(x, -sqrt(1-x^2)))/2, JacobiWeight(0,1/2,Chebyshev(xmin..xmax)), 50)
     dP2e = Fun( x -> (dP2(x,sqrt(1-x^2)) + dP2(x, -sqrt(1-x^2)))/2, Chebyshev(xmin..xmax), 50)
@@ -528,7 +530,7 @@ end
 Find 2x2 matrices A_N, B_N s.t. ∂P_N/∂s = A_N*Q_N, B_N*Q_{N-1}.
 Note Q_k(x,y) = [T̃_k^h(x); y*Ũ_{k-1}^h(x)]
 =#
-function get_derivative_op_Q_coeff_mats(N, h)
+function get_derivative_op_Q_coeff_mats(N, h, P)
     xmin = h
     xmax = 1
     X = Fun(identity, xmin..xmax)
@@ -536,8 +538,8 @@ function get_derivative_op_Q_coeff_mats(N, h)
     Ũkh,_,_ = lanczos(w,N+1)
     w = X / sqrt(1-X^2)
     T̃kh,_,_ = lanczos(w,N+1)
-    dP1 = (x,y)->arc_op_derivative_eval(N,h,x,y)[1]
-    dP2 = (x,y)->arc_op_derivative_eval(N,h,x,y)[2]
+    dP1 = (x,y)->arc_op_derivative_eval(N,h,P,x,y)[1]
+    dP2 = (x,y)->arc_op_derivative_eval(N,h,P,x,y)[2]
     # dP1e = Fun( x -> (dP1(x,sqrt(1-x^2)) + dP1(x, -sqrt(1-x^2)))/2, Chebyshev(xmin..xmax), 10)
     dP1o = Fun( x -> (dP1(x,sqrt(1-x^2)) - dP1(x, -sqrt(1-x^2)))/2, JacobiWeight(0,1/2,Chebyshev(xmin..xmax)), 50)
     dP2e = Fun( x -> (dP2(x,sqrt(1-x^2)) + dP2(x, -sqrt(1-x^2)))/2, Chebyshev(xmin..xmax), 50)
@@ -598,14 +600,14 @@ function Q2arc(N, h)
 end
 
 # Operator matrix for ∂/∂s. Acts on arc OP coeffs and results in arc OP coeffs.
-function arc_derivative_operator(N, h)
+function arc_derivative_operator(N, h, P)
     cols = rows = [1; round.(Int,2*ones(N))]  # block sizes
     l,u = 0,N          # block bandwidths
     λ,μ = 1,1          # sub-block bandwidths: the bandwidths of each block
     Ds = BandedBlockBandedMatrix(0.0I, (rows,cols), (l,u), (λ,μ))
     for k=1:N
         println(k)
-        A = get_derivative_op_basis_coeff_mats(k, h)
+        A = get_derivative_op_basis_coeff_mats(k, h, P)
         for n = 1:k
             view(Ds, Block(n+1,k+1)) .= A[n+1].'
         end
@@ -614,14 +616,14 @@ function arc_derivative_operator(N, h)
 end
 
 # Operator matrix for ∂/∂s. Acts on arc OP coeffs and results in Q coeffs.
-function arc_derivative_operator_in_Q(N, h)
+function arc_derivative_operator_in_Q(N, h, P)
     cols = rows = [1; round.(Int,2*ones(N))]  # block sizes
     l,u = 0,1          # block bandwidths
     λ,μ = 1,1          # sub-block bandwidths: the bandwidths of each block
     D̃s = BandedBlockBandedMatrix(0.0I, (rows,cols), (l,u), (λ,μ))
     for k=1:N
         println(k)
-        A = get_derivative_op_Q_coeff_mats(k, h)
+        A = get_derivative_op_Q_coeff_mats(k, h, P)
         j = 1
         for n = k-1:k
             view(D̃s, Block(n+1,k+1)) .= A[j].'
