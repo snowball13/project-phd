@@ -344,7 +344,7 @@ function func_to_coeffs(F, N, h)
     # Fe = (F.(X,Y) + F.(X,-Y))/2
     # Fo = (F.(X,Y) - F.(X,-Y))/2
     Fe = Fun( x -> (F(x,sqrt(1-x^2)) + F(x, -sqrt(1-x^2)))/2, Chebyshev(xmin..xmax), 50)
-    Fo = Fun( x -> (F(x,sqrt(1-x^2)) - F(x, -sqrt(1-x^2)))/2, JacobiWeight(0,1/2,Chebyshev(xmin..xmax)), 10)
+    Fo = Fun( x -> (F(x,sqrt(1-x^2)) - F(x, -sqrt(1-x^2)))/2, JacobiWeight(0,1/2,Chebyshev(xmin..xmax)), 50)
 
     Fcoeffs = zeros(2N+1)
     Fcoeffs[1] = sum(w*Tkh[1]*Fe)
@@ -372,7 +372,7 @@ function func_to_Q_coeffs(F, N, h)
     # Fe = (F.(X,Y) + F.(X,-Y))/2
     # Fo = (F.(X,Y) - F.(X,-Y))/2
     Fe = Fun( x -> (F(x,sqrt(1-x^2)) + F(x, -sqrt(1-x^2)))/2, Chebyshev(xmin..xmax), 50)
-    Fo = Fun( x -> (F(x,sqrt(1-x^2)) - F(x, -sqrt(1-x^2)))/2, JacobiWeight(0,1/2,Chebyshev(xmin..xmax)), 10)
+    Fo = Fun( x -> (F(x,sqrt(1-x^2)) - F(x, -sqrt(1-x^2)))/2, JacobiWeight(0,1/2,Chebyshev(xmin..xmax)), 50)
 
     Fcoeffs = zeros(2N+1)
     Fcoeffs[1] = sum(w*T̃kh[1]*Fe)
@@ -383,7 +383,83 @@ function func_to_Q_coeffs(F, N, h)
     return Fcoeffs
 end
 
+#=
+Gather the matrix coefficients of the expansion of the Nth arc OP in the arc "Q"
+OP basis.
+=#
+# function get_op_in_Q_basis_coeff_mats(N, h)
+#     if N == 0
+#         A = Vector{Matrix{Float64}}(1)
+#         P1 = (x,y)->arc_op_eval(0, h, x, y)
+#         P1c = func_to_Q_coeffs(P1, 0, h)
+#         A[1] = zeros(1,1)
+#         A[1][1] = P1c[1]
+#         return A
+#     end
+#     A = Vector{Matrix{Float64}}(2)
+#     P1 = (x,y)->arc_op_eval(N, h, x, y)[1]
+#     P2 = (x,y)->arc_op_eval(N, h, x, y)[2]
+#     P1c = func_to_Q_coeffs(P1, N, h)
+#     P2c = func_to_Q_coeffs(P2, N, h)
+#     if N == 1
+#         A[1] = zeros(2,1)
+#         A[1][1] = P1c[1]
+#         A[1][2] = P2c[1]
+#         A[2] = zeros(2,2)
+#         A[2] = [P1c[2] P1c[3]; P2c[2] P2c[3]]
+#     else
+#         j = 1
+#         for n = N-1:N
+#             A[j] = zeros(2,2)
+#             A[j] = [P1c[2n] P1c[2n+1]; P2c[2n] P2c[2n+1]]
+#             j += 1
+#         end
+#     end
+#     return A
+# end
 function get_op_in_Q_basis_coeff_mats(N, h)
+    xmin = h
+    xmax = 1
+    X = Fun(identity, xmin..xmax)
+    w = sqrt(1-X^2)
+    Ukh,_,_ = lanczos(w,N+1)
+    w = 1/sqrt(1-X^2)
+    Tkh,_,_ = lanczos(w,N+1)
+    if N == 0
+        A = Vector{Matrix{Float64}}(1)
+        P1 = (x,y)->Tkh[1](x)
+        P1c = func_to_Q_coeffs(P1, 0, h)
+        A[1] = zeros(1,1)
+        A[1][1] = P1c[1]
+        return A
+    end
+    A = Vector{Matrix{Float64}}(2)
+    P1 = (x,y)->Tkh[N+1](x)
+    P2 = (x,y)->Ukh[N](x)*y
+    P1c = func_to_Q_coeffs(P1, N, h)
+    P2c = func_to_Q_coeffs(P2, N, h)
+    if N == 1
+        A[1] = zeros(2,1)
+        A[1][1] = P1c[1]
+        A[1][2] = P2c[1]
+        A[2] = zeros(2,2)
+        A[2] = [P1c[2] P1c[3]; P2c[2] P2c[3]]
+    else
+        j = 1
+        for n = N-1:N
+            A[j] = zeros(2,2)
+            A[j] = [P1c[2n] P1c[2n+1]; P2c[2n] P2c[2n+1]]
+            j += 1
+        end
+    end
+    return A
+end
+
+#=
+Gather the matrix coefficients of the expansion of the Nth "Q" OP in the arc P
+OP basis.
+=#
+function get_Q_in_op_basis_coeff_mats(N, h)
     xmin = h
     xmax = 1
     X = Fun(identity, xmin..xmax)
@@ -401,7 +477,7 @@ function get_op_in_Q_basis_coeff_mats(N, h)
     end
     Q1 = (x,y)->T̃kh[N+1](x)
     Q2 = (x,y)->Ũkh[N](x)*y
-
+    Q1c = func_to_coeffs(Q1, N, h)
     Q2c = func_to_coeffs(Q2, N, h)
     A[1] = zeros(2,1)
     A[1][1] = Q1c[1]
@@ -410,30 +486,6 @@ function get_op_in_Q_basis_coeff_mats(N, h)
     for n = 1:N
         A[n+1] = zeros(2,2)
         A[n+1] = [Q1c[j] Q1c[j+1]; Q2c[j] Q2c[j+1]]
-        j += 2
-    end
-    return A
-end
-
-function get_Q_in_op_basis_coeff_mats(N, h)
-    if N == 0
-        P1 = (x,y)->arc_op_eval(0, h, x, y)
-        P1c = func_to_coeffs(P1, 0, h)
-        A[1] = zeros(1,1)
-        A[1][1] = P1c[1]
-        return A
-    end
-    P1 = (x,y)->arc_op_eval(N, h, x, y)[1]
-    P2 = (x,y)->arc_op_eval(N, h, x, y)[2]
-    P1c = func_to_coeffs(P1, N, h)
-    P2c = func_to_coeffs(P2, N, h)
-    A[1] = zeros(2,1)
-    A[1][1] = P1c[1]
-    A[1][2] = P2c[1]
-    j = 2
-    for n = 1:N
-        A[n+1] = zeros(2,2)
-        A[n+1] = [P1c[j] P1c[j+1]; P2c[j] P2c[j+1]]
         j += 2
     end
     return A
@@ -473,8 +525,8 @@ function get_derivative_op_basis_coeff_mats(N, h)
 end
 
 #=
-Find Q_N, Q_{N-1} s.t. ∂P_N/∂s = A_N*Q_N, B_N*Q_{N-1} for some 2x2 matrices
-A_N, B_N. Note Q_k(x,y) = [T̃kh(x); y*Ũkh(x)]
+Find 2x2 matrices A_N, B_N s.t. ∂P_N/∂s = A_N*Q_N, B_N*Q_{N-1}.
+Note Q_k(x,y) = [T̃_k^h(x); y*Ũ_{k-1}^h(x)]
 =#
 function get_derivative_op_Q_coeff_mats(N, h)
     xmin = h
@@ -486,10 +538,10 @@ function get_derivative_op_Q_coeff_mats(N, h)
     T̃kh,_,_ = lanczos(w,N+1)
     dP1 = (x,y)->arc_op_derivative_eval(N,h,x,y)[1]
     dP2 = (x,y)->arc_op_derivative_eval(N,h,x,y)[2]
-    dP1e = Fun( x -> (dP1(x,sqrt(1-x^2)) + dP1(x, -sqrt(1-x^2)))/2, Chebyshev(xmin..xmax), 10)
+    # dP1e = Fun( x -> (dP1(x,sqrt(1-x^2)) + dP1(x, -sqrt(1-x^2)))/2, Chebyshev(xmin..xmax), 10)
     dP1o = Fun( x -> (dP1(x,sqrt(1-x^2)) - dP1(x, -sqrt(1-x^2)))/2, JacobiWeight(0,1/2,Chebyshev(xmin..xmax)), 50)
     dP2e = Fun( x -> (dP2(x,sqrt(1-x^2)) + dP2(x, -sqrt(1-x^2)))/2, Chebyshev(xmin..xmax), 50)
-    dP2o = Fun( x -> (dP2(x,sqrt(1-x^2)) - dP2(x, -sqrt(1-x^2)))/2, JacobiWeight(0,1/2,Chebyshev(xmin..xmax)), 10)
+    # dP2o = Fun( x -> (dP2(x,sqrt(1-x^2)) - dP2(x, -sqrt(1-x^2)))/2, JacobiWeight(0,1/2,Chebyshev(xmin..xmax)), 10)
     A = Vector{Matrix{Float64}}(2)
     if N == 1
         A[1] = zeros(2,1)
@@ -517,29 +569,13 @@ function arc2Q(N, h)
     cols = rows = [1; round.(Int,2*ones(N))]  # block sizes
     l,u = 0,1
     λ,μ = 1,1
-    C = BandedBlockBandedMatrix(0.0I, (rows,cols), (l,u), (λ,μ))
-    # k = 0
-    P1 = (x,y)->arc_op_eval(0, h, x, y)[1]
-    P1c = func_to_Q_coeffs(P1, 0, h)
-    view(C, Block(1,1)) .= [P1c[1]]
-    # k = 1
-    P1 = (x,y)->arc_op_eval(1, h, x, y)[1]
-    P2 = (x,y)->arc_op_eval(1, h, x, y)[2]
-    P1c = func_to_Q_coeffs(P1, 1, h)
-    P2c = func_to_Q_coeffs(P2, 1, h)
-    view(C, Block(1,2)) .= [P1c[1] P2c[1]]
-    view(C, Block(2,2)) .= [P1c[2] P2c[2]; P1c[3] P2c[3]]
-    # k > 1
-    j = 2
-    for k=2:N
+    C = BandedBlockBandedMatrix(0.0*I, (rows,cols), (l,u), (λ,μ))
+    view(C, Block(1,1)) .= get_op_in_Q_basis_coeff_mats(0, h)[1]
+    for k=1:N
         println(k)
-        P1 = (x,y)->arc_op_eval(k, h, x, y)[1]
-        P2 = (x,y)->arc_op_eval(k, h, x, y)[2]
-        P1c = func_to_Q_coeffs(P1, k, h)
-        P2c = func_to_Q_coeffs(P2, k, h)
-        view(C, Block(k,k+1)) .= [P1c[j] P2c[j]; P1c[j+1] P2c[j+1]]
-        view(C, Block(k+1,k+1)) .= [P1c[j+2] P2c[j+2]; P1c[j+3] P2c[j+3]]
-        j += 2
+        A = get_op_in_Q_basis_coeff_mats(k, h)
+        view(C, Block(k,k+1)) .= A[1].'
+        view(C, Block(k+1,k+1)) .= A[2].'
     end
     return C
 end
@@ -550,10 +586,10 @@ function Q2arc(N, h)
     l,u = 0,N
     λ,μ = 1,1
     C = BandedBlockBandedMatrix(0.0I, (rows,cols), (l,u), (λ,μ))
-    view(C, Block(1,1)) .= get_op_in_Q_basis_coeff_mats(0, h)[1]
+    view(C, Block(1,1)) .= get_Q_in_op_basis_coeff_mats(0, h)[1]
     for k=1:N
         println(k)
-        A = get_op_in_Q_basis_coeff_mats(k, h)
+        A = get_Q_in_op_basis_coeff_mats(k, h)
         for n = 1:k+1
             view(C, Block(n,k+1)) .= A[n].'
         end
