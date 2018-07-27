@@ -105,6 +105,7 @@ end
 
 # Does the span of these match the span of the SHs? We expect the V matrix cols
 # from the SVD for each Y and P matrices to be equal up to sign.
+n = 2
 m = 10
 Y = zeros(2n+1, m); P = zeros(2n+1, m)
 x = 0.8rand(m); y = 0.5rand(m); z = zeros(m)
