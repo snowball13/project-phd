@@ -284,7 +284,7 @@ function arc_func_eval(F, h, P, x, y)
         return T0*F
     elseif N == 1
         gamma_nplus2 = zeros(2)
-        gamma_nplus1 = view(f, 2N:2N+1)
+        gamma_nplus1 = view(F, 2N:2N+1)
     else
         gamma_nplus2 = view(F, 2N:2N+1)
         gamma_nplus1 = (view(F, 2(N-1):2N-1)
