@@ -552,17 +552,132 @@ function hemJz(N)
 end
 
 
+# Methods to obtain the matrices used in the Clenshaw Algorithm
+function clenshawDT(n, Z)
+    pT, wpT, qT, wqT, pU, wpU, qU, wqU, Xp, Xq, αT, αU, δ = Z
+    if n == 0
+        return Diagonal([1/coeffAlpha(0, 0, 2, αT);
+                         1/coeffBetaT(0, 0, 6, pT, wpT, Xp, δ);
+                         1/coeffGammaT(0, 0, 6, Z)])
+    end
+    DT = zeros(2n+3, 3(2n+1))
+    for k = 0:n
+        view(DT, k+1, k+1) .= 1/coeffAlpha(n, k, 2, αT)
+    end
+    b = 0.5/coeffBetaT(n, n, 6, pT, wpT, Xp, δ)
+    view(DT, n+2, 3n+2) .= b
+    view(DT, n+2, 3(2n+1)) .= - b
+    for k = 0:n-1
+        view(DT, n+k+3, n+k+2) .= 1/coeffAlpha(n-1, k, 2, αU)
+    end
+    b = 0.5/coeffBetaU(n-1, n-1, 6, pU, wpU, Xp)
+    view(DT, 2n+3, 2(2n+1)) .= b
+    view(DT, 2n+3, 5n+3) .= b
+    return DT
+end
+
+function clenshawB(n, Z)
+    B = zeros(3(2n+1), 2n+1)
+    view(B, 1:2n+1, 1:2n+1) .= jacobiBx(n, Z)
+    view(B, 2n+2:2(2n+1), 1:2n+1) .= jacobiBy(n, Z)
+    view(B, 4n+3:3(2n+1), 1:2n+1) .= jacobiBz(n, Z)
+    return B
+end
+
+function clenshawC(n, Z)
+    C = zeros(3(2n+1), 2n-1)
+    view(C, 1:2n+1, 1:2n-1) .= jacobiCx(n, Z)
+    view(C, 2n+2:2(2n+1), 1:2n-1) .= jacobiCy(n, Z)
+    view(C, 4n+3:3(2n+1), 1:2n-1) .= jacobiCz(n, Z)
+    return C
+end
+
+function clenshawG(n, x, y, z)
+    G = zeros(3(2n+1), 2n+1)
+    view(G, 1:2n+1, 1:2n+1) .= Diagonal(x * ones(2n+1))
+    view(G, 2n+2:2(2n+1), 1:2n+1) .= Diagonal(y * ones(2n+1))
+    view(G, 4n+3:3(2n+1), 1:2n+1) .= Diagonal(z * ones(2n+1))
+    return G
+end
+
+# Obtain the submatrices used in the Clenshaw Alg
+function get_hemisphere_clenshaw_matrices(N, Z)
+    DT = Array{Matrix{Float64}}(N-1)
+    K = copy(DT)
+    L = copy(DT)
+    for n = N-1:-1:1
+        DT[n] = clenshawDT(n, Z)
+        K[n] = DT[n] * clenshawB(n, Z)
+        L[n] = DT[n] * clenshawC(n, Z)
+    end
+    return DT, K, L
+end
+
+#=
+Function to obtain the evaluation of a function f(x,y,z)
+where f is input as the coefficients of its expansion in the "P" hemisphere
+basis, i.e.
+f(x, y, z) = sum(vecdot(f_n, P_n(x,y,z)))
+where the {P_n} are the order n OPs for the hemisphere.
+
+Uses the Clenshaw Algorithm.
+=#
+function hemisphere_fun_eval(f, Z, x, y, z)
+    # Check that (x, y, z) lies are on the unit hemisphere
+    delta = 1e-5
+    @assert (x^2 + y^2 + z^2 < 1 + delta &&  x^2 + y^2 + z^2 > 1 - delta && x >= 0 && x <= 1)
+        "the point (x, y, z) must be on unit hemisphere defined by the x coord being in the range [0,1]"
+
+    M = length(f)
+    N = round(Int, sqrt(M) - 1)
+    @assert (M > 0 && sqrt(M) - 1 == N) "invalid length of F"
+
+    # Complete the reverse recurrance to gain gamma_1, gamma_2
+    # Note that gamma_(N+1) = 0, gamma_(N+2) = 0
+    P0 = hemisphere_op_eval(0, x, y, z)
+    if N == 0
+        return P0*f
+    elseif N == 1
+        P1 = hemisphere_op_eval(1, x, y, z)
+        return (f[1] * P0 + view(f, N^2+1:(N+1)^2).' * view(P1, 2:4))[1]
+    end
+
+    DT, K, L = get_hemisphere_clenshaw_matrices(N, Z)
+    xi = Vector{Array{Float64}}(3)
+    xi[3] = view(f, N^2+1:(N+1)^2).'
+    xi[2] = (view(f, (N-1)^2+1:N^2).'
+             - xi[3] * (K[N-1] - DT[N-1] * clenshawG(N-1, x, y, z)))
+    for n = N-2:-1:1
+        xi[1] = (view(f, n^2+1:(n+1)^2).'
+                    - xi[2] * (K[n] - DT[n] * clenshawG(n, x, y, z))
+                    - xi[3] * L[n+1])
+        xi[3] = copy(xi[2])
+        xi[2] = copy(xi[1])
+    end
+    # Calculate the evaluation of f using gamma_1, gamma_2
+    P1 = hemisphere_op_eval(1, x, y, z)
+    return (f[1] * P0 + xi[2] * view(P1, 2:4) - P0 * xi[3] * L[1])[1]
+end
+
 
 #=====#
 
-N = 5
-x = 0.2; y = 0.8; z = sqrt(1-x^2-y^2)
+N = 10
+tol = 1e-12
+x = 0.3; y = 0.8; z = sqrt(1-x^2-y^2)
 P = hemisphere_op_eval(N, x, y, z)
+J = hemJx(N)
+norm((x*P-J*P)[1:N^2])
+J = hemJy(N)
+norm((y*P-J*P)[1:N^2])
 J = hemJz(N)
-J[Block(2,2)]
-coeffBeta(1, 0, 4, pT, wpT, Xp, δ)
-coeffBeta(1, 1, 1, pT, wpT, Xp, δ)
-maximum(abs(J-J.'))
-(x*P-J*P)[1:N^2]
-(y*P-J*P)[1:N^2]
-(z*P-J*P)[1:N^2]
+norm((z*P-J*P)[1:N^2])
+
+M = (N+1)^2
+f = ones(M)
+Z = get1dops(N)
+out = 0.0
+for k = 0:N
+    out += vecdot(view(f, k^2+1:(k+1)^2), view(P, k^2+1:(k+1)^2))
+end
+out - hemisphere_fun_eval(f, Z, x, y, z)
