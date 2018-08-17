@@ -1,9 +1,9 @@
 using ApproxFun
-
+    import ApproxFun: evaluate, PolynomialSpace, recα, recβ, recγ
 
 abstract type SpaceFamily{D,R} end
 
-struct OrthogonalPolynomialSpace{WW,D,R} <: Space{D,R}
+struct OrthogonalPolynomialSpace{WW,D,R} <: PolynomialSpace{D,R}
     weight::WW
     a::Vector{R}  # Diagonal recurrence coefficients
     b::Vector{R}  # Off diagonal recurrence coefficients
@@ -12,7 +12,23 @@ end
 OrthogonalPolynomialSpace(w::Fun{<:Space{D,R}}) where {D,R} =
     OrthogonalPolynomialSpace{typeof(w),D,R}(w, Vector{R}(), Vector{R}())
 
+function resizedata!(S::OrthogonalPolynomialSpace, n)
+    n ≤ length(S.a) && return S
+    # TODO: populate a and b
 
+end
+
+#####
+# recα/β/γ are given by
+#       x p_{n-1} =γ_n p_{n-2} + α_n p_{n-1} +  p_n β_n
+#####
+
+recα(::Type{T}, S::OrthogonalPolynomialSpace, n) where T =
+    T(resizedata!(S, n).a[n])
+recβ(::Type{T}, S::OrthogonalPolynomialSpace, n) where T =
+    T(resizedata!(S, n).b[n])
+recγ(::Type{T}, S::OrthogonalPolynomialSpace, n) where T =
+    T(resizedata!(S, n).b[n-1])
 
 # R is range-type, which should be Float64.
 struct OrthogonalPolynomialFamily{FF,WW,D,R,N} <: SpaceFamily{D,R}
@@ -41,3 +57,10 @@ using Test
 x = Fun()
 P = OrthogonalPolynomialFamily(1+x,1-x)
 @test P(0.4,0.2).weight(0.1) ≈ (1+0.1)^0.4 * (1-0.1)^0.2
+
+P₅ = Fun(Jacobi(0.4,0.2), [zeros(5); 1])
+P₅ = P₅/sqrt(sum((1+x)^0.4*(1-x)^0.2*P₅^2))
+P̃₅ = Fun(P(0.4,0.2), [zeros(5); 1])
+
+# doesn't yet work
+@test P̃₅(0.1) ≈ P₅(0.1)
