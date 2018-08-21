@@ -1,7 +1,12 @@
+#=
+hemisphere
+=#
+
 using ApproxFun
     using SphericalHarmonics
     using BlockBandedMatrices
     using BlockArrays
+    using Base.Test
 
 # We define the hemisphere by x ∈ [0,1], y ∈ [-1,1], z = sqrt(1-x^2-y^2).
 
@@ -143,23 +148,31 @@ end
 
 #=
 The following coeff functions give the coefficients used in the
-relations for mult by x, y, z of the OPs
+relations for mult by x, y, z of the OPs (or Q basis OPs)
 =#
-function get1dops(N)
+function get1dops(N, kind = 'P')
     # T_n (μ = 0)
     μ = 0
     Xp = Fun(identity, 0..1)
     Xq = Fun(identity, -1..1)
     wqT = 1/sqrt(1-Xq^2)
-    qT, a, b = lanczos(wqT,N+1)
+    qT, a, b = lanczos(wqT, N+1)
     δ = b[1] # noted as is not 0.5 like the rest of the vector b
     pT = Vector{Vector{ApproxFun.Fun}}(N+1)
     αT = Vector{Vector{Vector{Float64}}}(N+1)
     wpT = Vector{ApproxFun.Fun}(N+1)
-    for k = 0:N
-        αT[k+1] = Vector{Vector{Float64}}(2)
-        wpT[k+1] = (1-Xp^2)^(k+μ)
-        pT[k+1], αT[k+1][1], αT[k+1][2] = lanczos(wpT[k+1], N+1)
+    if kind == 'P'
+        for k = 0:N
+            αT[k+1] = Vector{Vector{Float64}}(2)
+            wpT[k+1] = (1-Xp^2)^(k+μ)
+            pT[k+1], αT[k+1][1], αT[k+1][2] = lanczos(wpT[k+1], N+1)
+        end
+    elseif kind == 'Q'
+        for k = 0:N
+            αT[k+1] = Vector{Vector{Float64}}(2)
+            wpT[k+1] = Xp * (1-Xp^2)^(k+μ)
+            pT[k+1], αT[k+1][1], αT[k+1][2] = lanczos(wpT[k+1], N+1)
+        end
     end
 
     # U_n (μ = 1)
@@ -169,10 +182,18 @@ function get1dops(N)
     pU = Vector{Vector{ApproxFun.Fun}}(N+1)
     αU = Vector{Vector{Vector{Float64}}}(N+1)
     wpU = Vector{ApproxFun.Fun}(N+1)
-    for k = 0:N
-        αU[k+1] = Vector{Vector{Float64}}(2)
-        wpU[k+1] = (1-Xp^2)^(k+μ)
-        pU[k+1], αU[k+1][1], αU[k+1][2] = lanczos(wpU[k+1], N+1)
+    if kind == 'P'
+        for k = 0:N
+            αU[k+1] = Vector{Vector{Float64}}(2)
+            wpU[k+1] = (1-Xp^2)^(k+μ)
+            pU[k+1], αU[k+1][1], αU[k+1][2] = lanczos(wpU[k+1], N+1)
+        end
+    elseif kind == 'Q'
+        for k = 0:N
+            αU[k+1] = Vector{Vector{Float64}}(2)
+            wpU[k+1] = Xp * (1-Xp^2)^(k+μ)
+            pU[k+1], αU[k+1][1], αU[k+1][2] = lanczos(wpU[k+1], N+1)
+        end
     end
 
     return pT, wpT, qT, wqT, pU, wpU, qU, wqU, Xp, Xq, αT, αU, δ
@@ -630,7 +651,7 @@ function hemisphere_fun_eval(f, Z, x, y, z)
 
     M = length(f)
     N = round(Int, sqrt(M) - 1)
-    @assert (M > 0 && sqrt(M) - 1 == N) "invalid length of F"
+    @assert (M > 0 && sqrt(M) - 1 == N) "invalid length of f"
 
     # Complete the reverse recurrance to gain gamma_1, gamma_2
     # Note that gamma_(N+1) = 0, gamma_(N+2) = 0
@@ -659,6 +680,74 @@ function hemisphere_fun_eval(f, Z, x, y, z)
     return (f[1] * P0 + xi[2] * view(P1, 2:4) - P0 * xi[3] * L[1])[1]
 end
 
+function hemisphere_Q_fun_eval(f, x, y, z)
+    # Check that (x, y, z) lies are on the unit hemisphere
+    delta = 1e-5
+    @assert (x^2 + y^2 + z^2 < 1 + delta &&  x^2 + y^2 + z^2 > 1 - delta && x >= 0 && x <= 1)
+        "the point (x, y, z) must be on unit hemisphere defined by the x coord being in the range [0,1]"
+
+    M = length(f)
+    N = round(Int, sqrt(M) - 1)
+    @assert (M > 0 && sqrt(M) - 1 == N) "invalid length of f"
+
+    Q = getOPanonfunc(N, 'Q')
+    out = 0.0
+    for n = 0:N
+        for k = 1:2n+1
+            out += f[n^2+k] * Q[n+1][k](x, y, z)
+        end
+    end
+    return out
+end
+
+# Operator for conversion from P to Q basis
+function getHem2QCoeffMats(n, ZP, ZQ)
+    pT, wpT, qT, wqT, pU, wpU, qU, wqU, Xp, Xq, αT, αU, δ = ZP
+    pTQ, _, _, _, pUQ, _, _, _, _, _, _, _, _ = ZQ
+    if n == 0
+        A = Vector{Matrix{Float64}}(1)
+        A[1] = zeros(1,1)
+        A[1][1] = sum(pT[1][1] * Xp * pTQ[1][1] * wpT[1])
+        return A
+    end
+    A = Vector{Matrix{Float64}}(2)
+    A[1] = zeros(2n+1, 2n+1)
+    A[2] = zeros(2n+1, 2n-1)
+    m1 = n
+    m2 = n - 1
+    for i = 1:n
+        j = i
+        view(A[1], i, j) .= sum(pT[i][n-i+2] * Xp * pTQ[j][m1-j+2] * wpT[i])
+        view(A[2], i, j) .= sum(pT[i][n-i+2] * Xp * pTQ[j][m2-j+2] * wpT[i])
+    end
+    i = n + 1
+    j = i
+    view(A[1], i, j) .= sum(pT[i][n-i+2] * Xp * pTQ[j][m1-j+2] * wpT[i])
+    for i = n+2:2n
+        j = i
+        view(A[1], i, j) .= sum(pU[i-n-1][2n-i+2] * Xp * pUQ[j-m1-1][2m1-j+2] * wpU[i-n-1])
+        j = i - 1
+        view(A[2], i, j) .= sum(pU[i-n-1][2n-i+2] * Xp * pUQ[j-m2-1][2m2-j+2] * wpU[i-n-1])
+    end
+    i = 2n + 1
+    j = i
+    view(A[1], i, j) .= sum(pU[i-n-1][2n-i+2] * Xp * pUQ[j-m1-1][n+m1-j+2] * wpU[i-n-1])
+    return A
+end
+
+function hem2Q(N, ZP, ZQ)
+    cols = rows = 1:2:2N+1  # block sizes
+    l,u = 0,1
+    λ,μ = 0,1
+    C = BandedBlockBandedMatrix(0.0*I, (rows,cols), (l,u), (λ,μ))
+    view(C, Block(1, 1)) .= getHem2QCoeffMats(0, ZP, ZQ)[1]
+    for n = 1:N
+        A = getHem2QCoeffMats(n, ZP, ZQ)
+        view(C, Block(n+1, n+1)) .= A[1].'
+        view(C, Block(n, n+1)) .= A[2].'
+    end
+    return C
+end
 
 #=====#
 
@@ -675,9 +764,95 @@ norm((z*P-J*P)[1:N^2])
 
 M = (N+1)^2
 f = ones(M)
-Z = get1dops(N)
+ZP = get1dops(N)
 out = 0.0
 for k = 0:N
     out += vecdot(view(f, k^2+1:(k+1)^2), view(P, k^2+1:(k+1)^2))
 end
-out - hemisphere_fun_eval(f, Z, x, y, z)
+out - hemisphere_fun_eval(f, ZP, x, y, z)
+
+ZQ = get1dops(N, 'Q')
+C = hem2Q(N, ZP, ZQ)
+res = zeros(M)
+inds = []
+for j = 1:M
+    c = zeros(M)
+    c[j] = 1.0
+    res[j] = abs(hemisphere_Q_fun_eval(C*c, x, y, z) - hemisphere_fun_eval(c, ZP, x, y, z))
+    if res[j] > tol
+        append!(inds, j)
+    end
+end
+@test length(inds) == 0
+
+
+#=====================#
+
+
+
+pT, wpT, qT, wqT, pU, wpU, qU, wqU, Xp, Xq, αT, αU, δ = ZP
+pTQ, wpTQ, _, _, pUQ, wpUQ, _, _, _, _, αTQ, αUQ, _ = ZQ
+n = 8; k = 1; dx = 1e-9
+k * qU[k](x) - (qT[k+1](x+dx) - qT[k+1](x)) / dx
+(k+2) * qV[k](x) - (qU[k+1](x+dx) - qU[k+1](x)) / dx
+x/2 * qU[k+1](x) - (1-x)/2 * qU[k+1](x) - x * (1-x) * (qU[k+1](x+dx) - qU[k+1](x)) / dx
+(k+1) * qT[k+2](x)
+pT[k+1][n-k+1](x) - pU[k][n-k+1](x)
+pU[k+1][n-k+1](x) - pV[k][n-k+1](x)
+
+
+
+# Contstuction of the 1D hierarchy of OPs
+function OPSpace(N)
+    an = 5 # Number of "a" parameter vals
+    bn = 20 # Number of "b" parameter vals
+    H = Matrix{Vector{ApproxFun.Fun}}(an, bn)
+    P = Vector{Vector{ApproxFun.Fun}}(bn)
+    b = -0.5
+    X = Fun(identity, 0..1)
+    Y = Fun(identity, -1..1)
+    for j = 1:bn
+        wP = (1 - Y^2)^b
+        P[j] = lanczos(wP, N+1)[1]
+        a = 0
+        for i = 1:an
+            wH = X^a * (1 - X^2)^b
+            H[i, j] = lanczos(wH, N+1)[1]
+            a += 1
+        end
+        b += 1
+    end
+    return H, P
+end
+
+function getOPH(H, a, b)
+    return H[a+1, Int(b+1.5)]
+end
+
+function getOPP(P, b)
+    return P[Int(b+1.5)]
+end
+
+N = 5
+H, P = OPSpace(N)
+
+# Coeff of dP_n^(b,b)/dy = c * P_{n-1}^(b+1,b+1)
+a = 0; b = 0.5
+P0 = getOPP(P, b)
+P1 = getOPP(P, b+1)
+n = 2
+Y = Fun(identity, -1..1)
+dP0 = Fun(x->((P0[n+1](x+dx) - P0[n+1](x)) / dx), Chebyshev(-1..1), 10)
+c = sum(dP0 * P1[n] * (1 - Y^2)^(b+1))
+dP0(x) - c * P1[n](x)
+
+# Coeffs of dH_n^(a,b)/dx = c1 * H_{n-1}^(a+1,b+1) + c2 * H_{n-2}^(a+1,b+1)
+a = 0; b = -0.5
+H0 = getOPH(H, a, b)
+H1 = getOPH(H, a+1, b+1)
+n = 4
+X = Fun(identity, 0..1)
+dH0 = Fun(x->((H0[n+1](x+dx) - H0[n+1](x)) / dx), Chebyshev(0..1), 10)
+c1 = sum(dH0 * H1[n] * (1 - X^2)^(b+1) * X^(a+1))
+c2 = sum(dH0 * H1[n-1] * (1 - X^2)^(b+1) * X^(a+1))
+dH0(x) - (c1 * H1[n](x) + c2 * H1[n-1](x))
