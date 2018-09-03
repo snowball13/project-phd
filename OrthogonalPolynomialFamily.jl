@@ -1,7 +1,28 @@
 using ApproxFun
-    import ApproxFun: evaluate, PolynomialSpace, recα, recβ, recγ
+    import ApproxFun: evaluate, PolynomialSpace, recα, recβ, recγ, recA, recB, recC
 
 abstract type SpaceFamily{D,R} end
+
+
+# R is range-type, which should be Float64.
+struct OrthogonalPolynomialFamily{FF,WW,D,R,N} <: SpaceFamily{D,R}
+    factors::FF
+    spaces::Dict{NTuple{N,R}, OrthogonalPolynomialSpace{WW,D,R}}
+end
+
+function OrthogonalPolynomialFamily(w::Vararg{Fun{<:Space{D,R}},N}) where {D,R,N}
+    all(domain.(w) .== Ref(domain(first(w)))) || throw(ArgumentError("domains incompatible"))
+    WW =  typeof(prod(w.^0.5))
+    spaces = Dict{NTuple{N,R}, OrthogonalPolynomialSpace{WW,D,R}}()
+    OrthogonalPolynomialFamily{typeof(w),WW,D,R,N}(w, spaces)
+end
+
+function (P::OrthogonalPolynomialFamily{<:Any,<:Any,<:Any,R,N})(α::Vararg{R,N}) where {R,N}
+    haskey(P.spaces,α) && return P.spaces[α]
+    P.spaces[α] = OrthogonalPolynomialSpace(prod(P.factors.^α))
+end
+
+
 
 struct OrthogonalPolynomialSpace{WW,D,R} <: PolynomialSpace{D,R}
     weight::WW
@@ -30,23 +51,12 @@ recβ(::Type{T}, S::OrthogonalPolynomialSpace, n) where T =
 recγ(::Type{T}, S::OrthogonalPolynomialSpace, n) where T =
     T(resizedata!(S, n).b[n-1])
 
-# R is range-type, which should be Float64.
-struct OrthogonalPolynomialFamily{FF,WW,D,R,N} <: SpaceFamily{D,R}
-    factors::FF
-    spaces::Dict{NTuple{N,R}, OrthogonalPolynomialSpace{WW,D,R}}
-end
 
-function OrthogonalPolynomialFamily(w::Vararg{Fun{<:Space{D,R}},N}) where {D,R,N}
-    all(domain.(w) .== Ref(domain(first(w)))) || throw(ArgumentError("domains incompatible"))
-    WW =  typeof(prod(w.^0.5))
-    spaces = Dict{NTuple{N,R}, OrthogonalPolynomialSpace{WW,D,R}}()
-    OrthogonalPolynomialFamily{typeof(w),WW,D,R,N}(w, spaces)
-end
+recA(::Type{T}, S::OrthogonalPolynomialSpace, n) where T =
+    recα(T, S, n)/recβ(T,S,b) # ?
+recB(::Type{T}, S::OrthogonalPolynomialSpace, n) where T =
 
-function (P::OrthogonalPolynomialFamily{<:Any,<:Any,<:Any,R,N})(α::Vararg{R,N}) where {R,N}
-    haskey(P.spaces,α) && return P.spaces[α]
-    P.spaces[α] = OrthogonalPolynomialSpace(prod(P.factors.^α))
-end
+recC(::Type{T}, S::OrthogonalPolynomialSpace, n) where T =
 
 
 ## Tests
@@ -64,3 +74,16 @@ P̃₅ = Fun(P(0.4,0.2), [zeros(5); 1])
 
 # doesn't yet work
 @test P̃₅(0.1) ≈ P₅(0.1)
+
+
+f = Fun(Jacobi(0.1,0.2), [1.,2.,3.])
+
+f(0.1)
+@which clenshaw(f.space, f.coefficients, 0.1)
+
+Chebyshev() |> typeof |> supertype
+
+recα(Float64, Chebyshev(), 1)
+@which recβ(Float64, Chebyshev(), 2)
+
+domain(Chebyshev())
