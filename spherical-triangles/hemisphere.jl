@@ -806,17 +806,28 @@ pU[k+1][n-k+1](x) - pV[k][n-k+1](x)
 function OPSpace(N)
     an = 5 # Number of "a" parameter vals
     bn = 20 # Number of "b" parameter vals
+    cn = 5 # Number of "c" parameter vals
     H = Matrix{Vector{ApproxFun.Fun}}(an, bn)
     P = Vector{Vector{ApproxFun.Fun}}(bn)
-    b = -0.5
+    b = -1.0
     X = Fun(identity, 0..1)
     Y = Fun(identity, -1..1)
+    ρ = sqrt(1 - X^2)
     for j = 1:bn
-        wP = (1 - Y^2)^b
+        if round(b/2) == b/2
+            wH = (1 - Y^2)^(Int(b/2))
+        else
+            wH = (1 - Y^2)^(b/2)
+        end
         P[j] = lanczos(wP, N+1)[1]
         a = 0
         for i = 1:an
-            wH = X^a * (1 - X^2)^b
+            if round(b/2) == b/2
+                wH = X^a * (1 - X^2)^(Int(b/2))
+            else
+                wH = X^a * (1 - X^2)^(b/2)
+            end
+            lanczos(wH, N+1)[1]
             H[i, j] = lanczos(wH, N+1)[1]
             a += 1
         end
@@ -826,11 +837,11 @@ function OPSpace(N)
 end
 
 function getOPH(H, a, b)
-    return H[a+1, Int(b+1.5)]
+    return H[a+1, Int(b+2)]
 end
 
 function getOPP(P, b)
-    return P[Int(b+1.5)]
+    return P[Int(2b+2)]
 end
 
 N = 5
@@ -856,3 +867,103 @@ dH0 = Fun(x->((H0[n+1](x+dx) - H0[n+1](x)) / dx), Chebyshev(0..1), 10)
 c1 = sum(dH0 * H1[n] * (1 - X^2)^(b+1) * X^(a+1))
 c2 = sum(dH0 * H1[n-1] * (1 - X^2)^(b+1) * X^(a+1))
 dH0(x) - (c1 * H1[n](x) + c2 * H1[n-1](x))
+
+
+
+N = 5
+H, P = OPSpace(N)
+
+X = Fun(identity, -1..1)
+b = 1.5; n = 3
+dx = 1e-8
+P0 = getOPP(P, b)
+dP = Fun(x->((P0[n+1](x+dx) - P0[n+1](x)) / dx), Chebyshev(-1..1), 20)
+β = b + 1
+w = (1 - X^2)^β
+for m = 0:N+1
+    P1 = getOPP(P, β)
+    println("beta=", β, " m=", m, " int=", sum(dP * w * P1[m+1]))
+end
+
+m = n - 1
+# c = 0.5 * (n + 2b + 1)
+P1 = getOPP(P, β)
+c = sum(dP * (1-X^2)^β * P1[m+1])
+x = rand(1)[1]
+c * P1[m+1](x) - dP(x)
+
+a = 1; b = 1.5; n = 3
+X = Fun(identity, 0..1)
+dx = 1e-8
+H0 = getOPH(H, a, b)
+dH = Fun(x->((H0[n+1](x+dx) - H0[n+1](x)) / dx), Chebyshev(0..1), 10)
+α = a + 1
+β = b + 1
+w = X^α * (1 - X^2)^β
+for m = 0:N+1
+    # f = m * X^(m-1+α-a) * (1-X^2)^(β-b) + α * X^(m+α-a-1) * (1-X^2)^(β-b) - 2 * β * X^(m+α-a+1) * (1-X^2)^(β-b-1)
+    # f = m * X^(m-1+α-a) * (1-X^2)^(β-b+0.5) + α * X^(m+α-a-1) * (1-X^2)^(β-b+0.5) - 2 * (β-b+0.5) * X^(m+α-a+1) * (1-X^2)^(β-b-0.5)
+    H1 = getOPH(H, α, β)
+    println("alpha=", α, " beta=", β, " m=", m, " int=", sum(dH * w * H1[m+1]))
+end
+
+H1 = getOPH(H, α, β)
+c1 = sum(dH * w * H1[n])
+c2 = sum(dH * w * H1[n-1])
+x = rand(1)[1]
+c1 * H1[n](x) + c2 * H1[n-1](x) - dH(x)
+
+
+N = 5
+H, P = OPSpace(N)
+X = Fun(identity, 0..1)
+ρ = sqrt(1 - X^2)
+a = 2; b = 2; n = 4
+H0 = getOPH(H, a, b)
+α = a
+β = b - 2
+if round(b/2) == b/2
+    w = X^a * (1 - X^2)^(Int(b/2))
+else
+    w = X^a * (1 - X^2)^(b/2)
+end
+H1 = getOPH(H, α, β)
+x = rand(1)[1]
+out = 0.0
+cvec = []
+for m = 0:n+2
+    c = sum(H0[n+1] * w * H1[m+1])
+    append!(cvec, c)
+    out += c * H1[m+1](x)
+end
+out - H0[n+1](x) * (1-x^2)
+cvec
+
+
+N = 5
+Y = Fun(identity, -1..1)
+a = 2; b = 1; n = 3
+P0,_,_ = lanczos((1-Y^2)^b, N+1)
+P1,_,_ = lanczos((1-Y^2)^(b+1), N+1)
+Q,_,_ = lanczos((1-Y)^(b+1) * (1+Y)^(b-1), N+1)
+dy = 1e-9; dP = Fun(y->((P0[n+1](y + dy) - P0[n+1](y))/dy), Chebyshev(-1..1), 50)
+# L5starPn = - b * P0[n+1] + (1 - Y) * 0.5 * (n + 2b + 1) * P1[n]
+L6P = b * P0[n+1] + (1 + Y) * 0.5 * (n + 2b + 1) * P1[n]
+w = (1-Y^2)^(b+1)
+out = 0.0
+cvec = []
+y = rand(1)[1]
+if rand(1)[1] > 0.5
+    y *= -1
+end
+for m = 0:n-1
+    c = sum(w * dP * P1[m+1])
+    append!(cvec, c)
+    out += c * P1[m+1](y)
+end
+out - dP(y)
+cvec[end] * P1[n](y) - (P0[n+1](y + dy) - P0[n+1](y))/dy
+cvec
+0.5 * (n + 2b + 1) - cvec[end]
+0.5 * (n + 2b + 1) * P1[n](y)
+(P0[n+1](y + dy) - P0[n+1](y))/dy
