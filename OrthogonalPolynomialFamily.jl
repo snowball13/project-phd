@@ -1,6 +1,6 @@
 using ApproxFun
     import ApproxFun: evaluate, PolynomialSpace, recα, recβ, recγ, recA, recB, recC, domain,
-                        domainspace, rangespace, bandinds, lanczos
+                        domainspace, rangespace, bandwidths, lanczos, prectype, canonicaldomain, tocanonical
     import Base: getindex
 using FastGaussQuadrature
 using LinearAlgebra
@@ -58,8 +58,9 @@ struct OrthogonalPolynomialSpace{F,WW,D,R,FN} <: PolynomialSpace{D,R}
     ops::Vector{FN} # Cache the Funs given back from lanczos
 end
 
-domain(S::OrthogonalPolynomialSpace) =
-    domain(S.weight)
+domain(S::OrthogonalPolynomialSpace) = domain(S.weight)
+canonicaldomain(S::OrthogonalPolynomialSpace) = domain(S)
+tocanonical(S::OrthogonalPolynomialSpace, x) = x
 
 
 OrthogonalPolynomialSpace(fam::SpaceFamily{D,R}, w::Fun{<:Space{D,R}}) where {D,R,N} =
@@ -78,12 +79,12 @@ end
 # R is range-type, which should be Float64.
 struct OrthogonalPolynomialFamily{FF,WW,D,R,N} <: SpaceFamily{D,R}
     factors::FF
-    spaces::Dict{NTuple{N,R}, OrthogonalPolynomialSpace{<:Any,WW,D,R}}
+    spaces::Dict{NTuple{N,R}, OrthogonalPolynomialSpace}
 end
 
 function OrthogonalPolynomialFamily(w::Vararg{Fun{<:Space{D,R}},N}) where {D,R,N}
     all(domain.(w) .== Ref(domain(first(w)))) || throw(ArgumentError("domains incompatible"))
-    WW =  typeof(prod(w.^0.5))
+    WW =  Fun
     spaces = Dict{NTuple{N,R}, OrthogonalPolynomialSpace{OrthogonalPolynomialFamily{typeof(w),WW,D,R,N},WW,D,R}}()
     OrthogonalPolynomialFamily{typeof(w),WW,D,R,N}(w, spaces)
 end
@@ -136,6 +137,8 @@ function golubwelsch( ω::Fun, N::Integer )
     return x, w
 end
 
+golubwelsch(sp::OrthogonalPolynomialSpace, N) = golubwelsch(sp.weight, N)
+
 # Obtain quad rule for the weight W^{a,b}(x,y) = x^a * (1-x^2-y^2)^b
 function quadrule(N, a, b)
     # Return the weights and nodes to use for the even and odd components
@@ -167,7 +170,7 @@ function quadrule(N, a, b)
             we[i + (k - 1)N] = wse[k] * wt[i]
             xo[i + (k - 1)N] = so[k]
             yo[i + (k - 1)N] = t[i] * sqrt(1 - so[k]^2)
-            wo[i + (k - 1)N] = wso[k] * sqrt(1 - so[k]^2) * wt[i] * t[i]
+            wo[i + (k - 1)N] = wso[k] * sqrt(1 - so[k]^2) * wt[i]
         end
     end
     xe, ye, we, xo, yo, wo
@@ -208,6 +211,108 @@ function fun2coeffs(f, N, a, b)
     end
     c
 end
+a,b
+a = b = 0.0
+n,k= 2,2; m,j=1,1;
+    P1 =gethalfdiskOP(H, P, ρ, n, k, a, b)
+    P2 = gethalfdiskOP(H, P, ρ, m, j, a, b)
+    halfdiskintegral((x,y) -> P1(x,y) * P2(x,y),
+                20, a, b)
+
+
+X = Fun(identity, 0..1)
+H = OrthogonalPolynomialFamily(X, (1-X^2))
+sum(Fun(x -> Fun(H(0.,0.), [0.,1.])(x), 0..1))
+plot(Fun(x -> Fun(H(0.,0.), [0.,1.])(x), 0..1))
+
+H₂ = OrthogonalPolynomialFamily(1+Y, 1-((Y+1)/2)^2)
+plot(Fun(x -> Fun(H₂(0.,0.), [0.,1.])(x)))
+
+
+H(0.,0.).a[1]-0.5
+
+
+evaluate([0.,1.], H(0.,0.), 0.5)
+ApproxFun.tocanonical(H(0.,0.), 0.5)
+
+
+Fun(H(0.,0.), [0.,1.])(0.1)
+
+ApproxFun.canonicaldomain(H(0.,0.))
+
+lanczos(H(0.,0.).weight,3)
+
+t, w= golubwelsch(H(0.,0.).weight,3)
+
+f = Fun(Chebyshev(0..1), randn(6))
+w'*f.(t) - sum(f)
+H(0.,0.).a
+
+
+
+
+H(0.,0.).b
+
+H.spaces
+
+plot(H(0.,0.).weight)
+
+
+
+P1(0.1,0.2)
+sum(Fun(x -> Fun(H(a,b+0.5),[0,1.])(x), 0..1) * sqrt(1-X^2))
+
+
+
+P1(0.1,0.2)
+H̃ = Fun(H(a, b+k+0.5), [zeros(n-k); 1])
+
+plot(Fun(x -> Fun(H(a,b), [0.0,0,1])(x), 0..1))
+
+X = Fun(identity, 0..1)
+Y = Fun(identity, -1..1)
+
+using Plots
+Fun(x -> Fun(H(a,b), [0.,0,0,1])(x)) |> sum
+
+H(a,b).weight |> plot
+α = (a,b)
+OrthogonalPolynomialSpace(P, prod(P.factors.^α)).weight |> plot
+
+prod(H.factors.^α) |> typeof
+prod(H.factors.^(0.5,0.5)) |> typeof
+
+
+H.spaces
+
+
+H(a,b)
+a,b
+
+
+plot(Fun(x -> Fun(H(a,b), [0,0.0,0,0,0,1])(x)))
+
+
+a = b
+plot(H(a,b).weight)
+
+
+
+Fun(H(a,b), [0,0,0,0,0,1])(0.1)
+Fun(H(a,b), [0,0,0,0,0,1])(-0.1)
+
+a,b
+
+(1+Y)^(0.1)
+
+using Plots
+
+Y |> space
+roots((1-(Y+1)/2)^2)
+
+
+P1
+
 
 
 # Testing
@@ -218,7 +323,7 @@ Y = Fun(identity, -1..1)
 H = OrthogonalPolynomialFamily(X, (1-X^2))
 P = OrthogonalPolynomialFamily(1+Y, 1-Y)
 c = zeros(sum(1:N+1))
-f = (x,y)-> x + y^2
+f = (x,y)-> gethalfdiskOP(H, P, ρ, 2, 2, a, b)(x,y)
 j = 1
 for n = 0:N
     for k = 0:n
@@ -283,8 +388,17 @@ for n = 0:5
     @test P̃₅(0.1) ≈ P₅(0.1)
 end
 
-x = Fun(0..1)
-H = OrthogonalPolynomialFamily(x, 1-x^2)
+@testset "Golub–Welsch" begin
+    @test all(golubwelsch(P(a,b), 10) .≈ gaussjacobi(10, b,a))
+
+
+    x = Fun(0..1)
+    H = OrthogonalPolynomialFamily(x, 1-x^2)
+    N = 10; t,w = golubwelsch(H(a,b), N) # accurate for degree 2N - 1
+    f = Fun(Chebyshev(0..1), randn(2N)) # a random degree 2N-1 polynomial
+    @test sum(x^a*(1-x^2)^b * f) ≈ w'f.(t)
+end
+
 
 #====#
 
@@ -317,3 +431,44 @@ f = (x,y)-> x + y^2
 # Odd f
 f = (x,y)-> x*y^3
 @test sum(wo .* f.(xo, yo)) < 1e-12 # Should be zero
+
+
+
+# half disk integral
+
+
+a = b = 0;
+
+halfdiskintegral((x,y) -> exp((x+0.3)*y-0.1)*cos(x), 100, a, b)
+
+import ApproxFun: spacescompatible, points, transform
+spacescompatible(A::OrthogonalPolynomialSpace, B::OrthogonalPolynomialSpace) =
+    A.weight ≈ B.weight
+points(A::OrthogonalPolynomialSpace, n) = golubwelsch(A, n)[1]
+function transform(A::OrthogonalPolynomialSpace, vals)
+
+end
+
+using StaticArrays
+import Base: in
+struct HalfDisk{T} <: Domain{SVector{2,T}} end
+
+in(x::SVector{2}, d::HalfDisk) = 0 ≤ x[1] ≤ 1 && -sqrt(1-x[1]^2) ≤ x[2] ≤ sqrt(1-x[1]^2)
+
+
+struct HalfDiskSpace{T} <: Space{HalfDisk{T}, T}
+
+end
+
+SVector{2,Int}
+SVector(1,2)
+
+
+points(H(a,b), 10)
+
+Fun(x -> exp(x), H(a,b))
+
+
+
+
+Fun(x -> exp(x), HalfDiskSpace())
