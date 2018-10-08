@@ -211,6 +211,86 @@ function fun2coeffs(f, N, a, b)
     end
     c
 end
+
+
+## Tests
+
+## Jacobi example
+x = Fun()
+P = OrthogonalPolynomialFamily(1+x, 1-x)
+a, b = 0.4, 0.2
+function g(a, b, x0, x1)
+    # return the integral of x^a * (1-x^2)^b on the interval [x0, x1]
+    return (x1^(a+1) * _₂F₁(-b, (a + 1) / 2, (a + 3) / 2, x1^2) / (a + 1)
+            - x0^(a+1) * _₂F₁(-b, (a + 1) / 2, (a + 3) / 2, x0^2) / (a + 1))
+end
+
+@testset "Evaluation" begin
+    @test P(a,b).weight(0.1) ≈ (1+0.1)^a * (1-0.1)^b
+    for n = 0:5
+        P₅ = Fun(Jacobi(a,b), [zeros(n); 1])
+        P₅ = P₅ * sqrt(sum((1+x)^a*(1-x)^b))/sqrt(sum((1+x)^a*(1-x)^b*P₅^2))
+        P̃₅ = Fun(P(a,b), [zeros(n); 1])
+        @test P̃₅(0.1) ≈ P₅(0.1)
+    end
+end
+
+@testset "Golub–Welsch" begin
+    @test all(golubwelsch(P(a,b), 10) .≈ gaussjacobi(10, b,a))
+
+    x = Fun(0..1)
+    H = OrthogonalPolynomialFamily(x, 1-x^2)
+    N = 10; t,w = golubwelsch(H(a,b), N) # accurate for degree 2N - 1
+    f = Fun(Chebyshev(0..1), randn(2N)) # a random degree 2N-1 polynomial
+    @test sum(x^a*(1-x^2)^b * f) ≈ w'f.(t)
+
+    N = 3; a = 0.5; b = 0.5; d = 5
+    f = x->(x^d)
+    S = Fun(identity, 0..1)
+    ω = S^a * (1 - S^2)^(b+0.5)
+    x, w = golubwelsch(ω, N)
+    @test w'*f.(x) ≈ g(a + d, b + 0.5, 0, 1)
+end
+
+@testset "Quad Rule" begin
+    N = 4; a = 0.5; b = 0.5
+    xe, ye, we, xo, yo, wo  = quadrule(N, a, b)
+    # Even f
+    f = (x,y)-> x + y^2
+    @test sum(we .* f.(xe, ye)) ≈ (g(0, b, -1+1e-15, 1-1e-15) * g(a+1, b+0.5, 0, 1)
+                                    + g(2, b, -1+1e-15, 1-1e-15) * g(a, b+1.5, 0, 1))
+    # Odd f
+    f = (x,y)-> x*y^3
+    @test sum(wo .* f.(xo, yo)) < 1e-12 # Should be zero
+end
+
+@testset "Fun expansion in OP basis"
+    N = 5; a = 0.5; b = 0.5
+    X = Fun(identity, 0..1)
+    Y = Fun(identity, -1..1)
+    ρ = sqrt(1-X^2)
+    H = OrthogonalPolynomialFamily(X, (1-X^2))
+    P = OrthogonalPolynomialFamily(1+Y, 1-Y)
+    c = zeros(sum(1:N+1))
+    f = (x,y)-> x^2 * y^2 + y^4 * x
+    j = 1
+    for n = 0:N
+        for k = 0:n
+            Q = gethalfdiskOP(H, P, ρ, n, k, a, b)
+            ff = (x,y) -> (f(x,y) * Q(x,y))
+            QQ = (x,y) -> (Q(x,y) * Q(x,y))
+            global c[j] = halfdiskintegral(ff, N+1, a, b) / halfdiskintegral(QQ, N+1, a, b)
+            global j += 1
+        end
+    end
+    x = 0.3; y = 0.6
+    @test f(x, y) ≈ c'*[gethalfdiskOP(H, P, ρ, n, k, a, b)(x,y) for n = 0:N for k = 0:n] # zero for N >= deg(f)
+end
+
+
+#====#
+
+
 a,b
 a = b = 0.0
 n,k= 2,2; m,j=1,1;
@@ -314,129 +394,6 @@ roots((1-(Y+1)/2)^2)
 P1
 
 
-
-# Testing
-N = 5; a = 0.5; b = 0.5
-X = Fun(identity, 0..1)
-Y = Fun(identity, -1..1)
-ρ = sqrt(1-X^2)
-H = OrthogonalPolynomialFamily(X, (1-X^2))
-P = OrthogonalPolynomialFamily(1+Y, 1-Y)
-c = zeros(sum(1:N+1))
-f = (x,y)-> gethalfdiskOP(H, P, ρ, 2, 2, a, b)(x,y)
-j = 1
-for n = 0:N
-    for k = 0:n
-        Q = gethalfdiskOP(H, P, ρ, n, k, a, b)
-        ff = (x,y) -> (f(x,y) * Q(x,y))
-        QQ = (x,y) -> (Q(x,y) * Q(x,y))
-        global c[j] = halfdiskintegral(ff, N+1, a, b) / halfdiskintegral(QQ, N+1, a, b)
-        global j += 1
-    end
-end
-c
-
-out = 0.0; x = 0.3; y = 0.6
-for n = 0:N
-    for k = 0:n
-        Q = gethalfdiskOP(H, P, ρ, n, k, a, b)
-        global out += c[n+k+1] * Q(x,y)
-    end
-end
-out
-x = 0.3; y = 0.6
-f = (x,y)-> x + y^2
-f(x, y)
-
-
-
-#=====#
-
-
-# struct OrthogonalPolynomialDerivative{T} <: Derivative{T}
-#     space::OrthogonalPolynomialSpace
-# end
-#
-# domainspace(D::OrthogonalPolynomialDerivative) = D.space
-# rangespace(D::OrthogonalPolynomialDerivative) = D.space.family(D.space.α .+ 1)
-# bandwidths(D::OrthogonalPolynomialDerivative) = (1,?)
-# getindex(D::OrthogonalPolynomialDerivative, k::Int, j::Int) = ?
-#
-# Derivative(sp::OrthogonalPolynomialSpace, k) = (@assert k==1; OrthogonalPolynomialDerivative(sp))
-#
-#
-#
-# D = Derivative(Jacobi(a,b))
-# @which D[2,3]
-#
-# bandwidths(D)
-
-
-
-
-## Tests
-
-## Jacobi example
-x = Fun()
-P = OrthogonalPolynomialFamily(1+x, 1-x)
-a, b = 0.4, 0.2
-@test P(a,b).weight(0.1) ≈ (1+0.1)^a * (1-0.1)^b
-for n = 0:5
-    P₅ = Fun(Jacobi(a,b), [zeros(n); 1])
-    P₅ = P₅ * sqrt(sum((1+x)^a*(1-x)^b))/sqrt(sum((1+x)^a*(1-x)^b*P₅^2))
-    P̃₅ = Fun(P(a,b), [zeros(n); 1])
-    @test P̃₅(0.1) ≈ P₅(0.1)
-end
-
-@testset "Golub–Welsch" begin
-    @test all(golubwelsch(P(a,b), 10) .≈ gaussjacobi(10, b,a))
-
-
-    x = Fun(0..1)
-    H = OrthogonalPolynomialFamily(x, 1-x^2)
-    N = 10; t,w = golubwelsch(H(a,b), N) # accurate for degree 2N - 1
-    f = Fun(Chebyshev(0..1), randn(2N)) # a random degree 2N-1 polynomial
-    @test sum(x^a*(1-x^2)^b * f) ≈ w'f.(t)
-end
-
-
-#====#
-
-# Test golubwelsch()
-function g(a, b, x0, x1)
-    # return the integral of x^a * (1-x^2)^b on the interval [x0, x1]
-    return (x1^(a+1) * _₂F₁(-b, (a + 1) / 2, (a + 3) / 2, x1^2) / (a + 1)
-            - x0^(a+1) * _₂F₁(-b, (a + 1) / 2, (a + 3) / 2, x0^2) / (a + 1))
-end
-N = 3; a = 0.5; b = 0.5; d = 5
-f = x->(x^d)
-S = Fun(identity, 0..1)
-ω = S^a * (1 - S^2)^(b+0.5)
-x, w = golubwelsch(ω, N)
-feval = 0.0
-for j = 1:N
-    global feval += w[j] * f(x[j])
-end
-@test feval ≈ g(a + d, b + 0.5, 0, 1)
-
-
-
-# Test quadrule
-N = 4; a = 0.5; b = 0.5
-xe, ye, we, xo, yo, wo  = quadrule(N, a, b)
-# Even f
-f = (x,y)-> x + y^2
-@test sum(we .* f.(xe, ye)) ≈ (g(0, b, -1+1e-15, 1-1e-15) * g(a+1, b+0.5, 0, 1)
-                                + g(2, b, -1+1e-15, 1-1e-15) * g(a, b+1.5, 0, 1))
-# Odd f
-f = (x,y)-> x*y^3
-@test sum(wo .* f.(xo, yo)) < 1e-12 # Should be zero
-
-
-
-# half disk integral
-
-
 a = b = 0;
 
 halfdiskintegral((x,y) -> exp((x+0.3)*y-0.1)*cos(x), 100, a, b)
@@ -472,3 +429,27 @@ Fun(x -> exp(x), H(a,b))
 
 
 Fun(x -> exp(x), HalfDiskSpace())
+
+
+
+
+#=====#
+
+
+# struct OrthogonalPolynomialDerivative{T} <: Derivative{T}
+#     space::OrthogonalPolynomialSpace
+# end
+#
+# domainspace(D::OrthogonalPolynomialDerivative) = D.space
+# rangespace(D::OrthogonalPolynomialDerivative) = D.space.family(D.space.α .+ 1)
+# bandwidths(D::OrthogonalPolynomialDerivative) = (1,?)
+# getindex(D::OrthogonalPolynomialDerivative, k::Int, j::Int) = ?
+#
+# Derivative(sp::OrthogonalPolynomialSpace, k) = (@assert k==1; OrthogonalPolynomialDerivative(sp))
+#
+#
+#
+# D = Derivative(Jacobi(a,b))
+# @which D[2,3]
+#
+# bandwidths(D)
