@@ -145,7 +145,7 @@ function quadrule(N, a, b)
     # of a function, i.e. for the half disk Ω:
     #   int_Ω W^{a,b}(x,y) f(x,y) dydx ≈ Σ_j [weⱼ*fe(xⱼ,yⱼ) + woⱼ*fo(xⱼ,yⱼ)]
 
-    # NOTE: the odd part of the quad rule will equal 0, so can be ignored.
+    # NOTE: the odd part of the quad rule will equal 0 for polynomials, so can be ignored.
 
     S = Fun(identity, 0..1)
     T = Fun(identity, -1..1)
@@ -180,8 +180,9 @@ end
 # W^{a,b}(x,y) = x^a * (1-x^2-y^2)^b
 function halfdiskintegral(f, N, a, b)
     xe, ye, we, xo, yo, wo  = quadrule(N, a, b)
-    return (sum(we .* (f.(xe, ye) + f.(xe, -ye)) / 2)
-            + sum(wo .* (f.(xo, yo) - f.(xo, -yo)) / 2))
+    return sum(we .* (f.(xe, ye) + f.(xe, -ye))) / 2
+    # return (sum(we .* (f.(xe, ye) + f.(xe, -ye)) / 2)
+    #         + sum(wo .* (f.(xo, yo) - f.(xo, -yo)) / 2))
 end
 
 function gethalfdiskOP(H, P, ρ, n, k, a, b)
@@ -215,10 +216,6 @@ end
 
 ## Tests
 
-## Jacobi example
-x = Fun()
-P = OrthogonalPolynomialFamily(1+x, 1-x)
-a, b = 0.4, 0.2
 function g(a, b, x0, x1)
     # return the integral of x^a * (1-x^2)^b on the interval [x0, x1]
     return (x1^(a+1) * _₂F₁(-b, (a + 1) / 2, (a + 3) / 2, x1^2) / (a + 1)
@@ -226,6 +223,9 @@ function g(a, b, x0, x1)
 end
 
 @testset "Evaluation" begin
+    x = Fun()
+    P = OrthogonalPolynomialFamily(1+x, 1-x)
+    a, b = 0.4, 0.2
     @test P(a,b).weight(0.1) ≈ (1+0.1)^a * (1-0.1)^b
     for n = 0:5
         P₅ = Fun(Jacobi(a,b), [zeros(n); 1])
@@ -236,6 +236,9 @@ end
 end
 
 @testset "Golub–Welsch" begin
+    x = Fun()
+    P = OrthogonalPolynomialFamily(1+x, 1-x)
+    a, b = 0.4, 0.2
     @test all(golubwelsch(P(a,b), 10) .≈ gaussjacobi(10, b,a))
 
     x = Fun(0..1)
@@ -264,7 +267,7 @@ end
     @test sum(wo .* f.(xo, yo)) < 1e-12 # Should be zero
 end
 
-@testset "Fun expansion in OP basis"
+@testset "Fun expansion in OP basis" begin
     N = 5; a = 0.5; b = 0.5
     X = Fun(identity, 0..1)
     Y = Fun(identity, -1..1)
@@ -279,8 +282,8 @@ end
             Q = gethalfdiskOP(H, P, ρ, n, k, a, b)
             ff = (x,y) -> (f(x,y) * Q(x,y))
             QQ = (x,y) -> (Q(x,y) * Q(x,y))
-            global c[j] = halfdiskintegral(ff, N+1, a, b) / halfdiskintegral(QQ, N+1, a, b)
-            global j += 1
+            c[j] = halfdiskintegral(ff, N+1, a, b) / halfdiskintegral(QQ, N+1, a, b)
+            j += 1
         end
     end
     x = 0.3; y = 0.6
