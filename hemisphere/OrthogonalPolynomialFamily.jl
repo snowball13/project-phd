@@ -1,7 +1,9 @@
 using ApproxFun
     import ApproxFun: evaluate, PolynomialSpace, recα, recβ, recγ, recA, recB, recC, domain,
-                        domainspace, rangespace, bandwidths, lanczos, prectype, canonicaldomain, tocanonical
-    import Base: getindex
+                        domainspace, rangespace, bandwidths, lanczos, prectype, canonicaldomain, tocanonical,
+                        spacescompatible, points, transform, itransform
+    import Base: getindex, in
+using StaticArrays
 using FastGaussQuadrature
 using LinearAlgebra
 using SingularIntegralEquations
@@ -139,8 +141,41 @@ end
 
 golubwelsch(sp::OrthogonalPolynomialSpace, N) = golubwelsch(sp.weight, N)
 
+spacescompatible(A::OrthogonalPolynomialSpace, B::OrthogonalPolynomialSpace) =
+    A.weight ≈ B.weight
+
+points(S::OrthogonalPolynomialSpace, n) = golubwelsch(S, n)[1]
+
+# Creates a Vandermonde matrix by evaluating the basis at the grid
+function spvandermonde(S::OrthogonalPolynomialSpace, n)
+    pts = points(S, n)
+    V = Array{Float64}(undef, n, n)
+    for k = 1:n
+        V[:, k] = Fun(S, [zeros(k-1); 1]).(pts)
+    end
+    V
+end
+
+# Inputs: OP space, f(pts) for desired f
+# Output: Coeffs of the function f for its expansion in the OPSpace OPs
+function transform(S::OrthogonalPolynomialSpace, vals)
+    n = length(vals)
+    spvandermonde(S, n) \ vals
+end
+
+# Inputs: OP space, coeffs of a function f for its expansion in the OPSpace OPs
+# Output: vals = {f(x_j)} where x_j are are the points(S,n)
+function itransform(S::OrthogonalPolynomialSpace, cfs)
+    n = length(cfs)
+    spvandermonde(S, n) * cfs
+end
+
+
+#=====#
+# Half Disk
+
 # Obtain quad rule for the weight W^{a,b}(x,y) = x^a * (1-x^2-y^2)^b
-function quadrule(N, a, b)
+function halfdiskquadrule(N, a, b)
     # Return the weights and nodes to use for the even and odd components
     # of a function, i.e. for the half disk Ω:
     #   int_Ω W^{a,b}(x,y) f(x,y) dydx ≈ Σ_j [weⱼ*fe(xⱼ,yⱼ) + woⱼ*fo(xⱼ,yⱼ)]
@@ -179,7 +214,7 @@ end
 # integral of f(x,y) over the half disk with weight
 # W^{a,b}(x,y) = x^a * (1-x^2-y^2)^b
 function halfdiskintegral(f, N, a, b)
-    xe, ye, we, xo, yo, wo  = quadrule(N, a, b)
+    xe, ye, we, xo, yo, wo = halfdiskquadrule(N, a, b)
     return sum(we .* (f.(xe, ye) + f.(xe, -ye))) / 2
     # return (sum(we .* (f.(xe, ye) + f.(xe, -ye)) / 2)
     #         + sum(wo .* (f.(xo, yo) - f.(xo, -yo)) / 2))
@@ -193,7 +228,7 @@ end
 
 # Return the coefficients of the expansion of a function f(x,y) in the OP basis
 # {P^{a,b}_{n,k}(x,y)}
-function fun2coeffs(f, N, a, b)
+function halfdiskfun2coeffs(f, N, a, b)
     # Coeffs are obtained by inner products, approximated (or exact if low
     # enough degree polynomial) using the quad rule above
     X = Fun(identity, 0..1)
@@ -202,17 +237,105 @@ function fun2coeffs(f, N, a, b)
     H = OrthogonalPolynomialFamily(X, (1-X^2))
     P = OrthogonalPolynomialFamily(1+Y, 1-Y)
     c = zeros(sum(1:N+1))
+    j = 1
     for n = 0:N
         for k = 0:n
             Q = gethalfdiskOP(H, P, ρ, n, k, a, b)
             ff = (x,y) -> (f(x,y) * Q(x,y))
             QQ = (x,y) -> (Q(x,y) * Q(x,y))
-            c[n+k+1] = halfdiskintegral(ff, N+1, a, b) / halfdiskintegral(QQ, N+1, a, b)
+            c[j] = halfdiskintegral(ff, N+1, a, b) / halfdiskintegral(QQ, N+1, a, b)
+            j += 1
         end
     end
     c
 end
 
+struct HalfDisk{T} <: Domain{SVector{2,T}} end
+
+struct HalfDiskSpace{T} <: PolynomialSpace{HalfDisk{T}, T}
+    a::T # Power of the "x" factor in the weight
+    b::T # Power of the "(1-x^2-y^2)" factor in the weight
+    α::Vector{T} # Diagonal recurrence coefficients
+    β::Vector{T} # Off diagonal recurrence coefficients
+end # TODO
+
+HalfDiskSpace(a::Float64, b::Float64) =
+    HalfDiskSpace{typeof(a)}(a, b, Vector{typeof(a)}(), Vector{typeof(a)}())
+HalfDiskSpace() = HalfDiskSpace(0.5, 0.5)
+
+in(x::SVector{2}, d::HalfDisk) = 0 ≤ x[1] ≤ 1 && -sqrt(1-x[1]^2) ≤ x[2] ≤ sqrt(1-x[1]^2)
+
+domain(S::HalfDiskSpace) = domain(Chebyshev(0..1)) * domain(Chebyshev(-1..1))
+
+spacescompatible(A::HalfDiskSpace, B::HalfDiskSpace) = (A.a == B.a && A.b == B.b)
+
+function points(S::HalfDiskSpace, n)
+    pts = Vector{SArray{Tuple{2},Float64,1,2}}(undef, n^2)
+    a = S.a; b = S.b
+    X̃ = Fun(identity, 0..1)
+    Ỹ = Fun(identity, -1..1)
+    ωt = (1 - Ỹ^2)^b
+    t, wt = golubwelsch(ωt, n)
+    ωs = X̃^a * (1 - X̃^2)^(b + 0.5)
+    s, ws = golubwelsch(ωs, n)
+    for i = 1:n
+        for k = 1:n
+            pts[i + (k - 1)n] = s[k], t[i] * sqrt(1 - s[k]^2)
+        end
+    end
+    pts
+end # TODO
+
+# Creates a Vandermonde matrix by evaluating the basis at the grid
+function spvandermonde(S::HalfDiskSpace, n)
+    pts = points(S, Int(sqrt(n)))
+    V = Array{Float64}(undef, n, n)
+    for k = 1:n
+        V[:, k] = Fun(S, [zeros(k-1); 1]).(pts)
+    end
+    V
+end
+
+# Inputs: OP space, f(pts) for desired f
+# Output: Coeffs of the function f for its expansion in the OPSpace OPs
+function transform(S::HalfDiskSpace, vals)
+    n = length(vals)
+    spvandermonde(S, n) \ vals
+end
+
+# Inputs: OP space, coeffs of a function f for its expansion in the OPSpace OPs
+# Output: vals = {f(x_j)} where x_j are are the points(S,n)
+function itransform(S::HalfDiskSpace, cfs)
+    n = length(cfs)
+    spvandermonde(S, n) * cfs
+end
+
+
+
+n = 100
+f = (x, y) -> exp(x)
+S = Chebyshev()^2
+pts = points(S, n)
+T = Float64
+cfs = transform(S, T[f(x...) for x in pts])
+F = Fun(S, cfs)
+x = (0.1, 0.2)
+F.space
+@which evaluate(F.coefficients,F.space,ApproxFun.Vec(x...))
+
+
+n = 10; a = 0.5; b = -0.5
+S = HalfDiskSpace(a, b)
+pts = points(S, n)
+f = (x, y) -> exp(x)
+F = Fun(S, [zeros(0); 1])
+x = 0.1, 0.2
+F.space
+evaluate(F.coefficients,F.space,ApproxFun.Vec(x...))
+Fun(f, S)
+
+
+#====#
 
 ## Tests
 
@@ -257,7 +380,7 @@ end
 
 @testset "Quad Rule" begin
     N = 4; a = 0.5; b = 0.5
-    xe, ye, we, xo, yo, wo  = quadrule(N, a, b)
+    xe, ye, we, xo, yo, wo  = halfdiskquadrule(N, a, b)
     # Even f
     f = (x,y)-> x + y^2
     @test sum(we .* f.(xe, ye)) ≈ (g(0, b, -1+1e-15, 1-1e-15) * g(a+1, b+0.5, 0, 1)
@@ -274,22 +397,37 @@ end
     ρ = sqrt(1-X^2)
     H = OrthogonalPolynomialFamily(X, (1-X^2))
     P = OrthogonalPolynomialFamily(1+Y, 1-Y)
-    c = zeros(sum(1:N+1))
     f = (x,y)-> x^2 * y^2 + y^4 * x
-    j = 1
-    for n = 0:N
-        for k = 0:n
-            Q = gethalfdiskOP(H, P, ρ, n, k, a, b)
-            ff = (x,y) -> (f(x,y) * Q(x,y))
-            QQ = (x,y) -> (Q(x,y) * Q(x,y))
-            c[j] = halfdiskintegral(ff, N+1, a, b) / halfdiskintegral(QQ, N+1, a, b)
-            j += 1
-        end
-    end
-    x = 0.3; y = 0.6
+    c = halfdiskfun2coeffs(f, N, a, b)
+    x = 0.6; y = -0.3
     @test f(x, y) ≈ c'*[gethalfdiskOP(H, P, ρ, n, k, a, b)(x,y) for n = 0:N for k = 0:n] # zero for N >= deg(f)
 end
 
+@testset "Transform" begin
+    n = 20; a = 0.5; b = -0.5
+    X = Fun(identity, -1..1)
+    P = OrthogonalPolynomialFamily(1-X, 1+X)
+    S = P(b, b)
+    pts = points(S, n)
+    f = x->exp(x)
+    vals = f.(pts)
+    cfs = transform(S, vals)
+    ff = Fun(S, cfs)
+    x = 0.4
+    @test ff(x) ≈ f(x)
+    @test vals ≈ itransform(S, cfs)
+end
+
+@testset "Creating function in an OrthogonalPolynomialSpace" begin
+    n = 10; a = 0.5; b = -0.5
+    X = Fun(identity, 0..1)
+    H = OrthogonalPolynomialFamily(X, (1-X^2))
+    S = H(a, b)
+    f = x -> exp(x)
+    F = Fun(f, S)
+    x = 0.1567
+    @test F(x) ≈ f(x)
+end # NOTE: Fun(f, S) is a λ function, and not a Fun
 
 #====#
 
@@ -399,39 +537,7 @@ P1
 
 a = b = 0;
 
-halfdiskintegral((x,y) -> exp((x+0.3)*y-0.1)*cos(x), 100, a, b)
 
-import ApproxFun: spacescompatible, points, transform
-spacescompatible(A::OrthogonalPolynomialSpace, B::OrthogonalPolynomialSpace) =
-    A.weight ≈ B.weight
-points(A::OrthogonalPolynomialSpace, n) = golubwelsch(A, n)[1]
-function transform(A::OrthogonalPolynomialSpace, vals)
-
-end
-
-using StaticArrays
-import Base: in
-struct HalfDisk{T} <: Domain{SVector{2,T}} end
-
-in(x::SVector{2}, d::HalfDisk) = 0 ≤ x[1] ≤ 1 && -sqrt(1-x[1]^2) ≤ x[2] ≤ sqrt(1-x[1]^2)
-
-
-struct HalfDiskSpace{T} <: Space{HalfDisk{T}, T}
-
-end
-
-SVector{2,Int}
-SVector(1,2)
-
-
-points(H(a,b), 10)
-
-Fun(x -> exp(x), H(a,b))
-
-
-
-
-Fun(x -> exp(x), HalfDiskSpace())
 
 
 
