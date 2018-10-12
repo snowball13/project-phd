@@ -12,7 +12,7 @@ using LinearAlgebra
 using SingularIntegralEquations
 using Test
 
-export OrthogonalPolynomialFamily
+export OrthogonalPolynomialFamily, HalfDisk, HalfDiskSpace
 
 
 # Finds the OPs and recurrence for weight w, having already found N₀ OPs
@@ -335,6 +335,10 @@ end
 function itransform(S::HalfDiskSpace, cfs)
     n = length(cfs)
     spvandermonde(S, n) * cfs
+end
+
+function evaluate(cfs::AbstractVector, sp::HalfDiskSpace, z)
+    error("Implement")
 end
 
 end # module
