@@ -1,7 +1,8 @@
 using ApproxFun
     import ApproxFun: evaluate, PolynomialSpace, recα, recβ, recγ, recA, recB, recC, domain,
                         domainspace, rangespace, bandwidths, lanczos, prectype, canonicaldomain, tocanonical,
-                        spacescompatible, points, transform, itransform
+                        spacescompatible, points, transform, itransform, AbstractProductSpace, tensorizer,
+                        columnspace
     import Base: getindex, in
 using StaticArrays
 using FastGaussQuadrature
@@ -250,37 +251,59 @@ function halfdiskfun2coeffs(f, N, a, b)
     c
 end
 
-struct HalfDisk{T} <: Domain{SVector{2,T}} end
+struct HalfDisk{D,T} <: Domain{SVector{2,T}} end
 
-struct HalfDiskSpace{T} <: PolynomialSpace{HalfDisk{T}, T}
+struct HalfDiskSpace{SV,D,T} <: AbstractProductSpace{SV,D,T}
+    spaces::SV
     a::T # Power of the "x" factor in the weight
     b::T # Power of the "(1-x^2-y^2)" factor in the weight
     α::Vector{T} # Diagonal recurrence coefficients
     β::Vector{T} # Off diagonal recurrence coefficients
 end # TODO
 
-HalfDiskSpace(a::Float64, b::Float64) =
-    HalfDiskSpace{typeof(a)}(a, b, Vector{typeof(a)}(), Vector{typeof(a)}())
+function HalfDiskSpace(a::Float64, b::Float64)
+    sps = (Chebyshev(0..1),Chebyshev(-1..1))
+    d = typeof(mapreduce(domain,*,sps))
+    HalfDiskSpace{typeof(sps),typeof(d),typeof(a)}((Chebyshev(0..1), Chebyshev(-1..1)), a, b, Vector{typeof(a)}(), Vector{typeof(a)}())
+end
 HalfDiskSpace() = HalfDiskSpace(0.5, 0.5)
 
 in(x::SVector{2}, d::HalfDisk) = 0 ≤ x[1] ≤ 1 && -sqrt(1-x[1]^2) ≤ x[2] ≤ sqrt(1-x[1]^2)
 
-domain(S::HalfDiskSpace) = domain(Chebyshev(0..1)) * domain(Chebyshev(-1..1))
+domain(S::HalfDiskSpace) = mapreduce(domain,*,S.spaces)
 
 spacescompatible(A::HalfDiskSpace, B::HalfDiskSpace) = (A.a == B.a && A.b == B.b)
 
+tensorizer(S::HalfDiskSpace) = ApproxFun.Tensorizer(map(ApproxFun.blocklengths,S.spaces))
+
+# every column is in the same space for a TensorSpace
+# TODO: remove
+columnspace(S::HalfDiskSpace, _) = S.spaces[1]
+
+# canonicaldomain(S::HalfDiskSpace) = domain(S)
+# tocanonical(S::HalfDiskSpace, x) = x
+
 function points(S::HalfDiskSpace, n)
-    pts = Vector{SArray{Tuple{2},Float64,1,2}}(undef, n^2)
+    m = Int(cld(-3+sqrt(1+8n),2)) + 1
+    if iseven(m)
+        mt = Int(m / 2)
+        ms = m + 1
+    else
+        mt = Int((m + 1) / 2)
+        ms = m
+    end
+    ñ = Int((m+1)m/2)
+    pts = Vector{SArray{Tuple{2},Float64,1,2}}(undef, ñ)
     a = S.a; b = S.b
     X̃ = Fun(identity, 0..1)
     Ỹ = Fun(identity, -1..1)
     ωt = (1 - Ỹ^2)^b
-    t, wt = golubwelsch(ωt, n)
+    t, wt = golubwelsch(ωt, mt)
     ωs = X̃^a * (1 - X̃^2)^(b + 0.5)
-    s, ws = golubwelsch(ωs, n)
-    for i = 1:n
-        for k = 1:n
-            pts[i + (k - 1)n] = s[k], t[i] * sqrt(1 - s[k]^2)
+    s, ws = golubwelsch(ωs, ms)
+    for i = 1:mt
+        for k = 1:ms
+            pts[i + (k - 1)mt] = s[k], t[i] * sqrt(1 - s[k]^2)
         end
     end
     pts
@@ -288,7 +311,7 @@ end # TODO
 
 # Creates a Vandermonde matrix by evaluating the basis at the grid
 function spvandermonde(S::HalfDiskSpace, n)
-    pts = points(S, Int(sqrt(n)))
+    pts = points(S, n)
     V = Array{Float64}(undef, n, n)
     for k = 1:n
         V[:, k] = Fun(S, [zeros(k-1); 1]).(pts)
@@ -310,29 +333,42 @@ function itransform(S::HalfDiskSpace, cfs)
     spvandermonde(S, n) * cfs
 end
 
-
-
-n = 100
-f = (x, y) -> exp(x)
-S = Chebyshev()^2
-pts = points(S, n)
-T = Float64
-cfs = transform(S, T[f(x...) for x in pts])
-F = Fun(S, cfs)
-x = (0.1, 0.2)
-F.space
-@which evaluate(F.coefficients,F.space,ApproxFun.Vec(x...))
-
-
-n = 10; a = 0.5; b = -0.5
-S = HalfDiskSpace(a, b)
-pts = points(S, n)
-f = (x, y) -> exp(x)
-F = Fun(S, [zeros(0); 1])
-x = 0.1, 0.2
-F.space
-evaluate(F.coefficients,F.space,ApproxFun.Vec(x...))
-Fun(f, S)
+#
+# n = 16
+# f = (x, y) -> exp(x)
+# S = Chebyshev()^2
+# S.spaces
+# pts = points(S, n)
+# m = Int(cld(-3+sqrt(1+8n),2)) + 1; ñ = Int((m+1)m/2)
+# T = Float64
+# cfs = transform(S, T[f(x...) for x in pts])
+# F = Fun(S, cfs)
+# x = (0.1, 0.2)
+# typeof(F.space)
+# @which evaluate(F.coefficients,F.space,ApproxFun.Vec(x...))
+# ApproxFun.totensor(F.space,F.coefficients)
+# @which ApproxFun.tensorizer(F.space)
+# ApproxFun.Tensorizer(map(ApproxFun.blocklengths,F.space.spaces))
+# F.space.spaces
+# ApproxFun.columnspace(S, 3)
+#
+# n = 6; a = 0.5; b = -0.5
+# S = HalfDiskSpace(a, b)
+# pts = points(S, n)
+# f = (x, y) -> exp(x + y)
+# tensorizer(S)
+# columnspace(S, 2)
+# T = Float64
+# transform(S, T[f(x...) for x in pts])
+#
+# F = Fun(S, [zeros(1); 1])
+# F.(pts)
+# x = 0.1, 0.2
+# typeof(F.space)
+# evaluate(F.coefficients,F.space,ApproxFun.Vec(x...))
+# f(x...)
+# ff = Fun(f, S)
+# ff(x...) - f(x...)
 
 
 #====#
@@ -350,9 +386,10 @@ end
     P = OrthogonalPolynomialFamily(1+x, 1-x)
     a, b = 0.4, 0.2
     @test P(a,b).weight(0.1) ≈ (1+0.1)^a * (1-0.1)^b
+    w = sqrt(sum((1+x)^a*(1-x)^b))
     for n = 0:5
         P₅ = Fun(Jacobi(a,b), [zeros(n); 1])
-        P₅ = P₅ * sqrt(sum((1+x)^a*(1-x)^b))/sqrt(sum((1+x)^a*(1-x)^b*P₅^2))
+        P₅ = P₅ * w / sqrt(sum((1+x)^a*(1-x)^b*P₅^2))
         P̃₅ = Fun(P(a,b), [zeros(n); 1])
         @test P̃₅(0.1) ≈ P₅(0.1)
     end
