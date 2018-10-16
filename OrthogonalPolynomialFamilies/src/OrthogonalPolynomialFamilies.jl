@@ -149,30 +149,38 @@ golubwelsch(sp::OrthogonalPolynomialSpace, N) = golubwelsch(sp.weight, N)
 spacescompatible(A::OrthogonalPolynomialSpace, B::OrthogonalPolynomialSpace) =
     A.weight ≈ B.weight
 
-points(S::OrthogonalPolynomialSpace, n) = golubwelsch(S, n)[1]
-
-# Creates a Vandermonde matrix by evaluating the basis at the grid
-function spvandermonde(S::OrthogonalPolynomialSpace, n)
-    pts = points(S, n)
-    V = Array{Float64}(undef, n, n)
-    for k = 1:n
-        V[:, k] = Fun(S, [zeros(k-1); 1]).(pts)
-    end
-    V
-end
+points(S::OrthogonalPolynomialSpace, n) = golubwelsch(S, n)
 
 # Inputs: OP space, f(pts) for desired f
 # Output: Coeffs of the function f for its expansion in the OPSpace OPs
 function transform(S::OrthogonalPolynomialSpace, vals)
     n = length(vals)
-    spvandermonde(S, n) \ vals
+    pts, w = points(S, n)
+    # Vandermonde matrix transposed, times the weights matrix
+    VTW = Array{Float64}(undef, n, n)
+    # Vals divided by the norm of the ops
+    μ = Vector{Float64}(undef, n)
+    for k = 0:n-1
+        pk = Fun(S, [zeros(k); 1])
+        VTW[k+1, :] = pk.(pts) .* w
+        nrm = sum([pk(pts[j])^2 * w[j] for j = 1:n])
+        μ[k+1] = vals[k+1] / nrm
+    end
+    VTW * μ
 end
 
 # Inputs: OP space, coeffs of a function f for its expansion in the OPSpace OPs
 # Output: vals = {f(x_j)} where x_j are are the points(S,n)
 function itransform(S::OrthogonalPolynomialSpace, cfs)
     n = length(cfs)
-    spvandermonde(S, n) * cfs
+    pts, w = points(S, n)
+    # Vandermonde matrix
+    V = Array{Float64}(undef, n, n)
+    for k = 0:n-1
+        pk = Fun(S, [zeros(k); 1])
+        V[:, k+1] = pk.(pts)
+    end
+    V * cfs
 end
 
 
@@ -255,37 +263,21 @@ function halfdiskfun2coeffs(f, N, a, b)
     c
 end
 
-struct HalfDisk{D,T} <: Domain{SVector{2,T}} end
+struct HalfDisk{T} <: Domain{SVector{2,T}} end
 
-struct HalfDiskSpace{SV,D,T} <: AbstractProductSpace{SV,D,T}
-    spaces::SV
+struct HalfDiskSpace{SV,D,T} <: Space{HalfDisk{T}, T}
     a::T # Power of the "x" factor in the weight
     b::T # Power of the "(1-x^2-y^2)" factor in the weight
-    α::Vector{T} # Diagonal recurrence coefficients
-    β::Vector{T} # Off diagonal recurrence coefficients
 end # TODO
 
 function HalfDiskSpace(a::Float64, b::Float64)
-    sps = (Chebyshev(0..1),Chebyshev(-1..1))
-    d = typeof(mapreduce(domain,*,sps))
-    HalfDiskSpace{typeof(sps),typeof(d),typeof(a)}((Chebyshev(0..1), Chebyshev(-1..1)), a, b, Vector{typeof(a)}(), Vector{typeof(a)}())
+    HalfDiskSpace{HalfDisk{typeof(a)},typeof(a)}(a, b)
 end
 HalfDiskSpace() = HalfDiskSpace(0.5, 0.5)
 
 in(x::SVector{2}, d::HalfDisk) = 0 ≤ x[1] ≤ 1 && -sqrt(1-x[1]^2) ≤ x[2] ≤ sqrt(1-x[1]^2)
 
-domain(S::HalfDiskSpace) = mapreduce(domain,*,S.spaces)
-
 spacescompatible(A::HalfDiskSpace, B::HalfDiskSpace) = (A.a == B.a && A.b == B.b)
-
-tensorizer(S::HalfDiskSpace) = ApproxFun.Tensorizer(map(ApproxFun.blocklengths,S.spaces))
-
-# every column is in the same space for a TensorSpace
-# TODO: remove
-columnspace(S::HalfDiskSpace, _) = S.spaces[1]
-
-# canonicaldomain(S::HalfDiskSpace) = domain(S)
-# tocanonical(S::HalfDiskSpace, x) = x
 
 function points(S::HalfDiskSpace, n)
     m = Int(cld(-3+sqrt(1+8n),2)) + 1
