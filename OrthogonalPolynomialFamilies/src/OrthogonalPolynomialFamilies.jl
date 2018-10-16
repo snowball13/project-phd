@@ -156,17 +156,14 @@ points(S::OrthogonalPolynomialSpace, n) = golubwelsch(S, n)
 function transform(S::OrthogonalPolynomialSpace, vals)
     n = length(vals)
     pts, w = points(S, n)
-    # Vandermonde matrix transposed, times the weights matrix
-    VTW = Array{Float64}(undef, n, n)
-    # Vals divided by the norm of the ops
-    μ = Vector{Float64}(undef, n)
+    # Vandermonde matrix transposed, including weights and normalisations
+    Ṽ = Array{Float64}(undef, n, n)
     for k = 0:n-1
         pk = Fun(S, [zeros(k); 1])
-        VTW[k+1, :] = pk.(pts) .* w
         nrm = sum([pk(pts[j])^2 * w[j] for j = 1:n])
-        μ[k+1] = vals[k+1] / nrm
+        Ṽ[k+1, :] = pk.(pts) .* w / nrm
     end
-    VTW * μ
+    Ṽ * vals
 end
 
 # Inputs: OP space, coeffs of a function f for its expansion in the OPSpace OPs
@@ -304,16 +301,6 @@ function points(S::HalfDiskSpace, n)
     end
     pts
 end # TODO
-
-# Creates a Vandermonde matrix by evaluating the basis at the grid
-function spvandermonde(S::HalfDiskSpace, n)
-    pts = points(S, n)
-    V = Array{Float64}(undef, n, n)
-    for k = 1:n
-        V[:, k] = Fun(S, [zeros(k-1); 1]).(pts)
-    end
-    V
-end
 
 # Inputs: OP space, f(pts) for desired f
 # Output: Coeffs of the function f for its expansion in the OPSpace OPs
