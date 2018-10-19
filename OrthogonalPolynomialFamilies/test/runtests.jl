@@ -70,17 +70,30 @@ end
 
 @testset "Transform" begin
     n = 20; a = 0.5; b = -0.5
+
     X = Fun(identity, -1..1)
     P = OrthogonalPolynomialFamily(1-X, 1+X)
     S = P(b, b)
-    pts = points(S, n)
     f = x->exp(x)
+    pts = points(S, n)
     vals = f.(pts)
     cfs = transform(S, vals)
-    ff = Fun(S, cfs)
+    F = Fun(S, cfs)
     x = 0.4
-    @test ff(x) ≈ f(x)
+    @test F(x) ≈ f(x)
     @test vals ≈ itransform(S, cfs)
+
+    X = Fun(identity, 0..1)
+    H = OrthogonalPolynomialFamily(X, 1-X^2)
+    S = P(a, b)
+    f = x->sin(3x)
+    pts = points(S, n)
+    vals = f.(pts)
+    cfs = transform(S, vals)
+    F = Fun(S, cfs)
+    x = 0.1
+    @test F(x) ≈ f(x)
+    @test itransform(S, cfs) ≈ vals
 end
 
 @testset "Creating function in an OrthogonalPolynomialSpace" begin

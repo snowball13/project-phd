@@ -149,13 +149,14 @@ golubwelsch(sp::OrthogonalPolynomialSpace, N) = golubwelsch(sp.weight, N)
 spacescompatible(A::OrthogonalPolynomialSpace, B::OrthogonalPolynomialSpace) =
     A.weight ≈ B.weight
 
-points(S::OrthogonalPolynomialSpace, n) = golubwelsch(S, n)
+points(S::OrthogonalPolynomialSpace, n) = golubwelsch(S, n)[1]
+pointswithweights(S::OrthogonalPolynomialSpace, n) = golubwelsch(S, n)
 
 # Inputs: OP space, f(pts) for desired f
 # Output: Coeffs of the function f for its expansion in the OPSpace OPs
 function transform(S::OrthogonalPolynomialSpace, vals)
     n = length(vals)
-    pts, w = points(S, n)
+    pts, w = pointswithweights(S, n)
     # Vandermonde matrix transposed, including weights and normalisations
     Ṽ = Array{Float64}(undef, n, n)
     for k = 0:n-1
@@ -170,7 +171,7 @@ end
 # Output: vals = {f(x_j)} where x_j are are the points(S,n)
 function itransform(S::OrthogonalPolynomialSpace, cfs)
     n = length(cfs)
-    pts, w = points(S, n)
+    pts, w = pointswithweights(S, n)
     # Vandermonde matrix
     V = Array{Float64}(undef, n, n)
     for k = 0:n-1
@@ -262,62 +263,117 @@ end
 
 struct HalfDisk{T} <: Domain{SVector{2,T}} end
 
-struct HalfDiskSpace{SV,D,T} <: Space{HalfDisk{T}, T}
+struct HalfDiskSpace{T} <: Space{HalfDisk{T}, T}
     a::T # Power of the "x" factor in the weight
     b::T # Power of the "(1-x^2-y^2)" factor in the weight
+    opnorms::Vector{T}
+    quadpoints::Vector{T}
+    quadweights::Vector{T}
+    oppointevals::Vector{T}
 end # TODO
 
-function HalfDiskSpace(a::Float64, b::Float64)
-    HalfDiskSpace{HalfDisk{typeof(a)},typeof(a)}(a, b)
+function HalfDiskSpace(a::T, b::T) where T
+    HalfDiskSpace{typeof(a)}(a, b, Vector{T}(), Vector{T}(), Vector{T}(), Vector{T}())
 end
 HalfDiskSpace() = HalfDiskSpace(0.5, 0.5)
 
-in(x::SVector{2}, d::HalfDisk) = 0 ≤ x[1] ≤ 1 && -sqrt(1-x[1]^2) ≤ x[2] ≤ sqrt(1-x[1]^2)
+in(x::SVector{2}, D::HalfDisk) = 0 ≤ x[1] ≤ 1 && -sqrt(1-x[1]^2) ≤ x[2] ≤ sqrt(1-x[1]^2)
 
 spacescompatible(A::HalfDiskSpace, B::HalfDiskSpace) = (A.a == B.a && A.b == B.b)
 
-function points(S::HalfDiskSpace, n)
-    m = Int(cld(-3+sqrt(1+8n),2)) + 1
-    if iseven(m)
-        mt = Int(m / 2)
-        ms = m + 1
-    else
-        mt = Int((m + 1) / 2)
-        ms = m
+# NOTE n refers to the max degree of the OPs we use (i.e. the degree of f)
+function pointswithweights(S::HalfDiskSpace, n)
+    pts = Vector{SArray{Tuple{2},Float64,1,2}}(undef, 2(n^2))
+    x, y, w = halfdiskquadrule(n, S.a, S.b)[1:3]
+    for j = 1:n^2
+        pts[j] = x[j], y[j]
+        pts[n^2 + j] = x[j], -y[j]
     end
-    ñ = Int((m+1)m/2)
-    pts = Vector{SArray{Tuple{2},Float64,1,2}}(undef, ñ)
-    a = S.a; b = S.b
-    X̃ = Fun(identity, 0..1)
-    Ỹ = Fun(identity, -1..1)
-    ωt = (1 - Ỹ^2)^b
-    t, wt = golubwelsch(ωt, mt)
-    ωs = X̃^a * (1 - X̃^2)^(b + 0.5)
-    s, ws = golubwelsch(ωs, ms)
-    for i = 1:mt
-        for k = 1:ms
-            pts[i + (k - 1)mt] = s[k], t[i] * sqrt(1 - s[k]^2)
-        end
-    end
-    pts
-end # TODO
+    pts, w
+end
+points(S::HalfDiskSpace, n) = pointswithweights(S, n)[1]
+
+function halfdisknorm(f::Fun, S::HalfDiskSpace)
+    pts = S.quadpoints; n = Int(length(pts)/2)
+    sum(([f(pt) for pt in pts[1:N2]].^2 + [f(pt) for pt in pts[N2+1:end]].^2) .* S.quadweights) / 2
+end
 
 # Inputs: OP space, f(pts) for desired f
 # Output: Coeffs of the function f for its expansion in the OPSpace OPs
 function transform(S::HalfDiskSpace, vals)
-    n = length(vals)
-    spvandermonde(S, n) \ vals
+    N = Int(sqrt(length(vals) / 2)) # degree + 1
+    N2 = N^2
+    m = Int((N+1)N/2)
+
+    # Check is we already have all the points stored in S
+    m̃ = length(S.opnorms)
+    if length(m̃) < m
+        resize!(S.opnorms, m)
+        resize!(S.quadpoints, 2N2)
+        resize!(S.quadweights, 2N2)
+        resize!(S.oppointevals, 2N2)
+        S.quadpoints[:], S.quadweights[:] = pointswithweights(S, N)
+        for k = m̃+1:m
+            Pnk = Fun(S, [zeros(k-1); 1])
+            S.opnorms[k] = halfdisknorm(Pnk, S)
+        end
+    end
+
+    pts, w = S.quadpoints, S.quadweights
+    # Vandermonde matrices transposed, for each set of pts (x, ±y)
+    VTp = Array{Float64}(undef, m, N2)
+    VTm = copy(VTp)
+    for k = 1:m
+        Pnk = Fun(S, [zeros(k-1); 1])
+        VTp[k, :] = Pnk.(pts[1:N2])
+        VTm[k, :] = Pnk.(pts[N2+1:end])
+    end
+    W = Diagonal(w)
+    U = Diagonal(1/S.opnorms)
+    cfs = U * (VTp * W * vals[1:N2] + VTm * W * vals[N2+1:end]) / 2
 end
 
 # Inputs: OP space, coeffs of a function f for its expansion in the OPSpace OPs
 # Output: vals = {f(x_j)} where x_j are are the points(S,n)
 function itransform(S::HalfDiskSpace, cfs)
-    n = length(cfs)
-    spvandermonde(S, n) * cfs
-end
+    m = length(cfs)
+    N = Int(round(0.5 * (-1 + sqrt(1 + 8m))))
+    N2 = N^2
+    pts = points(S, N)
+    V = Array{Float64}(undef, 2N2, m)
+    for k = 1:m
+        Pnk = Fun(S, [zeros(k-1); 1])
+        V[:, k] = Pnk.(pts)
+    end
+    V * cfs
+end # TODO
 
-function evaluate(cfs::AbstractVector, sp::HalfDiskSpace, z)
-    error("Implement")
-end
+function evaluate(cfs::AbstractVector, S::HalfDiskSpace, z)
+    #=
+    TODO: Implement clenshaw for the half disk.
+
+    This is just a quick and dirty sum.
+    =#
+    m = length(cfs)
+    a = S.a; b = S.b
+    X = Fun(identity, 0..1)
+    Y = Fun(identity, -1..1)
+    ρ = sqrt(1 - X^2)
+    H = OrthogonalPolynomialFamily(X, 1-X^2)
+    P = OrthogonalPolynomialFamily(1-Y, 1+Y)
+    ret = 0.0
+    n = 0; k = 0
+    for j = 1:m
+        # Pnk = Fun(S, [zeros(j-1); 1])
+        Pnk = gethalfdiskOP(H, P, ρ, n, k, a, b)
+        ret += cfs[j] * Pnk(z...)
+        k += 1
+        if k > n
+            n += 1
+            k = 0
+        end
+    end
+    ret
+end # TODO
 
 end # module
