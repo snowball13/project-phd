@@ -9,7 +9,7 @@ using ApproxFun
 using StaticArrays
 using FastGaussQuadrature
 using LinearAlgebra
-using SingularIntegralEquations
+# using SingularIntegralEquations
 using Test
 
 export OrthogonalPolynomialFamily, HalfDisk, HalfDiskSpace
@@ -263,17 +263,22 @@ end
 
 struct HalfDisk{T} <: Domain{SVector{2,T}} end
 
-struct HalfDiskSpace{T} <: Space{HalfDisk{T}, T}
+struct HalfDiskSpace{T, FA, F} <: Space{HalfDisk{T}, T}
     a::T # Power of the "x" factor in the weight
     b::T # Power of the "(1-x^2-y^2)" factor in the weight
+    H::FA # OPFamily in [0,1]
+    P::FA # OPFamily in [-1,1]
+    ρ::F # Fun of sqrt(1-X^2) in [0,1]
     opnorms::Vector{T}
-    quadpoints::Vector{T}
-    quadweights::Vector{T}
-    oppointevals::Vector{T}
 end # TODO
 
 function HalfDiskSpace(a::T, b::T) where T
-    HalfDiskSpace{typeof(a)}(a, b, Vector{T}(), Vector{T}(), Vector{T}(), Vector{T}())
+    X = Fun(identity, 0..1)
+    Y = Fun(identity, -1..1)
+    H = OrthogonalPolynomialFamily(X, 1-X^2)
+    P = OrthogonalPolynomialFamily(1+Y, 1-Y)
+    ρ = sqrt(1 - X^2)
+    HalfDiskSpace{typeof(a), typeof(H), typeof(ρ)}(a, b, H, P, ρ, Vector{T}())
 end
 HalfDiskSpace() = HalfDiskSpace(0.5, 0.5)
 
@@ -293,9 +298,9 @@ function pointswithweights(S::HalfDiskSpace, n)
 end
 points(S::HalfDiskSpace, n) = pointswithweights(S, n)[1]
 
-function halfdisknorm(f::Fun, S::HalfDiskSpace)
-    pts = S.quadpoints; n = Int(length(pts)/2)
-    sum(([f(pt) for pt in pts[1:N2]].^2 + [f(pt) for pt in pts[N2+1:end]].^2) .* S.quadweights) / 2
+function halfdisknorm(f::Fun, S::HalfDiskSpace, pts, w)
+    n = Int(length(pts)/2)
+    sum(([f(pt) for pt in pts[1:n]].^2 + [f(pt) for pt in pts[n+1:end]].^2) .* w) / 2
 end
 
 # Inputs: OP space, f(pts) for desired f
@@ -305,21 +310,18 @@ function transform(S::HalfDiskSpace, vals)
     N2 = N^2
     m = Int((N+1)N/2)
 
-    # Check is we already have all the points stored in S
+    pts, w = pointswithweights(S, N)
+
+    # We store the norms of the OPs
     m̃ = length(S.opnorms)
-    if length(m̃) < m
+    if m̃ < m
         resize!(S.opnorms, m)
-        resize!(S.quadpoints, 2N2)
-        resize!(S.quadweights, 2N2)
-        resize!(S.oppointevals, 2N2)
-        S.quadpoints[:], S.quadweights[:] = pointswithweights(S, N)
         for k = m̃+1:m
             Pnk = Fun(S, [zeros(k-1); 1])
-            S.opnorms[k] = halfdisknorm(Pnk, S)
+            S.opnorms[k] = halfdisknorm(Pnk, S, pts, w)
         end
     end
 
-    pts, w = S.quadpoints, S.quadweights
     # Vandermonde matrices transposed, for each set of pts (x, ±y)
     VTp = Array{Float64}(undef, m, N2)
     VTm = copy(VTp)
@@ -329,8 +331,8 @@ function transform(S::HalfDiskSpace, vals)
         VTm[k, :] = Pnk.(pts[N2+1:end])
     end
     W = Diagonal(w)
-    U = Diagonal(1/S.opnorms)
-    cfs = U * (VTp * W * vals[1:N2] + VTm * W * vals[N2+1:end]) / 2
+    U = Diagonal(1 ./ S.opnorms)
+    U * (VTp * W * vals[1:N2] + VTm * W * vals[N2+1:end]) / 2
 end
 
 # Inputs: OP space, coeffs of a function f for its expansion in the OPSpace OPs
@@ -350,22 +352,16 @@ end # TODO
 
 function evaluate(cfs::AbstractVector, S::HalfDiskSpace, z)
     #=
-    TODO: Implement clenshaw for the half disk.
+    TODO: Implement clenshaw for the half disk?
 
     This is just a quick and dirty sum.
     =#
     m = length(cfs)
-    a = S.a; b = S.b
-    X = Fun(identity, 0..1)
-    Y = Fun(identity, -1..1)
-    ρ = sqrt(1 - X^2)
-    H = OrthogonalPolynomialFamily(X, 1-X^2)
-    P = OrthogonalPolynomialFamily(1-Y, 1+Y)
     ret = 0.0
     n = 0; k = 0
     for j = 1:m
         # Pnk = Fun(S, [zeros(j-1); 1])
-        Pnk = gethalfdiskOP(H, P, ρ, n, k, a, b)
+        Pnk = gethalfdiskOP(S.H, S.P, S.ρ, n, k, S.a, S.b)
         ret += cfs[j] * Pnk(z...)
         k += 1
         if k > n
