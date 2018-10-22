@@ -331,7 +331,7 @@ function transform(S::HalfDiskSpace, vals)
         VTm[k, :] = Pnk.(pts[N2+1:end])
     end
     W = Diagonal(w)
-    U = Diagonal(1 ./ S.opnorms)
+    U = Diagonal(1 ./ S.opnorms[1:m])
     U * (VTp * W * vals[1:N2] + VTm * W * vals[N2+1:end]) / 2
 end
 
