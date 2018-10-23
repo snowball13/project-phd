@@ -106,3 +106,17 @@ end
     x = 0.1567
     @test F(x) ≈ f(x)
 end # NOTE: Fun(f, S) is a λ function, and not a Fun
+
+@testset "Evaluation for HalfDiskSpace (transform())" begin
+    n = 4; a = 0.5; b = 1.5
+    f = (x,y) -> y*x^2 + x
+    S = HalfDiskSpace(a, b)
+    pts = points(S, n)
+    vals = [f(pt...) for pt in pts]
+    cfs = transform(S, vals)
+    S
+    z = [0.1; 0.2]
+    F = Fun(S, cfs)
+    F(z) ≈ f(z...)
+    itransform(S, cfs) ≈ vals
+end

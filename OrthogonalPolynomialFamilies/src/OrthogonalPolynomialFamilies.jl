@@ -12,7 +12,7 @@ using LinearAlgebra
 # using SingularIntegralEquations
 using Test
 
-export OrthogonalPolynomialFamily, HalfDisk, HalfDiskSpace
+export OrthogonalPolynomialFamily, HalfDisk, HalfDiskSpace, HalfDiskFamily
 
 
 # Finds the OPs and recurrence for weight w, having already found N₀ OPs
@@ -261,24 +261,28 @@ function halfdiskfun2coeffs(f, N, a, b)
     c
 end
 
-struct HalfDisk{T} <: Domain{SVector{2,T}} end
+# R should be Float64
+abstract type DiskSpaceFamily{R} end
 
-struct HalfDiskSpace{T, FA, F} <: Space{HalfDisk{T}, T}
-    a::T # Power of the "x" factor in the weight
-    b::T # Power of the "(1-x^2-y^2)" factor in the weight
+struct HalfDisk{R} <: Domain{SVector{2,R}} end
+
+struct HalfDiskSpace{DF, R, FA, F} <: Space{HalfDisk{R}, R}
+    family::DF # Pointer back to the family
+    a::R # Power of the "x" factor in the weight
+    b::R # Power of the "(1-x^2-y^2)" factor in the weight
     H::FA # OPFamily in [0,1]
     P::FA # OPFamily in [-1,1]
     ρ::F # Fun of sqrt(1-X^2) in [0,1]
-    opnorms::Vector{T}
-end # TODO
+    opnorms::Vector{R}
+end
 
-function HalfDiskSpace(a::T, b::T) where T
+function HalfDiskSpace(fam::DiskSpaceFamily{R}, a::R, b::R) where R
     X = Fun(identity, 0..1)
     Y = Fun(identity, -1..1)
     H = OrthogonalPolynomialFamily(X, 1-X^2)
     P = OrthogonalPolynomialFamily(1+Y, 1-Y)
     ρ = sqrt(1 - X^2)
-    HalfDiskSpace{typeof(a), typeof(H), typeof(ρ)}(a, b, H, P, ρ, Vector{T}())
+    HalfDiskSpace{typeof(fam), typeof(a), typeof(H), typeof(ρ)}(fam, a, b, H, P, ρ, Vector{R}())
 end
 HalfDiskSpace() = HalfDiskSpace(0.5, 0.5)
 
@@ -371,5 +375,23 @@ function evaluate(cfs::AbstractVector, S::HalfDiskSpace, z)
     end
     ret
 end # TODO
+
+# R should be Float64
+struct HalfDiskFamily{R} <: DiskSpaceFamily{R}
+    spaces::Dict{NTuple{2,R}, HalfDiskSpace}
+end
+
+function HalfDiskFamily()
+    WW = Fun
+    R = Float64
+    spaces = Dict{NTuple{2,R}, HalfDiskSpace}()
+    HalfDiskFamily{R}(spaces)
+end
+
+function (D::HalfDiskFamily{R})(a::R, b::R) where R
+    haskey(D.spaces,(a,b)) && return D.spaces[(a,b)]
+    D.spaces[(a,b)] = HalfDiskSpace(D, a, b)
+end
+
 
 end # module
