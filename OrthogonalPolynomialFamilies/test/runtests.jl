@@ -108,15 +108,56 @@ end
 end # NOTE: Fun(f, S) is a λ function, and not a Fun
 
 @testset "Evaluation for HalfDiskSpace (transform())" begin
-    n = 4; a = 0.5; b = 1.5
-    f = (x,y) -> y*x^2 + x
-    S = HalfDiskSpace(a, b)
-    pts = points(S, n)
-    vals = [f(pt...) for pt in pts]
-    cfs = transform(S, vals)
-    S
-    z = [0.1; 0.2]
-    F = Fun(S, cfs)
-    F(z) ≈ f(z...)
-    itransform(S, cfs) ≈ vals
+n = 4; a = 0.5; b = 1.5
+f = (x,y) -> y*x^2 + x
+F =  HalfDiskFamily()
+S =F(a, b)
+pts = points(S, n)
+vals = [f(pt...) for pt in pts]
+cfs = transform(S, vals)
+S
+z = [0.1; 0.2]
+F = Fun(S, cfs)
+@test F(z) ≈ f(z...)
+@test itransform(S, cfs) ≈ vals
+
+F = Fun(f, S, 10)
+@test F(z...) ≈ f(z...)
+
+
+@profiler Fun(f, S, 10)
+using Profile
+Profile.clear()
+
 end
+
+
+n = 10; a = 0.5; b = 1.5
+f = (x,y) -> y*x^2 + x
+F =  HalfDiskFamily()
+S =F(a, b)
+@time pts = points(S, n)
+@time vals = [f(pt...) for pt in pts]
+
+Profile.clear()
+
+@profiler transform(S, vals)
+p = points(S, 10)
+
+
+vals = (xy -> xy[1]).(p)
+@time P*vals
+
+P = Fun(S, [0,0,0,0,0,0,1])
+xP = Fun((x,y) -> x * P(x,y), S,  20)
+
+∂P = Fun((x,y) -> ∂P∂x(x,y), S,  10)
+
+p = points(S, 10)
+plan = ApproxFun.plan_transform(S, Vector{Float64}(undef, length(p)))
+
+
+P = Fun(S, [0,0,0,0,0,0,1])
+f = (x,y) -> y*P(x,y)
+@time vals = (xy -> f(xy...)).(p)
+@time Fun(S, plan*vals).coefficients

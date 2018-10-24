@@ -4,8 +4,8 @@ using ApproxFun
     import ApproxFun: evaluate, PolynomialSpace, recα, recβ, recγ, recA, recB, recC, domain,
                         domainspace, rangespace, bandwidths, prectype, canonicaldomain, tocanonical,
                         spacescompatible, points, transform, itransform, AbstractProductSpace, tensorizer,
-                        columnspace
-    import Base: getindex, in
+                        columnspace, checkpoints
+    import Base: getindex, in, *
 using StaticArrays
 using FastGaussQuadrature
 using LinearAlgebra
@@ -266,6 +266,10 @@ abstract type DiskSpaceFamily{R} end
 
 struct HalfDisk{R} <: Domain{SVector{2,R}} end
 
+HalfDisk() = HalfDisk{Float64}()
+
+checkpoints(::HalfDisk) = [ SVector(0.1,0.23), SVector(0.3,0.12)]
+
 struct HalfDiskSpace{DF, R, FA, F} <: Space{HalfDisk{R}, R}
     family::DF # Pointer back to the family
     a::R # Power of the "x" factor in the weight
@@ -301,15 +305,21 @@ function pointswithweights(S::HalfDiskSpace, n)
     pts, w
 end
 points(S::HalfDiskSpace, n) = pointswithweights(S, n)[1]
+domain(::HalfDiskSpace) = HalfDisk()
 
 function halfdisknorm(f::Fun, S::HalfDiskSpace, pts, w)
     n = Int(length(pts)/2)
     sum(([f(pt) for pt in pts[1:n]].^2 + [f(pt) for pt in pts[n+1:end]].^2) .* w) / 2
 end
 
-# Inputs: OP space, f(pts) for desired f
-# Output: Coeffs of the function f for its expansion in the OPSpace OPs
-function transform(S::HalfDiskSpace, vals)
+struct HalfDiskTransformPlan
+    U::Diagonal{Float64,Vector{Float64}}
+    VTp::Matrix{Float64}
+    W::Diagonal{Float64,Vector{Float64}}
+    VTm::Matrix{Float64}
+end
+
+function HalfDiskTransformPlan(S, vals)
     N = Int(sqrt(length(vals) / 2)) # degree + 1
     N2 = N^2
     m = Int((N+1)N/2)
@@ -336,8 +346,19 @@ function transform(S::HalfDiskSpace, vals)
     end
     W = Diagonal(w)
     U = Diagonal(1 ./ S.opnorms[1:m])
-    U * (VTp * W * vals[1:N2] + VTm * W * vals[N2+1:end]) / 2
+
+    HalfDiskTransformPlan(U, VTp, W, VTm)
 end
+
+# Inputs: OP space, f(pts) for desired f
+# Output: Coeffs of the function f for its expansion in the OPSpace OPs
+function *(P::HalfDiskTransformPlan, vals)
+    N = Int(sqrt(length(vals) / 2)) # degree + 1
+    N2 = N^2
+    P.U * (P.VTp * P.W * vals[1:N2] + P.VTm * P.W * vals[N2+1:end]) / 2
+end
+
+plan_transform(S::HalfDiskSpace, vals) = HalfDiskTransformPlan(S, vals)
 
 # Inputs: OP space, coeffs of a function f for its expansion in the OPSpace OPs
 # Output: vals = {f(x_j)} where x_j are are the points(S,n)
