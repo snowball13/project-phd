@@ -4,7 +4,7 @@ using ApproxFun
     import ApproxFun: evaluate, PolynomialSpace, recα, recβ, recγ, recA, recB, recC, domain,
                         domainspace, rangespace, bandwidths, prectype, canonicaldomain, tocanonical,
                         spacescompatible, points, transform, itransform, AbstractProductSpace, tensorizer,
-                        columnspace, checkpoints
+                        columnspace, checkpoints, plan_transform
     import Base: getindex, in, *
 using StaticArrays
 using FastGaussQuadrature
@@ -237,30 +237,6 @@ function gethalfdiskOP(H, P, ρ, n, k, a, b)
     return (x,y) -> (H̃(x) * ρ(x)^k * P̃(y / ρ(x)))
 end
 
-# Return the coefficients of the expansion of a function f(x,y) in the OP basis
-# {P^{a,b}_{n,k}(x,y)}
-function halfdiskfun2coeffs(f, N, a, b)
-    # Coeffs are obtained by inner products, approximated (or exact if low
-    # enough degree polynomial) using the quad rule above
-    X = Fun(identity, 0..1)
-    Y = Fun(identity, -1..1)
-    ρ = sqrt(1-X^2)
-    H = OrthogonalPolynomialFamily(X, (1-X^2))
-    P = OrthogonalPolynomialFamily(1+Y, 1-Y)
-    c = zeros(sum(1:N+1))
-    j = 1
-    for n = 0:N
-        for k = 0:n
-            Q = gethalfdiskOP(H, P, ρ, n, k, a, b)
-            ff = (x,y) -> (f(x,y) * Q(x,y))
-            QQ = (x,y) -> (Q(x,y) * Q(x,y))
-            c[j] = halfdiskintegral(ff, N+1, a, b) / halfdiskintegral(QQ, N+1, a, b)
-            j += 1
-        end
-    end
-    c
-end
-
 # R should be Float64
 abstract type DiskSpaceFamily{R} end
 
@@ -294,22 +270,35 @@ in(x::SVector{2}, D::HalfDisk) = 0 ≤ x[1] ≤ 1 && -sqrt(1-x[1]^2) ≤ x[2] �
 
 spacescompatible(A::HalfDiskSpace, B::HalfDiskSpace) = (A.a == B.a && A.b == B.b)
 
-# NOTE n refers to the max degree of the OPs we use (i.e. the degree of f)
+# NOTE we output ≈n points (x,y), plus the ≈n points corresponding to (x,-y)
 function pointswithweights(S::HalfDiskSpace, n)
-    pts = Vector{SArray{Tuple{2},Float64,1,2}}(undef, 2(n^2))
-    x, y, w = halfdiskquadrule(n, S.a, S.b)[1:3]
-    for j = 1:n^2
-        pts[j] = x[j], y[j]
-        pts[n^2 + j] = x[j], -y[j]
+    # Return the weights and nodes to use for the even
+    # of a function, i.e. for the half disk Ω:
+    #   int_Ω W^{a,b}(x,y) f(x,y) dydx ≈ Σ_j weⱼ*fe(xⱼ,yⱼ)
+    # NOTE: the odd part of the quad rule will equal 0 for polynomials,
+    #       so can be ignored.
+    N = Int(ceil(sqrt(n)))
+    t, wt = golubwelsch((S.P)(S.b, S.b).weight, N)
+    s, ws = golubwelsch((S.H)(S.a, S.b + 0.5).weight, N)
+    pts = Vector{SArray{Tuple{2},Float64,1,2}}(undef, 2(N^2))
+    w = zeros(N^2)
+    for i = 1:N
+        for k = 1:N
+            x, y = s[k], t[i] * sqrt(1 - s[k]^2)
+            pts[i + (k - 1)N] = x, y
+            pts[N^2 + i + (k - 1)N] = x, -y
+            w[i + (k - 1)N] = ws[k] * wt[i]
+        end
     end
     pts, w
 end
 points(S::HalfDiskSpace, n) = pointswithweights(S, n)[1]
+
 domain(::HalfDiskSpace) = HalfDisk()
 
-function halfdisknorm(f::Fun, S::HalfDiskSpace, pts, w)
-    n = Int(length(pts)/2)
-    sum(([f(pt) for pt in pts[1:n]].^2 + [f(pt) for pt in pts[n+1:end]].^2) .* w) / 2
+function halfdisknorm(f, pts, w)
+    n = Int(length(pts) / 2)
+    sum(([f(pt...) for pt in pts[1:n]].^2 + [f(pt...) for pt in pts[n+1:end]].^2) .* w) / 2
 end
 
 struct HalfDiskTransformPlan
@@ -320,11 +309,10 @@ struct HalfDiskTransformPlan
 end
 
 function HalfDiskTransformPlan(S, vals)
-    N = Int(sqrt(length(vals) / 2)) # degree + 1
-    N2 = N^2
-    m = Int((N+1)N/2)
-
-    pts, w = pointswithweights(S, N)
+    n = Int(length(vals) / 2)
+    N = Int(sqrt(n)) - 1
+    m = Int((N+1)*(N+2) / 2)
+    pts, w = pointswithweights(S, n)
 
     # We store the norms of the OPs
     m̃ = length(S.opnorms)
@@ -332,17 +320,17 @@ function HalfDiskTransformPlan(S, vals)
         resize!(S.opnorms, m)
         for k = m̃+1:m
             Pnk = Fun(S, [zeros(k-1); 1])
-            S.opnorms[k] = halfdisknorm(Pnk, S, pts, w)
+            S.opnorms[k] = halfdisknorm(Pnk, pts, w)
         end
     end
 
     # Vandermonde matrices transposed, for each set of pts (x, ±y)
-    VTp = Array{Float64}(undef, m, N2)
+    VTp = Array{Float64}(undef, m, n)
     VTm = copy(VTp)
     for k = 1:m
         Pnk = Fun(S, [zeros(k-1); 1])
-        VTp[k, :] = Pnk.(pts[1:N2])
-        VTm[k, :] = Pnk.(pts[N2+1:end])
+        VTp[k, :] = Pnk.(pts[1:n])
+        VTm[k, :] = Pnk.(pts[n+1:end])
     end
     W = Diagonal(w)
     U = Diagonal(1 ./ S.opnorms[1:m])
@@ -350,12 +338,13 @@ function HalfDiskTransformPlan(S, vals)
     HalfDiskTransformPlan(U, VTp, W, VTm)
 end
 
+transform(S::HalfDiskSpace, vals) = plan_transform(S, vals) * vals
+
 # Inputs: OP space, f(pts) for desired f
 # Output: Coeffs of the function f for its expansion in the OPSpace OPs
 function *(P::HalfDiskTransformPlan, vals)
-    N = Int(sqrt(length(vals) / 2)) # degree + 1
-    N2 = N^2
-    P.U * (P.VTp * P.W * vals[1:N2] + P.VTm * P.W * vals[N2+1:end]) / 2
+    n = Int(length(vals) / 2)
+    P.U * (P.VTp * P.W * vals[1:n] + P.VTm * P.W * vals[n+1:end]) / 2
 end
 
 plan_transform(S::HalfDiskSpace, vals) = HalfDiskTransformPlan(S, vals)
@@ -365,9 +354,9 @@ plan_transform(S::HalfDiskSpace, vals) = HalfDiskTransformPlan(S, vals)
 function itransform(S::HalfDiskSpace, cfs)
     m = length(cfs)
     N = Int(round(0.5 * (-1 + sqrt(1 + 8m))))
-    N2 = N^2
-    pts = points(S, N)
-    V = Array{Float64}(undef, 2N2, m)
+    n = N^2
+    pts = points(S, n)
+    V = Array{Float64}(undef, 2n, m)
     for k = 1:m
         Pnk = Fun(S, [zeros(k-1); 1])
         V[:, k] = Pnk.(pts)
