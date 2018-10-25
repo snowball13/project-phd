@@ -55,18 +55,18 @@ end
     @test sum(wo .* f.(xo, yo)) < 1e-12 # Should be zero
 end
 
-@testset "Fun expansion in OP basis" begin
-    N = 5; a = 0.5; b = 0.5
-    X = Fun(identity, 0..1)
-    Y = Fun(identity, -1..1)
-    ρ = sqrt(1-X^2)
-    H = OrthogonalPolynomialFamily(X, (1-X^2))
-    P = OrthogonalPolynomialFamily(1+Y, 1-Y)
-    f = (x,y)-> x^2 * y^2 + y^4 * x
-    c = halfdiskfun2coeffs(f, N, a, b)
-    x = 0.6; y = -0.3
-    @test f(x, y) ≈ c'*[gethalfdiskOP(H, P, ρ, n, k, a, b)(x,y) for n = 0:N for k = 0:n] # zero for N >= deg(f)
-end
+# @testset "Fun expansion in OP basis" begin
+#     N = 5; a = 0.5; b = 0.5
+#     X = Fun(identity, 0..1)
+#     Y = Fun(identity, -1..1)
+#     ρ = sqrt(1-X^2)
+#     H = OrthogonalPolynomialFamily(X, (1-X^2))
+#     P = OrthogonalPolynomialFamily(1+Y, 1-Y)
+#     f = (x,y)-> x^2 * y^2 + y^4 * x
+#     c = halfdiskfun2coeffs(f, N, a, b)
+#     x = 0.6; y = -0.3
+#     @test f(x, y) ≈ c'*[gethalfdiskOP(H, P, ρ, n, k, a, b)(x,y) for n = 0:N for k = 0:n] # zero for N >= deg(f)
+# end
 
 @testset "Transform" begin
     n = 20; a = 0.5; b = -0.5
