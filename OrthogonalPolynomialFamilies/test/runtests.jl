@@ -126,3 +126,20 @@ end # NOTE: Fun(f, S) is a λ function, and not a Fun
     F = Fun(f, S)
     @test F(z) ≈ f(z...)
 end
+
+@testset "Jacobi matrices" begin
+    n = 10; a = 0.5; b = -0.5
+    D = HalfDiskFamily()
+    S = D(a, b)
+    z = [0.1; 0.2]
+    f = (x,y)->x*y + x
+    pts = points(S, n)
+    vals = [f(pt...) for pt in pts]
+    cfs = transform(S, vals)
+    m = length(cfs)
+    N = Int(ceil(0.5 * (-1 + sqrt(1 + 8m)))) - 1
+    Jx = jacobix(S, N+1)
+    Jy = jacobiy(S, N+1)
+    @test evaluate(Jx'[1:m, 1:m] * cfs, S, z) ≈ z[1] * f(z...)
+    @test evaluate(Jy'[1:m, 1:m] * cfs, S, z) ≈ z[2] * f(z...)
+end

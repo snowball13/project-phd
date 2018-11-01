@@ -4,11 +4,13 @@ using ApproxFun
     import ApproxFun: evaluate, PolynomialSpace, recα, recβ, recγ, recA, recB, recC, domain,
                         domainspace, rangespace, bandwidths, prectype, canonicaldomain, tocanonical,
                         spacescompatible, points, transform, itransform, AbstractProductSpace, tensorizer,
-                        columnspace, checkpoints, plan_transform
+                        columnspace, checkpoints, plan_transform, clenshaw
     import Base: getindex, in, *
 using StaticArrays
 using FastGaussQuadrature
 using LinearAlgebra
+using SparseArrays
+using BlockBandedMatrices
 # using SingularIntegralEquations
 using Test
 
@@ -104,8 +106,7 @@ end
 
 #####
 # recα/β/γ are given by
-#       x p_{n-1} = γ_n p_{n-2} + α_n p_{n-1} +  p_n β_n ???
-#           Should it be: x p_{n} = γ_n p_{n-1} + α_n p_{n} +  β_n p_{n+1} (dont think so)
+#       x p_{n-1} = γ_n p_{n-2} + α_n p_{n-1} +  p_n β_n
 #####
 recα(::Type{T}, S::OrthogonalPolynomialSpace, n) where T =
     T(resizedata!(S, n).a[n])
@@ -253,7 +254,11 @@ struct HalfDiskSpace{DF, R, FA, F} <: Space{HalfDisk{R}, R}
     H::FA # OPFamily in [0,1]
     P::FA # OPFamily in [-1,1]
     ρ::F # Fun of sqrt(1-X^2) in [0,1]
-    opnorms::Vector{R}
+    opnorms::Vector{R} # squared norms
+    A::Vector{Array{R}}
+    B::Vector{Array{R}}
+    C::Vector{Array{R}}
+    DT::Vector{Array{R}}
 end
 
 function HalfDiskSpace(fam::DiskSpaceFamily{R}, a::R, b::R) where R
@@ -262,7 +267,7 @@ function HalfDiskSpace(fam::DiskSpaceFamily{R}, a::R, b::R) where R
     H = OrthogonalPolynomialFamily(X, 1-X^2)
     P = OrthogonalPolynomialFamily(1+Y, 1-Y)
     ρ = sqrt(1 - X^2)
-    HalfDiskSpace{typeof(fam), typeof(a), typeof(H), typeof(ρ)}(fam, a, b, H, P, ρ, Vector{R}())
+    HalfDiskSpace{typeof(fam), typeof(a), typeof(H), typeof(ρ)}(fam, a, b, H, P, ρ, Vector{R}(), Vector{Array{R}}(), Vector{Array{R}}(), Vector{Array{R}}(), Vector{Array{R}}())
 end
 HalfDiskSpace() = HalfDiskSpace(0.5, 0.5)
 
@@ -296,9 +301,20 @@ points(S::HalfDiskSpace, n) = pointswithweights(S, n)[1]
 
 domain(::HalfDiskSpace) = HalfDisk()
 
-function halfdisknorm(f, pts, w)
+function inner(f, g, pts, w)
     n = Int(length(pts) / 2)
-    sum(([f(pt...) for pt in pts[1:n]].^2 + [f(pt...) for pt in pts[n+1:end]].^2) .* w) / 2
+    sum(([f(pt...) * g(pt...) for pt in pts[1:n]]
+            + [f(pt...) * g(pt...) for pt in pts[n+1:end]]) .* w) / 2
+end
+
+# NOTE these are squared norms
+function getopnorms(S::HalfDiskSpace, m, pts, w)
+    m̃ = length(S.opnorms)
+    resize!(S.opnorms, m)
+    for k = m̃+1:m
+        Pnk = Fun(S, [zeros(k-1); 1])
+        S.opnorms[k] = inner(Pnk, Pnk, pts, w)
+    end
 end
 
 struct HalfDiskTransformPlan
@@ -315,13 +331,8 @@ function HalfDiskTransformPlan(S, vals)
     pts, w = pointswithweights(S, n)
 
     # We store the norms of the OPs
-    m̃ = length(S.opnorms)
-    if m̃ < m
-        resize!(S.opnorms, m)
-        for k = m̃+1:m
-            Pnk = Fun(S, [zeros(k-1); 1])
-            S.opnorms[k] = halfdisknorm(Pnk, pts, w)
-        end
+    if length(S.opnorms) < m
+        getopnorms(S, m, pts, w)
     end
 
     # Vandermonde matrices transposed, for each set of pts (x, ±y)
@@ -364,12 +375,251 @@ function itransform(S::HalfDiskSpace, cfs)
     V * cfs
 end # TODO
 
-function evaluate(cfs::AbstractVector, S::HalfDiskSpace, z)
-    #=
-    TODO: Implement clenshaw for the half disk?
+inner(S::OrthogonalPolynomialSpace, f::Fun, g::Fun) = sum(S.weight * f * g)
 
-    This is just a quick and dirty sum.
-    =#
+# TODO: Store these coeffs?
+function recα(S::HalfDiskSpace, n, k, j)
+    T = Float64 # TODO
+    H = (S.H)(S.a, S.b + k + 0.5)
+    if j == 1
+        return recγ(T, H, n-k+1)
+    elseif j == 2
+        return recα(T, H, n-k+1)
+    end
+    error("Invalid entry to function")
+end
+
+# TODO
+function recβ(S::HalfDiskSpace, pts, w, n, k, j)
+    # We store the norms of the 2D OPs
+    m = Int((n+2)*(n+3) / 2)
+    if length(S.opnorms) < m
+        getopnorms(S, m, pts, w)
+    end
+    P1 = Fun(S, [zeros(Int((n+1)n/2 + k)); 1])
+    if j == 1
+        ind = Int((n-1)n/2 + k-1)
+        P2 = Fun(S, [zeros(ind); 1])
+        return inner((x,y)->y*P1(x,y), P2, pts, w) / S.opnorms[ind + 1]
+    elseif j == 2
+        ind = Int((n-1)n/2 + k+1)
+        P2 = Fun(S, [zeros(ind); 1])
+        return inner((x,y)->y*P1(x,y), P2, pts, w) / S.opnorms[ind + 1]
+    elseif j == 3
+        ind = Int((n+1)n/2 + k-1)
+        P2 = Fun(S, [zeros(ind); 1])
+        return inner((x,y)->y*P1(x,y), P2, pts, w) / S.opnorms[ind + 1]
+    elseif j == 4
+        ind = Int((n+1)n/2 + k+1)
+        P2 = Fun(S, [zeros(ind); 1])
+        return inner((x,y)->y*P1(x,y), P2, pts, w) / S.opnorms[ind + 1]
+    elseif j == 5
+        ind = Int((n+1)*(n+2)/2 + k-1)
+        P2 = Fun(S, [zeros(ind); 1])
+        return inner((x,y)->y*P1(x,y), P2, pts, w) / S.opnorms[ind + 1]
+    elseif j == 6
+        ind = Int((n+1)*(n+2)/2 + k+1)
+        P2 = Fun(S, [zeros(ind); 1])
+        return inner((x,y)->y*P1(x,y), P2, pts, w) / S.opnorms[ind + 1]
+    end
+    error("Invalid entry to function")
+    # T = Float64
+    # P = (S.P)(S.b, S.b)
+    # H1 = (S.H)(S.a, S.b + k - 0.5)
+    # H2 = (S.H)(S.a, S.b + k + 0.5)
+    # H3 = (S.H)(S.a, S.b + k + 1.5)
+    #
+    # # We store the norms of the 2D OPs
+    # m = Int((n+2)*(n+3) / 2)
+    # if length(S.opnorms) < m
+    #     pts, w = pointswithweights(S, (n + 1.5)^2)
+    #     getopnorms(S, m, pts, w)
+    # end
+    #
+    # # Doing this first ensures the 1D ops are calculated
+    # resizedata!(H1, n-k+3)
+    # resizedata!(H2, n-k+1)
+    # resizedata!(H3, n-k+1)
+    #
+    # if isodd(j)
+    #     δ = recγ(T, P, k+1)
+    # else
+    #     δ = recβ(T, P, k+1)
+    # end
+    # if j == 1
+    #     return inner(H2, H2.ops[n-k+1], H1.ops[n-k+1]) * δ / S.opnorms[Int((n-1)n / 2) + k]
+    # elseif j == 2
+    #     return inner(H3, H2.ops[n-k+1], H3.ops[n-k-1]) * δ / S.opnorms[Int((n-1)n / 2) + k + 2]
+    # elseif j == 3
+    #     return inner(H2, H2.ops[n-k+1], H1.ops[n-k+2]) * δ / S.opnorms[Int((n+1)n / 2) + k]
+    # elseif j == 4
+    #     return inner(H3, H2.ops[n-k+1], H3.ops[n-k]) * δ / S.opnorms[Int((n+1)n / 2) + k + 2]
+    # elseif j == 5
+    #     return inner(H2, H2.ops[n-k+1], H1.ops[n-k+3]) * δ / S.opnorms[Int((n+1)*(n+2) / 2) + k]
+    # elseif j == 6
+    #     return inner(H3, H2.ops[n-k+1], H3.ops[n-k+1]) * δ / S.opnorms[Int((n+1)*(n+2) / 2) + k + 2]
+    # end
+    # error("Invalid entry to function")
+end
+
+function getAs!(S::HalfDiskSpace, N, N₀, pts, w)
+    m = N₀
+    if m == 0
+        S.A[1] = [recα(S, 1, 0, 1) 0; 0 recβ(S, pts, w, 0, 0, 6)]
+        m += 1
+    end
+    for n = N+1:-1:m
+        v1 = [recα(S, n+1, k, 1) for k = 0:n]
+        v2 = [recβ(S, pts, w, n, k, 6) for k = 0:n-1]
+        v3 = [recβ(S, pts, w, n, k, 5) for k = 1:n]
+        S.A[n+1] = [Diagonal(v1) zeros(n+1);
+                    Tridiagonal(v3, zeros(n+1), v2) [zeros(n); recβ(S, pts, w, n, n, 6)]]
+    end
+end
+
+function getDTs!(S::HalfDiskSpace, N, N₀, pts, w)
+    for n = N+1:-1:N₀
+        # v = [[1/recα(S, n+1, k, 1) for k = 0:n]; 1/recβ(S, n, n, 6)]
+        # ij = [i for i=1:n+1]
+        # S.DT[n+1] = sparse([ij; n+2], [ij; 2(n+1)], v)
+        S.DT[n+1] = sparse(pinv(Array(S.A[n+1])))
+    end
+end
+function getBs!(S::HalfDiskSpace, N, N₀, pts, w)
+    m = N₀
+    if N₀ == 0
+        S.B[1] = sparse([1, 2], [1, 1], [recα(S, 0, 0, 2), 0])
+        m += 1
+    end
+    for n = N+1:-1:m
+        v1 = [recα(S, n, k, 2) for k = 0:n]
+        v2 = [recβ(S, pts, w, n, k, 4) for k = 0:n-1]
+        v3 = [recβ(S, pts, w, n, k, 3) for k = 1:n]
+        S.B[n+1] = sparse([Diagonal(v1); Tridiagonal(v3, zeros(n+1), v2)])
+    end
+end
+function getCs!(S::HalfDiskSpace, N, N₀, pts, w)
+    m = N₀
+    if N₀ == 0
+        # C_1 does not exist
+        m += 1
+    end
+    if m == 1
+        S.C[2] = sparse([1, 4], [1, 1], [recα(S, 1, 0, 1), recβ(S, pts, w, 1, 1, 1)])
+        m += 1
+    end
+    for n = N+1:-1:m
+        v1 = [recα(S, n, k, 1) for k = 0:n-1]
+        v2 = [recβ(S, pts, w, n, k, 2) for k = 0:n-2]
+        v3 = [recβ(S, pts, w, n, k, 1) for k = 1:n-1]
+        S.C[n+1] = sparse([Diagonal(v1);
+                           zeros(1,n);
+                           Tridiagonal(v3, zeros(n), v2);
+                           [zeros(1, n-1) recβ(S, pts, w, n, n, 1)]])
+    end
+end
+
+function resizedata!(S::HalfDiskSpace, N)
+    # N is the max degree of the OPs
+    N₀ = length(S.B)
+    N ≤ N₀ - 2 && return S
+    resize!(S.A, N + 2)
+    resize!(S.B, N + 2)
+    resize!(S.C, N + 2)
+    resize!(S.DT, N + 2)
+    pts, w = pointswithweights(S, (N + 1 + 1.5)^2)
+    getBs!(S, N, N₀, pts, w)
+    getCs!(S, N, N₀, pts, w)
+    getAs!(S, N, N₀, pts, w)
+    getDTs!(S, N, N₀, pts, w)
+    S
+end
+
+function jacobix(S, N)
+    resizedata!(S, N)
+    rows = cols = 1:N+1
+    l, u = 1, 1
+    λ, μ = 0, 0
+    J = BandedBlockBandedMatrix(0.0I, (rows, cols), (l, u), (λ, μ))
+    J[1, 1] = S.B[1][1, 1]
+    view(J, Block(1, 2)) .= S.A[1][1, :]'
+    for n = 2:N
+        view(J, Block(n, n-1)) .= S.C[n][1:Int(end/2), :]
+        view(J, Block(n, n)) .= S.B[n][1:Int(end/2), :]
+        view(J, Block(n, n+1)) .= S.A[n][1:Int(end/2), :]
+    end
+    view(J, Block(N+1, N)) .= S.C[N+1][1:Int(end/2), :]
+    view(J, Block(N+1, N+1)) .= S.B[N+1][1:Int(end/2), :]
+    J
+end
+
+function jacobiy(S, N)
+    resizedata!(S, N)
+    rows = cols = 1:N+1
+    l, u = 1, 1
+    λ, μ = 1, 1
+    J = BandedBlockBandedMatrix(0.0I, (rows, cols), (l, u), (λ, μ))
+    J[1, 1] = S.B[1][2, 1]
+    view(J, Block(1, 2)) .= S.A[1][2, :]'
+    for n = 2:N
+        view(J, Block(n, n-1)) .= S.C[n][Int(end/2)+1:end, :]
+        view(J, Block(n, n)) .= S.B[n][Int(end/2)+1:end, :]
+        view(J, Block(n, n+1)) .= S.A[n][Int(end/2)+1:end, :]
+    end
+    view(J, Block(N+1, N)) .= S.C[N+1][Int(end/2)+1:end, :]
+    view(J, Block(N+1, N+1)) .= S.B[N+1][Int(end/2)+1:end, :]
+    J
+end
+
+function clenshawG(n, z)
+    sp = sparse(I, n+1, n+1)
+    [z[1] * sp; z[2] * sp]
+end
+function clenshaw(cfs::AbstractVector, S::HalfDiskSpace, z)
+    # TODO: Implement clenshaw for the half disk
+    m̃ = length(cfs)
+    N = Int(ceil(-1 + sqrt(1+2(m̃-1)))) - 1
+    resizedata!(S, N)
+    m = Int((N+1)*(N+2)/2)
+    if m̃ < m
+        resize!(cfs, m)
+        cfs[m̃+1:end] .= 0.0
+    end
+
+    P0 = Fun(S, [1])(z)
+    P1 = [Fun(S, [0, 1])(z); Fun(S, [0, 0, 1])(z)]
+    if N == 0
+        return cfs[1] * P0
+    elseif N == 1
+        return cfs[1] * P0 + vecdot(view(cfs, 1:2), P1)
+    end
+    inds = m-N:m
+    γ2 = view(cfs, inds)'
+    inds = (m-2N):(m-N-1)
+    γ1 = view(cfs, inds)' - γ2 * S.DT[N] * (S.B[N] - clenshawG(N-1, z))
+    for n = N-2:-1:1
+        ind = sum(1:n)
+        γ = (view(cfs, ind+1:ind+n+1)'
+             - γ1 * S.DT[n+1] * (S.B[n+1] - clenshawG(n, z))
+             - γ2 * S.DT[n+2] * S.C[n+2])
+        γ2 = copy(γ1)
+        γ1 = copy(γ)
+    end
+    cfs[1] * P0 + γ1 * P1 - (P0 * γ2 * S.DT[2] * S.C[2])[1]
+end
+
+function evaluate(cfs::AbstractVector, S::HalfDiskSpace, z)
+    # # TODO: Implement clenshaw for the half disk?
+    # m̃ = length(cfs)
+    # N = Int(ceil(-1 + sqrt(1+2(m-1))))
+    # m = Int((N+1)*(N+2)/2)
+    # if m̃ < m
+    #     resize!(cfs, m)
+    #     cfs[m̃+1:end] = 0.0
+    # end
+
+
+    # This is just a quick and dirty sum.
     m = length(cfs)
     ret = 0.0
     n = 0; k = 0
