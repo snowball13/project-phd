@@ -72,7 +72,7 @@ canonicaldomain(S::OrthogonalPolynomialSpace) = domain(S)
 tocanonical(S::OrthogonalPolynomialSpace, x) = x
 
 
-OrthogonalPolynomialSpace(fam::SpaceFamily{D,R}, w::Fun{<:Space{D,R}}) where {D,R,N} =
+OrthogonalPolynomialSpace(fam::SpaceFamily{D,R}, w::Fun) where {D,R,N} =
     OrthogonalPolynomialSpace{typeof(fam),typeof(w),D,R,Fun}(fam, w, Vector{R}(), Vector{R}(), Vector{Fun}())
 
 function resizedata!(S::OrthogonalPolynomialSpace, n)
@@ -644,5 +644,6 @@ function (D::HalfDiskFamily{R})(a::R, b::R) where R
     D.spaces[(a,b)] = HalfDiskSpace(D, a, b)
 end
 
+(D::HalfDiskFamily{R})(a, b) where R = D(convert(R,a), convert(R,b))
 
 end # module
