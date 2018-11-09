@@ -185,6 +185,34 @@ end
 inner(S::OrthogonalPolynomialSpace, f::Fun, g::Fun, pts, w) =
     sum(f.(pts) .* g.(pts) .* w)
 
+function differentiateop(S::OrthogonalPolynomialSpace, n)
+    if n == 0
+        return Fun(S, [0])
+    end
+    f = Fun(S, [0,1])
+    dom = domain(S)
+    X = Fun(identity, dom)
+    T = Float64
+    p0 = Fun(S, [1])
+    dp1 = (f(dom.b) - f(dom.a)) / (dom.b - dom.a) # p1 is linear
+    if n == 1
+        return Fun(dp1, dom)
+    end
+    k = 1
+    p1 = (recB(T, S, k-1) + recA(T, S, k-1) * X) * p0
+    dp2 = ((recB(T, S, k) + recA(T, S, k) * X) * dp1
+           + recA(T, S, k) * p1)
+    pm1 = copy(p0); p0 = copy(p1); dp0 = copy(dp1); dp1 = copy(dp2)
+    for k = 2:n-1
+        p1 = (recB(T, S, k-1) + recA(T, S, k-1) * X) * p0 - recC(T, S, k-1) * pm1
+        dp2 = ((recB(T, S, k) + recA(T, S, k) * X) * dp1
+               - recC(T, S, k) * dp0
+               + recA(T, S, k) * p1)
+        pm1 = copy(p0); p0 = copy(p1); dp0 = copy(dp1); dp1 = copy(dp2)
+    end
+    dp1
+end
+
 #=====#
 # Half Disk
 
@@ -645,5 +673,19 @@ function (D::HalfDiskFamily{R})(a::R, b::R) where R
 end
 
 (D::HalfDiskFamily{R})(a, b) where R = D(convert(R,a), convert(R,b))
+
+function evalderivativex(S::HalfDiskSpace, n, k, x, y)
+    H = Fun(S.H(S.a, S.b+k+0.5), [zeros(n-k); 1])
+    P = Fun(S.P(S.b, S.b), [zeros(k); 1])
+    ρ = S.ρ(x); h = H(x); p = P(y/ρ)
+    ρ^(k - 3) * (differentiateop(S.H(S.a, S.b+k+0.5), n-k)(x) * ρ^3 * p
+                 - x * k * h * ρ * p
+                 + x * y * h * differentiateop(S.P(S.b, S.b), k)(y/S.ρ(x)))
+end
+function evalderivativey(S::HalfDiskSpace, n, k, x, y)
+    H = Fun(S.H(S.a, S.b+k+0.5), [zeros(n-k); 1])
+    H(x) * S.ρ(x)^(k-1) * differentiateop(S.P(S.b, S.b), k)(y/S.ρ(x))
+end
+
 
 end # module
