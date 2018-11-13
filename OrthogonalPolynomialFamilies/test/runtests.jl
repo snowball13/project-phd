@@ -1,6 +1,7 @@
 using ApproxFun, OrthogonalPolynomialFamilies, FastGaussQuadrature, SingularIntegralEquations, Test
 import OrthogonalPolynomialFamilies: golubwelsch, lanczos, halfdiskquadrule, gethalfdiskOP,
-                                        jacobix, jacobiy
+                                        jacobix, jacobiy, evalderivativex, evalderivativey
+                                        differentiatex, differentiatey
 
 
 
@@ -145,6 +146,29 @@ end
     @test evaluate(Jx'[1:m, 1:m] * cfs, S, z) ≈ z[1] * f(z...)
     @test evaluate(Jy'[1:m, 1:m] * cfs, S, z) ≈ z[2] * f(z...)
 end
+
+@testset "Evaluate partial derivative of HalfDiskSpace OP" begin
+    a, b = 0.5, -0.5
+    x, y = 0.5, 0.3; x^2 + y^2 < 1
+    D = HalfDiskFamily(); S = D(a, b)
+    h = 0.0001
+    for n=0:5, k=0:n
+        f = Fun(S, [zeros(sum(0:n)+k); 1])
+        @test evalderivativex(S, n, k, x, y) ≈ (f(x+h,y) - f(x,y))/h atol=100h
+        @test evalderivativey(S, n, k, x, y) ≈ (f(x,y+h) - f(x,y))/h atol=100h
+    end
+end
+
+@testset "Evaluate partial derivative of (random) function" begin
+    a, b = 0.5, 0.5
+    x, y = 0.5, 0.3; x^2 + y^2 < 1
+    D = HalfDiskFamily(); S = D(a, b)
+    N = 4
+    f = Fun(S, randn(sum(1:N+1)))
+    h = 1e-5; @test (f(x+h,y)-f(x,y))/h ≈ differentiatex(f, f.space)(x,y) atol=100h
+    h = 1e-5; @test (f(x,y+h)-f(x,y))/h ≈ differentiatey(f, f.space)(x,y) atol=100h
+end
+
 
 
 

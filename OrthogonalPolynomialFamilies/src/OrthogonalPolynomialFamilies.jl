@@ -11,6 +11,7 @@ using FastGaussQuadrature
 using LinearAlgebra
 using SparseArrays
 using BlockBandedMatrices
+using BlockArrays
 # using SingularIntegralEquations
 using Test
 
@@ -194,7 +195,7 @@ function differentiateop(S::OrthogonalPolynomialSpace, n)
     X = Fun(identity, dom)
     T = Float64
     p0 = Fun(S, [1])
-    dp1 = (f(dom.b) - f(dom.a)) / (dom.b - dom.a) # p1 is linear
+    dp1 = (f(Float64(dom.right)) - f(Float64(dom.left))) / (Float64(dom.right) - Float64(dom.left)) # p1 is linear
     if n == 1
         return Fun(dp1, dom)
     end
@@ -674,18 +675,96 @@ end
 
 (D::HalfDiskFamily{R})(a, b) where R = D(convert(R,a), convert(R,b))
 
+# Partial derivatives:
+# Seems that: dx takes (a,b)->(a+1,b+1) with nonzero for m=n-1,n-2
+#             dy takes (a,b)->(a,b+1) with nonzero for m=n-1
+#                   OR takes (a,b)->(a+1,b+1) with nonzero for m=n-1,n-2
 function evalderivativex(S::HalfDiskSpace, n, k, x, y)
     H = Fun(S.H(S.a, S.b+k+0.5), [zeros(n-k); 1])
     P = Fun(S.P(S.b, S.b), [zeros(k); 1])
     ρ = S.ρ(x); h = H(x); p = P(y/ρ)
     ρ^(k - 3) * (differentiateop(S.H(S.a, S.b+k+0.5), n-k)(x) * ρ^3 * p
                  - x * k * h * ρ * p
-                 + x * y * h * differentiateop(S.P(S.b, S.b), k)(y/S.ρ(x)))
+                 + x * y * h * differentiateop(S.P(S.b, S.b), k)(y/ρ))
 end
 function evalderivativey(S::HalfDiskSpace, n, k, x, y)
     H = Fun(S.H(S.a, S.b+k+0.5), [zeros(n-k); 1])
     H(x) * S.ρ(x)^(k-1) * differentiateop(S.P(S.b, S.b), k)(y/S.ρ(x))
 end
-
+function getpartialoperatorx(S::HalfDiskSpace, N)
+    if N == 2
+        A = BandedBlockBandedMatrix(Zeros{Float64}(sum(1:N),sum(1:(N+1))), (1:N, 1:N+1), (-1,2), (0, 2))
+    else
+        A = BandedBlockBandedMatrix(Zeros{Float64}(sum(1:N),sum(1:(N+1))), (1:N, 1:N+1), (-1,2), (0, N-1))
+    end
+    n, k = 1, 0
+    cfs = pad(Fun((x,y) -> evalderivativex(S, n, k, x, y),
+                differentiatespacex(S)).coefficients, sum(1:n))
+    view(A, Block(n, n+1))[1, 1] = cfs[1]
+    for n = 2:N, k = 0:n
+        cfs = pad(Fun((x,y) -> evalderivativex(S, n, k, x, y), differentiatespacex(S)).coefficients, sum(1:n))
+        cfs = PseudoBlockArray(cfs, 1:n)
+        if k == 0
+            inds1 = 1
+            inds2 = 1
+        elseif k == 1
+            inds1 = 2
+            inds2 = 2
+        elseif k == n - 1
+            inds1 = n-2
+            inds2 = n-2:2:n
+        elseif k == n
+            inds1 = n-1
+            inds2 = n-1
+        else
+            inds1 = k-1:2:k+1
+            inds2 = k-1:2:k+1
+        end
+        if !(n == 2 && k == 1)
+            view(A, Block(n-1, n+1))[inds1, k+1] = cfs[Block(n-1)][inds1]
+        end
+        view(A, Block(n, n+1))[inds2, k+1] = cfs[Block(n)][inds2]
+    end
+    A
+end
+function getpartialoperatory(S::HalfDiskSpace, N)
+    A = BandedBlockBandedMatrix(Zeros{Float64}(sum(1:N),sum(1:(N+1))), (1:N, 1:N+1), (-1,1), (-1,1))
+    for n = 1:N, k = 1:n
+        cfs = pad(Fun((x,y) -> evalderivativey(S, n, k, x, y), differentiatespacey(S)).coefficients, sum(1:n))
+        cfs = PseudoBlockArray(cfs, 1:n)
+        view(A, Block(n, n+1))[k, k+1] = cfs[Block(n)][k]
+    end
+    A
+end
+function differentiatex(S::HalfDiskSpace, cfs::AbstractVector)
+    m̃ = length(cfs)
+    N = -1 + Int(round(sqrt(1+2(m̃-1))))
+    m = Int((N+1)*(N+2)/2)
+    if m̃ < m
+        resize!(cfs, m)
+        cfs[m̃+1:end] .= 0.0
+    end
+    getpartialoperatorx(S, N) * cfs
+end
+function differentiatey(S::HalfDiskSpace, cfs::AbstractVector)
+    m̃ = length(cfs)
+    N = -1 + Int(round(sqrt(1+2(m̃-1))))
+    m = Int((N+1)*(N+2)/2)
+    if m̃ < m
+        cfs2 = zeros(m)
+        cfs2[1:m̃] = cfs
+        getpartialoperatory(S, N) * cfs2
+    else
+        getpartialoperatory(S, N) * cfs
+    end
+end
+differentiatespacex(S::HalfDiskSpace) =
+    (S.family)(S.a+1, S.b+1)
+differentiatespacey(S::HalfDiskSpace) =
+    (S.family)(S.a, S.b+1)
+differentiatex(f::Fun, S::HalfDiskSpace) =
+    Fun(differentiatespacex(S), differentiatex(S, f.coefficients))
+differentiatey(f::Fun, S::HalfDiskSpace) =
+    Fun(differentiatespacey(S), differentiatey(S, f.coefficients))
 
 end # module
