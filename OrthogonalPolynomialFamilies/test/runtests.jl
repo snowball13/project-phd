@@ -1,6 +1,6 @@
 using ApproxFun, OrthogonalPolynomialFamilies, FastGaussQuadrature, SingularIntegralEquations, Test
 import OrthogonalPolynomialFamilies: golubwelsch, lanczos, halfdiskquadrule, gethalfdiskOP,
-                                        jacobix, jacobiy, evalderivativex, evalderivativey
+                                        jacobix, jacobiy, evalderivativex, evalderivativey,
                                         differentiatex, differentiatey
 
 
