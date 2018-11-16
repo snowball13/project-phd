@@ -24,7 +24,8 @@ function lanczos!(w, P, β, γ, N₀=0)
     # x * P[n](x) == (γ[n] * P[n+1](x) + β[n] * P[n](x) + γ[n-1] * P[n-1](x))
 
     N = length(β)
-    x = Fun(identity,space(w))
+    # x = Fun(identity, space(w)) # NOTE: space(w) does not "work" sometimes
+    x = Fun(identity, domain(w))
 
     if N₀ <= 0
         N₀ = 1
@@ -100,10 +101,14 @@ function OrthogonalPolynomialFamily(w::Vararg{Fun{<:Space{D,R}},N}) where {D,R,N
 end
 
 function (P::OrthogonalPolynomialFamily{<:Any,<:Any,<:Any,R,N})(α::Vararg{R,N}) where {R,N}
-    haskey(P.spaces,α) && return P.spaces[α]
-    P.spaces[α] = OrthogonalPolynomialSpace(P, prod(P.factors.^α))
+    if length(α) == 1
+        haskey(P.spaces,α) && return P.spaces[α]
+        P.spaces[α] = OrthogonalPolynomialSpace(P, (P.factors.^α)[1])
+    else
+        haskey(P.spaces,α) && return P.spaces[α]
+        P.spaces[α] = OrthogonalPolynomialSpace(P, prod(P.factors.^α))
+    end
 end
-
 
 #####
 # recα/β/γ are given by
@@ -766,5 +771,58 @@ differentiatex(f::Fun, S::HalfDiskSpace) =
     Fun(differentiatespacex(S), differentiatex(S, f.coefficients))
 differentiatey(f::Fun, S::HalfDiskSpace) =
     Fun(differentiatespacey(S), differentiatey(S, f.coefficients))
+
+
+function evalweightedderivativex(S::HalfDiskSpace, n, k, x, y)
+
+end
+function evalweightedderivativey(S::HalfDiskSpace, n, k, x, y)
+    j = Int((n+1)*n/2 + k)
+    x^(S.a) * (1-x^2-y^2)^(S.b-1) * (-2 * S.b * y * Fun(S, [zeros(j); 1])(x,y)
+                                        + evalderivativey(S, n, k, x, y) * (1-x^2-y^2))
+end
+function getweightedpartialoperatory(S::HalfDiskSpace, N)
+
+end
+function getweightedpartialoperatory(S::HalfDiskSpace, N)
+    W = BandedBlockBandedMatrix(Zeros{Float64}(sum(1:(N+2)),sum(1:(N+1))), (1:N+2, 1:N+1), (1,-1), (1,-1))
+    for n = 0:N, k = 0:n
+        p = (x,y) -> (evalweightedderivativey(S, n, k, x, y) * x^(-S.a) * (1-x^2-y^2)^(1-b))
+        cfs = pad(Fun(p, (S.family)(S.a, S.b-1)).coefficients, sum(1:(n+2)))
+        cfs = PseudoBlockArray(cfs, 1:(n+2))
+        view(W, Block(n+2, n+1))[k+2, k+1] = cfs[Block(n+2)][k+2]
+    end
+    W
+end
+function gettransformoperator(S, N)
+    if Int(S.a) == 1 && Int(S.b) == 0
+        T = BandedBlockBandedMatrix(Zeros{Float64}(sum(1:(N+2)),sum(1:(N+1))), (1:N+2, 1:N+1), (1,0), (0,0))
+        for n = 0:N, k = 0:n
+            j = Int(n*(n+1)/2 + k)
+            p = (x,y) -> (x * Fun(S, [zeros(j); 1])(x,y))
+            Fun(p, (S.family)(0.0, 0.0)).coefficients
+            cfs = pad(Fun(p, (S.family)(0.0, 0.0)).coefficients, sum(1:(n+2)))
+            cfs = PseudoBlockArray(cfs, 1:(n+2))
+            view(T, Block(n+1, n+1))[k+1, k+1] = cfs[Block(n+1)][k+1]
+            view(T, Block(n+2, n+1))[k+1, k+1] = cfs[Block(n+2)][k+1]
+        end
+        T
+    elseif Int(S.a) == 0 && Int(S.b) == 1
+        T = BandedBlockBandedMatrix(Zeros{Float64}(sum(1:(N+1)),sum(1:(N+1))), (1:N+1, 1:N+1), (0,1), (0,0))
+        for n = 0:N
+            for k = 0:n-1
+                j = Int(n*(n+1)/2 + k)
+                cfs = pad(Fun(Fun(S, [zeros(j); 1]), (S.family)(1.0, 1.0)).coefficients, sum(1:(n+1)))
+                cfs = PseudoBlockArray(cfs, 1:(n+1))
+                view(T, Block(n, n+1))[k+1, k+1] = cfs[Block(n)][k+1]
+                view(T, Block(n+1, n+1))[k+1, k+1] = cfs[Block(n+1)][k+1]
+            end
+            view(T, Block(n+1, n+1))[n+1, n+1] = 1.0
+        end
+        T
+    else
+        error("Invalid HalfDiskSpace")
+    end
+end
 
 end # module
