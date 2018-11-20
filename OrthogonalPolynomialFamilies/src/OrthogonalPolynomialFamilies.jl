@@ -774,20 +774,42 @@ differentiatey(f::Fun, S::HalfDiskSpace) =
 
 
 function evalweightedderivativex(S::HalfDiskSpace, n, k, x, y)
-
+    j = Int((n+1)*n/2 + k)
+    p = Fun(S, [zeros(j); 1])(x,y)
+    x^(S.a-1) * (1-x^2-y^2)^(S.b-1) * (S.a * (1-x^2-y^2) * p
+                                       -2 * S.b * x^2 * p
+                                       + evalderivativex(S, n, k, x, y) * x * (1-x^2-y^2))
 end
 function evalweightedderivativey(S::HalfDiskSpace, n, k, x, y)
     j = Int((n+1)*n/2 + k)
     x^(S.a) * (1-x^2-y^2)^(S.b-1) * (-2 * S.b * y * Fun(S, [zeros(j); 1])(x,y)
                                         + evalderivativey(S, n, k, x, y) * (1-x^2-y^2))
 end
-function getweightedpartialoperatory(S::HalfDiskSpace, N)
-
+function getweightedpartialoperatorx(S::HalfDiskSpace, N)
+    W = BandedBlockBandedMatrix(Zeros{Float64}(sum(1:(N+3)),sum(1:(N+1))), (1:N+3, 1:N+1), (2,-1), (2,0))
+    for n = 0:N
+        for k = 0:n-1
+            p = (x,y) -> (OrthogonalPolynomialFamilies.evalweightedderivativex(S, n, k, x, y) * x^(1-S.a) * (1-x^2-y^2)^(1-S.b))
+            cfs = pad(Fun(p, (S.family)(S.a-1, S.b-1)).coefficients, sum(1:(n+3)))
+            cfs = PseudoBlockArray(cfs, 1:(n+3))
+            inds = k+1:2:k+3
+            view(W, Block(n+2, n+1))[inds, k+1] = cfs[Block(n+2)][inds]
+            view(W, Block(n+3, n+1))[inds, k+1] = cfs[Block(n+3)][inds]
+        end
+        k = n
+        p = (x,y) -> (OrthogonalPolynomialFamilies.evalweightedderivativex(S, n, k, x, y) * x^(1-S.a) * (1-x^2-y^2)^(1-S.b))
+        cfs = pad(Fun(p, (S.family)(S.a-1, S.b-1)).coefficients, sum(1:(n+3)))
+        cfs = PseudoBlockArray(cfs, 1:(n+3))
+        inds = k+1:2:k+3
+        view(W, Block(n+2, n+1))[k+1, k+1] = cfs[Block(n+2)][k+1]
+        view(W, Block(n+3, n+1))[inds, k+1] = cfs[Block(n+3)][inds]
+    end
+    W
 end
 function getweightedpartialoperatory(S::HalfDiskSpace, N)
     W = BandedBlockBandedMatrix(Zeros{Float64}(sum(1:(N+2)),sum(1:(N+1))), (1:N+2, 1:N+1), (1,-1), (1,-1))
     for n = 0:N, k = 0:n
-        p = (x,y) -> (evalweightedderivativey(S, n, k, x, y) * x^(-S.a) * (1-x^2-y^2)^(1-b))
+        p = (x,y) -> (evalweightedderivativey(S, n, k, x, y) * x^(-S.a) * (1-x^2-y^2)^(1-S.b))
         cfs = pad(Fun(p, (S.family)(S.a, S.b-1)).coefficients, sum(1:(n+2)))
         cfs = PseudoBlockArray(cfs, 1:(n+2))
         view(W, Block(n+2, n+1))[k+2, k+1] = cfs[Block(n+2)][k+2]
@@ -823,6 +845,36 @@ function gettransformoperator(S, N)
     else
         error("Invalid HalfDiskSpace")
     end
+end
+
+function laplace(D::HalfDiskFamily, N)
+    A = getpartialoperatorx(D(0.0,0.0), N+2)
+    B = getweightedpartialoperatorx(D(1.0,1.0), N)
+    C = gettransformoperator(D(0.0,1.0), N+1)
+    E = getpartialoperatory(D(0.0,0.0), N+2)
+    F = gettransformoperator(D(1.0,0.0), N+1)
+    G = getweightedpartialoperatory(D(1.0,1.0), N)
+    A * B + C * E * F * G
+end
+
+# Resize the coeffs vector to be of the expected/standard length for a degree N
+# expansion (so we can apply operators).
+function resizecoeffs!(f::Fun, N)
+    cfs = f.coefficients
+    m̃ = length(cfs)
+    m = Int((N+1)*(N+2)/2)
+    if m̃ < m
+        resize!(cfs, m)
+        cfs[m̃+1:end] .= 0.0
+    elseif m̃ > m
+        for j = m+1:m̃
+            if cfs[j] > 1e-15
+                error("Trying to decrease degree of f")
+            end
+        end
+        resize!(cfs, m)
+    end
+    cfs
 end
 
 end # module

@@ -1,7 +1,7 @@
 using ApproxFun, OrthogonalPolynomialFamilies, FastGaussQuadrature, SingularIntegralEquations, Test
 import OrthogonalPolynomialFamilies: golubwelsch, lanczos, halfdiskquadrule, gethalfdiskOP,
                                         jacobix, jacobiy, evalderivativex, evalderivativey,
-                                        differentiatex, differentiatey
+                                        differentiatex, differentiatey, resizecoeffs!, laplace
 
 
 
@@ -169,6 +169,30 @@ end
     h = 1e-5; @test (f(x,y+h)-f(x,y))/h ≈ differentiatey(f, f.space)(x,y) atol=100h
 end
 
+@test "Poisson" begin
+    # Model Problem: Δ(u*w)(x,y) = f(x,y) in Ω=halfdisk; u(x,y) ≡ 0 on ∂Ω.
+    #   where w(x,y) = x*(1-x^2-y^2) is the weight of the D(1.0,1.0) basis.
+    a, b = 1.0, 1.0; D = HalfDiskFamily(); S = D(a, b)
+    x, y = 0.4, -0.2; z = [x; y] # Test point
+
+    # 1) f(x,y) = -8x => u(x,y) ≡ 1
+    N = 1 # degree of f
+    c = rand(1)[1]; f = Fun((x,y)->-c*8x, S)
+    Δ = OrthogonalPolynomialFamilies.laplace(D, N-1)
+    u = Fun(S, Δ \ resizecoeffs!(f, N))
+    @test u(z) ≈ c # Result u(x,y) where Δ(u*w)(x,y) = f(x,y)
+
+    # 2) f(x,y) = 2 - 12xy - 14x^2 - 2y^2 => u(x,y) = x + y
+    U = Fun((x,y)->x+y, S)
+    N = 2 # degree of f
+    f = Fun((x,y)->(2 - 12x*y - 14x^2 - 2y^2), S)
+    Δ = laplace(D, N-1)
+    u = Fun(S, Δ \ resizecoeffs!(f, N))
+    @test u(z) ≈ U(z)
+end
+
+
+#=====#
 
 
 
