@@ -707,7 +707,9 @@ function getpartialoperatorx(S::HalfDiskSpace, N)
                 differentiatespacex(S)).coefficients, sum(1:n))
     view(A, Block(n, n+1))[1, 1] = cfs[1]
     for n = 2:N, k = 0:n
-        cfs = pad(Fun((x,y) -> evalderivativex(S, n, k, x, y), differentiatespacex(S)).coefficients, sum(1:n))
+        m = Int((n+3)*(n+4))
+        cfs = pad(Fun((x,y) -> evalderivativex(S, n, k, x, y),
+                        differentiatespacex(S), m).coefficients, sum(1:n))
         cfs = PseudoBlockArray(cfs, 1:n)
         if k == 0
             inds1 = 1
@@ -735,7 +737,9 @@ end
 function getpartialoperatory(S::HalfDiskSpace, N)
     A = BandedBlockBandedMatrix(Zeros{Float64}(sum(1:N),sum(1:(N+1))), (1:N, 1:N+1), (-1,1), (-1,1))
     for n = 1:N, k = 1:n
-        cfs = pad(Fun((x,y) -> evalderivativey(S, n, k, x, y), differentiatespacey(S)).coefficients, sum(1:n))
+        m = Int((n+2)*(n+3))
+        cfs = pad(Fun((x,y) -> evalderivativey(S, n, k, x, y),
+                        differentiatespacey(S), m).coefficients, sum(1:n))
         cfs = PseudoBlockArray(cfs, 1:n)
         view(A, Block(n, n+1))[k, k+1] = cfs[Block(n)][k]
     end
@@ -788,17 +792,19 @@ end
 function getweightedpartialoperatorx(S::HalfDiskSpace, N)
     W = BandedBlockBandedMatrix(Zeros{Float64}(sum(1:(N+3)),sum(1:(N+1))), (1:N+3, 1:N+1), (2,-1), (2,0))
     for n = 0:N
+        m = Int((n+2+(2-S.a-S.b))*(n+3+(2-S.a-S.b)))
         for k = 0:n-1
             p = (x,y) -> (OrthogonalPolynomialFamilies.evalweightedderivativex(S, n, k, x, y) * x^(1-S.a) * (1-x^2-y^2)^(1-S.b))
-            cfs = pad(Fun(p, (S.family)(S.a-1, S.b-1)).coefficients, sum(1:(n+3)))
+            cfs = pad(Fun(p, (S.family)(S.a-1, S.b-1), m).coefficients, sum(1:(n+3)))
             cfs = PseudoBlockArray(cfs, 1:(n+3))
             inds = k+1:2:k+3
             view(W, Block(n+2, n+1))[inds, k+1] = cfs[Block(n+2)][inds]
             view(W, Block(n+3, n+1))[inds, k+1] = cfs[Block(n+3)][inds]
         end
         k = n
+        m = Int((n+2+(2-S.a-S.b))*(n+3+(2-S.a-S.b)))
         p = (x,y) -> (OrthogonalPolynomialFamilies.evalweightedderivativex(S, n, k, x, y) * x^(1-S.a) * (1-x^2-y^2)^(1-S.b))
-        cfs = pad(Fun(p, (S.family)(S.a-1, S.b-1)).coefficients, sum(1:(n+3)))
+        cfs = pad(Fun(p, (S.family)(S.a-1, S.b-1), m).coefficients, sum(1:(n+3)))
         cfs = PseudoBlockArray(cfs, 1:(n+3))
         inds = k+1:2:k+3
         view(W, Block(n+2, n+1))[k+1, k+1] = cfs[Block(n+2)][k+1]
@@ -809,8 +815,9 @@ end
 function getweightedpartialoperatory(S::HalfDiskSpace, N)
     W = BandedBlockBandedMatrix(Zeros{Float64}(sum(1:(N+2)),sum(1:(N+1))), (1:N+2, 1:N+1), (1,-1), (1,-1))
     for n = 0:N, k = 0:n
+        m = Int((n+2+(1-S.a-S.b))*(n+3+(1-S.a-S.b)))
         p = (x,y) -> (evalweightedderivativey(S, n, k, x, y) * x^(-S.a) * (1-x^2-y^2)^(1-S.b))
-        cfs = pad(Fun(p, (S.family)(S.a, S.b-1)).coefficients, sum(1:(n+2)))
+        cfs = pad(Fun(p, (S.family)(S.a, S.b-1), m).coefficients, sum(1:(n+2)))
         cfs = PseudoBlockArray(cfs, 1:(n+2))
         view(W, Block(n+2, n+1))[k+2, k+1] = cfs[Block(n+2)][k+2]
     end
@@ -822,8 +829,8 @@ function gettransformoperator(S, N)
         for n = 0:N, k = 0:n
             j = Int(n*(n+1)/2 + k)
             p = (x,y) -> (x * Fun(S, [zeros(j); 1])(x,y))
-            Fun(p, (S.family)(0.0, 0.0)).coefficients
-            cfs = pad(Fun(p, (S.family)(0.0, 0.0)).coefficients, sum(1:(n+2)))
+            m = Int((n+3)*(n+4))
+            cfs = pad(Fun(p, (S.family)(0.0, 0.0), m).coefficients, sum(1:(n+2)))
             cfs = PseudoBlockArray(cfs, 1:(n+2))
             view(T, Block(n+1, n+1))[k+1, k+1] = cfs[Block(n+1)][k+1]
             view(T, Block(n+2, n+1))[k+1, k+1] = cfs[Block(n+2)][k+1]
@@ -834,7 +841,8 @@ function gettransformoperator(S, N)
         for n = 0:N
             for k = 0:n-1
                 j = Int(n*(n+1)/2 + k)
-                cfs = pad(Fun(Fun(S, [zeros(j); 1]), (S.family)(1.0, 1.0)).coefficients, sum(1:(n+1)))
+                m = Int((n+2)*(n+3))
+                cfs = pad(Fun(Fun(S, [zeros(j); 1]), (S.family)(1.0, 1.0), m).coefficients, sum(1:(n+1)))
                 cfs = PseudoBlockArray(cfs, 1:(n+1))
                 view(T, Block(n, n+1))[k+1, k+1] = cfs[Block(n)][k+1]
                 view(T, Block(n+1, n+1))[k+1, k+1] = cfs[Block(n+1)][k+1]

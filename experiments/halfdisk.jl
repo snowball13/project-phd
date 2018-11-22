@@ -27,7 +27,7 @@ x, y = 0.4, -0.2; z = [x; y] # Test point
 # 1) f(x,y) = -8x => u(x,y) ≡ 1
 N = 1 # degree of f
 c = rand(1)[1]; f = Fun((x,y)->-c*8x, S)
-resizecoeffs!(f, N)
+OrthogonalPolynomialFamilies.resizecoeffs!(f, N)
 Δ = OrthogonalPolynomialFamilies.laplace(D, N-1)
 Δ \ f.coefficients
 u = Fun(S, Δ \ f.coefficients)
@@ -40,16 +40,14 @@ U = Fun((x,y)->x+y, S)
 N = 2 # degree of f
 f = Fun((x,y)->(2 - 12x*y - 14x^2 - 2y^2), S)
 Δ = OrthogonalPolynomialFamilies.laplace(D, N-1)
-u = Fun(S, Δ \ resizecoeffs!(f, N))
+u = Fun(S, Δ \ OrthogonalPolynomialFamilies.resizecoeffs!(f, N))
 @test u(z) ≈ U(z)
 
 # 3) f(x,y) = y*exp(x)*[2-11x-6x^2-x^3-2y^2-xy^2] => u(x,y) = y*exp(x)
-# TODO: laplace(D, n) hangs/gives error for n >= 3. Think problem is in
-#       obtaining T^{(1,0)->(0,0)} operator.
 U = Fun((x,y)->y*exp(x), S)
-N = 4 # degree of f
-m = Int((N+1)*(N+2)/2)
+N = 7 # degree of f
+m = Int((N+1)*(N+2))
 f = Fun((x,y)->y*exp(x)*(2-11x-6x^2-x^3-2y^2-x*y^2), S, m)
-# Δ = OrthogonalPolynomialFamilies.laplace(D, N-1) # NOTE: hangs/error
-# u = Fun(S, Δ \ resizecoeffs!(f, N))
-# @test u(z) ≈ U(z)
+Δ = OrthogonalPolynomialFamilies.laplace(D, N-1)
+u = Fun(S, Δ \ f.coefficients[1:size(Δ)[1]])
+@test u(z) ≈ U(z) atol=10.0^(-N)
