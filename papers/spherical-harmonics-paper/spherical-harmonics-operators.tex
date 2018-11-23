@@ -1,0 +1,422 @@
+\documentclass[11pt, oneside]{article}   	% use "amsart" instead of "article" for AMSLaTeX format
+\usepackage{geometry}                		% See geometry.pdf to learn the layout options. There are lots.
+\geometry{letterpaper}                   		% ... or a4paper or a5paper or ... 
+%\geometry{landscape}                		% Activate for rotated page geometry
+\usepackage[parfill]{parskip}    		% Activate to begin paragraphs with an empty line rather than an indent
+\usepackage{graphicx}				% Use pdf, png, jpg, or eps§ with pdflatex; use eps in DVI mode
+								% TeX will automatically convert eps --> pdf in pdflatex		
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{float}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{bm}
+\usepackage{bbm}
+\usepackage{mleftright}
+
+%SetFonts
+
+%SetFonts
+
+\usepackage{natbib}
+\usepackage{url}
+\bibliographystyle{elsarticle-harv}
+
+\newcommand{\half}{\frac{1}{2}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\No}{\mathbb{N}_0}
+\newcommand{\Ylm}{Y^m_l}
+\newcommand{\Ylmfull}{Y^m_l(\theta,\varphi)}
+\newcommand{\Plm}{P^m_l}
+\newcommand{\costheta}{\cos\theta}
+\newcommand{\sintheta}{\sin\theta}
+\newcommand{\cosphi}{\cos\varphi}
+\newcommand{\sinphi}{\sin\varphi}
+\newcommand{\eimphi}{e^{im\varphi}}
+\newcommand{\alphalm}{\alpha^m_l}
+\newcommand{\clm}{c^m_l}
+\newcommand{\ctilde}{\tilde{c}^m_l}
+\newcommand{\ctildemod}{\tilde{c}^{|m|}_l}
+\newcommand{\chat}{\hat{c}^m_l}
+\newcommand{\chatmod}{\hat{c}^{|m|}_l}
+\newcommand{\ddx}{\frac{\mathrm{d}}{\mathrm{d}x}}
+\newcommand{\dmdxm}{\frac{\mathrm{d}^m}{\mathrm{d}x^m}}
+
+\newcommand{\Atilde}{\tilde{A}_{l,m}}
+\newcommand{\Btilde}{\tilde{B}_{l,m}}
+\newcommand{\Dtilde}{\tilde{D}_{l,m}}
+\newcommand{\Etilde}{\tilde{E}_{l,m}}
+\newcommand{\Ftilde}{\tilde{F}_{l,m}}
+\newcommand{\Gtilde}{\tilde{G}_{l,m}}
+\newcommand{\Alm}{A_{l,m}}
+\newcommand{\Blm}{B_{l,m}}
+\newcommand{\Dlm}{D_{l,m}}
+\newcommand{\Elm}{E_{l,m}}
+\newcommand{\Flm}{F_{l,m}}
+\newcommand{\Glm}{G_{l,m}}
+
+\newcommand{\xione}{\xi^{(1)}_{n, \lambda}}
+\newcommand{\xitwo}{\xi^{(2)}_{n, \lambda}}
+\newcommand{\xithree}{\xi^{(3)}_{n, \lambda}}
+\newcommand{\xifour}{\xi^{(4)}_{n, \lambda}}
+
+\newcommand{\bigP}{\mathbb{P}}
+\newcommand{\Pl}{\mathbb{P}_l}
+\newcommand{\gradP}{\nabla\mathbb{P}}
+\newcommand{\gradPl}{\nabla\mathbb{P}_l}
+\newcommand{\gradY}{\nabla Y}
+\newcommand{\gradYlm}{\nabla Y^m_l}
+\newcommand{\gradpY}{\nabla^\perp Y}
+\newcommand{\gradpYlm}{\nabla^\perp Y^m_l}
+
+\newcommand{\Dlt}{D^T_l}
+
+\newcommand{\curlyy}{\bm{\mathcal{Y}}}
+\newcommand{\blone}{\beta_{l, 1}}
+\newcommand{\blzero}{\beta_{l, 0}}
+\newcommand{\blmone}{\beta_{l, -1}}
+\newcommand{\chivec}{\bm{\chi}_{1,m_s}}
+\newcommand{\cgcoeff}{\mathcal{C}}
+
+\newcommand{\alm}{a_{l,m}}
+\newcommand{\blm}{b_{l,m}}
+\newcommand{\dlm}{d_{l,m}}
+\newcommand{\elm}{e_{l,m}}
+\newcommand{\flm}{f_{l,m}}
+\newcommand{\glm}{g_{l,m}}
+\newcommand{\hlm}{h_{l,m}}
+\newcommand{\jlm}{j_{l,m}}
+\newcommand{\klm}{k_{l,m}}
+\newcommand{\almperp}{a_{l,m}^\perp}
+\newcommand{\blmperp}{b_{l,m}^\perp}
+\newcommand{\dlmperp}{d_{l,m}^\perp}
+\newcommand{\elmperp}{e_{l,m}^\perp}
+\newcommand{\flmperp}{f_{l,m}^\perp}
+\newcommand{\glmperp}{g_{l,m}^\perp}
+\newcommand{\hlmperp}{h_{l,m}^\perp}
+\newcommand{\jlmperp}{j_{l,m}^\perp}
+\newcommand{\klmperp}{k_{l,m}^\perp}
+
+\newcommand{\unitvec}{\hat{\bm{k}}}
+
+
+
+
+
+\title{Spherical Harmonics on the Unit Sphere}
+\author{Ben Snowball}
+%\date{}							% Activate to display a given date or no date
+
+
+\begin{document}
+
+\maketitle
+
+
+\section{Deriving matrices for certain operators}
+
+Define \(\unitvec\) as the unit outward normal vector at the point on the sphere \((x,y,z)\), so that
+\begin{align}
+\unitvec = \begin{bmatrix} x \\ y \\ z \end{bmatrix}.
+\end{align}
+
+Let \(S := \{ \bold{x} := (x,y,z) \quad | \quad ||\bold{x}|| = 1\}\) be the unit sphere in \(\R^3\) and let \(T_x^S\) denote the tangent space at the point \(\bold{x} \in S\). Further, let \(\bold{u}(x,y,z)\), \(\bold{v}(x,y,z)\) be two vector valued functions for \((x,y,z)\) on the unit sphere (representing the tangential velocity of a flow for example) and let \(h(x,y,z)\) be a scalar function on the sphere.
+
+Then, 
+\begin{align}
+\bold{u} &= \sum_{l=0}^{\infty} \sum_{m=-l}^{l} [ u_{l,m} \gradYlm + u^{\perp}_{l,m} \gradpYlm ], \\
+\bold{v} &= \sum_{l=0}^{\infty} \sum_{m=-l}^{l} [ v_{l,m} \gradYlm + v^{\perp}_{l,m} \gradpYlm ], \\
+h &= \sum_{l=0}^{\infty} \sum_{m=-l}^{l} h_{l,m} \Ylm,
+\end{align}
+for some real coefficients \(u_{l,m}, u^{\perp}_{l,m}, v_{l,m}, v^{\perp}_{l,m}, h_{l,m}\). Define the vectors of these coefficients as 
+\begin{align}
+\bold{u}^c &= \begin{bmatrix}
+			\bold{u}_0^c \\
+			\bold{u}_1^c \\
+			\vdots \\
+		    \end{bmatrix},
+\quad
+\bold{v}^c = \begin{bmatrix}
+			\bold{v}_0^c \\
+			\bold{v}_1^c \\
+			\vdots \\
+		    \end{bmatrix},
+\quad
+\bold{h}^c = \begin{bmatrix}
+			\bold{h}_0^c \\
+			\bold{h}_1^c \\
+			\vdots \\
+		    \end{bmatrix},		  
+\end{align}
+where
+\begin{align}
+\bold{u}^c_l &= \begin{bmatrix}
+				u_{l,-l} \\
+				u^{\perp}_{l,-l} \\
+				\vdots \\
+				u_{l,l} \\
+				u^{\perp}_{l,l}
+		        \end{bmatrix},
+\quad
+\bold{v}^c_l = \begin{bmatrix}
+				v_{l,-l} \\
+				v^{\perp}_{l,-l} \\
+				\vdots \\
+				v_{l,l} \\
+				v^{\perp}_{l,l}
+		        \end{bmatrix},
+\quad
+\bold{h}^c_l = \begin{bmatrix}
+				h_{l,-l} \\
+				\vdots \\
+				h_{l,l} \\
+		        \end{bmatrix},
+\quad \forall l \in \No	  
+\end{align}.
+
+Then, for large enough \(N \in \N\) we have that
+\begin{align}
+\bold{u} &\approx \sum_{l=0}^{N} \sum_{m=-l}^{l} [ u_{l,m} \gradYlm + u^{\perp}_{l,m} \gradpYlm ], \\
+\bold{v} &\approx \sum_{l=0}^{N} \sum_{m=-l}^{l} [ v_{l,m} \gradYlm + v^{\perp}_{l,m} \gradpYlm ], \\
+h &\approx \sum_{l=0}^{N} \sum_{m=-l}^{l} h_{l,m} \Ylm,
+\end{align}
+and so we define the truncated coefficient vectors for some \(N \in \N\) as
+\begin{align}
+\bold{u}^c &= \begin{bmatrix}
+			\bold{u}_0^c \\
+			\bold{u}_1^c \\
+			\vdots \\
+			\bold{u}_N^c
+		    \end{bmatrix},
+\quad
+\bold{v}^c = \begin{bmatrix}
+			\bold{v}_0^c \\
+			\bold{v}_1^c \\
+			\vdots \\
+			\bold{v}_N^c
+		    \end{bmatrix},
+\quad
+\bold{h}^c = \begin{bmatrix}
+			\bold{h}_0^c \\
+			\bold{h}_1^c \\
+			\vdots \\
+			\bold{h}_N^c
+		    \end{bmatrix}.		  
+\end{align}
+			
+
+We note that
+\begin{align}
+\gradpYlm = \unitvec \times \gradYlm, \quad \forall \; l \in \No, \; m \in \Z \; \text{s.t.} \; |m| \le l.
+\end{align}
+
+\subsection{Operator for "\(\unitvec \times \quad\)"}
+\begin{align}
+\unitvec \times \bold{u} &= \unitvec \times \sum_{l=0}^{\infty} \sum_{m=-l}^{l} [ u_{l,m} \gradYlm + u^{\perp}_{l,m} \gradpYlm ] \\
+&= \sum_{l=0}^{\infty} \sum_{m=-l}^{l} [ u_{l,m} \unitvec \times \gradYlm + u^{\perp}_{l,m} \unitvec \times \gradpYlm ] \\
+&= \sum_{l=0}^{\infty} \sum_{m=-l}^{l} [ u_{l,m} \unitvec \times \gradYlm + u^{\perp}_{l,m} \unitvec \times ( \unitvec \times \gradYlm ) ] \\
+&= \sum_{l=0}^{\infty} \sum_{m=-l}^{l} [ u_{l,m} \gradpYlm + u^{\perp}_{l,m} (( \unitvec \cdot \gradpYlm) \unitvec - ( \unitvec \cdot \unitvec ) \gradYlm ) ] \\
+&= \sum_{l=0}^{\infty} \sum_{m=-l}^{l} [ u_{l,m} \gradpYlm - u^{\perp}_{l,m} \gradYlm ) ]. \\
+\end{align}
+
+Thus the operator matrix for the cross product from the left by the normal unit vector at the point \((x,y,z)\) is given by
+\begin{align}
+K =  \begin{bmatrix}
+		0 & -1 & & & & \\
+		1 & 0 & & & & \\
+		& & 0 & -1 & & \\
+		& & 1 & 0 & & \\
+		& & & & \ddots \\
+		& & & & & \ddots 
+	  \end{bmatrix} \quad \in \quad \R^{2(N+1)^2 \times 2(N+1)^2}.
+\end{align}
+so that \(K\bold{u}^c\) gives the vector of coefficients for for expansion of \(\unitvec \times \bold{u}\) in the vector spherical harmonic basis (up to degree N).
+
+\subsection{Operator for Div}
+\begin{align}
+\nabla \cdot \bold{u} &= \nabla \cdot \Big( \sum_l \sum_{m=-l}^{l} [ u_{l,m} \gradYlm + u^{\perp}_{l,m} \gradpYlm ] \Big) \\
+&= \sum_l \sum_{m=-l}^{l} [ u_{l,m} \: \Delta \Ylm + u^{\perp}_{l,m} \nabla \cdot (\unitvec \times \gradYlm) ] \\
+&= \sum_l \sum_{m=-l}^{l} u_{l,m} \: \Delta \Ylm \\
+&= \sum_l \sum_{m=-l}^{l} - u_{l,m} \: l(l+1) \Ylm, \\
+\end{align}
+using the fact that 
+\begin{align}
+\Delta \Ylm(x,y,z) = -l(l+1)\Ylm(x,y,z), \quad \forall \; l \in \No, \; m \in \Z \; \text{s.t.} \; |m| \le l.
+\end{align}
+
+Thus, the operator matrix for the divergence of a vector in the tangent space is
+\begin{align}
+D &=  \begin{bmatrix}
+		-l(l+1)|_{l=0} & 0 & & & & & & & \\
+		& & -l(l+1)|_{l=1} & 0 & & & & & \\
+		& & & & -l(l+1)|_{l=1} & 0 & & & \\
+		& & & & & & -l(l+1)|_{l=1} & 0 & \\
+		& & & & & & & \ddots 
+	  \end{bmatrix} \\
+	  &=  \begin{bmatrix}
+		0 & 0 & & & & & & & \\
+		& & -2 & 0 & & & & & \\
+		& & & & -2 & 0 & & & \\
+		& & & & & & -2 & 0 & \\
+		& & & & & & & \ddots 
+	  \end{bmatrix} \quad \in \quad \R^{(N+1)^2 \times 2(N+1)^2},
+\end{align}
+so that \(D\bold{u}^c\) gives the vector of coefficients of the expansion for \(\nabla \cdot u\) in the spherical harmonic basis.
+
+
+\subsection{Operator for Grad}
+\begin{align}
+\nabla h &= \nabla \Big( \sum_l \sum_{m=-l}^{l} h_{l,m} \Ylm \Big) \\
+&= \sum_l \sum_{m=-l}^{l} h_{l,m} \gradYlm
+\end{align}
+
+Thus, the operator matrix for the gradient of a scalar function on the sphere is
+\begin{align}
+G &=  \begin{bmatrix}
+		\tilde{G_0} & & & \\
+		& \tilde{G_1} & & \\
+		& & \tilde{G_2} & \\
+		& & & \ddots
+	  \end{bmatrix}  \quad \in \quad \R^{2(N+1)^2 \times (N+1)^2},
+\end{align}
+where
+\begin{align}
+\tilde{G_l} &=  \begin{bmatrix}
+		1 & & & \\
+		0 & & & \\
+		& 1 & & \\
+		& 0 & & \\
+		& & 1 & \\
+		& & 0 & \\
+		& & & \ddots \\
+	  \end{bmatrix} \quad \in \quad \R^{2(2l+1) \times (2l+1)},
+\end{align}
+so that \(G\bold{h}^c\) gives the vector of coefficients of the expansion for \(\nabla h\) in the tangent space (vector spherical harmonic) basis.
+
+\subsection{Dot products}
+
+We consider the general case that \(\bold{u}\) is expanded up to order \(N_1 \in \N\) and \(\bold{v}\) is expanded up to order \(N_2 \in \N\), i.e. 
+\begin{align}
+\bold{u}^c &= \begin{bmatrix}
+			\bold{u}_0^c \\
+			\bold{u}_1^c \\
+			\vdots \\
+			\bold{u}_{N_1}^c
+		    \end{bmatrix},
+\quad
+\bold{v}^c = \begin{bmatrix}
+			\bold{v}_0^c \\
+			\bold{v}_1^c \\
+			\vdots \\
+			\bold{v}_{N_2}^c
+		    \end{bmatrix}.
+\end{align}
+
+Let \((x,y,z)\) lie on the unit sphere and let \(l = 1\), \(m \in {-1, 0, 1}\) and define \(\tilde{N} := N_1 + N_2\). Then
+\begin{align}
+\gradYlm(x,y,z) \cdot \bold{v}(x,y,z) = (\bold{b}^c)^T  \: \bigP(x,y,z)
+\end{align}
+where
+\begin{align}
+\bigP &:= \begin{bmatrix}
+		\bigP_0 \\
+		\bigP_1 \\
+		\bigP_2 \\
+		\vdots \\
+		\bigP_{N_2}
+	  \end{bmatrix}, \quad 
+\Pl := \begin{bmatrix}
+		Y_l^{-l} \\
+		\vdots \\	
+		Y_l^l
+	  \end{bmatrix},
+\end{align}
+for some coefficient vector \(\bold{b}^c \in \R^{(N_2+1)^2}\). In other words, the dot product of one of the \(l=1\) tangent space's orthogonal polynomials with a vector valued function on the unit sphere can naturally be written as an expansion in the scalar spherical harmonic OP basis. Similarly,
+\begin{align}
+\gradpYlm(x,y,z) \cdot \bold{v}(x,y,z) = (\bold{b^\perp}^c)^T  \: \bigP(x,y,z)
+\end{align}
+for some coefficient vector \(\bold{b^\perp}^c \in \R^{(N_2+2)^2}\).
+
+Then, 
+\begin{align}
+\bold{b}^c &= J_{l,m} \: \bold{v}^c, \quad 
+\bold{b^\perp}^c = J^\perp_{l,m} \: \bold{v}^c
+\end{align}
+where \(J_{l,m}\), \(J^\perp_{l,m}\) are (operator) matrices for the dot product with \(\gradYlm(x,y,z)\) and \(\gradpYlm(x,y,z)\) respectively.
+Each \(J_{l,m}\), \(J^\perp_{l,m}\) will have the \((\tilde{N} \times N_2)\) block structure:
+\begin{align}
+	\begin{array}{c|c|c|c}
+		1 \times 6 & 1 \times 10 & \\
+		\hline
+		3 \times 6 & 3 \times 10 & 3 \times 14 & \\
+		\hline
+		5 \times 6 & 5 \times 10 & 5 \times 14 & \ddots \\
+		\hline
+		&  7 \times 10 & 7 \times 14 & \ddots \\
+		\hline
+		& & \ddots & \ddots \\
+	  \end{array}
+\end{align}
+i.e. a BandedBlockBandedMatrix\((J, (rows, cols), (2,1), (?,?))\) where 
+\begin{align}
+rows &= 1:2:2\tilde{N}+1 \\
+cols &= 6:4:2(2N_2+1).
+\end{align}
+
+Define
+\begin{align}
+T^\bigP_0 &:= 0, \quad
+T^\bigP_1 := \begin{bmatrix}
+			J_{1,-1} \\
+			J^\perp_{1,-1} \\
+			J_{1,0} \\
+			J^\perp_{1,0} \\
+			J_{1,1} \\
+			J^\perp_{1,1}
+	  	\end{bmatrix}.
+\end{align}
+Then by linearity of the dot product, we can use the recurrence relation for \(\gradPl\) to gain a recurrence for \(T^\bigP_l\):
+\begin{align}
+T^\bigP_{l+1} = -\Dlt [B_l-G_l(J^x, J^y, J^z)] \: T^\bigP_l - \Dlt C_l  \, T^\bigP_{l-1}, \quad l \in \{1,\dots,N_1-1\},
+\end{align}
+where \(J^x, J^y, J^z\) are the \(\tilde{N} \times \tilde{N}\) Jacobi operator matrices for multiplication by \(x, y, z\) respectively. We then have that for each \(l \in {1,\dots,N_1}\), 
+\begin{align}
+T^\bigP_l := \begin{bmatrix}
+			J_{l,-l} \\
+			J^\perp_{l,-l} \\
+			\vdots \\
+			J_{l,l} \\
+			J^\perp_{l,l}
+	  	\end{bmatrix}.
+\end{align}
+
+Then, 
+\begin{align}
+\bold{u}(x,y,z) \cdot \bold{v}(x,y,z) = (\bold{b}^c)^T  \: \bigP(x,y,z)
+\end{align}
+where \(\bold{b}^c \in \R^{(\tilde{N}+1)^2}\) and is given by
+\begin{align}
+\bold{b}^c = \Big(\sum_{l=0}^{N_1} \sum_{m=-l}^{l} [ u_{l,m} J_{l,m} + u^{\perp}_{l,m} J^\perp_{l,m} ] \Big) \: \bold{v}^c.
+\end{align}
+
+
+
+\bibliography{spherical-harmonics-bib}
+
+
+\end{document}
+
+
+
+
+
+
+
+
+
+
+
+  
