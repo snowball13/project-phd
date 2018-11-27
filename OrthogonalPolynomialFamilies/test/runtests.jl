@@ -169,7 +169,7 @@ end
     h = 1e-5; @test (f(x,y+h)-f(x,y))/h ≈ differentiatey(f, f.space)(x,y) atol=100h
 end
 
-@test "Poisson" begin
+@testset "Poisson" begin
     # Model Problem: Δ(u*w)(x,y) = f(x,y) in Ω=halfdisk; u(x,y) ≡ 0 on ∂Ω.
     #   where w(x,y) = x*(1-x^2-y^2) is the weight of the D(1.0,1.0) basis.
     a, b = 1.0, 1.0; D = HalfDiskFamily(); S = D(a, b)
@@ -178,7 +178,7 @@ end
     # 1) f(x,y) = -8x => u(x,y) ≡ 1
     N = 1 # degree of f
     c = rand(1)[1]; f = Fun((x,y)->-c*8x, S)
-    Δ = OrthogonalPolynomialFamilies.laplace(D, N-1)
+    Δ = laplace(D, N-1)
     u = Fun(S, Δ \ resizecoeffs!(f, N))
     @test u(z) ≈ c # Result u(x,y) where Δ(u*w)(x,y) = f(x,y)
 
