@@ -1,0 +1,559 @@
+\documentclass[11pt, oneside]{article}   	% use "amsart" instead of "article" for AMSLaTeX format
+\usepackage{geometry}                		% See geometry.pdf to learn the layout options. There are lots.
+\geometry{letterpaper}                   		% ... or a4paper or a5paper or ... 
+%\geometry{landscape}                		% Activate for rotated page geometry
+\usepackage[parfill]{parskip}    		% Activate to begin paragraphs with an empty line rather than an indent
+\usepackage{graphicx}				% Use pdf, png, jpg, or eps§ with pdflatex; use eps in DVI mode
+								% TeX will automatically convert eps --> pdf in pdflatex		
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{float}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{bm}
+\usepackage{bbm}
+\usepackage{mleftright}
+\usepackage{todonotes}
+
+\newcommand{\sotodo}{\todo[color=green]}
+\newcommand{\sotodoinline}{\todo[color=green,inline=true]}
+\newcommand{\bstodo}{\todo[color=pink]}
+\newcommand{\bstodoinline}{\todo[color=pink,inline=true]}
+
+
+%SetFonts
+
+%SetFonts
+
+\usepackage{natbib}
+\usepackage{url}
+%\bibliographystyle{elsarticle-harv}
+\bibliographystyle{plain}
+
+\newcommand{\half}{\frac{1}{2}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\No}{\mathbb{N}_0}
+\newcommand{\Ylm}{Y^m_l}
+\newcommand{\Ylmfull}{Y^m_l(\theta,\varphi)}
+\newcommand{\Plm}{P^m_l}
+\newcommand{\costheta}{\cos\theta}
+\newcommand{\sintheta}{\sin\theta}
+\newcommand{\cosphi}{\cos\varphi}
+\newcommand{\sinphi}{\sin\varphi}
+\newcommand{\eimphi}{e^{im\varphi}}
+\newcommand{\alphalm}{\alpha^m_l}
+\newcommand{\clm}{c^m_l}
+\newcommand{\ctilde}{\tilde{c}^m_l}
+\newcommand{\ctildemod}{\tilde{c}^{|m|}_l}
+\newcommand{\chat}{\hat{c}^m_l}
+\newcommand{\chatmod}{\hat{c}^{|m|}_l}
+\newcommand{\ddx}{\frac{\mathrm{d}}{\mathrm{d}x}}
+\newcommand{\dmdxm}{\frac{\mathrm{d}^m}{\mathrm{d}x^m}}
+
+\newcommand{\Atilde}{\tilde{A}_{l,m}}
+\newcommand{\Btilde}{\tilde{B}_{l,m}}
+\newcommand{\Dtilde}{\tilde{D}_{l,m}}
+\newcommand{\Etilde}{\tilde{E}_{l,m}}
+\newcommand{\Ftilde}{\tilde{F}_{l,m}}
+\newcommand{\Gtilde}{\tilde{G}_{l,m}}
+\newcommand{\Alm}{A_{l,m}}
+\newcommand{\Blm}{B_{l,m}}
+\newcommand{\Dlm}{D_{l,m}}
+\newcommand{\Elm}{E_{l,m}}
+\newcommand{\Flm}{F_{l,m}}
+\newcommand{\Glm}{G_{l,m}}
+
+\newcommand{\xione}{\xi^{(1)}_{n, \lambda}}
+\newcommand{\xitwo}{\xi^{(2)}_{n, \lambda}}
+\newcommand{\xithree}{\xi^{(3)}_{n, \lambda}}
+\newcommand{\xifour}{\xi^{(4)}_{n, \lambda}}
+
+\newcommand{\bigP}{\mathbb{P}}
+\newcommand{\Pl}{\mathbb{P}_l}
+\newcommand{\gradP}{T\mathbb{P}}
+\newcommand{\gradPl}{T\mathbb{P}_l}
+\newcommand{\gradY}{\nabla Y}
+\newcommand{\gradYlm}{\nabla Y^m_l}
+\newcommand{\gradpY}{\nabla^\perp Y}
+\newcommand{\gradpYlm}{\nabla^\perp Y^m_l}
+
+\newcommand{\Dlt}{D^T_l}
+
+\newcommand{\curlyy}{\bm{\mathcal{Y}}}
+\newcommand{\blone}{\beta_{l, 1}}
+\newcommand{\blzero}{\beta_{l, 0}}
+\newcommand{\blmone}{\beta_{l, -1}}
+\newcommand{\chivec}{\bm{\chi}_{1,m_s}}
+\newcommand{\cgcoeff}{\mathcal{C}}
+
+\newcommand{\alm}{a_{l,m}}
+\newcommand{\blm}{b_{l,m}}
+\newcommand{\dlm}{d_{l,m}}
+\newcommand{\elm}{e_{l,m}}
+\newcommand{\flm}{f_{l,m}}
+\newcommand{\glm}{g_{l,m}}
+\newcommand{\hlm}{h_{l,m}}
+\newcommand{\jlm}{j_{l,m}}
+\newcommand{\klm}{k_{l,m}}
+\newcommand{\almperp}{a_{l,m}^\perp}
+\newcommand{\blmperp}{b_{l,m}^\perp}
+\newcommand{\dlmperp}{d_{l,m}^\perp}
+\newcommand{\elmperp}{e_{l,m}^\perp}
+\newcommand{\flmperp}{f_{l,m}^\perp}
+\newcommand{\glmperp}{g_{l,m}^\perp}
+\newcommand{\hlmperp}{h_{l,m}^\perp}
+\newcommand{\jlmperp}{j_{l,m}^\perp}
+\newcommand{\klmperp}{k_{l,m}^\perp}
+
+\newcommand{\unitvec}{\hat{\bm{k}}}
+
+\newcommand{\Pnk}{P_{n,k}}
+\newcommand{\Pnkab}{P_{n,k}^{(a,b)}}
+\newcommand{\Wab}{{W^{(a,b)}}}
+\newcommand{\Pmjab}{P_{m,j}^{(a,b)}}
+\newcommand{\alphaab}{\alpha^{(a,b)}}
+\newcommand{\betaab}{\beta^{(a,b)}}
+\newcommand{\bigPab}{\bigP^{(a,b)}}
+\newcommand{\Dnt}{D^T_n}
+\newcommand{\Wii}{W^{(1,1)}}
+\newcommand{\Pii}{P^{(1,1)}}
+\newcommand{\Poo}{P^{(0,0)}}
+\newcommand{\Poi}{P^{(0,1)}}
+\newcommand{\Pio}{P^{(1,0)}}
+\newcommand{\dx}{\frac{\partial}{\partial x}}
+\newcommand{\dy}{\frac{\partial}{\partial y}}
+
+%\usepackage{media9}
+%\graphicspath{ {../sphere/plots} }
+
+
+
+\title{Sparse Spectral Methods and P-Finite Element Methods on Disk-Splices and Rhombi - Part I: Zero Boundary Conditions}
+\author{Sheehan Olver, Ben Snowball}
+%\date{}							% Activate to display a given date or no date
+
+
+\begin{document}
+
+\maketitle
+
+
+
+%
+\section{Introduction}
+
+This document is to derive a framework for solving PDEs on the half disk using sparse spectral methods. We present our procedure  to gain a (two-parameter) family of 2D orthogonal polynomials (OPs) on the half disk domain, by combining 1D OPs to the interval, to form 2D OPs on the disk. We will derive a quadrature rule on the half disk that can be used to expand a function in the OP basis up to a given order. We will demonstrate that these families will have sparse operators (including Jacobi operators representing multiplication by $x$ and $y$, and partial differential operators), and how we can implement function evaluation using the coefficients of the expansion of a given function using the Clenshaw algorithm. We can extend this work directly by projecting up to 3D OPs on the hemisphere, where sparse operators, function evaluation and expansion etc. can be found similarly. 
+
+\section{Orthogonal polynomials  and function approximation on the half disk (2D)}
+
+By using a similar process to \cite{dunkl2014orthogonal} (p??) \bstodo{Try to always include page numbers in citations to books, as otherwise you'll forget where it is} we can construct 2D orthogonal polynomials on the half disk from 1D orthogonal polynomials on the intervals \([0,1]\) and \([-1,1]\). We denote the half disk by \(\Omega\) where
+\begin{align}
+\Omega := \{(x,y) \in \R^2 \quad | \quad 0 < x < 1, \: -(1-x^2)^{\half} < y < (1-x^2)^{\half}\}.
+\end{align}
+
+Let \(w_1 : (\alpha,\beta) \: \to \R\), \(w_2 : (\gamma,\delta) \: \to \R\) be weight functions with \(\alpha,\beta,\gamma,\delta \in \R\), and \(\rho \: : \: (\alpha,\beta) \: \to (0,\infty)\) be such that either:
+
+1) \(\rho\) is a degree 1 polynomial, or 
+
+2) \(\rho\) is the square root of a non-negative degree \(\le\) 2 polynomial, \(-\gamma = \delta > 0\), and \(w_2\) is an even function.
+
+Then, \(\forall n,k = 0,1,2,\dots\) let \(\{p_{n,k}\}\) be polynomials orthogonal with respect to the weight \(\rho(x)^{2k+1} w_1(x)\), and \(\{q_{n}\}\) be polynomials orthogonal with respect to the weight \(w_2(x)\).
+
+We define \(\Pnk(x,y) := p_{n-k,k}(x) \: \rho(x)^k \: q_k(\frac{y}{\rho(x)})\) for \( 0 \le k \le n, \: n = 0,1,2,\dots\) and note that the functions \(\{\Pnk\}\) are in fact polynomials in either cases above. Furthermore, they are orthogonal with respect to the weight \(W(x,y) := w_1(x) \: w_2(\frac{y}{\rho(x)}) \) on \(R := \{(x,y) \in \R^2 \quad | \quad \alpha < x < \beta, \: \gamma \rho(x) < y < \delta \rho(x)\}\).
+
+Let \(a, b \in \R\). For the half disk, if we set:
+
+\begin{align}
+\alpha &:= 0 \\
+\beta &:= 1 \\
+\gamma &:= -1 \\
+\delta &:= -c = 1 \\
+\rho(x) &:= (1-x^2)^{\half} \\
+w_1(x) &:= x^a \: (1-x^2)^b \\
+w_2(x) &:= (1-x^2)^b = (1-x)^b \: (1+x)^b,
+\end{align}
+
+we can obtain the 1D orthogonal polynomials \(\{H_n^{(a, b)}\}\) orthogonal with respect to the weight \(x^a \: (1-x^2)^b\), and \(\{P_n^{(b, b)}\}\) orthogonal with respect to the weight \((1-x^2)^b\) (so \(\{P_n^{(b, b)}\}\) are in fact Jacobi polynomials), leading to the two parameter 2D orthogonal polynomials \(\{\Pnk\}\) given by, for \(0 \le k \le n, \: n = 0,1,2,\dots,\)
+\begin{align}
+ \Pnk(x,y) := H_{n-k}^{(a, b+k+\half)}(x) \: \rho(x)^k \: P_k^{(b,b)}(\frac{y}{\rho(x)}), \quad (x,y) \in \Omega, 
+\end{align}
+orthogonal on \(\Omega\) with respect to the weight 
+\begin{align}
+W^{(a,b)}(x,y) := x^a \: (1-x^2-y^2)^b, \quad (x,y) \in \Omega.
+\end{align}
+
+This provides us with a family of orthogonal polynomial spaces on the half disk.
+
+
+\subsection{Obtaining the coefficients for expansion of a function}
+
+Fix \(a,b \in \R\). Then for any function \(f : \Omega \to \R\) we can approximate (or exactly express) \(f\) by
+\begin{align}
+f(x,y) \approx \sum_{n=0}^N \bigP_n^{(a,b)}(x,y)^T \: \mathbf{f}_n
+\end{align}
+where
+\begin{align}
+\bigP(x,y) := \begin{bmatrix}
+		\bigP_0(x,y) \\
+		\hline
+		\bigP_1(x,y) \\
+		\hline
+		\bigP_2(x,y) \\
+		\hline
+		\vdots \\
+		\hline
+		\bigP_N(x,y)
+	\end{bmatrix},
+\quad
+\bigP_n(x,y) := \begin{bmatrix}
+		P_{n,0}(x,y) \\
+		\vdots \\
+		P_{n,n}(x,y)
+	\end{bmatrix} \in \R^{n+1} \quad \forall n = 0,1,2,\dots,N,
+\end{align}
+and where
+\begin{align}
+\mathbf{f} &:= \begin{bmatrix}
+		\mathbf{f}_0 \\
+		\hline
+		\mathbf{f}_1 \\
+		\hline
+		\mathbf{f}_2\\
+		\hline
+		\vdots \\
+		\hline
+		\mathbf{f}_N
+	\end{bmatrix},
+\quad
+\mathbf{f}_n := \begin{bmatrix}
+		f_{n,0} \\
+		\vdots \\
+		f_{n,n}
+	\end{bmatrix} \in \R^{n+1} \quad \forall n = 0,1,2,\dots,N, \\
+f_{n,k} &:= \frac{\langle f, \: \Pnk^{(a,b)} \rangle_{W^{(a,b)}}}{|| \Pnk^{(a,b)} ||_{W^{(a,b)}}}
+\end{align}
+
+
+
+
+We can develop a quadrature rule on \(\Omega\) in order to evaluate (40) and obtain the coefficients vector \(\mathbf{f}\) as follows. 
+
+We will use the substitution that
+\begin{align}
+x &= s, \quad y = (1-s^2)^\half t.
+\end{align}
+First, note that
+\begin{align}
+W^{(a,b)}(x,y) &= x^a \: (1-x^2-y^2)^b, \quad \text{for } (x,y) \in \Omega, \\
+		      &= s^a \: (1-s^2)^{b} \: (1-t^2)^b =: V^{(a,b)}(s,t), \quad \text{for } (s,t) \in [0,1] \times [-1,1].
+\end{align}
+Using the Golub-Welsch algorithm, we can obtain nodes and weights for 1D quadrature rules on \([0,1]\) with weight \(s^a \: (1-s^2)^{b+\half}\), and on \([-1,1]\) with weight \((1-t^2)^b\).
+
+Let \(f(x,y)\) be a degree \(d\) polynomial that is even in \(y\). Then there exists a polynomial in \(x,y\) \(\tilde{f}(x,y)\) such that \(g(s,t) := f(x, y) = f(s, (1-s^2)^\half t) = \tilde{f}(s, (1-s^2) t^2)\). Now, as \(\tilde{f}\) is a polynomial, so must \(g\) be a polynomial of degree \(\tilde{d}\) \bstodo{What is the degree of g?} \ in \(s\) and \(t\). Thus our quadrature rule will be exact:
+\begin{align}
+& \quad \int_0^1 \int_{-\rho(x)}^{\rho(x)} W^{(a,b)}(x,y) \: f(x,y) \: dy \: dx \\
+&= \int_0^1 \int_{-1}^1 V^{(a,b)}(s,t) \: g(s,t) \: (1-s^2)^\half \: dt \: ds \\
+&= \int_0^1 s^a \: (1-s^2)^{b+\half} \: \Big( \sum_k w_k^{(t)} \: g(s, t_k) \Big) \: ds \\
+&= \sum_j \sum_k w_j^{(s)} w_k^{(t)} \: g(s_j, t_k) \\
+&= \sum_j \sum_k w_j^{(s)} w_k^{(t)} \: f(x_j, y_{j,k}),
+\end{align} \bstodo{What is the degree of g?}
+where \(x_j := s_j,\) \(y_{j,k} := \rho(s_j) \: t_k\).
+
+We further note that for any polynomial \(f(x,y)\) that is odd in \(y\),
+\begin{align}
+\int_0^1 \int_{-\rho(x)}^{\rho(x)} W^{(a,b)}(x,y) \: f(x,y) \: dy \: dx = 0.
+\end{align}
+
+Relabelling the weights and nodes as 
+\begin{align}
+x_{i+(k-1)N} &:= s_k, \quad i,k = 1,\dots,N, \\
+y_{l+(i-1)N} &:= (1-s_l^2)^\half \: t_l, \quad i,l = 1,\dots,N, \\
+w_{l+(k-1)N} &:= w_k^{(s)} w_l^{(t)}, \quad k,l = 1,\dots,N.
+\end{align}
+
+Then our quadrature rule for any polynomial \(f(x,y)\) on \(\Omega\) is:
+\begin{align}
+\int \int_\Omega W^{(a,b)}(x,y) \: f(x,y) \: dy \: dx \approx \half \: \sum_{j=1}^{N^2} w_j \: \big[ f(x_j, y_j) + f(x_j, -y_j) \big],
+\end{align}
+exact for any polynomial where \(deg(f(x,\cdot)) \le 2N-1\) and \(deg(f(\cdot,y)) \le 2N-1\). Thus,
+\begin{align}
+< f, \: \Pnk^{(a,b)} >_{W^{(a,b)}} &= \half \: \sum_{j=1}^{N^2} w_j \: \big[ \big(f(x_j, y_j) \: \Pnk^{(a,b)}(x_j, y_j)\big) +\big(f(x_j, -y_j) \: \Pnk^{(a,b)}(x_j, -y_j)\big) \big], \\
+|| \Pnk^{(a,b)} ||_{W^{(a,b)}}^2 &= \half \: \sum_{j=1}^{N^2} w_j \: \big[ \Pnk^{(a,b)}(x_j, y_j)^2 + \Pnk^{(a,b)}(x_j, -y_j)^2 \big].
+\end{align}
+
+
+\subsection{Jacobi matrices}
+
+We obtain the 1D OPs via the Lanczos algorithm, which also gives us the coefficients of the relations
+\begin{align}
+x H_n^{(a,b)}(x) &= \beta_n^{(a,b)} H_{n+1}^{(a,b)}(x) + \alpha_n^{(a,b)} H_n^{(a,b)}(x) + \beta_{n-1}^{(a,b)} H_{n-1}^{(a,b)}(x) \\
+y P_n^{(b,b)}(y) &= \delta_n^{(b)} P_{n+1}^{(b,b)}(y) + \gamma_n^{(b)} P_n^{(b,b)}(y) + \delta_{n-1}^{(b)} P_{n-1}^{(b,b)}(y),
+\end{align}
+where we note that \(\gamma_n^{(b)} = 0\) \(\forall n = 0,1,2,\dots\).
+
+Next, note that \(<y \Pnkab, P_{m,j}^{(a,b)}>_\Wab = 0\) for \(m < n-1\) (and for \(m > n+2\)). Thus for \(m = n-1, n, n+1,\) \(j = 0,\dots,m:\)
+\begin{align}
+<y \Pnkab, P_{m,j}^{(a,b)}>_\Wab &= \int \int_\Omega \Pnkab(x,y) \: \Pmjab(x,y) \: y \: \Wab(x,y) \: dy \: dx \\
+&= \Big( \int^1_0 H_{n-k}^{(a, b+k+\half)}(s) \: H_{m-j}^{(a, b+j+\half)}(s) \: s^a \: \rho(s)^{2b+k+j+2} \: ds \Big) \nonumber \\
+& \quad \quad \quad\cdot \: \Big( \int^1_{-1} P_k^{(b,b)}(t) \: P_j^{(b,b)}(t) \: t \: (1-t^2)^b \: dt \Big) \\
+&= \begin{cases}
+    	\delta_k^{(b)} \: <H_{n-k}^{(a, b+k+\half)}, H_{m-k-1}^{(a, b+k+\frac{3}{2})}>_{H^{(a, b+k+\frac{3}{2})}} \quad& \text{if } j = k+1 \\
+	\delta_{k-1}^{(b)} \: <H_{n-k}^{(a, b+k+\half)}, H_{m-k+1}^{(a, b+k-\half)}>_{H^{(a, b+k+\half)}} \quad& \text{if } j = k-1 \\
+	0 & \text{o/w}
+      \end{cases}.
+\end{align}
+
+We then have that multiplication by \(x\) and \(y\) yields the 3-term recurrences as follows:
+\begin{align}
+x \Pnk^{(a,b)}(x,y) &= \alphaab_{n,k,1} \: P_{n-1, k}^{(a,b)}(x, y) + \alphaab_{n,k,2} \: P_{n, k}^{(a,b)}(x, y) + \alphaab_{n+1,k,1} \: P_{n+1, k}^{(a,b)}(x, y), \\
+y \Pnk^{(a,b)}(x,y) &= \betaab_{n,k,1} \: P_{n-1, k-1}^{(a,b)}(x, y) + \betaab_{n,k,2} \: P_{n-1, k+1}^{(a,b)}(x, y) \nonumber \\
+		& \quad \quad + \betaab_{n,k,3} \: P_{n, k-1}^{(a,b)}(x, y) + \betaab_{n,k,4} \: P_{n, k+1}^{(a,b)}(x, y) \nonumber \\
+		& \quad \quad + \betaab_{n,k,5} \: P_{n+1, k-1}^{(a,b)}(x, y) + \betaab_{n,k,6} \: P_{n+1, k+1}^{(a,b)}(x, y),
+\end{align}
+for \((x,y) \in \Omega\), where
+\begin{align}
+\alphaab_{n,k,1} &:= \beta_{n-k-1}^{(a, b+k+\half)} \\
+\alphaab_{n,k,2} &:= \alpha_{n-k}^{(a, b+k+\half)} \\
+\betaab_{n,k,1} &:= \frac{\delta_{k-1}^{(b)}}{|| P_{n-1,k-1}^{(a,b)} ||_{W^{(a,b)}}^2} \: <H_{n-k}^{(a, b+k+\half)}, H_{n-k}^{(a, b+k-\half)}>_{H^{(a, b+k+\half)}} \\
+\betaab_{n,k,2} &:= \frac{\delta_{k}^{(b)}}{|| P_{n-1,k+1}^{(a,b)} ||_{W^{(a,b)}}^2} \: <H_{n-k}^{(a, b+k+\half)}, H_{n-k-2}^{(a, b+k+\frac{3}{2})}>_{H^{(a, b+k+\frac{3}{2})}} \\
+\betaab_{n,k,3} &:= \frac{\delta_{k-1}^{(b)}}{|| P_{n,k-1}^{(a,b)} ||_{W^{(a,b)}}^2} \: <H_{n-k}^{(a, b+k+\half)}, H_{n-k+1}^{(a, b+k-\half)}>_{H^{(a, b+k+\half)}} \\
+\betaab_{n,k,4} &:= \frac{\delta_{k}^{(b)}}{|| P_{n,k+1}^{(a,b)} ||_{W^{(a,b)}}^2} \: <H_{n-k}^{(a, b+k+\half)}, H_{n-k-1}^{(a, b+k+\frac{3}{2})}>_{H^{(a, b+k+\frac{3}{2})}} \\
+\betaab_{n,k,5} &:= \frac{\delta_{k-1}^{(b)}}{|| P_{n+1,k-1}^{(a,b)} ||_{W^{(a,b)}}^2} \: <H_{n-k}^{(a, b+k+\half)}, H_{n-k+2}^{(a, b+k-\half)}>_{H^{(a, b+k+\half)}} \\
+\betaab_{n,k,6} &:= \frac{\delta_{k}^{(b)}}{|| P_{n+1,k+1}^{(a,b)} ||_{W^{(a,b)}}^2} \: <H_{n-k}^{(a, b+k+\half)}, H_{n-k}^{(a, b+k+\frac{3}{2})}>_{H^{(a, b+k+\frac{3}{2})}}. 
+\end{align}
+
+Now, set \(J_x^{(a,b)}, J_y^{(a,b)}\) as the \(\half (N+1)(N+2) \times \half (N+1)(N+2)\) Jacobi matrices corresponding to
+\begin{align}
+J_x^{(a,b)} \bigPab(x,y) = x \bigPab(x,y), \quad J_y^{(a,b)} \bigPab(x,y) = y \bigPab(x,y).
+\end{align}
+Then  \(J_x^{(a,b)}, J_y^{(a,b)}\) have the Banded-Block-Banded structures
+\begin{align}
+J_{x/y}^{(a,b)} &= \begin{bmatrix}
+		B^{x/y}_0 & A^{x/y}_0 & & & & \\
+		C^{x/y}_1 & B^{x/y}_1 & A^{x/y}_1 & & & \\
+		& C^{x/y}_2 & B^{x/y}_2 & A^{x/y}_2  & & & \\
+		& & C^{x/y}_3 & \ddots & \ddots & \\
+		& & & \ddots & \ddots & \ddots \\
+	\end{bmatrix}
+\end{align}
+where
+\begin{align}
+A^x_n &:= \begin{bmatrix}
+		\alphaab_{n+1,0,1} & 0 & \hdots & 0 \\
+		& \ddots & & \vdots & \\
+		& & \alphaab_{n+1,n,1} & 0 \\
+	    \end{bmatrix} \in \R^{(n+1)\times(n+2)}, \quad n = 0,1,2,\dots,N-1 \\
+B^x_n &:= \begin{bmatrix}
+		\alphaab_{n,0,2} & & \\
+		& \ddots & \\
+		& & \alphaab_{n,n,2} \\
+	    \end{bmatrix} \in \R^{(n+1)\times(n+1)} \quad n = 0,1,2,\dots,N \\
+C^x_n &:= \big( A^x_n \big)^T \in \R^{(n+1)\times n},  \quad n = 1,2,\dots,N, \\ 
+\nonumber \\
+A^y_n &:= \begin{bmatrix}
+		0 & \betaab_{n,0,6} & & & \\
+		\betaab_{n,1,5} & 0 & & & \\
+		& \ddots & \ddots & \ddots & \\
+		& & \betaab_{n,n,5}& 0 & \betaab_{n,n,6} \\
+	    \end{bmatrix} \in \R^{(n+1)\times(n+2)}, \quad n = 0,1,2,\dots,N-1 \\
+B^y_n &:= \begin{bmatrix}
+		0 & \betaab_{n,0,4} & & \\
+		\betaab_{n,1,3} & 0 & \ddots & \\
+		& \ddots & \ddots & \betaab_{n,n-1,4} \\
+		& & \betaab_{n,n,3} & 0
+	    \end{bmatrix} \in \R^{(n+1)\times(n+1)}  \quad n = 0,1,2,\dots,N \\
+C^y_n &:= \begin{bmatrix}
+		0 & \betaab_{n,0,2} & & \\
+		\betaab_{n,1,1} & 0 & \ddots & \\
+		& \ddots & \ddots & \betaab_{n,n-2,2} \\
+		& & \ddots & 0 \\
+		& & & \betaab_{n,n,1} \\
+	    \end{bmatrix} \in \R^{(n+1)\times n}, \quad n = 1,2,\dots,N.
+\end{align}
+
+\subsection{Clenshaw on the half disk}
+
+Combining each system in (71) we can write the block-tridiagonal system
+\begin{align}
+\renewcommand\arraystretch{1.3}
+\mleft[
+\begin{array}{cccc}
+		1 & & & \\
+		B_0-G_0(x,y) & A_0 & & \\
+		C_1 & B_1-G_1(x,y) & \quad A_1 \quad & \\
+		& C_2 & \ddots & \ddots \\
+		& & \ddots &
+\end{array}
+\mright]
+\bigPab(x,y)
+=
+\begin{bmatrix}
+	P^{(a,b)}_{0,0} \\ 0 \\ 0 \\ \vdots \\ 0 \\
+\end{bmatrix}.
+\end{align}
+where we note \(P^{(a,b)}_{0,0}(x,y) \equiv H_0^{(a,b)} \: P_0^{(b,b)}\), and for each \(n = 0,1,\dots,N\):
+\begin{align}
+A_n &:= \begin{bmatrix}
+		A^x_n \\
+		A^y_n \\
+		A^z_n
+	    \end{bmatrix} \in \R^{2(n+1)\times(n+3)} \quad (n \ne N), \quad
+C_n := \begin{bmatrix}
+		C^x_n \\
+		C^y_n
+	    \end{bmatrix} \in \R^{2(n+1)\times n} \quad (n \ne 0), \nonumber \\
+B_n &:= \begin{bmatrix}
+		B^x_n \\
+		B^y_n
+	    \end{bmatrix} \in \R^{2(n+1)\times(n+1)}, \quad
+G_n(x,y,z) := \begin{bmatrix}
+		xI_{n+1} \\
+		yI_{n+1}
+	    \end{bmatrix} \in \R^{2(n+1)\times(n+1)}.
+\end{align}
+ 
+For each \(n = 0,1,\dots,N-1\) let \(\Dnt\) be any matrix that is a left inverse of \(A_n\), i.e. such that \(\Dnt A_n = I_{n+3}\). Multiplying our system by the preconditioner matrix that is given by the block diagonal matrix of the \(\Dnt\)'s, we obtain a lower triangular system \citep{dunkl2014orthogonal} \bstodo{Try to always include page numbers in citations to books, as otherwise you'll forget where it is}, which can be expanded to obtain the recurrence:
+\begin{align}
+\begin{cases}
+\bigPab_{-1}(x,y) := 0 \\
+\bigPab_{0}(x,y) := P^{(a,b)}_{0,0} \\
+\bigPab_{n+1}(x,y) = -\Dnt (B_n-G_n(x,y)) \bigPab_n - \Dnt C_n  \,\bigPab_{n-1}(x,y), \quad n = 1,2,3,\dots,N.
+\end{cases}
+\end{align}
+
+Note that we can define \(\Dnt\) as follows. For \(n\) even:
+\begin{align}
+\Dnt := \begin{bmatrix}
+		\frac{1}{\alphaab_{n+1,0,1}} & & &  \\
+		& \ddots & & & \\
+		& & \frac{1}{\alphaab_{n+1,n,1}} & \\
+		0 & \hdots & 0 & \eta_{m-1} & \hdots & 0 & \eta_1 & 0 & \eta_0
+	    \end{bmatrix},
+\end{align}
+where
+\begin{align}
+m &= \frac{n}{2} + 1, \quad \eta_0 = \frac{1}{\betaab_{n,n,6}}, \nonumber \\
+\eta_k &= -\frac{\betaab_{n,n-2(k-1),5} \: \eta_{k-1}}{\betaab_{n,n-2k,6}} \quad k = 1,\dots,m-1.
+\end{align}
+
+For \(n\) odd:
+
+\begin{align}
+\Dnt := \begin{bmatrix}
+		\frac{1}{\alphaab_{n+1,0,1}} & &  \\
+		& \ddots & & &  \\
+		& & \ddots & & \\
+		& & & \frac{1}{\alphaab_{n+1,n,1}} & \\
+		\xi & 0 & \hdots & 0 & 0 & \eta_{m-2} & \hdots & 0 & \eta_0
+	    \end{bmatrix},
+\end{align}
+ where
+\begin{align}
+m &= \frac{n+1}{2} + 1, \quad \eta_0 = \frac{1}{\betaab_{n,n,6}}, \nonumber \\
+\eta_k &= -\frac{\betaab_{n,n-2(k-1),5} \: \eta_{k-1}}{\betaab_{n,n-2k,6}} \quad k = 1,\dots,m-2, \\
+\xi &= -\frac{\betaab_{n,1,5} \: \eta_{m-2}}{\alphaab_{n+1,0,1}}. \nonumber
+\end{align}
+
+%
+\section{Sparse partial differential operators}
+
+We can obtain the matrix operator for \(\Delta\), that will take us from coefficients for expansion in the weighted space
+\[
+\Wii(x,y) \: \bigP^{(1,1)}(x,y)
+\]
+to coefficients in the non-weighted space
+\[
+\bigP^{(1,1)}(x,y).
+\]
+Importantly, this operator will have Banded-Block-Banded structure, and hence will be sparse. Note that this construction will ensure the imposition of the Dirichlet zero boundary conditions on $\Omega$.
+
+For general \(a,b\) and general function \(f(x,y) = \mathbf{f}^T \: \bigPab(x,y)\), there exist Banded-Block-Banded matrix operators \(D_x^{(a,b)}, \: D_y^{(a,b)}, \: W_x^{(a,b)}, \: W_y^{(a,b)}\) such that:
+\begin{align}
+\dx[f(x,y)] &= \bigP^{(a+1,b+1)}(x,y)^T \: D_x^{(a,b)} \: \mathbf{f}, \\
+\dy[f(x,y)] &= \bigP^{(a,b+1)}(x,y)^T \: D_y^{(a,b)} \: \mathbf{f}, \\
+\dx[\Wab(x,y) \: f(x,y)] &= W^{(a-1,b-1)}(x,y) \: \bigP^{(a-1,b-1)}(x,y)^T \: W_x^{(a,b)} \: \mathbf{f}, \\
+\dy[\Wab(x,y) \: f(x,y)] &= W^{(a,b-1)}(x,y) \: \bigP^{(a,b-1)}(x,y)^T \: W_y^{(a,b)} \: \mathbf{f}.
+\end{align}
+The incrementing and decrementing of parameters as seen here is analogous to other well known orthogonal polynomials families' derivatives, for example the Jacobi polynomials, as seen in the DLMF \cite{DLMFDerivatives}.
+Further, we note that there exist Banded-Block-Banded matrix operators \(T^{(1,0)\to(0,0)}\) and \(T^{(0,1)\to(1,1)}\) such that:
+\begin{align}
+x \bigP^{(1,0)}(x,y) &= \Big(T^{(1,0)\to(0,0)} \Big)^T \: \bigP^{(0,0)}(x,y) \\
+\bigP^{(0,1)}(x,y) &= \Big(T^{(0,1)\to(1,1)} \Big)^T \: \bigP^{(1,1)}(x,y)
+\end{align}
+Then, the operator \(\Delta\) is given by
+\begin{align}
+    \Delta := D_x^{(0,0)} \: W_x^{(1,1)} + T^{(0,1)\to(1,1)} \: D_y^{(0,0)} \: T^{(1,0)\to(0,0)} \: W_y^{(1,1)}
+\end{align}
+
+
+%
+\section{P-finite element methods using sparse operators}
+Consider the 2D Dirichlet problem on a disk-splice or rhobus $\Omega$:
+\begin{align}
+	\begin{cases}
+                \Delta u(x,y) = f(x,y) \quad \text{in } \Omega \\
+                u(x,y) = 0 \quad \text{on } \partial \Omega
+         \end{cases}
+\end{align}
+This has the weak formulation for any test function $v$
+\begin{align}
+	L(v) := \int \int_\Omega f \: v \: dy \: dx = - \int \int_\Omega \nabla u \cdot \nabla v \: dy \: dx =: a(u,v).
+\end{align}
+
+We can choose our finite dimensional space $V$ to
+
+
+
+%
+\section{Examples on the half disk with zero BCs}
+
+\subsection{Poisson}
+
+Fix \(a, b = 1,1\). Find \(u(x,y)\) given a function \(f(x,y)\) such that:
+\begin{align}
+    \Delta(\Wii \: u)(x,y) = f(x,y) \quad \text{in } \Omega
+    \end{align}
+    where we recall
+    \begin{align}
+    \Wii(x,y) = x \: (1-x^2-y^2)
+\end{align}
+which ensures a boundary condition that \((\Wii \: u)(x,y) = 0\) on \(\partial \Omega\).
+
+The first step is to obtain the expansion of \(f\) in the \(\Pii\) basis, i.e. obtain the vector \(\mathbf{f}\) such that \(f(x,y) = \mathbf{f}^T \: \bigP^{(1,1)}(x,y) = \sum_{n=0}^N \mathbf{f}_n^T \: \bigP_n^{(1,1)}(x,y)\) for some \(N \in \N\). The coefficients of \(u\) in the \(\Pii\) basis are then given by 
+\begin{align}
+    \mathbf{u} = \Delta \text{\textbackslash} \mathbf{f}.
+\end{align}
+
+\subsection{Helmholtz}
+
+\subsection{Advection-Diffusion}
+
+%
+\section{Future work - orthogonal polynomials on the hemisphere and spherical triangles}
+
+We will use a similar idea of projecting up from 1D OPs to the interval, to 2D OPs on the disk, to 3D OPs on the sphere. Initially, we will add to the ApproxFun library by adding capability to work with OPs on the half disk (2D) with weights governed by parameters that will be incremented/decremented after an application of an operator (e.g. partial derivative). With this, we can obtain a family of OPs on the hemisphere, with sparse relations.
+
+Beyond this, solving PDEs on isosceles triangles should follow using the same procedure. However, we are expecting that to solve PDEs on spherical triangles (as is our ultimate goal) will require further ideas beyond the procedures given in this document.
+
+
+\sotodoinline{Expand bibliography: cite spherical harmonics books, Huybrechs, ECMWF paper, etc.}
+
+\bibliography{halfdisk-bib}
+
+
+\end{document}
+
+
+
+
+
+
+
+
+
+
+
+  
