@@ -149,7 +149,7 @@ This document is to derive a framework for solving PDEs on the half disk using s
 
 \section{Orthogonal polynomials  and function approximation on the half disk (2D)}
 
-By using a similar process to \cite{dunkl2014orthogonal} (p??) \bstodo{Try to always include page numbers in citations to books, as otherwise you'll forget where it is} we can construct 2D orthogonal polynomials on the half disk from 1D orthogonal polynomials on the intervals \([0,1]\) and \([-1,1]\). We denote the half disk by \(\Omega\) where
+By using a similar process to \cite{dunkl2014orthogonal} (p55-56) we can construct 2D orthogonal polynomials on the half disk from 1D orthogonal polynomials on the intervals \([0,1]\) and \([-1,1]\). We denote the half disk by \(\Omega\) where
 \begin{align}
 \Omega := \{(x,y) \in \R^2 \quad | \quad 0 < x < 1, \: -(1-x^2)^{\half} < y < (1-x^2)^{\half}\}.
 \end{align}
@@ -415,7 +415,7 @@ G_n(x,y,z) := \begin{bmatrix}
 	    \end{bmatrix} \in \R^{2(n+1)\times(n+1)}.
 \end{align}
  
-For each \(n = 0,1,\dots,N-1\) let \(\Dnt\) be any matrix that is a left inverse of \(A_n\), i.e. such that \(\Dnt A_n = I_{n+3}\). Multiplying our system by the preconditioner matrix that is given by the block diagonal matrix of the \(\Dnt\)'s, we obtain a lower triangular system \citep{dunkl2014orthogonal} \bstodo{Try to always include page numbers in citations to books, as otherwise you'll forget where it is}, which can be expanded to obtain the recurrence:
+For each \(n = 0,1,\dots,N-1\) let \(\Dnt\) be any matrix that is a left inverse of \(A_n\), i.e. such that \(\Dnt A_n = I_{n+3}\). Multiplying our system by the preconditioner matrix that is given by the block diagonal matrix of the \(\Dnt\)'s, we obtain a lower triangular system \citep{dunkl2014orthogonal} (p78), which can be expanded to obtain the recurrence:
 \begin{align}
 \begin{cases}
 \bigPab_{-1}(x,y) := 0 \\
@@ -538,8 +538,6 @@ We will use a similar idea of projecting up from 1D OPs to the interval, to 2D O
 
 Beyond this, solving PDEs on isosceles triangles should follow using the same procedure. However, we are expecting that to solve PDEs on spherical triangles (as is our ultimate goal) will require further ideas beyond the procedures given in this document.
 
-
-\sotodoinline{Expand bibliography: cite spherical harmonics books, Huybrechs, ECMWF paper, etc.}
 
 \bibliography{halfdisk-bib}
 
