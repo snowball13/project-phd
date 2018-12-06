@@ -252,15 +252,15 @@ W^{(a,b)}(x,y) &= x^a \: (1-x^2-y^2)^b, \quad \text{for } (x,y) \in \Omega, \\
 \end{align}
 Using the Golub-Welsch algorithm, we can obtain nodes and weights for 1D quadrature rules on \([0,1]\) with weight \(s^a \: (1-s^2)^{b+\half}\), and on \([-1,1]\) with weight \((1-t^2)^b\).
 
-Let \(f(x,y)\) be a degree \(d\) polynomial that is even in \(y\). Then there exists a polynomial in \(x,y\) \(\tilde{f}(x,y)\) such that \(g(s,t) := f(x, y) = f(s, (1-s^2)^\half t) = \tilde{f}(s, (1-s^2) t^2)\). Now, as \(\tilde{f}\) is a polynomial, so must \(g\) be a polynomial of degree \(\tilde{d}\) \bstodo{What is the degree of g?} \ in \(s\) and \(t\). Thus our quadrature rule will be exact:
+Let \(f(x,y)\) be polynomial that is even in \(y\) of degree $d_1$ in $x$ and degree $d_2$ in $y$. Then there exists a polynomial \(\tilde{f}(x,y)\) in \(x,y\) such that \(g(s,t) := f(x, y) = f(s, (1-s^2)^\half t) = \tilde{f}(s, (1-s^2) t^2)\) (i.e. that $d_2$ is an even integer). Now, as \(\tilde{f}\) is a polynomial, so must \(g\) be a polynomial of degree $d_1+\frac{d_2}{2}$ in $s$ and degree $d_2$ in $t$. Thus a quadrature rule of the following will be exact for the polynomial $f(x,y)$ (even in \(y\) of degree $\le d_1$ in $x$ and degree $\le d_2$ in $y$):
 \begin{align}
 & \quad \int_0^1 \int_{-\rho(x)}^{\rho(x)} W^{(a,b)}(x,y) \: f(x,y) \: dy \: dx \\
 &= \int_0^1 \int_{-1}^1 V^{(a,b)}(s,t) \: g(s,t) \: (1-s^2)^\half \: dt \: ds \\
-&= \int_0^1 s^a \: (1-s^2)^{b+\half} \: \Big( \sum_k w_k^{(t)} \: g(s, t_k) \Big) \: ds \\
-&= \sum_j \sum_k w_j^{(s)} w_k^{(t)} \: g(s_j, t_k) \\
-&= \sum_j \sum_k w_j^{(s)} w_k^{(t)} \: f(x_j, y_{j,k}),
-\end{align} \bstodo{What is the degree of g?}
-where \(x_j := s_j,\) \(y_{j,k} := \rho(s_j) \: t_k\).
+&= \int_0^1 s^a \: (1-s^2)^{b+\half} \: \Big( \sum_k^{\half(d_2 + 1)} w_k^{(t)} \: g(s, t_k) \Big) \: ds \\
+&= \sum_j^{\half(d_1 + \frac{d_2}{2} + 1)} \sum_k^{\half(d_2 + 1)} w_j^{(s)} w_k^{(t)} \: g(s_j, t_k) \\
+&= \sum_j^{\half(d_1 + \frac{d_2}{2} + 1)} \sum_k^{\half(d_2 + 1)} w_j^{(s)} w_k^{(t)} \: f(x_j, y_{j,k}),
+\end{align}
+where \(x_j := s_j,\) \(y_{j,k} := \rho(s_j) \: t_k\) are the quadrature points.
 
 We further note that for any polynomial \(f(x,y)\) that is odd in \(y\),
 \begin{align}
@@ -278,11 +278,12 @@ Then our quadrature rule for any polynomial \(f(x,y)\) on \(\Omega\) is:
 \begin{align}
 \int \int_\Omega W^{(a,b)}(x,y) \: f(x,y) \: dy \: dx \approx \half \: \sum_{j=1}^{N^2} w_j \: \big[ f(x_j, y_j) + f(x_j, -y_j) \big],
 \end{align}
-exact for any polynomial where \(deg(f(x,\cdot)) \le 2N-1\) and \(deg(f(\cdot,y)) \le 2N-1\). Thus,
+and is exact for any polynomial $f(x,y)$ where the degree in $x$ is $\le N$ and the degree in $y$ is $\le 2N-1$. Thus,
 \begin{align}
 < f, \: \Pnk^{(a,b)} >_{W^{(a,b)}} &= \half \: \sum_{j=1}^{N^2} w_j \: \big[ \big(f(x_j, y_j) \: \Pnk^{(a,b)}(x_j, y_j)\big) +\big(f(x_j, -y_j) \: \Pnk^{(a,b)}(x_j, -y_j)\big) \big], \\
-|| \Pnk^{(a,b)} ||_{W^{(a,b)}}^2 &= \half \: \sum_{j=1}^{N^2} w_j \: \big[ \Pnk^{(a,b)}(x_j, y_j)^2 + \Pnk^{(a,b)}(x_j, -y_j)^2 \big].
+|| \Pnk^{(a,b)} ||_{W^{(a,b)}}^2 &= \half \: \sum_{j=1}^{N^2} w_j \: \big[ \Pnk^{(a,b)}(x_j, y_j)^2 + \Pnk^{(a,b)}(x_j, -y_j)^2 \big],
 \end{align}
+for suitably large $N$.
 
 
 \subsection{Jacobi matrices}
@@ -515,9 +516,9 @@ We can choose our finite dimensional space $V$ to
 Fix \(a, b = 1,1\). Find \(u(x,y)\) given a function \(f(x,y)\) such that:
 \begin{align}
     \Delta(\Wii \: u)(x,y) = f(x,y) \quad \text{in } \Omega
-    \end{align}
+\end{align}
     where we recall
-    \begin{align}
+\begin{align}
     \Wii(x,y) = x \: (1-x^2-y^2)
 \end{align}
 which ensures a boundary condition that \((\Wii \: u)(x,y) = 0\) on \(\partial \Omega\).
@@ -527,9 +528,39 @@ The first step is to obtain the expansion of \(f\) in the \(\Pii\) basis, i.e. o
     \mathbf{u} = \Delta \text{\textbackslash} \mathbf{f}.
 \end{align}
 
-\subsection{Helmholtz}
 
-\subsection{Advection-Diffusion}
+\subsection{Inhomogenous Helmholtz}
+
+Fix \(a, b = 1,1\). Find \(u(x,y)\) given a function \(f(x,y)\) such that:
+\begin{align}
+    \Delta(\Wii u)(x,y) + k^2 u(x,y) = - f(x,y) \quad \text{in } \Omega
+\end{align}
+noting that this ensures a boundary condition that \((\Wii \: u)(x,y) = 0\) on \(\partial \Omega\).
+
+Again, the first step is to obtain the expansion of \(f\) in the \(\Pii\) basis. The coefficients of \(u\) in the \(\Pii\) basis are then given by 
+\begin{align}
+    \mathbf{u} = - (k^2I + \Delta) \text{\textbackslash} \mathbf{f}.
+\end{align}
+
+
+\subsection{Heat Equation}
+
+Fix \(a, b = 1,1\), and consider
+\begin{align}
+\frac{\partial u}{\partial t}(x,y) = \Delta(\Wii \: u)(x,y) \quad \text{in } \Omega
+\end{align}
+
+Using a backward Euler time-stepping method, we can formulate this for \(t = 0,1,2,\dots\) and step length $h$:
+\begin{align}
+u_{t+1}(x,y) - u_t (x,y) = h \Delta(\Wii \: u_{t+1})(x,y) \quad \text{for } (x,y) \in \Omega.
+\end{align}
+
+There exist $N \in \N$ such that, for each $t = 0,1,2,\dots$, $u_t (x,y) = \sum_{n=0}^N \mathbf{u_t}_n^T \: \bigP_n^{(1,1)}(x,y) = \mathbf{u}_t^T \; \bigP^{(1,1)}(x,y)$. Then, using the operator $\Delta$, we can solve this system for a given initial condition $\mathbf{u_0}$ by iterating for $t = 0,1,2,\dots,t_{max}$:
+\begin{align}
+    \mathbf{u_{t+1}} &= (I - h \Delta) \: \text{\textbackslash} \: \mathbf{u_t}, \\
+    \big( u_{t+1}(x,y) &= \mathbf{u}_{t+1}^T \; \bigP^{(1,1)}(x,y) \big) \nonumber.
+\end{align}
+
 
 %
 \section{Future work - orthogonal polynomials on the hemisphere and spherical triangles}

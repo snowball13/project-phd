@@ -486,15 +486,15 @@ W^{(a,b)}(x,y) &= x^a \: (1-x^2-y^2)^b, \quad \text{for } (x,y) \in \Omega, \\
 \end{align}
 Using the Golub-Welsch algorithm, we can obtain nodes and weights for 1D quadrature rules on \([0,1]\) with weight \(s^a \: (1-s^2)^{b+\half}\), and on \([-1,1]\) with weight \((1-t^2)^b\).
 
-Let \(f(x,y)\) be a degree \(d\) polynomial that is even in \(y\). Then there exists a polynomial in \(x,y\) \(\tilde{f}(x,y)\) such that \(g(s,t) := f(x, y) = f(s, (1-s^2)^\half t) = \tilde{f}(s, (1-s^2) t^2)\). Now, as \(\tilde{f}\) is a polynomial, so must \(g\) be a polynomial of degree \(\tilde{d}\) \bstodo{What is the degree of g?} \ in \(s\) and \(t\). Thus our quadrature rule will be exact:
+Let \(f(x,y)\) be polynomial that is even in \(y\) of degree $d_1$ in $x$ and degree $d_2$ in $y$. Then there exists a polynomial \(\tilde{f}(x,y)\) in \(x,y\) such that \(g(s,t) := f(x, y) = f(s, (1-s^2)^\half t) = \tilde{f}(s, (1-s^2) t^2)\) (i.e. that $d_2$ is an even integer). Now, as \(\tilde{f}\) is a polynomial, so must \(g\) be a polynomial of degree $d_1+\frac{d_2}{2}$ in $s$ and degree $d_2$ in $t$. Thus a quadrature rule of the following will be exact for the polynomial $f(x,y)$ (even in \(y\) of degree $\le d_1$ in $x$ and degree $\le d_2$ in $y$):
 \begin{align}
 & \quad \int_0^1 \int_{-\rho(x)}^{\rho(x)} W^{(a,b)}(x,y) \: f(x,y) \: dy \: dx \\
 &= \int_0^1 \int_{-1}^1 V^{(a,b)}(s,t) \: g(s,t) \: (1-s^2)^\half \: dt \: ds \\
-&= \int_0^1 s^a \: (1-s^2)^{b+\half} \: \Big( \sum_k w_k^{(t)} \: g(s, t_k) \Big) \: ds \\
-&= \sum_j \sum_k w_j^{(s)} w_k^{(t)} \: g(s_j, t_k) \\
-&= \sum_j \sum_k w_j^{(s)} w_k^{(t)} \: f(x_j, y_{j,k}),
-\end{align} \bstodo{What is the degree of g?}
-where \(x_j := s_j,\) \(y_{j,k} := \rho(s_j) \: t_k\).
+&= \int_0^1 s^a \: (1-s^2)^{b+\half} \: \Big( \sum_k^{\half(d_2 + 1)} w_k^{(t)} \: g(s, t_k) \Big) \: ds \\
+&= \sum_j^{\half(d_1 + \frac{d_2}{2} + 1)} \sum_k^{\half(d_2 + 1)} w_j^{(s)} w_k^{(t)} \: g(s_j, t_k) \\
+&= \sum_j^{\half(d_1 + \frac{d_2}{2} + 1)} \sum_k^{\half(d_2 + 1)} w_j^{(s)} w_k^{(t)} \: f(x_j, y_{j,k}),
+\end{align}
+where \(x_j := s_j,\) \(y_{j,k} := \rho(s_j) \: t_k\) are the quadrature points.
 
 We further note that for any polynomial \(f(x,y)\) that is odd in \(y\),
 \begin{align}
@@ -512,11 +512,12 @@ Then our quadrature rule for any polynomial \(f(x,y)\) on \(\Omega\) is:
 \begin{align}
 \int \int_\Omega W^{(a,b)}(x,y) \: f(x,y) \: dy \: dx \approx \half \: \sum_{j=1}^{N^2} w_j \: \big[ f(x_j, y_j) + f(x_j, -y_j) \big],
 \end{align}
-exact for any polynomial where \(deg(f(x,\cdot)) \le 2N-1\) and \(deg(f(\cdot,y)) \le 2N-1\). Thus,
+and is exact for any polynomial $f(x,y)$ where the degree in $x$ is $\le N$ and the degree in $y$ is $\le 2N-1$. Thus,
 \begin{align}
 < f, \: \Pnk^{(a,b)} >_{W^{(a,b)}} &= \half \: \sum_{j=1}^{N^2} w_j \: \big[ \big(f(x_j, y_j) \: \Pnk^{(a,b)}(x_j, y_j)\big) +\big(f(x_j, -y_j) \: \Pnk^{(a,b)}(x_j, -y_j)\big) \big], \\
-|| \Pnk^{(a,b)} ||_{W^{(a,b)}}^2 &= \half \: \sum_{j=1}^{N^2} w_j \: \big[ \Pnk^{(a,b)}(x_j, y_j)^2 + \Pnk^{(a,b)}(x_j, -y_j)^2 \big].
+|| \Pnk^{(a,b)} ||_{W^{(a,b)}}^2 &= \half \: \sum_{j=1}^{N^2} w_j \: \big[ \Pnk^{(a,b)}(x_j, y_j)^2 + \Pnk^{(a,b)}(x_j, -y_j)^2 \big],
 \end{align}
+for suitably large $N$.
 
 
 \subsection{Jacobi matrices}
