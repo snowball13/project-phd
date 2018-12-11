@@ -125,6 +125,9 @@
 \newcommand{\Pio}{P^{(1,0)}}
 \newcommand{\dx}{\frac{\partial}{\partial x}}
 \newcommand{\dy}{\frac{\partial}{\partial y}}
+\newcommand{\element}{\tau}
+\newcommand{\refelement}{\hat{\tau}}
+\newcommand{\FEset}{\mathcal{T}}
 
 %\usepackage{media9}
 %\graphicspath{ {../sphere/plots} }
@@ -167,13 +170,15 @@ We define \(\Pnk(x,y) := p_{n-k,k}(x) \: \rho(x)^k \: q_k(\frac{y}{\rho(x)})\) f
 Let \(a, b \in \R\). For the half disk, if we set:
 
 \begin{align}
+\begin{cases}
 \alpha &:= 0 \\
 \beta &:= 1 \\
 \gamma &:= -1 \\
-\delta &:= -c = 1 \\
+\delta &:= -\gamma = 1 \\
 \rho(x) &:= (1-x^2)^{\half} \\
 w_1(x) &:= x^a \: (1-x^2)^b \\
 w_2(x) &:= (1-x^2)^b = (1-x)^b \: (1+x)^b,
+\end{cases}
 \end{align}
 
 we can obtain the 1D orthogonal polynomials \(\{H_n^{(a, b)}\}\) orthogonal with respect to the weight \(x^a \: (1-x^2)^b\), and \(\{P_n^{(b, b)}\}\) orthogonal with respect to the weight \((1-x^2)^b\) (so \(\{P_n^{(b, b)}\}\) are in fact Jacobi polynomials), leading to the two parameter 2D orthogonal polynomials \(\{\Pnk\}\) given by, for \(0 \le k \le n, \: n = 0,1,2,\dots,\)
@@ -185,7 +190,7 @@ orthogonal on \(\Omega\) with respect to the weight
 W^{(a,b)}(x,y) := x^a \: (1-x^2-y^2)^b, \quad (x,y) \in \Omega.
 \end{align}
 
-This provides us with a family of orthogonal polynomial spaces on the half disk.
+This provides us with a family of orthogonal polynomial spaces on the half disk. Note that we can obtain OP families on other disk-splices and rhombi by appropriately choosing the functions and constants in (2). \bstodo{Should I add in the rhombi / other disk splices formulations here?}
 
 
 \subsection{Obtaining the coefficients for expansion of a function}
@@ -239,7 +244,7 @@ f_{n,k} &:= \frac{\langle f, \: \Pnk^{(a,b)} \rangle_{W^{(a,b)}}}{|| \Pnk^{(a,b)
 
 
 
-We can develop a quadrature rule on \(\Omega\) in order to evaluate (40) and obtain the coefficients vector \(\mathbf{f}\) as follows. 
+We can develop a quadrature rule on \(\Omega\) in order to evaluate (40) and obtain the coefficients vector \(\mathbf{f}\) as follows. \bstodo{Should I add in the rhombi / other disk splices formulations here?}
 
 We will use the substitution that
 \begin{align}
@@ -375,6 +380,8 @@ C^y_n &:= \begin{bmatrix}
 	    \end{bmatrix} \in \R^{(n+1)\times n}, \quad n = 1,2,\dots,N.
 \end{align}
 
+Note that the sparsity of the Jacobi matrices (in particular the sparsity of the sub-blocks) comes from the natural sparsity of the three-term recurrences of the 1D OPs. In other words, sparsity is not dependent on the domain.
+
 \subsection{Clenshaw on the half disk}
 
 Combining each system in (71) we can write the block-tridiagonal system
@@ -486,25 +493,60 @@ x \bigP^{(1,0)}(x,y) &= \Big(T^{(1,0)\to(0,0)} \Big)^T \: \bigP^{(0,0)}(x,y) \\
 \end{align}
 Then, the operator \(\Delta\) is given by
 \begin{align}
-    \Delta := D_x^{(0,0)} \: W_x^{(1,1)} + T^{(0,1)\to(1,1)} \: D_y^{(0,0)} \: T^{(1,0)\to(0,0)} \: W_y^{(1,1)}
+    \Delta := D_x^{(0,0)} \: W_x^{(1,1)} + T^{(0,1)\to(1,1)} \: D_y^{(0,0)} \: T^{(1,0)\to(0,0)} \: W_y^{(1,1)}.
 \end{align}
+The sparsity of the differential operators can be shown using a simply integration by parts argument, again showing that the sparsity for differential operators is not dependent on the domain.
 
 
 %
 \section{P-finite element methods using sparse operators}
-Consider the 2D Dirichlet problem on a disk-splice or rhobus $\Omega$:
+\bstodoinline{Need to discuss this}
+We follow the method of \cite{beuchler2006new}. Consider the 2D Dirichlet problem on a domain $\Omega$:
 \begin{align}
 	\begin{cases}
-                \Delta u(x,y) = f(x,y) \quad \text{in } \Omega \\
-                u(x,y) = 0 \quad \text{on } \partial \Omega
+         - \Delta u(x,y) = f(x,y) \quad \text{in } \Omega \\
+         u = 0 \quad \text{on } \partial \Omega
          \end{cases}
 \end{align}
-This has the weak formulation for any test function $v$
+This has the weak formulation for any test function $v \in V := H_0^1(\Omega) = \{v \in H^1(\Omega) \quad | \quad v|_{\partial \Omega} = 0 \}$,
 \begin{align}
-	L(v) := \int \int_\Omega f \: v \: dy \: dx = - \int \int_\Omega \nabla u \cdot \nabla v \: dy \: dx =: a(u,v).
+	L(v) := \int_\Omega f \: v \: d\mathbf{x} = \int_\Omega \nabla u \cdot \nabla v \: d\mathbf{x} =: a(u,v).
 \end{align}
 
-We can choose our finite dimensional space $V$ to
+Let $\FEset$ be the set of elements $\element$ that make up our finite element discretisation of the domain, where each $\element$ is a rhombus for example. We can choose our finite dimensional space $V_h = \{v_h \in V \quad | \quad deg(v_h)|_\element \le p \: \forall \element \in \FEset\}$.
+
+We seek $u_h \in V_h$ s.t.
+\begin{align}
+	L(v_h) = a(u_h,v_h) \quad \forall \: v_h \in V_h.
+\end{align}
+
+We can choose a basis for $V_h$ by using the orthogonal polynomials 
+\begin{align}
+\bigP(x,y) := \begin{bmatrix}
+		\bigP_0(x,y) \\
+		\hline
+		\bigP_1(x,y) \\
+		\hline
+		\bigP_2(x,y) \\
+		\hline
+		\vdots \\
+		\hline
+		\bigP_p(x,y)
+	\end{bmatrix},
+\quad
+\bigP_n(x,y) := \begin{bmatrix}
+		P_{n,0}(x,y) \\
+		\vdots \\
+		P_{n,n}(x,y)
+	\end{bmatrix} \in \R^{n+1} \quad \forall n = 0,1,2,\dots,p,
+\end{align}
+Appropriately relabelling these OPs as the set $\{\phi_1,\dots,\phi_N\}$, we can define the global stiffness matrix $A$ by $A_{ij} =  a(\phi_i, \phi_j)$. The global stiffness matrix can be computed using the element stiffness matrices $A^\element = \int_\element \nabla \bigP \cdot \nabla \bigP \: d\mathbf{x}, \: \element \in \FEset$. Then we have the linear system for our finite element problem:
+\begin{align}
+A\mathbf{u} = \mathbf{f}
+\end{align}
+where the vectors $\mathbf{u}, \mathbf{f}$ are the coefficient vectors for expansion of the solution $u_h$ and for the function $f$ respectively.
+
+Using the quadrature rule we have formulated for integrals on a rhombus element $\element$, and the sparse operator matrices for divergence (partial derivatives), we obtain a sparse global stiffness matrix.
 
 
 
@@ -544,7 +586,7 @@ Again, the first step is to obtain the expansion of \(f\) in the \(\Pii\) basis.
 
 
 \subsection{Heat Equation}
-
+\bstodo{Struggling to get plotting working}
 Fix \(a, b = 1,1\), and consider
 \begin{align}
 \frac{\partial u}{\partial t}(x,y) = \Delta(\Wii \: u)(x,y) \quad \text{in } \Omega
@@ -560,6 +602,7 @@ There exist $N \in \N$ such that, for each $t = 0,1,2,\dots$, $u_t (x,y) = \sum_
     \mathbf{u_{t+1}} &= (I - h \Delta) \: \text{\textbackslash} \: \mathbf{u_t}, \\
     \big( u_{t+1}(x,y) &= \mathbf{u}_{t+1}^T \; \bigP^{(1,1)}(x,y) \big) \nonumber.
 \end{align}
+
 
 
 %
