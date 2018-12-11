@@ -880,29 +880,34 @@ function getweightedpartialoperatory(S::HalfDiskSpace, N)
     end
     W
 end
-function gettransformoperator(S, N)
+function gettransformoperator(S::HalfDiskSpace, N)
     if Int(S.a) == 1 && Int(S.b) == 0
+        St = (S.family)(0.0, 0.0)
         T = BandedBlockBandedMatrix(Zeros{Float64}(sum(1:(N+2)),sum(1:(N+1))), (1:N+2, 1:N+1), (1,0), (0,0))
-        for n = 0:N, k = 0:n
-            j = Int(n*(n+1)/2 + k)
-            p = (x,y) -> (x * Fun(S, [zeros(j); 1])(x,y))
-            m = Int((n+3)*(n+4))
-            cfs = pad(Fun(p, (S.family)(0.0, 0.0), m).coefficients, sum(1:(n+2)))
-            cfs = PseudoBlockArray(cfs, 1:(n+2))
-            view(T, Block(n+1, n+1))[k+1, k+1] = cfs[Block(n+1)][k+1]
-            view(T, Block(n+2, n+1))[k+1, k+1] = cfs[Block(n+2)][k+1]
+        getopnorms(St, sum(1:N+2))
+        pts, w = pointswithweights(St, Int(ceil(N+1.5)^2))
+        for n=0:N, k=0:n
+            j = getindex!(n, k)
+            p = (x,y) -> (x * Fun(S, [zeros(j-1); 1])(x,y))
+            for m = n:n+1
+                i = getindex!(m, k)
+                view(T, Block(m+1, n+1))[k+1, k+1] = inner(St, p, Fun(St, [zeros(i-1); 1]), pts, w) / St.opnorms[i]
+            end
         end
         T
     elseif Int(S.a) == 0 && Int(S.b) == 1
+        St = (S.family)(1.0, 1.0)
+        getopnorms(St, sum(1:N+2))
+        pts, w = pointswithweights(St, Int(ceil(N+1.5)^2))
         T = BandedBlockBandedMatrix(Zeros{Float64}(sum(1:(N+1)),sum(1:(N+1))), (1:N+1, 1:N+1), (0,1), (0,0))
         for n = 0:N
             for k = 0:n-1
-                j = Int(n*(n+1)/2 + k)
-                m = Int((n+2)*(n+3))
-                cfs = pad(Fun(Fun(S, [zeros(j); 1]), (S.family)(1.0, 1.0), m).coefficients, sum(1:(n+1)))
-                cfs = PseudoBlockArray(cfs, 1:(n+1))
-                view(T, Block(n, n+1))[k+1, k+1] = cfs[Block(n)][k+1]
-                view(T, Block(n+1, n+1))[k+1, k+1] = cfs[Block(n+1)][k+1]
+                j = getindex!(n, k)
+                p = Fun(S, [zeros(j-1); 1])
+                for m = n-1:n
+                    i = getindex!(m, k)
+                    view(T, Block(m+1, n+1))[k+1, k+1] = inner(St, p, Fun(St, [zeros(i-1); 1]), pts, w) / St.opnorms[i]
+                end
             end
             view(T, Block(n+1, n+1))[n+1, n+1] = 1.0
         end
@@ -921,6 +926,11 @@ function laplace(D::HalfDiskFamily, N)
     G = getweightedpartialoperatory(D(1.0,1.0), N)
     A * B + C * E * F * G
 end
+
+function laplacesquare(D::HalfDiskFamily, N)
+    sparse([laplace(D, N) zeros(sum(1:N+2), sum(1:N+2)-sum(1:N+1))])
+end
+
 
 # Resize the coeffs vector to be of the expected/standard length for a degree N
 # expansion (so we can apply operators).
