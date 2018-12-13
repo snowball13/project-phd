@@ -1,7 +1,8 @@
 using ApproxFun, OrthogonalPolynomialFamilies, FastGaussQuadrature, SingularIntegralEquations, Test
 import OrthogonalPolynomialFamilies: golubwelsch, lanczos, halfdiskquadrule, gethalfdiskOP,
                                         jacobix, jacobiy, evalderivativex, evalderivativey,
-                                        differentiatex, differentiatey, resizecoeffs!, laplace
+                                        differentiatex, differentiatey, resizecoeffs!, laplace,
+                                        gettransformoperator
 
 
 
@@ -189,6 +190,24 @@ end
     Δ = laplace(D, N-1)
     u = Fun(S, Δ \ resizecoeffs!(f, N))
     @test u(z) ≈ U(z)
+end
+
+@testset "Conversion operators" begin
+    a, b = 1.0, 1.0; D = HalfDiskFamily(); S = D(a, b)
+    x, y = 0.457, -0.209; z = [x; y] # Test point
+    N = 5
+    f1 = Fun(D(0.0, 2.0), rand(sum(1:N+1)))
+    T = gettransformoperator(D(0.0, 2.0), N)
+    f2 = Fun(D(2.0, 2.0), T * f1.coefficients)
+    @test f2(z) ≈ f1(z)
+    f1 = Fun(D(0.0, 1.0), rand(sum(1:N+1)))
+    T = gettransformoperator(D(0.0, 1.0), N)
+    f2 = Fun(D(1.0, 1.0), T * f1.coefficients)
+    @test f2(z) ≈ f1(z)
+    f1 = Fun(D(1.0, 0.0), rand(sum(1:N+1)))
+    T = gettransformoperator(D(1.0, 0.0), N)
+    f2 = Fun(D(0.0, 0.0), T * f1.coefficients)
+    @test f2(z) ≈ x*f1(z)
 end
 
 

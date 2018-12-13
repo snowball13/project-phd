@@ -912,6 +912,31 @@ function gettransformoperator(S::HalfDiskSpace, N)
             view(T, Block(n+1, n+1))[n+1, n+1] = 1.0
         end
         T
+    elseif Int(S.a) == 0 && Int(S.b) == 2
+        St = (S.family)(2.0, 2.0)
+        getopnorms(St, sum(1:N+2))
+        pts, w = pointswithweights(St, Int(ceil(N+1.5)^2))
+        T = BandedBlockBandedMatrix(Zeros{Float64}(sum(1:(N+1)),sum(1:(N+1))), (1:N+1, 1:N+1), (0,2), (0,0))
+        n = 0; view(T, Block(n+1, n+1))[n+1, n+1] = 1.0
+        for n = 1:N
+            for k = 0:n-2
+                j = getindex!(n, k)
+                p = Fun(S, [zeros(j-1); 1])
+                for m = n-2:n
+                    i = getindex!(m, k)
+                    view(T, Block(m+1, n+1))[k+1, k+1] = inner(St, p, Fun(St, [zeros(i-1); 1]), pts, w) / St.opnorms[i]
+                end
+            end
+            k = n-1
+            j = getindex!(n, k)
+            p = Fun(S, [zeros(j-1); 1])
+            for m = n-1:n
+                i = getindex!(m, k)
+                view(T, Block(m+1, n+1))[k+1, k+1] = inner(St, p, Fun(St, [zeros(i-1); 1]), pts, w) / St.opnorms[i]
+            end
+            view(T, Block(n+1, n+1))[n+1, n+1] = 1.0
+        end
+        T
     else
         error("Invalid HalfDiskSpace")
     end
