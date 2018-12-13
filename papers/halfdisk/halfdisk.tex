@@ -120,7 +120,9 @@
 \newcommand{\Dnt}{D^T_n}
 \newcommand{\Wii}{W^{(1,1)}}
 \newcommand{\Pii}{P^{(1,1)}}
+\newcommand{\bigPii}{{\mathbb{P}^{(1,1)}}}
 \newcommand{\Poo}{P^{(0,0)}}
+\newcommand{\bigPoo}{{\mathbb{P}^{(0,0)}}}
 \newcommand{\Poi}{P^{(0,1)}}
 \newcommand{\Pio}{P^{(1,0)}}
 \newcommand{\dx}{\frac{\partial}{\partial x}}
@@ -128,6 +130,8 @@
 \newcommand{\element}{\tau}
 \newcommand{\refelement}{\hat{\tau}}
 \newcommand{\FEset}{\mathcal{T}}
+\newcommand{\bigW}{\mathbb{W}}
+\newcommand{\bigWii}{{\mathbb{W}^{(1,1)}}}
 
 %\usepackage{media9}
 %\graphicspath{ {../sphere/plots} }
@@ -190,7 +194,7 @@ orthogonal on \(\Omega\) with respect to the weight
 W^{(a,b)}(x,y) := x^a \: (1-x^2-y^2)^b, \quad (x,y) \in \Omega.
 \end{align}
 
-This provides us with a family of orthogonal polynomial spaces on the half disk. Note that we can obtain OP families on other disk-splices and rhombi by appropriately choosing the functions and constants in (2). \bstodo{Should I add in the rhombi / other disk splices formulations here?}
+This provides us with a family of orthogonal polynomial spaces on the half disk. Note that we can obtain OP families on other disk-splices and rhombi by appropriately choosing the functions and constants in (2).
 
 
 \subsection{Obtaining the coefficients for expansion of a function}
@@ -244,7 +248,7 @@ f_{n,k} &:= \frac{\langle f, \: \Pnk^{(a,b)} \rangle_{W^{(a,b)}}}{|| \Pnk^{(a,b)
 
 
 
-We can develop a quadrature rule on \(\Omega\) in order to evaluate (40) and obtain the coefficients vector \(\mathbf{f}\) as follows. \bstodo{Should I add in the rhombi / other disk splices formulations here?}
+We can develop a quadrature rule on the half disk \(\Omega\) in order to evaluate (40) and obtain the coefficients vector \(\mathbf{f}\) as follows.
 
 We will use the substitution that
 \begin{align}
@@ -468,16 +472,6 @@ m &= \frac{n+1}{2} + 1, \quad \eta_0 = \frac{1}{\betaab_{n,n,6}}, \nonumber \\
 %
 \section{Sparse partial differential operators}
 
-We can obtain the matrix operator for \(\Delta\), that will take us from coefficients for expansion in the weighted space
-\[
-\Wii(x,y) \: \bigP^{(1,1)}(x,y)
-\]
-to coefficients in the non-weighted space
-\[
-\bigP^{(1,1)}(x,y).
-\]
-Importantly, this operator will have Banded-Block-Banded structure, and hence will be sparse. Note that this construction will ensure the imposition of the Dirichlet zero boundary conditions on $\Omega$.
-
 For general \(a,b\) and general function \(f(x,y) = \mathbf{f}^T \: \bigPab(x,y)\), there exist Banded-Block-Banded matrix operators \(D_x^{(a,b)}, \: D_y^{(a,b)}, \: W_x^{(a,b)}, \: W_y^{(a,b)}\) such that:
 \begin{align}
 \dx[f(x,y)] &= \bigP^{(a+1,b+1)}(x,y)^T \: D_x^{(a,b)} \: \mathbf{f}, \\
@@ -491,16 +485,24 @@ Further, we note that there exist Banded-Block-Banded matrix operators \(T^{(1,0
 x \bigP^{(1,0)}(x,y) &= \Big(T^{(1,0)\to(0,0)} \Big)^T \: \bigP^{(0,0)}(x,y) \\
 \bigP^{(0,1)}(x,y) &= \Big(T^{(0,1)\to(1,1)} \Big)^T \: \bigP^{(1,1)}(x,y)
 \end{align}
-Then, the operator \(\Delta\) is given by
+
+We can then obtain the matrix operator for \(\Delta\), that will take us from coefficients for expansion in the weighted space
+\[
+\Wii(x,y) \: \bigPii(x,y)
+\]
+to coefficients in the non-weighted space
+\[
+\bigPii(x,y).
+\]
+Importantly, this operator will have Banded-Block-Banded structure, and hence will be sparse. Note that this construction will ensure the imposition of the Dirichlet zero boundary conditions on $\Omega$. The matrix operator \(\Delta\) acting on the coefficients vector is then given by
 \begin{align}
     \Delta := D_x^{(0,0)} \: W_x^{(1,1)} + T^{(0,1)\to(1,1)} \: D_y^{(0,0)} \: T^{(1,0)\to(0,0)} \: W_y^{(1,1)}.
 \end{align}
-The sparsity of the differential operators can be shown using a simply integration by parts argument, again showing that the sparsity for differential operators is not dependent on the domain.
-
+The sparsity of the these operators can be shown using a simply integration by parts argument, again showing that the sparsity for differential operators is not dependent on the domain.
 
 %
 \section{P-finite element methods using sparse operators}
-\bstodoinline{Need to discuss this}
+
 We follow the method of \cite{beuchler2006new}. Consider the 2D Dirichlet problem on a domain $\Omega$:
 \begin{align}
 	\begin{cases}
@@ -513,40 +515,83 @@ This has the weak formulation for any test function $v \in V := H_0^1(\Omega) = 
 	L(v) := \int_\Omega f \: v \: d\mathbf{x} = \int_\Omega \nabla u \cdot \nabla v \: d\mathbf{x} =: a(u,v).
 \end{align}
 
-Let $\FEset$ be the set of elements $\element$ that make up our finite element discretisation of the domain, where each $\element$ is a rhombus for example. We can choose our finite dimensional space $V_h = \{v_h \in V \quad | \quad deg(v_h)|_\element \le p \: \forall \element \in \FEset\}$.
+In general, we would let $\FEset$ be the set of elements $\element$ that make up our finite element discretisation of the domain, where each $\element$ is a rhombus or disk slice for example. For the purposes of this paper, we limit this to a single element, that is we let $\element = \Omega$ for a half disk/disk slice/rhombus domain. We can choose our finite dimensional space $V_h = \{v_h \in V \quad | \quad deg(v_h|_\element) \le p\}$ for some $p \in \N$.
 
 We seek $u_h \in V_h$ s.t.
 \begin{align}
 	L(v_h) = a(u_h,v_h) \quad \forall \: v_h \in V_h.
 \end{align}
 
-We can choose a basis for $V_h$ by using the orthogonal polynomials 
+Define $\Lambda^{(a,b)} := \langle \bigP^{(a,b)}, \: {\bigP^{(a,b)}}^T \rangle_{W^{(a,b)}}$ where $W^{(a,b)}$ is the weight with which the OPs in $\bigP^{(a,b)}$ are orthogonal with respect to. Note that due to orthogonality this is a diagonal matrix. We can choose a basis for $V_h$ by using the weighted orthogonal polynomials on $\element$ with parameters $a = b = 1$:
 \begin{align}
-\bigP(x,y) := \begin{bmatrix}
-		\bigP_0(x,y) \\
+\bigWii(x,y) &:= \begin{bmatrix}
+		\bigWii_0(x,y) \\
 		\hline
-		\bigP_1(x,y) \\
+		\bigWii_1(x,y) \\
 		\hline
-		\bigP_2(x,y) \\
+		\bigWii_2(x,y) \\
 		\hline
 		\vdots \\
 		\hline
-		\bigP_p(x,y)
-	\end{bmatrix},
-\quad
-\bigP_n(x,y) := \begin{bmatrix}
-		P_{n,0}(x,y) \\
+		\bigWii_p(x,y)
+	\end{bmatrix}, \\
+\bigWii_n(x,y) &:= \begin{bmatrix}
+		\Wii(x,y) \: \Pii_{n,0}(x,y) \\
 		\vdots \\
-		P_{n,n}(x,y)
+		\Wii(a,y) \: \Pii_{n,n}(x,y)
 	\end{bmatrix} \in \R^{n+1} \quad \forall n = 0,1,2,\dots,p,
 \end{align}
-Appropriately relabelling these OPs as the set $\{\phi_1,\dots,\phi_N\}$, we can define the global stiffness matrix $A$ by $A_{ij} =  a(\phi_i, \phi_j)$. The global stiffness matrix can be computed using the element stiffness matrices $A^\element = \int_\element \nabla \bigP \cdot \nabla \bigP \: d\mathbf{x}, \: \element \in \FEset$. Then we have the linear system for our finite element problem:
+and rewrite (63) in matrix form:
 \begin{align}
-A\mathbf{u} = \mathbf{f}
+	a(u_h,v_h) &= \int_\element \nabla u_h \cdot \nabla v_h \: d\mathbf{x} \\
+	&= \int_\element \begin{bmatrix}
+					\partial_x v_h \\
+					\partial_y v_h
+				\end{bmatrix}^T 
+				\begin{bmatrix}
+					\partial_x u_h \\
+					\partial_y u_h
+				\end{bmatrix}
+				\\
+	&= \int_\element \begin{bmatrix}
+					\bigPoo^T \Wii_x \mathbf{v} \\
+					\bigPoo^T T^{(1,0)\to(0,0)} \Wii_y \mathbf{v}
+				\end{bmatrix}^T 
+				\begin{bmatrix}
+					\bigPoo^T \Wii_x \mathbf{u} \\
+					\bigPoo^T T^{(1,0)\to(0,0)} \Wii_y \mathbf{u}
+				\end{bmatrix}
+				\\
+	&= \int_\element \Big( \mathbf{v}^T {\Wii_x}^T \bigPoo \bigPoo^T \Wii_x \mathbf{u} \nonumber \\
+					& \quad \quad \quad + \mathbf{v}^T ({T^{(1,0)\to(0,0)} \Wii_y})^T \bigPoo \bigPoo^T T^{(1,0)\to(0,0)} \Wii_y \mathbf{u}  \Big) \: d\mathbf{x} \\
+	&= \mathbf{v}^T \: \Big( {\Wii_x}^T \Lambda^{(0,0)} \Wii_x + ({T^{(1,0)\to(0,0)} \Wii_y})^T \Lambda^{(0,0)} T^{(1,0)\to(0,0)} \Wii_y \Big) \: \mathbf{u}
 \end{align}
-where the vectors $\mathbf{u}, \mathbf{f}$ are the coefficient vectors for expansion of the solution $u_h$ and for the function $f$ respectively.
+where $\mathbf{u}, \mathbf{v}$ are the coefficient vectors of the expansions of $u_h, v_h \in V_h$ respectively in the $V_h$ basis ($\bigWii$ OPs), and
+\begin{align}
+	L(v_h) &= \int_\element \: v_h \: f \: d\mathbf{x} \\
+	&= \int_\element \: \mathbf{v}^T \: \bigWii \: \bigPii^T \: \mathbf{f} \: d\mathbf{x} \\
+	&= \mathbf{v}^T \Lambda^{(1,1)} \: \mathbf{f},
+\end{align}
+where $\mathbf{f}$ is the coefficient vector for the expansion of the function $f(x,y)$ in the $\bigPii$ OP basis. We can also not that naturally $\langle \bigPii, {\bigPii}^T \rangle_{\Wii}$ is just a diagonal matrix. 
 
-Using the quadrature rule we have formulated for integrals on a rhombus element $\element$, and the sparse operator matrices for divergence (partial derivatives), we obtain a sparse global stiffness matrix.
+Since (63) is equivalent to stating that
+\begin{align}
+	L(\Wii \Pii_{n,k}) = a(u_h,\Wii \Pii_{n,k}) \quad \forall \: n = 0,\dots,p, \: k = 0,\dots,n,
+\end{align}
+(i.e. holds for all basis functions of $V_h$) by choosing $v_h$ as each basis function, we can equivalently write the linear system for our finite element problem as:
+\begin{align}
+A\mathbf{u} = \tilde{\mathbf{f}}.
+\end{align}
+where the (element) stiffness matrix $A$ is defined by 
+\begin{align}
+A = {\Wii_x}^T \Lambda^{(0,0)} \Wii_x + ({T^{(1,0)\to(0,0)} \Wii_y})^T \Lambda^{(0,0)} T^{(1,0)\to(0,0)} \Wii_y, 
+\end{align}
+and the load vector $\tilde{\mathbf{f}}$ is given by 
+\begin{align}
+\tilde{\mathbf{f}} = \Lambda^{(1,1)} \: \mathbf{f}.
+\end{align}
+
+Note the since we have sparse operator matrices for partial derivatives and basis-transform, we obtain a symmetric sparse (element) stiffness matrix, as well as a sparse operator matrix for calculating the load vector (rhs).
 
 
 
