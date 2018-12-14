@@ -15,6 +15,8 @@
 \usepackage{mleftright}
 \usepackage{todonotes}
 
+\graphicspath{ {images/} }
+
 \newcommand{\sotodo}{\todo[color=green]}
 \newcommand{\sotodoinline}{\todo[color=green,inline=true]}
 \newcommand{\bstodo}{\todo[color=pink]}
@@ -472,6 +474,49 @@ m &= \frac{n+1}{2} + 1, \quad \eta_0 = \frac{1}{\betaab_{n,n,6}}, \nonumber \\
 %
 \section{Sparse partial differential operators}
 
+
+\begin{figure} 
+\center
+\begin{tikzpicture} 
+% Box/square (4x4)
+\draw[black,solid,ultra thin] (0,0)--(0,4);
+\draw[black,solid,ultra thin] (0,0)--(4,0);
+\draw[black,solid,ultra thin] (4,0)--(4,4);
+\draw[black,solid,ultra thin] (0,4)--(4,4);
+% Dots
+\draw[black,fill=black] (0,0) circle (.5ex);
+\draw[black,fill=black] (2,2) circle (.5ex);
+\draw[black,fill=black] (4,4) circle (.5ex);
+\draw[black,fill=black] (0,2) circle (.5ex);
+\draw[black,fill=black] (0,4) circle (.5ex);
+% Arrows
+\draw[black,thick,->] (0.2,0.2)--(1.8,1.8);
+\draw[black,thick,->] (2.2,2.2)--(3.8,3.8);
+\draw[black,thick,->] (0,0.2)--(0,1.8);
+\draw[black,thick,->] (0,2.2)--(0,3.8);
+\draw [black,thick,->] (0.2,4.2) to [out=20,in=160] (3.8,4.2);
+% Node (parameter) labels
+\draw[] (0,0) node[anchor=east] {$(0,0)$};
+\draw[] (0,4) node[anchor=east] {$(0,2)$};
+\draw[] (4,0) node[anchor=west] {$(2,0)$};
+\draw[] (4,4) node[anchor=west] {$(2,2)$};
+% Arrow labels
+\draw[] (1,1) node[anchor=north] {$\tfrac{\partial}{\partial x}$};
+\draw[] (3,3) node[anchor=north] {$\tfrac{\partial}{\partial x}$};
+\draw[] (0,1) node[anchor=west] {$\tfrac{\partial}{\partial y}$};
+\draw[] (0,3) node[anchor=west] {$\tfrac{\partial}{\partial y}$};
+% The key and headings
+\draw[black,thick,->] (-2.5,3.4)--(-2.5,4);
+\draw[black,thick,->] (-2.5,3.4)--(-1.9,3.4);
+\draw[] (-2.3,3.2) node[anchor=west] {$a$};
+\draw[] (-2.7,3.6) node[anchor=south] {$b$};
+\draw[] (2,4.6) node[anchor=south] {basis conversion};
+\end{tikzpicture} 
+\caption{The Laplace operator acting on vectors of $P_{n,k}=P_{n,k}^{(0,0)}$ coefficients has a sparse matrix representation if the range is represented as vectors of $\smash{P^{(2,2)}_{n,k}}$ coefficients. Here, the arrows indicate that the corresponding operation has a sparse matrix representation when the domain is $\smash{P_{n,k}^{(a,b)}}$ coefficients, where $(a,b)$ is at the tail of the arrow, and the range is $\smash{P_{n,k}^{(\tilde{a},\tilde{b})}}$ coefficients, where $(\tilde{a},\tilde{b})$ is at the head of the arrow. %For example, $\smash{\frac{\partial}{\partial x}}$ has a sparse matrix representation when the domain is represented in $\smash{P_{n,k}^{(0,0,0)}}$ (resp.~$\smash{P_{n,k}^{(1,0,1)}}$) and the range in $\smash{P_{n,k}^{(1,0,1)}}$ (resp.~$\smash{P_{n,k}^{(2,0,2)}}$).
+}
+\label{fig:Laplace} 
+\end{figure}
+
 For general \(a,b\) and general function \(f(x,y) = \mathbf{f}^T \: \bigPab(x,y)\), there exist Banded-Block-Banded matrix operators \(D_x^{(a,b)}, \: D_y^{(a,b)}, \: W_x^{(a,b)}, \: W_y^{(a,b)}\) such that:
 \begin{align}
 \dx[f(x,y)] &= \bigP^{(a+1,b+1)}(x,y)^T \: D_x^{(a,b)} \: \mathbf{f}, \\
@@ -480,10 +525,11 @@ For general \(a,b\) and general function \(f(x,y) = \mathbf{f}^T \: \bigPab(x,y)
 \dy[\Wab(x,y) \: f(x,y)] &= W^{(a,b-1)}(x,y) \: \bigP^{(a,b-1)}(x,y)^T \: W_y^{(a,b)} \: \mathbf{f}.
 \end{align}
 The incrementing and decrementing of parameters as seen here is analogous to other well known orthogonal polynomials families' derivatives, for example the Jacobi polynomials, as seen in the DLMF \cite{DLMFDerivatives}.
-Further, we note that there exist Banded-Block-Banded matrix operators \(T^{(1,0)\to(0,0)}\) and \(T^{(0,1)\to(1,1)}\) such that:
+Further, we note that there exist Banded-Block-Banded matrix operators \(T^{(1,0)\to(0,0)}\), \(T^{(0,1)\to(1,1)}\) and $T^{(0,2)\to(2,2)}$ such that:
 \begin{align}
 x \bigP^{(1,0)}(x,y) &= \Big(T^{(1,0)\to(0,0)} \Big)^T \: \bigP^{(0,0)}(x,y) \\
-\bigP^{(0,1)}(x,y) &= \Big(T^{(0,1)\to(1,1)} \Big)^T \: \bigP^{(1,1)}(x,y)
+\bigP^{(0,1)}(x,y) &= \Big(T^{(0,1)\to(1,1)} \Big)^T \: \bigP^{(1,1)}(x,y) \\
+\bigP^{(0,2)}(x,y) &= \Big(T^{(0,2)\to(2,2)} \Big)^T \: \bigP^{(2,2)}(x,y)
 \end{align}
 
 We can then obtain the matrix operator for \(\Delta\), that will take us from coefficients for expansion in the weighted space
@@ -498,7 +544,22 @@ Importantly, this operator will have Banded-Block-Banded structure, and hence wi
 \begin{align}
     \Delta := D_x^{(0,0)} \: W_x^{(1,1)} + T^{(0,1)\to(1,1)} \: D_y^{(0,0)} \: T^{(1,0)\to(0,0)} \: W_y^{(1,1)}.
 \end{align}
+
+Further, we can also obtain the matrix operator for \(\Delta\) that will take us from coefficients for expansion in the space
+\[
+\bigPoo(x,y)
+\]
+to coefficients in the space
+\[
+\bigP^{(2,2)}(x,y).
+\]
+Importantly, again, this operator will have Banded-Block-Banded structure, and hence will be sparse. The matrix operator \(\Delta\) acting on the coefficients vector is then given by
+\begin{align}
+    D := D_x^{(1,1)} \: D_x^{(0,0)} + T^{(0,2)\to(2,2)} \: D_y^{(0,1)} \: D_y^{(0,0)}.
+\end{align}
+
 The sparsity of the these operators can be shown using a simply integration by parts argument, again showing that the sparsity for differential operators is not dependent on the domain.
+
 
 %
 \section{P-finite element methods using sparse operators}
@@ -598,6 +659,7 @@ Note the since we have sparse operator matrices for partial derivatives and basi
 %
 \section{Examples on the half disk with zero BCs}
 
+
 \subsection{Poisson}
 
 Fix \(a, b = 1,1\). Find \(u(x,y)\) given a function \(f(x,y)\) such that:
@@ -614,6 +676,14 @@ The first step is to obtain the expansion of \(f\) in the \(\Pii\) basis, i.e. o
 \begin{align}
     \mathbf{u} = \Delta \text{\textbackslash} \mathbf{f}.
 \end{align}
+
+\begin{figure}
+	\includegraphics[scale=0.4]{example4coeffs}
+\centering
+\caption{Plot of the difference between the previous solution's coefficients and the current solution's coefficients under increasing degree of approximation (number of coefficients used) for $N = 2,\dots,10$, using RHS of $f(x,y) = 2(1-x^2-y^2)\cos(x) - 8x\sin(x) - x(1-x^2-y^2)\sin(x) - 4x^2 \cos(x) - 12xy$ for the Poisson equation. The solution is converging as seen by the decreasing (absolute value) difference of coefficient values.}
+\centering
+\label{fig:poisson}
+\end{figure}
 
 
 \subsection{Inhomogenous Helmholtz}
@@ -647,6 +717,14 @@ There exist $N \in \N$ such that, for each $t = 0,1,2,\dots$, $u_t (x,y) = \sum_
     \mathbf{u_{t+1}} &= (I - h \Delta) \: \text{\textbackslash} \: \mathbf{u_t}, \\
     \big( u_{t+1}(x,y) &= \mathbf{u}_{t+1}^T \; \bigP^{(1,1)}(x,y) \big) \nonumber.
 \end{align}
+
+\begin{figure}
+	\includegraphics[scale=0.4]{example2timesteppingcovnvergence}
+\centering
+\caption{Plot of the current iteration's coefficients for the heat equation example, using degree of approximation $N = 5$ with initial condition of $u_0(x,y) = \Wii(x,y)$ and step size $h=0.01$, plotted for iterations $t=100, 120, \dots, 200$. The solution tends to zero, as seen by the decreasing (absolute value) coefficient values.}
+\centering
+\label{fig:heateqn}
+\end{figure}
 
 
 
