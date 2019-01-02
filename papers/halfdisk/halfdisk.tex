@@ -135,12 +135,21 @@
 \newcommand{\bigW}{\mathbb{W}}
 \newcommand{\bigWii}{{\mathbb{W}^{(1,1)}}}
 
+\usepackage{amsthm}
+
+\newtheorem{proposition}{Proposition}
+\newtheorem{lemma}{Lemma} 
+\newtheorem{theorem}{Theorem} 
+\newtheorem{definition}{Definition}
+
+\include somacros
+
 %\usepackage{media9}
 %\graphicspath{ {../sphere/plots} }
 
 
 
-\title{Sparse Spectral Methods and P-Finite Element Methods on Disk-Splices and Rhombi - Part I: Zero Boundary Conditions}
+\title{Sparse spectral and $p$-finite element methods on disk-slices and rhombi I: zero boundary conditions}
 \author{Sheehan Olver, Ben Snowball}
 %\date{}							% Activate to display a given date or no date
 
@@ -149,176 +158,91 @@
 
 \maketitle
 
+\begin{abstract}
+In recent years, sparse spectral methods have been derived using hierarchies of classical orthogonal polynomials on intervals, disks, and triangles. In this work we extend this methodology to a hierarchy of non-classical orthogonal polynomials on disk slices (e.g. a half disk) and rhombi. This builds on the observation that sparsity is guaranteed due to the boundary being defined by an algebraic curve, and that the entries of partial differential operators can be determined using formulae in terms of (non-classical) univariate orthogonal polynomials. 
+\end{abstract}
 
 
 %
 \section{Introduction}
 
-This document is to derive a framework for solving PDEs on the half disk using sparse spectral methods. We present our procedure  to gain a (two-parameter) family of 2D orthogonal polynomials (OPs) on the half disk domain, by combining 1D OPs to the interval, to form 2D OPs on the disk. We will derive a quadrature rule on the half disk that can be used to expand a function in the OP basis up to a given order. We will demonstrate that these families will have sparse operators (including Jacobi operators representing multiplication by $x$ and $y$, and partial differential operators), and how we can implement function evaluation using the coefficients of the expansion of a given function using the Clenshaw algorithm. We can extend this work directly by projecting up to 3D OPs on the hemisphere, where sparse operators, function evaluation and expansion etc. can be found similarly. 
+This paper develops sparse spectral methods for solving linear partial differential equations on a special class of geometries that includes disk slices and rhombi.  
+More precisely, let  \(\rho \: : \: (\alpha,\beta) \: \to (0,\infty)\) be such that either:
 
-\section{Orthogonal polynomials  and function approximation on the half disk (2D)}
+\begin{enumerate}
+\item  \(\rho\) is a degree 1 polynomial, or 
+\item \(\rho\) is the square root of a non-negative degree \(\le\) 2 polynomial, \(-\gamma = \delta > 0\), and \(w_2\) is an even function.
+\end{enumerate}
 
-By using a similar process to \cite{dunkl2014orthogonal} (p55-56) we can construct 2D orthogonal polynomials on the half disk from 1D orthogonal polynomials on the intervals \([0,1]\) and \([-1,1]\). We denote the half disk by \(\Omega\) where
+We consider the solution of partial differential equations on the domain
 \begin{align}
-\Omega := \{(x,y) \in \R^2 \quad | \quad 0 < x < 1, \: -(1-x^2)^{\half} < y < (1-x^2)^{\half}\}.
+\Omega := \{(x,y) \in \R^2 \quad | \quad \alpha < x < \beta, \: \gamma \rho(x) < y < \delta \rho(x)\}
 \end{align}
+For simplicity of discussion we focus on the half-disk, where $\rho(x) = \sqrt{1-x^2}$,  $(\alpha,\beta) = (0, 1)$, and  $(\gamma, \delta)  = (-1,1)$, with discussion of extension to other geometries in the appendix. 
 
-Let \(w_1 : (\alpha,\beta) \: \to \R\), \(w_2 : (\gamma,\delta) \: \to \R\) be weight functions with \(\alpha,\beta,\gamma,\delta \in \R\), and \(\rho \: : \: (\alpha,\beta) \: \to (0,\infty)\) be such that either:
 
-1) \(\rho\) is a degree 1 polynomial, or 
+We show that partial differential equations become sparse linear systems when viewed as acting on expansions involving a family of orthogonal polynomials that  generalise Jacobi polynomials, mirroring the ultraspherical spectral method for ordinary differential equations \cite{SOATUltraspherical} and its analogue on the triangle \cite{SOATGVTriangle}.  On the half-disk the family of weights we consider are of the form
+$$
+W^{(a,b)}(x,y) = x^a (1-x-y)^b
+$$
+with corresponding OPs denoted $P_{n,k}^{(a,b)}(x,y)$. Sparsity comes from expanding the domain and range of an operator  using different polynomials. Where the sparsity pattern and entries derived in \cite{SOATGVTriangleRecurrence,SOATGVTriangle}  results from manipulations of Jacobi polynomials, in the present work we use a more general integration-by-parts argument to deduce the sparsity structure, alongside quadrature rules to determine the entries.  Furthermore, we use this framework to derive sparse $p$-finite element methods that are analogous to those of Beuchler and Sch\"oberl on tetrahedra \cite{TriangleFEM}. 
 
-2) \(\rho\) is the square root of a non-negative degree \(\le\) 2 polynomial, \(-\gamma = \delta > 0\), and \(w_2\) is an even function.
+The motivation for this work is solving partial differential equations on sub-domains of the sphere. In particular, OPs on a half-sphere can be represented using two families of OPs on the half-disk. Constructing sparse spectral methods for surface PDEs on half-spheres, spherical caps, and spherical triangles is future work, and has applications in weather prediction. Other extensions include a full $hp$-finite element method on sections of a disk, which has applications in fluids. 
 
-Then, \(\forall n,k = 0,1,2,\dots\) let \(\{p_{n,k}\}\) be polynomials orthogonal with respect to the weight \(\rho(x)^{2k+1} w_1(x)\), and \(\{q_{n}\}\) be polynomials orthogonal with respect to the weight \(w_2(x)\).
+  
 
-We define \(\Pnk(x,y) := p_{n-k,k}(x) \: \rho(x)^k \: q_k(\frac{y}{\rho(x)})\) for \( 0 \le k \le n, \: n = 0,1,2,\dots\) and note that the functions \(\{\Pnk\}\) are in fact polynomials in either cases above. Furthermore, they are orthogonal with respect to the weight \(W(x,y) := w_1(x) \: w_2(\frac{y}{\rho(x)}) \) on \(R := \{(x,y) \in \R^2 \quad | \quad \alpha < x < \beta, \: \gamma \rho(x) < y < \delta \rho(x)\}\).
+ We present our procedure  to gain a (two-parameter) family of 2D orthogonal polynomials (OPs) on the half disk domain, by combining 1D OPs to the interval, to form 2D OPs on the disk. We will derive a quadrature rule on the half disk that can be used to expand a function in the OP basis up to a given order. We will demonstrate that these families will have sparse operators (including Jacobi operators representing multiplication by $x$ and $y$, and partial differential operators), and how we can implement function evaluation using the coefficients of the expansion of a given function using the Clenshaw algorithm. We can extend this work directly by projecting up to 3D OPs on the hemisphere, where sparse operators, function evaluation and expansion etc. can be found similarly. 
 
-Let \(a, b \in \R\). For the half disk, if we set:
+\section{Orthogonal polynomials  on the half disk}
+
+In this section we outline some basic properties of $P_{n,k}^{(a,b)}(x,y)$. The symmetry in the weight allows us to express the polynomials in terms of 1D OPs, and deduce certain properties such as recurrence relationships. 
+
+\subsection{Explicit construction}
+
+
+By using a similar process to \cite[p55--56]{dunkl2014orthogonal} we can construct 2D orthogonal polynomials on $\Omega$ from 1D orthogonal polynomials on the intervals \([0,1]\) and \([-1,1]\).
+
+\begin{proposition}
+Let \(w_1 : (\alpha,\beta) \: \to \R\), \(w_2 : (\gamma,\delta) \: \to \R\) be weight functions with \(\alpha,\beta,\gamma,\delta \in \R\),
+Then, \(\forall n,k = 0,1,2,\dots\) let \(\{p_{n,k}\}\) be polynomials orthogonal with respect to the weight \(\rho(x)^{2k+1} w_1(x)\), and \(\{q_{n}\}\) be polynomials orthogonal with respect to the weight \(w_2(x)\). Then
+$$
+\Pnk(x,y) := p_{n-k,k}(x) \: \rho(x)^k \: q_k(\frac{y}{\rho(x)}) \qquad\hbox{for} \qquad 0 \le k \le n, \: n = 0,1,2,\dots
+$$
+are orthogonal polynomials with respect to the weight \(W(x,y) := w_1(x) \: w_2(\frac{y}{\rho(x)}) \) on $\Omega$. 
+\end{proposition}
+
+For the half disk, the weight $W^{(a,b)}(x,y)$ results from setting:
 
 \begin{align}
 \begin{cases}
-\alpha &:= 0 \\
-\beta &:= 1 \\
-\gamma &:= -1 \\
-\delta &:= -\gamma = 1 \\
+(\alpha,\beta) &:= (0.1) \\
+(\gamma,\delta) &:= (-1,1) \\
 \rho(x) &:= (1-x^2)^{\half} \\
 w_1(x) &:= x^a \: (1-x^2)^b \\
 w_2(x) &:= (1-x^2)^b = (1-x)^b \: (1+x)^b,
 \end{cases}
 \end{align}
 
-we can obtain the 1D orthogonal polynomials \(\{H_n^{(a, b)}\}\) orthogonal with respect to the weight \(x^a \: (1-x^2)^b\), and \(\{P_n^{(b, b)}\}\) orthogonal with respect to the weight \((1-x^2)^b\) (so \(\{P_n^{(b, b)}\}\) are in fact Jacobi polynomials), leading to the two parameter 2D orthogonal polynomials \(\{\Pnk\}\) given by, for \(0 \le k \le n, \: n = 0,1,2,\dots,\)
+The weight $w_2(x)$ is an ultraspherical weight, and the corresponding OPs are   the Jacobi polynomials  \(\{P_n^{(b, b)}\}\). The weight $w_1(x)$ is non-classical and we introduce the notation \(\{H_n^{(a, b)}\}\) for the orthonormal polynomials. Thus we arrive at  a two parameter family of  2D orthogonal polynomials \(\{\Pnk\}\) given by, for \(0 \le k \le n, \: n = 0,1,2,\dots,\)
 \begin{align}
- \Pnk(x,y) := H_{n-k}^{(a, b+k+\half)}(x) \: \rho(x)^k \: P_k^{(b,b)}(\frac{y}{\rho(x)}), \quad (x,y) \in \Omega, 
+ \Pnk^{(a,b)}(x,y) := H_{n-k}^{(a, b+k+\half)}(x) \: \rho(x)^k \: P_k^{(b,b)}(\frac{y}{\rho(x)}), \quad (x,y) \in \Omega, 
 \end{align}
-orthogonal on \(\Omega\) with respect to the weight 
-\begin{align}
-W^{(a,b)}(x,y) := x^a \: (1-x^2-y^2)^b, \quad (x,y) \in \Omega.
-\end{align}
-
-This provides us with a family of orthogonal polynomial spaces on the half disk. Note that we can obtain OP families on other disk-splices and rhombi by appropriately choosing the functions and constants in (2).
-
-
-\subsection{Obtaining the coefficients for expansion of a function}
-
-Fix \(a,b \in \R\). Then for any function \(f : \Omega \to \R\) we can approximate (or exactly express) \(f\) by
-\begin{align}
-f(x,y) \approx \sum_{n=0}^N \bigP_n^{(a,b)}(x,y)^T \: \mathbf{f}_n
-\end{align}
-where
-\begin{align}
-\bigP(x,y) := \begin{bmatrix}
-		\bigP_0(x,y) \\
-		\hline
-		\bigP_1(x,y) \\
-		\hline
-		\bigP_2(x,y) \\
-		\hline
-		\vdots \\
-		\hline
-		\bigP_N(x,y)
-	\end{bmatrix},
-\quad
-\bigP_n(x,y) := \begin{bmatrix}
-		P_{n,0}(x,y) \\
-		\vdots \\
-		P_{n,n}(x,y)
-	\end{bmatrix} \in \R^{n+1} \quad \forall n = 0,1,2,\dots,N,
-\end{align}
-and where
-\begin{align}
-\mathbf{f} &:= \begin{bmatrix}
-		\mathbf{f}_0 \\
-		\hline
-		\mathbf{f}_1 \\
-		\hline
-		\mathbf{f}_2\\
-		\hline
-		\vdots \\
-		\hline
-		\mathbf{f}_N
-	\end{bmatrix},
-\quad
-\mathbf{f}_n := \begin{bmatrix}
-		f_{n,0} \\
-		\vdots \\
-		f_{n,n}
-	\end{bmatrix} \in \R^{n+1} \quad \forall n = 0,1,2,\dots,N, \\
-f_{n,k} &:= \frac{\langle f, \: \Pnk^{(a,b)} \rangle_{W^{(a,b)}}}{|| \Pnk^{(a,b)} ||_{W^{(a,b)}}}
-\end{align}
-
-
-
-
-We can develop a quadrature rule on the half disk \(\Omega\) in order to evaluate (40) and obtain the coefficients vector \(\mathbf{f}\) as follows.
-
-We will use the substitution that
-\begin{align}
-x &= s, \quad y = (1-s^2)^\half t.
-\end{align}
-First, note that
-\begin{align}
-W^{(a,b)}(x,y) &= x^a \: (1-x^2-y^2)^b, \quad \text{for } (x,y) \in \Omega, \\
-		      &= s^a \: (1-s^2)^{b} \: (1-t^2)^b =: V^{(a,b)}(s,t), \quad \text{for } (s,t) \in [0,1] \times [-1,1].
-\end{align}
-Using the Golub-Welsch algorithm, we can obtain nodes and weights for 1D quadrature rules on \([0,1]\) with weight \(s^a \: (1-s^2)^{b+\half}\), and on \([-1,1]\) with weight \((1-t^2)^b\).
-
-Let \(f(x,y)\) be polynomial that is even in \(y\) of degree $d_1$ in $x$ and degree $d_2$ in $y$. Then there exists a polynomial \(\tilde{f}(x,y)\) in \(x,y\) such that \(g(s,t) := f(x, y) = f(s, (1-s^2)^\half t) = \tilde{f}(s, (1-s^2) t^2)\) (i.e. that $d_2$ is an even integer). Now, as \(\tilde{f}\) is a polynomial, so must \(g\) be a polynomial of degree $d_1+\frac{d_2}{2}$ in $s$ and degree $d_2$ in $t$. Thus a quadrature rule of the following will be exact for the polynomial $f(x,y)$ (even in \(y\) of degree $\le d_1$ in $x$ and degree $\le d_2$ in $y$):
-\begin{align}
-& \quad \int_0^1 \int_{-\rho(x)}^{\rho(x)} W^{(a,b)}(x,y) \: f(x,y) \: dy \: dx \\
-&= \int_0^1 \int_{-1}^1 V^{(a,b)}(s,t) \: g(s,t) \: (1-s^2)^\half \: dt \: ds \\
-&= \int_0^1 s^a \: (1-s^2)^{b+\half} \: \Big( \sum_k^{\half(d_2 + 1)} w_k^{(t)} \: g(s, t_k) \Big) \: ds \\
-&= \sum_j^{\half(d_1 + \frac{d_2}{2} + 1)} \sum_k^{\half(d_2 + 1)} w_j^{(s)} w_k^{(t)} \: g(s_j, t_k) \\
-&= \sum_j^{\half(d_1 + \frac{d_2}{2} + 1)} \sum_k^{\half(d_2 + 1)} w_j^{(s)} w_k^{(t)} \: f(x_j, y_{j,k}),
-\end{align}
-where \(x_j := s_j,\) \(y_{j,k} := \rho(s_j) \: t_k\) are the quadrature points.
-
-We further note that for any polynomial \(f(x,y)\) that is odd in \(y\),
-\begin{align}
-\int_0^1 \int_{-\rho(x)}^{\rho(x)} W^{(a,b)}(x,y) \: f(x,y) \: dy \: dx = 0.
-\end{align}
-
-Relabelling the weights and nodes as 
-\begin{align}
-x_{i+(k-1)N} &:= s_k, \quad i,k = 1,\dots,N, \\
-y_{l+(i-1)N} &:= (1-s_l^2)^\half \: t_l, \quad i,l = 1,\dots,N, \\
-w_{l+(k-1)N} &:= w_k^{(s)} w_l^{(t)}, \quad k,l = 1,\dots,N.
-\end{align}
-
-Then our quadrature rule for any polynomial \(f(x,y)\) on \(\Omega\) is:
-\begin{align}
-\int \int_\Omega W^{(a,b)}(x,y) \: f(x,y) \: dy \: dx \approx \half \: \sum_{j=1}^{N^2} w_j \: \big[ f(x_j, y_j) + f(x_j, -y_j) \big],
-\end{align}
-and is exact for any polynomial $f(x,y)$ where the degree in $x$ is $\le N$ and the degree in $y$ is $\le 2N-1$. Thus,
-\begin{align}
-< f, \: \Pnk^{(a,b)} >_{W^{(a,b)}} &= \half \: \sum_{j=1}^{N^2} w_j \: \big[ \big(f(x_j, y_j) \: \Pnk^{(a,b)}(x_j, y_j)\big) +\big(f(x_j, -y_j) \: \Pnk^{(a,b)}(x_j, -y_j)\big) \big], \\
-|| \Pnk^{(a,b)} ||_{W^{(a,b)}}^2 &= \half \: \sum_{j=1}^{N^2} w_j \: \big[ \Pnk^{(a,b)}(x_j, y_j)^2 + \Pnk^{(a,b)}(x_j, -y_j)^2 \big],
-\end{align}
-for suitably large $N$.
+orthogonal on \(\Omega\) with respect to the weight $W^{(a,b)}(x,y)$.
 
 
 \subsection{Jacobi matrices}
 
-We obtain the 1D OPs via the Lanczos algorithm, which also gives us the coefficients of the relations
+Express the three-term recurrences associated to $H_n^{(a,b)}$ and $P_n^{(b,b)}$ as
 \begin{align}
 x H_n^{(a,b)}(x) &= \beta_n^{(a,b)} H_{n+1}^{(a,b)}(x) + \alpha_n^{(a,b)} H_n^{(a,b)}(x) + \beta_{n-1}^{(a,b)} H_{n-1}^{(a,b)}(x) \\
 y P_n^{(b,b)}(y) &= \delta_n^{(b)} P_{n+1}^{(b,b)}(y) + \gamma_n^{(b)} P_n^{(b,b)}(y) + \delta_{n-1}^{(b)} P_{n-1}^{(b,b)}(y),
 \end{align}
-where we note that \(\gamma_n^{(b)} = 0\) \(\forall n = 0,1,2,\dots\).
+where we note that \(\gamma_n^{(b)} = 0\) \(\forall n = 0,1,2,\dots\). We can use these to determine the 2D recurences for $P_{n,k}^{(a,b)}(x,y)$:
 
-Next, note that \(<y \Pnkab, P_{m,j}^{(a,b)}>_\Wab = 0\) for \(m < n-1\) (and for \(m > n+2\)). Thus for \(m = n-1, n, n+1,\) \(j = 0,\dots,m:\)
-\begin{align}
-<y \Pnkab, P_{m,j}^{(a,b)}>_\Wab &= \int \int_\Omega \Pnkab(x,y) \: \Pmjab(x,y) \: y \: \Wab(x,y) \: dy \: dx \\
-&= \Big( \int^1_0 H_{n-k}^{(a, b+k+\half)}(s) \: H_{m-j}^{(a, b+j+\half)}(s) \: s^a \: \rho(s)^{2b+k+j+2} \: ds \Big) \nonumber \\
-& \quad \quad \quad\cdot \: \Big( \int^1_{-1} P_k^{(b,b)}(t) \: P_j^{(b,b)}(t) \: t \: (1-t^2)^b \: dt \Big) \\
-&= \begin{cases}
-    	\delta_k^{(b)} \: <H_{n-k}^{(a, b+k+\half)}, H_{m-k-1}^{(a, b+k+\frac{3}{2})}>_{H^{(a, b+k+\frac{3}{2})}} \quad& \text{if } j = k+1 \\
-	\delta_{k-1}^{(b)} \: <H_{n-k}^{(a, b+k+\half)}, H_{m-k+1}^{(a, b+k-\half)}>_{H^{(a, b+k+\half)}} \quad& \text{if } j = k-1 \\
-	0 & \text{o/w}
-      \end{cases}.
-\end{align}
+\sotodoinline{Define norms and inner products below}
 
-We then have that multiplication by \(x\) and \(y\) yields the 3-term recurrences as follows:
+\begin{lemma}
+$\Pnk^{(a,b)}(x,y)$ satisfy the following 3-term recurrences:
 \begin{align}
 x \Pnk^{(a,b)}(x,y) &= \alphaab_{n,k,1} \: P_{n-1, k}^{(a,b)}(x, y) + \alphaab_{n,k,2} \: P_{n, k}^{(a,b)}(x, y) + \alphaab_{n+1,k,1} \: P_{n+1, k}^{(a,b)}(x, y), \\
 y \Pnk^{(a,b)}(x,y) &= \betaab_{n,k,1} \: P_{n-1, k-1}^{(a,b)}(x, y) + \betaab_{n,k,2} \: P_{n-1, k+1}^{(a,b)}(x, y) \nonumber \\
@@ -329,15 +253,33 @@ for \((x,y) \in \Omega\), where
 \begin{align}
 \alphaab_{n,k,1} &:= \beta_{n-k-1}^{(a, b+k+\half)} \\
 \alphaab_{n,k,2} &:= \alpha_{n-k}^{(a, b+k+\half)} \\
-\betaab_{n,k,1} &:= \frac{\delta_{k-1}^{(b)}}{|| P_{n-1,k-1}^{(a,b)} ||_{W^{(a,b)}}^2} \: <H_{n-k}^{(a, b+k+\half)}, H_{n-k}^{(a, b+k-\half)}>_{H^{(a, b+k+\half)}} \\
-\betaab_{n,k,2} &:= \frac{\delta_{k}^{(b)}}{|| P_{n-1,k+1}^{(a,b)} ||_{W^{(a,b)}}^2} \: <H_{n-k}^{(a, b+k+\half)}, H_{n-k-2}^{(a, b+k+\frac{3}{2})}>_{H^{(a, b+k+\frac{3}{2})}} \\
-\betaab_{n,k,3} &:= \frac{\delta_{k-1}^{(b)}}{|| P_{n,k-1}^{(a,b)} ||_{W^{(a,b)}}^2} \: <H_{n-k}^{(a, b+k+\half)}, H_{n-k+1}^{(a, b+k-\half)}>_{H^{(a, b+k+\half)}} \\
-\betaab_{n,k,4} &:= \frac{\delta_{k}^{(b)}}{|| P_{n,k+1}^{(a,b)} ||_{W^{(a,b)}}^2} \: <H_{n-k}^{(a, b+k+\half)}, H_{n-k-1}^{(a, b+k+\frac{3}{2})}>_{H^{(a, b+k+\frac{3}{2})}} \\
-\betaab_{n,k,5} &:= \frac{\delta_{k-1}^{(b)}}{|| P_{n+1,k-1}^{(a,b)} ||_{W^{(a,b)}}^2} \: <H_{n-k}^{(a, b+k+\half)}, H_{n-k+2}^{(a, b+k-\half)}>_{H^{(a, b+k+\half)}} \\
-\betaab_{n,k,6} &:= \frac{\delta_{k}^{(b)}}{|| P_{n+1,k+1}^{(a,b)} ||_{W^{(a,b)}}^2} \: <H_{n-k}^{(a, b+k+\half)}, H_{n-k}^{(a, b+k+\frac{3}{2})}>_{H^{(a, b+k+\frac{3}{2})}}. 
+\betaab_{n,k,1} &:= \frac{\delta_{k-1}^{(b)}}{|| P_{n-1,k-1}^{(a,b)} ||_{W^{(a,b)}}^2} \: \ip<H_{n-k}^{(a, b+k+\half)}, H_{n-k}^{(a, b+k-\half)}>_{H^{(a, b+k+\half)}} \\
+\betaab_{n,k,2} &:= \frac{\delta_{k}^{(b)}}{|| P_{n-1,k+1}^{(a,b)} ||_{W^{(a,b)}}^2} \: \ip<H_{n-k}^{(a, b+k+\half)}, H_{n-k-2}^{(a, b+k+\frac{3}{2})}>_{H^{(a, b+k+\frac{3}{2})}} \\
+\betaab_{n,k,3} &:= \frac{\delta_{k-1}^{(b)}}{|| P_{n,k-1}^{(a,b)} ||_{W^{(a,b)}}^2} \: \ip<H_{n-k}^{(a, b+k+\half)}, H_{n-k+1}^{(a, b+k-\half)}>_{H^{(a, b+k+\half)}} \\
+\betaab_{n,k,4} &:= \frac{\delta_{k}^{(b)}}{|| P_{n,k+1}^{(a,b)} ||_{W^{(a,b)}}^2} \: \ip<H_{n-k}^{(a, b+k+\half)}, H_{n-k-1}^{(a, b+k+\frac{3}{2})}>_{H^{(a, b+k+\frac{3}{2})}} \\
+\betaab_{n,k,5} &:= \frac{\delta_{k-1}^{(b)}}{|| P_{n+1,k-1}^{(a,b)} ||_{W^{(a,b)}}^2} \: \ip<H_{n-k}^{(a, b+k+\half)}, H_{n-k+2}^{(a, b+k-\half)}>_{H^{(a, b+k+\half)}} \\
+\betaab_{n,k,6} &:= \frac{\delta_{k}^{(b)}}{|| P_{n+1,k+1}^{(a,b)} ||_{W^{(a,b)}}^2} \: \ip<H_{n-k}^{(a, b+k+\half)}, H_{n-k}^{(a, b+k+\frac{3}{2})}>_{H^{(a, b+k+\frac{3}{2})}}. 
 \end{align}
 
-Now, set \(J_x^{(a,b)}, J_y^{(a,b)}\) as the \(\half (N+1)(N+2) \times \half (N+1)(N+2)\) Jacobi matrices corresponding to
+\end{lemma}
+
+\begin{proof}
+Note that \(\ip<y \Pnkab, P_{m,j}^{(a,b)}>_\Wab = 0\) for \(m < n-1\) (and for \(m > n+2\)). Thus for \(m = n-1, n, n+1,\) \(j = 0,\dots,m:\)
+\begin{align}
+\ip<y \Pnkab, P_{m,j}^{(a,b)}>_\Wab &= \int \int_\Omega \Pnkab(x,y) \: \Pmjab(x,y) \: y \: \Wab(x,y) \: dy \: dx \\
+&= \Big( \int^1_0 H_{n-k}^{(a, b+k+\half)}(s) \: H_{m-j}^{(a, b+j+\half)}(s) \: s^a \: \rho(s)^{2b+k+j+2} \: ds \Big) \nonumber \\
+& \quad \quad \quad\cdot \: \Big( \int^1_{-1} P_k^{(b,b)}(t) \: P_j^{(b,b)}(t) \: t \: (1-t^2)^b \: dt \Big) \\
+&= \begin{cases}
+    	\delta_k^{(b)} \: \ip<H_{n-k}^{(a, b+k+\half)}, H_{m-k-1}^{(a, b+k+\frac{3}{2})}>_{H^{(a, b+k+\frac{3}{2})}} \quad& \text{if } j = k+1 \\
+	\delta_{k-1}^{(b)} \: \ip<H_{n-k}^{(a, b+k+\half)}, H_{m-k+1}^{(a, b+k-\half)}>_{H^{(a, b+k+\half)}} \quad& \text{if } j = k-1 \\
+	0 & \text{otherwise}
+      \end{cases}.
+\end{align}
+
+\end{proof}
+
+
+Three-term recurrences lead to Jacobi operators that correspond to multiplication by $x$ and $y$. Set \(J_x^{(a,b)}, J_y^{(a,b)}\) as the \(\half (N+1)(N+2) \times \half (N+1)(N+2)\) Jacobi matrices corresponding to
 \begin{align}
 J_x^{(a,b)} \bigPab(x,y) = x \bigPab(x,y), \quad J_y^{(a,b)} \bigPab(x,y) = y \bigPab(x,y).
 \end{align}
@@ -388,7 +330,10 @@ C^y_n &:= \begin{bmatrix}
 
 Note that the sparsity of the Jacobi matrices (in particular the sparsity of the sub-blocks) comes from the natural sparsity of the three-term recurrences of the 1D OPs. In other words, sparsity is not dependent on the domain.
 
-\subsection{Clenshaw on the half disk}
+
+
+
+\subsection{Building the OPs} 
 
 Combining each system in (71) we can write the block-tridiagonal system
 \begin{align}
@@ -517,7 +462,7 @@ m &= \frac{n+1}{2} + 1, \quad \eta_0 = \frac{1}{\betaab_{n,n,6}}, \nonumber \\
 \label{fig:Laplace} 
 \end{figure}
 
-For general \(a,b\) and general function \(f(x,y) = \mathbf{f}^T \: \bigPab(x,y)\), there exist Banded-Block-Banded matrix operators \(D_x^{(a,b)}, \: D_y^{(a,b)}, \: W_x^{(a,b)}, \: W_y^{(a,b)}\) such that:
+For general \(a,b\) and general functions \(f(x,y) = \bigPab(x,y)^\top \mathbf{f}\), there exist sparse operators \(D_x^{(a,b)}, \: D_y^{(a,b)}, \: W_x^{(a,b)}, \: W_y^{(a,b)}\) such that:
 \begin{align}
 \dx[f(x,y)] &= \bigP^{(a+1,b+1)}(x,y)^T \: D_x^{(a,b)} \: \mathbf{f}, \\
 \dy[f(x,y)] &= \bigP^{(a,b+1)}(x,y)^T \: D_y^{(a,b)} \: \mathbf{f}, \\
@@ -560,6 +505,107 @@ Importantly, again, this operator will have Banded-Block-Banded structure, and h
 
 The sparsity of the these operators can be shown using a simply integration by parts argument, again showing that the sparsity for differential operators is not dependent on the domain.
 
+\section{Computational aspects}
+
+\subsection{Constructing $H_n^{(a,b)}(x)$}
+
+\subsection{Quadrature rules}
+
+In this section we construct a quadrature rule exact for polynomials in $\Omega$ that can be used to expand functions in $P_{n,k}^{(a,b)}(x,y)$. 
+
+
+\begin{theorem}
+
+Denote the  Gauss quadrature nodes and weight on \([0,1]\) with weight \(s^a \: (1-s^2)^{b+\half}\) as $(s_k,w_k^{(s)})$ , and
+ on \([-1,1]\) with weight \((1-t^2)^b\) as $(t_k,w_k^{(t)})$. Define
+\begin{align}
+x_{i+(k-1)N} &:= s_k, \quad i,k = 1,\dots,N, \\
+y_{l+(i-1)N} &:= (1-s_l^2)^\half \: t_l, \quad i,l = 1,\dots,N, \\
+w_{l+(k-1)N} &:= w_k^{(s)} w_l^{(t)}, \quad k,l = 1,\dots,N.
+\end{align}
+If $f(x,y)$ is an at most degree $N$ polynomial in $x$ and at most degree $2N-1$ in $y$ then
+$$
+\iint_\Omega f(x,y) \D A =\sum_{j=1}^{N^2} w_j \: \big[ f(x_j, y_j) + f(x_j, -y_j) \big],
+$$
+
+\end{theorem}
+\begin{proof}
+
+We will use the substitution that
+\begin{align}
+x &= s, \quad y = (1-s^2)^\half t.
+\end{align}
+First, note that
+\begin{align}
+W^{(a,b)}(x,y) &= x^a \: (1-x^2-y^2)^b, \quad \text{for } (x,y) \in \Omega, \\
+		      &= s^a \: (1-s^2)^{b} \: (1-t^2)^b =: V^{(a,b)}(s,t), \quad \text{for } (s,t) \in [0,1] \times [-1,1].
+\end{align}
+
+\end{proof}
+
+
+
+
+\subsection{Obtaining the coefficients for expansion of a function}
+
+Fix \(a,b \in \R\). Then for any function \(f : \Omega \to \R\) we can approximate (or exactly express) \(f\) by
+\begin{align*}
+f(x,y) \approx \sum_{n=0}^N \bigP_n^{(a,b)}(x,y)^T \: \mathbf{f}_n
+\end{align*}
+where
+\begin{align*}
+\bigP_n(x,y) &:= \begin{bmatrix}
+		P_{n,0}(x,y) \\
+		\vdots \\
+		P_{n,n}(x,y)
+	\end{bmatrix} \in \R^{n+1} \quad \forall n = 0,1,2,\dots,N,
+\end{align*}
+and where
+\begin{align*}
+\mathbf{f}_n &:= \begin{bmatrix}
+		f_{n,0} \\
+		\vdots \\
+		f_{n,n}
+	\end{bmatrix} \in \R^{n+1} \quad \forall n = 0,1,2,\dots,N, \quad
+f_{n,k} := \frac{\langle f, \: \Pnk^{(a,b)} \rangle_{W^{(a,b)}}}{|| \Pnk^{(a,b)} ||_{W^{(a,b)}}}
+\end{align*}
+
+
+
+
+We can develop a quadrature rule on the half disk \(\Omega\) in order to evaluate (40) and obtain the coefficient vectors \(\mathbf{f}_n\) as follows.
+
+
+
+
+Let \(f(x,y)\) be polynomial that is even in \(y\) of degree $d_1$ in $x$ and degree $d_2$ in $y$\sotodo{Clarify this}. Then there exists a polynomial \(\tilde{f}(x,y)\) in \(x,y\) such that \(g(s,t) := f(x, y) = f(s, (1-s^2)^\half t) = \tilde{f}(s, (1-s^2) t^2)\) (i.e. that $d_2$ is an even integer). Now, as \(\tilde{f}\) is a polynomial, so must \(g\) be a polynomial of degree $d_1+\frac{d_2}{2}$ in $s$ and degree $d_2$ in $t$. Thus a quadrature rule of the following will be exact for the polynomial $f(x,y)$ (even in \(y\) of degree $\le d_1$ in $x$ and degree $\le d_2$ in $y$):
+\begin{align}
+& \quad \int_0^1 \int_{-\rho(x)}^{\rho(x)} W^{(a,b)}(x,y) \: f(x,y) \: dy \: dx \\
+&= \int_0^1 \int_{-1}^1 V^{(a,b)}(s,t) \: g(s,t) \: (1-s^2)^\half \: dt \: ds \\
+&= \int_0^1 s^a \: (1-s^2)^{b+\half} \: \Big( \sum_k^{\half(d_2 + 1)} w_k^{(t)} \: g(s, t_k) \Big) \: ds \\
+&= \sum_j^{\half(d_1 + \frac{d_2}{2} + 1)} \sum_k^{\half(d_2 + 1)} w_j^{(s)} w_k^{(t)} \: g(s_j, t_k) \\
+&= \sum_j^{\half(d_1 + \frac{d_2}{2} + 1)} \sum_k^{\half(d_2 + 1)} w_j^{(s)} w_k^{(t)} \: f(x_j, y_{j,k}),
+\end{align}
+where \(x_j := s_j,\) \(y_{j,k} := \rho(s_j) \: t_k\) are the quadrature points.
+
+We further note that for any polynomial \(f(x,y)\) that is odd in \(y\),
+\begin{align}
+\int_0^1 \int_{-\rho(x)}^{\rho(x)} W^{(a,b)}(x,y) \: f(x,y) \: dy \: dx = 0.
+\end{align}
+
+
+Then our quadrature rule for any polynomial \(f(x,y)\) on \(\Omega\) is:
+\begin{align}
+\int \int_\Omega W^{(a,b)}(x,y) \: f(x,y) \: dy \: dx \approx \half \: \sum_{j=1}^{N^2} w_j \: \big[ f(x_j, y_j) + f(x_j, -y_j) \big],
+\end{align}
+and is exact for any polynomial $f(x,y)$ where the degree in $x$ is $\le N$ and the degree in $y$ is $\le 2N-1$. Thus,
+\begin{align}
+\ip< f, \: \Pnk^{(a,b)} >_{W^{(a,b)}} &= \half \: \sum_{j=1}^{N^2} w_j \: \big[ \big(f(x_j, y_j) \: \Pnk^{(a,b)}(x_j, y_j)\big) +\big(f(x_j, -y_j) \: \Pnk^{(a,b)}(x_j, -y_j)\big) \big], \\
+|| \Pnk^{(a,b)} ||_{W^{(a,b)}}^2 &= \half \: \sum_{j=1}^{N^2} w_j \: \big[ \Pnk^{(a,b)}(x_j, y_j)^2 + \Pnk^{(a,b)}(x_j, -y_j)^2 \big],
+\end{align}
+for suitably large $N$.
+
+
 
 %
 \section{P-finite element methods using sparse operators}
@@ -587,13 +633,9 @@ Define $\Lambda^{(a,b)} := \langle \bigP^{(a,b)}, \: {\bigP^{(a,b)}}^T \rangle_{
 \begin{align}
 \bigWii(x,y) &:= \begin{bmatrix}
 		\bigWii_0(x,y) \\
-		\hline
 		\bigWii_1(x,y) \\
-		\hline
 		\bigWii_2(x,y) \\
-		\hline
 		\vdots \\
-		\hline
 		\bigWii_p(x,y)
 	\end{bmatrix}, \\
 \bigWii_n(x,y) &:= \begin{bmatrix}
