@@ -142,7 +142,7 @@
 \newtheorem{theorem}{Theorem} 
 \newtheorem{definition}{Definition}
 
-\include somacros
+\include{somacros}
 
 %\usepackage{media9}
 %\graphicspath{ {../sphere/plots} }
@@ -239,8 +239,6 @@ y P_n^{(b,b)}(y) &= \delta_n^{(b)} P_{n+1}^{(b,b)}(y) + \gamma_n^{(b)} P_n^{(b,b
 \end{align}
 where we note that \(\gamma_n^{(b)} = 0\) \(\forall n = 0,1,2,\dots\). We can use these to determine the 2D recurences for $P_{n,k}^{(a,b)}(x,y)$:
 
-\sotodoinline{Define norms and inner products below}
-
 \begin{lemma}
 $\Pnk^{(a,b)}(x,y)$ satisfy the following 3-term recurrences:
 \begin{align}
@@ -260,6 +258,7 @@ for \((x,y) \in \Omega\), where
 \betaab_{n,k,5} &:= \frac{\delta_{k-1}^{(b)}}{|| P_{n+1,k-1}^{(a,b)} ||_{W^{(a,b)}}^2} \: \ip<H_{n-k}^{(a, b+k+\half)}, H_{n-k+2}^{(a, b+k-\half)}>_{H^{(a, b+k+\half)}} \\
 \betaab_{n,k,6} &:= \frac{\delta_{k}^{(b)}}{|| P_{n+1,k+1}^{(a,b)} ||_{W^{(a,b)}}^2} \: \ip<H_{n-k}^{(a, b+k+\half)}, H_{n-k}^{(a, b+k+\frac{3}{2})}>_{H^{(a, b+k+\frac{3}{2})}}. 
 \end{align}
+where $|| p(x,y) ||_{W^{(a,b)}}^2 := \int_\Omega p(x,y)^2 \: \Wab(x,y) \: d\mathbf{x}$ and $\ip<p(x), q(x)>_{H^{(a, b)}} := \int_\alpha^\beta p(x) \: q(x) \: x^a \: (1-x^2)^b \: dx$, i.e the 1D inner product using the $\{H^{(a,b)}_n\}$ family weight.
 
 \end{lemma}
 
@@ -578,7 +577,7 @@ We can develop a quadrature rule on the half disk \(\Omega\) in order to evaluat
 
 
 
-Let \(f(x,y)\) be polynomial that is even in \(y\) of degree $d_1$ in $x$ and degree $d_2$ in $y$\sotodo{Clarify this}. Then there exists a polynomial \(\tilde{f}(x,y)\) in \(x,y\) such that \(g(s,t) := f(x, y) = f(s, (1-s^2)^\half t) = \tilde{f}(s, (1-s^2) t^2)\) (i.e. that $d_2$ is an even integer). Now, as \(\tilde{f}\) is a polynomial, so must \(g\) be a polynomial of degree $d_1+\frac{d_2}{2}$ in $s$ and degree $d_2$ in $t$. Thus a quadrature rule of the following will be exact for the polynomial $f(x,y)$ (even in \(y\) of degree $\le d_1$ in $x$ and degree $\le d_2$ in $y$):
+Let \(f(x,y)\) be polynomial that is even in \(y\) of degree $d_1$ in $x$ and degree $d_2$ in $y$ (i.e. $f(\cdot, y)$ with $y$ fixed is a degree $d_1$ polynomial, and $f(x, \cdot)$ with $x$ fixed is an even degree $d_2$ polynomial). Then there exists a polynomial \(\tilde{f}(x,y)\) in \(x,y\) such that \(g(s,t) := f(x, y) = f(s, (1-s^2)^\half t) = \tilde{f}(s, (1-s^2) t^2)\) (i.e. that $d_2$ is an even integer). Now, as \(\tilde{f}\) is a polynomial, so must \(g\) be a polynomial of degree $d_1+\frac{d_2}{2}$ in $s$ and degree $d_2$ in $t$. Thus a quadrature rule of the following will be exact for the polynomial $f(x,y)$ (even in \(y\) of degree $\le d_1$ in $x$ and degree $\le d_2$ in $y$):
 \begin{align}
 & \quad \int_0^1 \int_{-\rho(x)}^{\rho(x)} W^{(a,b)}(x,y) \: f(x,y) \: dy \: dx \\
 &= \int_0^1 \int_{-1}^1 V^{(a,b)}(s,t) \: g(s,t) \: (1-s^2)^\half \: dt \: ds \\
@@ -743,7 +742,6 @@ Again, the first step is to obtain the expansion of \(f\) in the \(\Pii\) basis.
 
 
 \subsection{Heat Equation}
-\bstodo{Struggling to get plotting working}
 Fix \(a, b = 1,1\), and consider
 \begin{align}
 \frac{\partial u}{\partial t}(x,y) = \Delta(\Wii \: u)(x,y) \quad \text{in } \Omega
