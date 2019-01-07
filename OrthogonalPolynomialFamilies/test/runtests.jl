@@ -2,7 +2,7 @@ using ApproxFun, OrthogonalPolynomialFamilies, FastGaussQuadrature, SingularInte
 import OrthogonalPolynomialFamilies: golubwelsch, lanczos, halfdiskquadrule, gethalfdiskOP,
                                         jacobix, jacobiy, evalderivativex, evalderivativey,
                                         differentiatex, differentiatey, resizecoeffs!, laplace,
-                                        gettransformoperator
+                                        gettransformoperator, operatorclenshaw
 
 
 
@@ -210,6 +210,17 @@ end
     @test f2(z) ≈ x*f1(z)
 end
 
+@testset "Operator Clenshaw" begin
+    a, b = 1.0, 1.0; D = HalfDiskFamily(); S = D(a, b)
+    x, y = 0.4, -0.2; z = [x; y] # Test point
+    N = 14
+    oper = Fun((x,y)->cos(x)*y^2, S, 200)
+    A = operatorclenshaw(oper, S)
+    f = Fun((x,y)->x*y, S)
+    resizecoeffs!(f, N)
+    foper = Fun(S, A*f.coefficients)
+    @test foper(z) ≈ f(z) * oper(z)
+end
 
 #=====#
 

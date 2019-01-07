@@ -995,5 +995,65 @@ function getnk!(j)
     Int(n), Int(k)
 end
 
+# Operator Clenshaw
+function operatorclenshawG(n, Jx, Jy)
+    G = Matrix{SparseMatrixCSC{Float64}}(undef, 2(n+1), n+1)
+    for i = 1:n+1
+        for j = 1:n+1
+            if i == j
+                G[i,j] = Jx
+                G[i+n+1,j] = Jy
+            else
+                G[i,j] = zeros(size(Jx))
+                G[i+n+1,j] = zeros(size(Jy))
+            end
+        end
+    end
+    G
+end
+function converttooperatorclenshawmatrix(A, Jx)
+    nn = size(Jx)
+    B = Array{SparseMatrixCSC{Float64}}(undef, size(A))
+    for ij = 1:length(A)
+        B[ij] = sparse(I, nn) * A[ij]
+    end
+    B
+end
+function operatorclenshaw(cfs, S::HalfDiskSpace)
+    # TODO: ρ(Jx) doesnt work, how to implement (i.e. get operator version of P_1)
+    m̃ = length(cfs)
+    N = -1 + Int(round(sqrt(1+2(m̃-1))))
+    OrthogonalPolynomialFamilies.resizedata!(S, N+1)
+    m = Int((N+1)*(N+2)/2)
+    Jx = OrthogonalPolynomialFamilies.jacobix(S, N)
+    Jy = OrthogonalPolynomialFamilies.jacobiy(S, N)' # TODO: Need to transpose in the method!
+    if m̃ < m
+        resize!(cfs, m)
+        cfs[m̃+1:end] .= 0.0
+    end
+    P0 = 1.0
+    if N == 0
+        return cfs[1] * id * P0
+    end
+    if N == 1
+        P0 * (converttooperatorclenshawmatrix(cfs[1], Jx)[1] - (converttooperatorclenshawmatrix(S.DT[1], Jx) * (converttooperatorclenshawmatrix(S.B[1], Jx) - operatorclenshawG(0, Jx, Jy)))[1])
+    end
+    inds2 = m-N:m
+    γ2 = converttooperatorclenshawmatrix(view(cfs, inds2), Jx)'
+    inds1 = (m-2N):(m-N-1)
+    γ1 = (converttooperatorclenshawmatrix(view(cfs, inds1), Jx)'
+        - γ2 * converttooperatorclenshawmatrix(S.DT[N], Jx) * (converttooperatorclenshawmatrix(S.B[N], Jx)
+                                                                - operatorclenshawG(N-1, Jx, Jy)))
+    for n = N-2:-1:0
+        ind = sum(1:n)
+        γ = (converttooperatorclenshawmatrix(view(cfs, ind+1:ind+n+1), Jx)'
+             - γ1 * converttooperatorclenshawmatrix(S.DT[n+1], Jx) * (converttooperatorclenshawmatrix(S.B[n+1], Jx) - operatorclenshawG(n, Jx, Jy))
+             - γ2 * converttooperatorclenshawmatrix(S.DT[n+2] * S.C[n+2], Jx))
+        γ2 = copy(γ1)
+        γ1 = copy(γ)
+    end
+    (γ1 * P0)[1]
+end
+operatorclenshaw(f::Fun, S::HalfDiskSpace) = operatorclenshaw(f.coefficients, S)
 
 end # module
