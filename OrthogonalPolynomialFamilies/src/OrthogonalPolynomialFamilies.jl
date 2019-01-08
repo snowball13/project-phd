@@ -332,6 +332,8 @@ function pointswithweights(S::HalfDiskSpace, n)
             w[i + (k - 1)N] = ws[k] * wt[i]
         end
     end
+    # # Reset the calculated OP pt evals, and return the pts and wghts
+    # resetopptseval(S)
     pts, w
 end
 points(S::HalfDiskSpace, n) = pointswithweights(S, n)[1]
@@ -1059,18 +1061,27 @@ operatorclenshaw(f::Fun, S::HalfDiskSpace) = operatorclenshaw(f.coefficients, S)
 
 
 # Method to gather and evaluate the ops of space S at the transform pts given
+function getopptseval(S, N, pts)
+    resetopptseval(S)
+    jj = [getindex!(n, 0) for n=0:N]
+    for j in jj
+        opevalatpts(S, j, pts)
+    end
+    S.opptseval
+end
 function opevalatpts(S, j, pts)
     len = length(S.opptseval)
     if len ≥ j
         return S.opptseval[j]
     end
 
-    # Check that j is valid (i.e. not too large)
+    # We iterate up from the last obtained pts eval
     N = len == 0 ? -1 : getnk!(len)[1]
     n = getnk!(j)[1]
-    if N != n - 1 || (len == 0 && j > 1)
-        error("Invalid index - should only ask for one degree higher than already obtained")
+    if  N != n - 1 || (len == 0 && j > 1)
+        error("Invalid index")
     end
+
     jj = getindex!(n, 0)
     resizedata!(S, n)
     resize!(S.opptseval, getindex!(n, n))
@@ -1105,5 +1116,29 @@ function opevalatpts(S, j, pts)
     S.opptseval[j]
 end
 resetopptseval(S) = resize!(S.opptseval, 0)
+
+function getweightedpartialoperatory2(S::HalfDiskSpace, N, pts, w)
+    W = BandedBlockBandedMatrix(
+        Zeros{Float64}(sum(1:(N+2)),sum(1:(N+1))), (1:N+2, 1:N+1), (1,-1), (1,-1))
+    Sy = differentiateweightedspacey(S)
+    getopnorms(Sy, sum(1:N+2))
+    getopptseval(Sy, N+1, pts)
+    for k=0:N
+        j = getindex!(N+1, k+1)
+        dpy = (x,y) -> (evalweightedderivativey(S, N, k, x, y) * x^(-S.a) * (1-x^2-y^2)^(1-S.b))
+        dpypts = [dpy(pt...) for pt in pts]
+        val = inner2(dpypts, Sy.opptseval[j], w) / Sy.opnorms[j]
+        for i = k:N
+            view(W, Block(i+2, i+1))[k+2, k+1] = val
+        end
+    end
+    W
+end
+function inner2(fpts, gpts, w)
+    n = length(w)
+    sum(([fpts[pt] * gpts[pt] for pt = 1:n]
+            + [fpts[pt] * gpts[pt] for pt = n+1:2n]) .* w) / 2
+end
+
 
 end # module
