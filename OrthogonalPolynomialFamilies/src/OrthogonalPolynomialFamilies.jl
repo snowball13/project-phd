@@ -291,6 +291,7 @@ struct HalfDiskSpace{DF, R, FA, F} <: Space{HalfDisk{R}, R}
     P::FA # OPFamily in [-1,1]
     ρ::F # Fun of sqrt(1-X^2) in [0,1]
     opnorms::Vector{R} # squared norms
+    opptseval::Vector{Vector{R}} # Store the ops evaluated at the transform pts
     A::Vector{SparseMatrixCSC{R}}
     B::Vector{SparseMatrixCSC{R}}
     C::Vector{SparseMatrixCSC{R}}
@@ -303,7 +304,7 @@ function HalfDiskSpace(fam::DiskSpaceFamily{R}, a::R, b::R) where R
     H = OrthogonalPolynomialFamily(X, 1-X^2)
     P = OrthogonalPolynomialFamily(1+Y, 1-Y)
     ρ = sqrt(1 - X^2)
-    HalfDiskSpace{typeof(fam), typeof(a), typeof(H), typeof(ρ)}(fam, a, b, H, P, ρ, Vector{R}(), Vector{SparseMatrixCSC{R}}(), Vector{SparseMatrixCSC{R}}(), Vector{SparseMatrixCSC{R}}(), Vector{SparseMatrixCSC{R}}())
+    HalfDiskSpace{typeof(fam), typeof(a), typeof(H), typeof(ρ)}(fam, a, b, H, P, ρ, Vector{R}(), Vector{Vector{R}}(), Vector{SparseMatrixCSC{R}}(), Vector{SparseMatrixCSC{R}}(), Vector{SparseMatrixCSC{R}}(), Vector{SparseMatrixCSC{R}}())
 end
 HalfDiskSpace() = HalfDiskSpace(0.5, 0.5)
 
@@ -1055,5 +1056,54 @@ function operatorclenshaw(cfs, S::HalfDiskSpace)
     (γ1 * P0)[1]
 end
 operatorclenshaw(f::Fun, S::HalfDiskSpace) = operatorclenshaw(f.coefficients, S)
+
+
+# Method to gather and evaluate the ops of space S at the transform pts given
+function opevalatpts(S, j, pts)
+    len = length(S.opptseval)
+    if len ≥ j
+        return S.opptseval[j]
+    end
+
+    # Check that j is valid (i.e. not too large)
+    N = len == 0 ? -1 : getnk!(len)[1]
+    n = getnk!(j)[1]
+    if N != n - 1 || (len == 0 && j > 1)
+        error("Invalid index - should only ask for one degree higher than already obtained")
+    end
+    jj = getindex!(n, 0)
+    resizedata!(S, n)
+    resize!(S.opptseval, getindex!(n, n))
+    for k = 0:n
+        S.opptseval[jj+k] = Vector{Float64}(undef, length(pts))
+    end
+
+    if n == 0
+        S.opptseval[1][:] .= 1.0
+    elseif n == 1
+        nm1 = getindex!(n-1, 0)
+        for r = 1:length(pts)
+            P1 = [opevalatpts(S, nm1+i, pts)[r] for i = 0:n-1]
+            P = - S.DT[n] * (S.B[n] - clenshawG(n-1, pts[r])) * P1
+            for k = 0:n
+                S.opptseval[jj+k][r] = P[k+1]
+            end
+        end
+    else
+        nm1 = getindex!(n-1, 0)
+        nm2 = getindex!(n-2, 0)
+        for r = 1:length(pts)
+            P1 = [opevalatpts(S, nm1+i, pts)[r] for i = 0:n-1]
+            P2 = [opevalatpts(S, nm2+i, pts)[r] for i = 0:n-2]
+            P = (- S.DT[n] * (S.B[n] - clenshawG(n-1, pts[r])) * P1
+                 - S.DT[n] * S.C[n] * P2)
+            for k = 0:n
+                S.opptseval[jj+k][r] = P[k+1]
+            end
+        end
+    end
+    S.opptseval[j]
+end
+resetopptseval(S) = resize!(S.opptseval, 0)
 
 end # module
