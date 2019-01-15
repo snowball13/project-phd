@@ -292,6 +292,10 @@ struct HalfDiskSpace{DF, R, FA, F} <: Space{HalfDisk{R}, R}
     ρ::F # Fun of sqrt(1-X^2) in [0,1]
     opnorms::Vector{R} # squared norms
     opptseval::Vector{Vector{R}} # Store the ops evaluated at the transform pts
+    xderivopptseval::Vector{Vector{R}} # Store the x deriv of the ops evaluated
+                                    # at the transform pts
+    yderivopptseval::Vector{Vector{R}} # Store the y deriv of the ops evaluated
+                                    # at the transform pts
     A::Vector{SparseMatrixCSC{R}}
     B::Vector{SparseMatrixCSC{R}}
     C::Vector{SparseMatrixCSC{R}}
@@ -304,9 +308,13 @@ function HalfDiskSpace(fam::DiskSpaceFamily{R}, a::R, b::R) where R
     H = OrthogonalPolynomialFamily(X, 1-X^2)
     P = OrthogonalPolynomialFamily(1+Y, 1-Y)
     ρ = sqrt(1 - X^2)
-    HalfDiskSpace{typeof(fam), typeof(a), typeof(H), typeof(ρ)}(fam, a, b, H, P, ρ, Vector{R}(), Vector{Vector{R}}(), Vector{SparseMatrixCSC{R}}(), Vector{SparseMatrixCSC{R}}(), Vector{SparseMatrixCSC{R}}(), Vector{SparseMatrixCSC{R}}())
+    HalfDiskSpace{typeof(fam), typeof(a), typeof(H), typeof(ρ)}(
+        fam, a, b, H, P, ρ, Vector{R}(), Vector{Vector{R}}(),
+        Vector{Vector{R}}(), Vector{Vector{R}}(), Vector{SparseMatrixCSC{R}}(),
+        Vector{SparseMatrixCSC{R}}(), Vector{SparseMatrixCSC{R}}(),
+        Vector{SparseMatrixCSC{R}}())
 end
-HalfDiskSpace() = HalfDiskSpace(0.5, 0.5)
+HalfDiskSpace() = HalfDiskSpace(1.0, 1.0)
 
 in(x::SVector{2}, D::HalfDisk) = 0 ≤ x[1] ≤ 1 && -sqrt(1-x[1]^2) ≤ x[2] ≤ sqrt(1-x[1]^2)
 
@@ -1163,6 +1171,132 @@ function opevalatpts(S, j, pts)
     S.opptseval[j]
 end
 resetopptseval(S) = resize!(S.opptseval, 0)
+
+# Methods to gather and evaluate the derivatives of the ops of space S at the
+# transform pts given
+function clenshawGtildex(n, z)
+    sp = sparse(I, n+1, n+1)
+    [sp; z[2] * sp]
+end
+function getxderivopptseval(S, N, pts)
+    resetxderivopptseval(S)
+    jj = [getopindex(n, 0) for n=0:N]
+    for j in jj
+        xderivopevalatpts(S, j, pts)
+    end
+    S.xderivopptseval
+end
+resetxderivopptseval(S) = resize!(S.xderivopptseval, 0)
+function clenshawGtildey(n, z)
+    sp = sparse(I, n+1, n+1)
+    [z[1] * sp; sp]
+end
+function getyderivopptseval(S, N, pts)
+    resetyderivopptseval(S)
+    jj = [getopindex(n, 0) for n=0:N]
+    for j in jj
+        yderivopevalatpts(S, j, pts)
+    end
+    S.yderivopptseval
+end
+resetyderivopptseval(S) = resize!(S.yderivopptseval, 0)
+
+function xderivopevalatpts(S, j, pts)
+    len = length(S.xderivopptseval)
+    if len ≥ j
+        return S.xderivopptseval[j]
+    end
+
+    # We iterate up from the last obtained pts eval
+    N = len == 0 ? -1 : getnk(len)[1]
+    n = getnk(j)[1]
+    if  N != n - 1 || (len == 0 && j > 1)
+        error("Invalid index")
+    end
+
+    jj = getopindex(n, 0)
+    resizedata!(S, n)
+    resize!(S.xderivopptseval, getopindex(n, n))
+    for k = 0:n
+        S.xderivopptseval[jj+k] = Vector{Float64}(undef, length(pts))
+    end
+
+    if n == 0
+        S.xderivopptseval[1][:] .= 0.0
+    elseif n == 1
+        nm1 = getopindex(n-1, 0)
+        for r = 1:length(pts)
+            P1 = [opevalatpts(S, nm1+i, pts)[r] for i = 0:n-1]
+            dxP = S.DT[n] * clenshawGtildex(n-1, pts[r]) * P1
+            for k = 0:n
+                S.xderivopptseval[jj+k][r] = dxP[k+1]
+            end
+        end
+    else
+        nm1 = getopindex(n-1, 0)
+        nm2 = getopindex(n-2, 0)
+        for r = 1:length(pts)
+            dxP1 = [xderivopevalatpts(S, nm1+i, pts)[r] for i = 0:n-1]
+            dxP2 = [xderivopevalatpts(S, nm2+i, pts)[r] for i = 0:n-2]
+            P1 = [opevalatpts(S, nm1+i, pts)[r] for i = 0:n-1]
+            dxP = (- S.DT[n] * (S.B[n] - clenshawG(n-1, pts[r])) * dxP1
+                   - S.DT[n] * S.C[n] * dxP2
+                   + S.DT[n] * clenshawGtildex(n-1, pts[r]) * P1)
+            for k = 0:n
+                S.xderivopptseval[jj+k][r] = dxP[k+1]
+            end
+        end
+    end
+    S.xderivopptseval[j]
+end
+function yderivopevalatpts(S, j, pts)
+    len = length(S.yderivopptseval)
+    if len ≥ j
+        return S.yderivopptseval[j]
+    end
+
+    # We iterate up from the last obtained pts eval
+    N = len == 0 ? -1 : getnk(len)[1]
+    n = getnk(j)[1]
+    if  N != n - 1 || (len == 0 && j > 1)
+        error("Invalid index")
+    end
+
+    jj = getopindex(n, 0)
+    resizedata!(S, n)
+    resize!(S.yderivopptseval, getopindex(n, n))
+    for k = 0:n
+        S.yderivopptseval[jj+k] = Vector{Float64}(undef, length(pts))
+    end
+
+    if n == 0
+        S.yderivopptseval[1][:] .= 0.0
+    elseif n == 1
+        nm1 = getopindex(n-1, 0)
+        for r = 1:length(pts)
+            P1 = [opevalatpts(S, nm1+i, pts)[r] for i = 0:n-1]
+            dyP = S.DT[n] * clenshawGtildey(n-1, pts[r]) * P1
+            for k = 0:n
+                S.yderivopptseval[jj+k][r] = dyP[k+1]
+            end
+        end
+    else
+        nm1 = getopindex(n-1, 0)
+        nm2 = getopindex(n-2, 0)
+        for r = 1:length(pts)
+            dyP1 = [yderivopevalatpts(S, nm1+i, pts)[r] for i = 0:n-1]
+            dyP2 = [yderivopevalatpts(S, nm2+i, pts)[r] for i = 0:n-2]
+            P1 = [opevalatpts(S, nm1+i, pts)[r] for i = 0:n-1]
+            dyP = (- S.DT[n] * (S.B[n] - clenshawG(n-1, pts[r])) * dyP1
+                   - S.DT[n] * S.C[n] * dyP2
+                   + S.DT[n] * clenshawGtildey(n-1, pts[r]) * P1)
+            for k = 0:n
+                S.yderivopptseval[jj+k][r] = dyP[k+1]
+            end
+        end
+    end
+    S.yderivopptseval[j]
+end
 
 function getweightedpartialoperatory2(S::HalfDiskSpace, N, pts, w)
     W = BandedBlockBandedMatrix(
