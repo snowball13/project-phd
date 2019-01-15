@@ -2,7 +2,8 @@ using ApproxFun, OrthogonalPolynomialFamilies, FastGaussQuadrature, SingularInte
 import OrthogonalPolynomialFamilies: golubwelsch, lanczos, halfdiskquadrule, gethalfdiskOP,
                                         jacobix, jacobiy, evalderivativex, evalderivativey,
                                         differentiatex, differentiatey, resizecoeffs!, laplace,
-                                        gettransformoperator, operatorclenshaw
+                                        gettransformoperator, operatorclenshaw, getnk,
+                                        convertweightedtononoperator, increaseparamsoperator
 
 
 
@@ -220,6 +221,61 @@ end
     resizecoeffs!(f, N)
     foper = Fun(S, A*f.coefficients)
     @test foper(z) ≈ f(z) * oper(z)
+end
+
+@testset "Weighted to non-weighted space conversion" begin
+    # NOTE: Operator takes W11*P11 -> P00 only
+    tol = 1e-8
+    a, b = 1.0, 1.0; D = HalfDiskFamily(); S = D(a, b)
+    x, y = 0.4, -0.2; z = [x; y] # Test point
+    weight(S) = z -> (z[1]^S.a * (1-z[1]^2-z[2]^2)^S.b)
+    St = (S.family)(S.a-1, S.b-1)
+    maxop = 100
+    N = getnk(maxop)[1] + 1
+    W = convertweightedtononoperator(S, N)
+    for j = 1:maxop
+        p = Fun(S, [zeros(j-1); 1])
+        resizecoeffs!(p, N+3)
+        q = Fun(St, W * p.coefficients)
+        res = abs(q(z) - p(z)*weight(S)(z))
+        @test res < tol
+        if res >= tol
+            @show getnk(j), j, res
+        end
+    end
+end
+
+@testset "Increment parameters operator" begin
+    tol = 1e-8
+    a, b = 1.0, 1.0; D = HalfDiskFamily(); S = D(a-1, b-1)
+    x, y = 0.4, -0.2; z = [x; y] # Test point
+    St = (S.family)(S.a+1, S.b+1)
+    maxop = 150
+    N = getnk(maxop)[1] + 1
+    C = increaseparamsoperator(S, N)
+    for j = 1:maxop
+        p = Fun(S, [zeros(j-1); 1])
+        resizecoeffs!(p, N)
+        q = Fun(St, C * p.coefficients)
+        res = abs(q(z) - p(z))
+        res > tol && @show getnk(j), j, res
+        @test res < tol
+    end
+
+    a, b = 2.0, 1.0; D = HalfDiskFamily(); S = D(a-1, b-1)
+    x, y = 0.4, -0.2; z = [x; y] # Test point
+    St = (S.family)(S.a+1, S.b+1)
+    maxop = 150
+    N = getnk(maxop)[1] + 1
+    C = increaseparamsoperator(S, N)
+    for j = 1:maxop
+        p = Fun(S, [zeros(j-1); 1])
+        resizecoeffs!(p, N)
+        q = Fun(St, C * p.coefficients)
+        res = abs(q(z) - p(z))
+        res > tol && @show getnk(j), j, res
+        @test res < tol
+    end
 end
 
 #=====#
