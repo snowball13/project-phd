@@ -722,7 +722,7 @@ function differentiatex(S::HalfDiskSpace, cfs::AbstractVector)
         resize!(cfs, m)
         cfs[m̃+1:end] .= 0.0
     end
-    getpartialoperatorx(S, N) * cfs
+    partialoperatorx(S, N) * cfs
 end
 function differentiatey(S::HalfDiskSpace, cfs::AbstractVector)
     m̃ = length(cfs)
@@ -731,25 +731,13 @@ function differentiatey(S::HalfDiskSpace, cfs::AbstractVector)
     if m̃ < m
         cfs2 = zeros(m)
         cfs2[1:m̃] = cfs
-        getpartialoperatory(S, N) * cfs2
+        partialoperatory(S, N) * cfs2
     else
-        getpartialoperatory(S, N) * cfs
+        partialoperatory(S, N) * cfs
     end
 end
 
-function evalderivativex(S::HalfDiskSpace, n, k, x, y)
-    H = Fun(S.H(S.a, S.b+k+0.5), [zeros(n-k); 1])
-    P = Fun(S.P(S.b, S.b), [zeros(k); 1])
-    ρ = S.ρ(x); h = H(x); p = P(y/ρ)
-    ρ^(k - 3) * (differentiateop(S.H(S.a, S.b+k+0.5), n-k)(x) * ρ^3 * p
-                 - x * k * h * ρ * p
-                 + x * y * h * differentiateop(S.P(S.b, S.b), k)(y/ρ))
-end
-function evalderivativey(S::HalfDiskSpace, n, k, x, y)
-    H = Fun(S.H(S.a, S.b+k+0.5), [zeros(n-k); 1])
-    H(x) * S.ρ(x)^(k-1) * differentiateop(S.P(S.b, S.b), k)(y/S.ρ(x))
-end
-function getpartialoperatorx(S::HalfDiskSpace, N)
+function partialoperatorx(S::HalfDiskSpace, N)
     # Takes the space P^{a,b} -> P^{a+1,b+1}
     Sx = differentiatespacex(S)
     pts, w = pointswithweights(Sx, N^2)
@@ -802,7 +790,7 @@ function getpartialoperatorx(S::HalfDiskSpace, N)
     end
     A
 end
-function getpartialoperatory(S::HalfDiskSpace, N)
+function partialoperatory(S::HalfDiskSpace, N)
     # Takes the space P^{a,b} -> P^{a,b+1}
     A = BandedBlockBandedMatrix(
         Zeros{Float64}(sum(1:N),sum(1:(N+1))), (1:N, 1:N+1), (-1,1), (-1,1))
@@ -824,7 +812,7 @@ function getpartialoperatory(S::HalfDiskSpace, N)
     end
     A
 end
-function getweightedpartialoperatorx(S::HalfDiskSpace, N)
+function weightedpartialoperatorx(S::HalfDiskSpace, N)
     # Takes weighted space ∂/∂y(W^{a,b}) -> W^{a-1,b-1}
     W = BandedBlockBandedMatrix(
         Zeros{Float64}(sum(1:(N+3)),sum(1:(N+1))), (1:N+3, 1:N+1), (2,-1), (2,0))
@@ -854,7 +842,7 @@ function getweightedpartialoperatorx(S::HalfDiskSpace, N)
     end
     W
 end
-function getweightedpartialoperatory(S::HalfDiskSpace, N)
+function weightedpartialoperatory(S::HalfDiskSpace, N)
     # Takes weighted space ∂/∂y(W^{a,b}) -> W^{a,b-1}
     W = BandedBlockBandedMatrix(
         Zeros{Float64}(sum(1:(N+2)),sum(1:(N+1))), (1:N+2, 1:N+1), (1,-1), (1,-1))
@@ -878,35 +866,42 @@ function getweightedpartialoperatory(S::HalfDiskSpace, N)
     end
     W
 end
-function gettransformoperator(S::HalfDiskSpace, N)
+
+function transformoperator(S::HalfDiskSpace, N)
     if Int(S.a) == 1 && Int(S.b) == 0
         # Takes the space xP^{1,0} -> P^{0,0}
         St = (S.family)(0.0, 0.0)
-        T = BandedBlockBandedMatrix(Zeros{Float64}(sum(1:(N+2)),sum(1:(N+1))), (1:N+2, 1:N+1), (1,0), (0,0))
+        T = BandedBlockBandedMatrix(
+            Zeros{Float64}(sum(1:(N+2)),sum(1:(N+1))), (1:N+2, 1:N+1), (1,0), (0,0))
         getopnorms(St, sum(1:N+2))
-        pts, w = pointswithweights(St, Int(ceil(N+1.5)^2))
+        pts, w = pointswithweights(St, (N+2)^2)
+        getopptseval(St, N+2, pts)
+        getopptseval(S, N+2, pts)
         for n=0:N, k=0:n
             j = getopindex(n, k)
-            p = (x,y) -> (x * Fun(S, [zeros(j-1); 1])(x,y))
+            p = [opevalatpts(S, j, pts)[i] * pts[i][1] for i = 1:length(pts)]
             for m = n:n+1
-                i = getopindex(m, k)
-                view(T, Block(m+1, n+1))[k+1, k+1] = inner(St, p, Fun(St, [zeros(i-1); 1]), pts, w) / St.opnorms[i]
+                jj = getopindex(m, k)
+                view(T, Block(m+1, n+1))[k+1, k+1] = inner2(
+                                p, opevalatpts(St, jj, pts), w) / St.opnorms[jj]
             end
         end
         T
     elseif Int(S.a) == 0 && Int(S.b) == 1
         # Takes the space P^{0,1} -> P^{1,1}
         St = (S.family)(1.0, 1.0)
+        T = BandedBlockBandedMatrix(
+            Zeros{Float64}(sum(1:(N+1)),sum(1:(N+1))), (1:N+1, 1:N+1), (0,1), (0,0))
         getopnorms(St, sum(1:N+2))
-        pts, w = pointswithweights(St, Int(ceil(N+1.5)^2))
-        T = BandedBlockBandedMatrix(Zeros{Float64}(sum(1:(N+1)),sum(1:(N+1))), (1:N+1, 1:N+1), (0,1), (0,0))
+        pts, w = pointswithweights(St, (N+2)^2)
+        getopptseval(St, N+2, pts)
+        getopptseval(S, N+2, pts)
         for n = 0:N
             for k = 0:n-1
                 j = getopindex(n, k)
-                p = Fun(S, [zeros(j-1); 1])
                 for m = n-1:n
-                    i = getopindex(m, k)
-                    view(T, Block(m+1, n+1))[k+1, k+1] = inner(St, p, Fun(St, [zeros(i-1); 1]), pts, w) / St.opnorms[i]
+                    jj = getopindex(m, k)
+                    view(T, Block(m+1, n+1))[k+1, k+1] = inner2(opevalatpts(S, j, pts), opevalatpts(St, jj, pts), w) / St.opnorms[jj]
                 end
             end
             view(T, Block(n+1, n+1))[n+1, n+1] = 1.0
@@ -915,25 +910,26 @@ function gettransformoperator(S::HalfDiskSpace, N)
     elseif Int(S.a) == 0 && Int(S.b) == 2
         # Takes the space P^{0,2} -> P^{2,2}
         St = (S.family)(2.0, 2.0)
+        T = BandedBlockBandedMatrix(
+            Zeros{Float64}(sum(1:(N+1)),sum(1:(N+1))), (1:N+1, 1:N+1), (0,2), (0,0))
         getopnorms(St, sum(1:N+2))
-        pts, w = pointswithweights(St, Int(ceil(N+1.5)^2))
-        T = BandedBlockBandedMatrix(Zeros{Float64}(sum(1:(N+1)),sum(1:(N+1))), (1:N+1, 1:N+1), (0,2), (0,0))
+        pts, w = pointswithweights(St, (N+2)^2)
+        getopptseval(St, N+2, pts)
+        getopptseval(S, N+2, pts)
         n = 0; view(T, Block(n+1, n+1))[n+1, n+1] = 1.0
         for n = 1:N
             for k = 0:n-2
                 j = getopindex(n, k)
-                p = Fun(S, [zeros(j-1); 1])
                 for m = n-2:n
-                    i = getopindex(m, k)
-                    view(T, Block(m+1, n+1))[k+1, k+1] = inner(St, p, Fun(St, [zeros(i-1); 1]), pts, w) / St.opnorms[i]
+                    jj = getopindex(m, k)
+                    view(T, Block(m+1, n+1))[k+1, k+1] = inner2(opevalatpts(S, j, pts), opevalatpts(St, jj, pts), w) / St.opnorms[jj]
                 end
             end
             k = n-1
             j = getopindex(n, k)
-            p = Fun(S, [zeros(j-1); 1])
             for m = n-1:n
-                i = getopindex(m, k)
-                view(T, Block(m+1, n+1))[k+1, k+1] = inner(St, p, Fun(St, [zeros(i-1); 1]), pts, w) / St.opnorms[i]
+                jj = getopindex(m, k)
+                view(T, Block(m+1, n+1))[k+1, k+1] = inner2(opevalatpts(S, j, pts), opevalatpts(St, jj, pts), w) / St.opnorms[jj]
             end
             view(T, Block(n+1, n+1))[n+1, n+1] = 1.0
         end
@@ -992,12 +988,12 @@ function convertweightedtononoperator(S, N)
 end
 
 function laplace(D::HalfDiskFamily, N)
-    A = getpartialoperatorx(D(0.0,0.0), N+2)
-    B = getweightedpartialoperatorx(D(1.0,1.0), N)
-    C = gettransformoperator(D(0.0,1.0), N+1)
-    E = getpartialoperatory(D(0.0,0.0), N+2)
-    F = gettransformoperator(D(1.0,0.0), N+1)
-    G = getweightedpartialoperatory(D(1.0,1.0), N)
+    A = partialoperatorx(D(0.0,0.0), N+2)
+    B = weightedpartialoperatorx(D(1.0,1.0), N)
+    C = transformoperator(D(0.0,1.0), N+1)
+    E = partialoperatory(D(0.0,0.0), N+2)
+    F = transformoperator(D(1.0,0.0), N+1)
+    G = weightedpartialoperatory(D(1.0,1.0), N)
     A * B + C * E * F * G
 end
 

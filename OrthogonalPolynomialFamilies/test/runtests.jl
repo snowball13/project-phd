@@ -2,7 +2,7 @@ using ApproxFun, OrthogonalPolynomialFamilies, FastGaussQuadrature, SingularInte
 import OrthogonalPolynomialFamilies: golubwelsch, lanczos, halfdiskquadrule, gethalfdiskOP,
                                         jacobix, jacobiy, evalderivativex, evalderivativey,
                                         differentiatex, differentiatey, resizecoeffs!, laplace,
-                                        gettransformoperator, operatorclenshaw, getnk,
+                                        transformoperator, operatorclenshaw, getnk,
                                         convertweightedtononoperator, increaseparamsoperator
 
 
@@ -198,15 +198,15 @@ end
     x, y = 0.457, -0.209; z = [x; y] # Test point
     N = 5
     f1 = Fun(D(0.0, 2.0), rand(sum(1:N+1)))
-    T = gettransformoperator(D(0.0, 2.0), N)
+    T = transformoperator(D(0.0, 2.0), N)
     f2 = Fun(D(2.0, 2.0), T * f1.coefficients)
     @test f2(z) ≈ f1(z)
     f1 = Fun(D(0.0, 1.0), rand(sum(1:N+1)))
-    T = gettransformoperator(D(0.0, 1.0), N)
+    T = transformoperator(D(0.0, 1.0), N)
     f2 = Fun(D(1.0, 1.0), T * f1.coefficients)
     @test f2(z) ≈ f1(z)
     f1 = Fun(D(1.0, 0.0), rand(sum(1:N+1)))
-    T = gettransformoperator(D(1.0, 0.0), N)
+    T = transformoperator(D(1.0, 0.0), N)
     f2 = Fun(D(0.0, 0.0), T * f1.coefficients)
     @test f2(z) ≈ x*f1(z)
 end
