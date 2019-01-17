@@ -320,6 +320,9 @@ in(x::SVector{2}, D::HalfDisk) = 0 ≤ x[1] ≤ 1 && -sqrt(1-x[1]^2) ≤ x[2] �
 
 spacescompatible(A::HalfDiskSpace, B::HalfDiskSpace) = (A.a == B.a && A.b == B.b)
 
+weight(S::HalfDiskSpace, x, y) = x^S.a * (1 - x^2 - y^2)^S.b
+weight(S::HalfDiskSpace, z) = weight(S, z[1], z[2])
+
 # NOTE we output ≈n points (x,y), plus the ≈n points corresponding to (x,-y)
 function pointswithweights(S::HalfDiskSpace, n)
     # Return the weights and nodes to use for the even
@@ -693,89 +696,24 @@ end
 
 (D::HalfDiskFamily{R})(a, b) where R = D(convert(R,a), convert(R,b))
 
+
 # Partial derivatives:
 # Seems that: dx takes (a,b)->(a+1,b+1) with nonzero for m=n-1,n-2
 #             dy takes (a,b)->(a,b+1) with nonzero for m=n-1
 #                   OR takes (a,b)->(a+1,b+1) with nonzero for m=n-1,n-2
-function evalderivativex(S::HalfDiskSpace, n, k, x, y)
-    H = Fun(S.H(S.a, S.b+k+0.5), [zeros(n-k); 1])
-    P = Fun(S.P(S.b, S.b), [zeros(k); 1])
-    ρ = S.ρ(x); h = H(x); p = P(y/ρ)
-    ρ^(k - 3) * (differentiateop(S.H(S.a, S.b+k+0.5), n-k)(x) * ρ^3 * p
-                 - x * k * h * ρ * p
-                 + x * y * h * differentiateop(S.P(S.b, S.b), k)(y/ρ))
-end
-function evalderivativey(S::HalfDiskSpace, n, k, x, y)
-    H = Fun(S.H(S.a, S.b+k+0.5), [zeros(n-k); 1])
-    H(x) * S.ρ(x)^(k-1) * differentiateop(S.P(S.b, S.b), k)(y/S.ρ(x))
-end
-function getpartialoperatorx(S::HalfDiskSpace, N)
-    Sx = differentiatespacex(S)
-    # We need this many pts for exact quadrature in inner()
-    pts, w = pointswithweights(Sx, Int(ceil(N-0.5))^2)
-    getopnorms(Sx, Int((N-1)N/2) + N)
-    if N == 2
-        A = BandedBlockBandedMatrix(
-            Zeros{Float64}(sum(1:N),sum(1:(N+1))), (1:N, 1:N+1), (-1,2), (0, 2))
-    else
-        A = BandedBlockBandedMatrix(
-            Zeros{Float64}(sum(1:N),sum(1:(N+1))), (1:N, 1:N+1), (-1,2), (0, N-1))
-    end
-    n, k = 1, 0
-    j = Int((n-1)n/2) + k + 1
-    view(A, Block(n, n+1))[1, 1] = inner(Sx, (x,y) -> evalderivativex(S, n, k, x, y),
-                            Fun(Sx, [zeros(j-1); 1]), pts, w) / Sx.opnorms[j]
-    for n = 2:N, k = 0:n
-        dxp = (x,y) -> evalderivativex(S, n, k, x, y)
-        if k == 0
-            inds1 = [1]
-            inds2 = [1]
-        elseif k == 1
-            inds1 = [2]
-            inds2 = [2]
-        elseif k == n - 1
-            inds1 = [n-2]
-            inds2 = [n-2, n]
-        elseif k == n
-            inds1 = [n-1]
-            inds2 = [n-1]
-        else
-            inds1 = [k-1, k+1]
-            inds2 = [k-1, k+1]
-        end
-        if !(n == 2 && k == 1)
-            for i in inds1
-                j = sum(1:n-2)+i
-                view(A, Block(n-1, n+1))[i, k+1] = inner(Sx, dxp,
-                            Fun(Sx, [zeros(j-1); 1]), pts, w) / Sx.opnorms[j]
-            end
-        end
-        for i in inds2
-            j = sum(1:n-1)+i
-            view(A, Block(n, n+1))[i, k+1] = inner(Sx, dxp,
-                            Fun(Sx, [zeros(j-1); 1]), pts, w) / Sx.opnorms[j]
-        end
-    end
-    A
-end
-function getpartialoperatory(S::HalfDiskSpace, N)
-    A = BandedBlockBandedMatrix(
-        Zeros{Float64}(sum(1:N),sum(1:(N+1))), (1:N, 1:N+1), (-1,1), (-1,1))
-    Sy = differentiatespacey(S)
-    # We need this many pts for exact quadrature in inner()
-    pts, w = pointswithweights(Sy, Int(ceil(N-0.5))^2)
-    getopnorms(Sy, Int((N-1)N/2) + N)
-    for k = 1:N
-        j = getopindex(N-1, k-1)
-        val = (inner(Sy, (x,y) -> evalderivativey(S, N, k, x, y),
-                     Fun(Sy, [zeros(j-1); 1]), pts, w)
-              / Sy.opnorms[j])
-        for i = k:N
-            view(A, Block(i, i+1))[k, k+1] = val
-        end
-    end
-    A
-end
+
+differentiatespacex(S::HalfDiskSpace) =
+    (S.family)(S.a+1, S.b+1)
+differentiatespacey(S::HalfDiskSpace) =
+    (S.family)(S.a, S.b+1)
+differentiateweightedspacex(S::HalfDiskSpace) =
+    (S.family)(S.a-1, S.b-1)
+differentiateweightedspacey(S::HalfDiskSpace) =
+    (S.family)(S.a, S.b-1)
+differentiatex(f::Fun, S::HalfDiskSpace) =
+    Fun(differentiatespacex(S), differentiatex(S, f.coefficients))
+differentiatey(f::Fun, S::HalfDiskSpace) =
+    Fun(differentiatespacey(S), differentiatey(S, f.coefficients))
 function differentiatex(S::HalfDiskSpace, cfs::AbstractVector)
     m̃ = length(cfs)
     N = -1 + Int(round(sqrt(1+2(m̃-1))))
@@ -798,93 +736,142 @@ function differentiatey(S::HalfDiskSpace, cfs::AbstractVector)
         getpartialoperatory(S, N) * cfs
     end
 end
-differentiatespacex(S::HalfDiskSpace) =
-    (S.family)(S.a+1, S.b+1)
-differentiatespacey(S::HalfDiskSpace) =
-    (S.family)(S.a, S.b+1)
-differentiateweightedspacex(S::HalfDiskSpace) =
-    (S.family)(S.a-1, S.b-1)
-differentiateweightedspacey(S::HalfDiskSpace) =
-    (S.family)(S.a, S.b-1)
-differentiatex(f::Fun, S::HalfDiskSpace) =
-    Fun(differentiatespacex(S), differentiatex(S, f.coefficients))
-differentiatey(f::Fun, S::HalfDiskSpace) =
-    Fun(differentiatespacey(S), differentiatey(S, f.coefficients))
 
-
-function evalweightedderivativex(S::HalfDiskSpace, n, k, x, y)
-    j = Int((n+1)*n/2 + k)
-    p = Fun(S, [zeros(j); 1])(x,y)
-    x^(S.a-1) * (1-x^2-y^2)^(S.b-1) * (S.a * (1-x^2-y^2) * p
-                                       -2 * S.b * x^2 * p
-                                       + evalderivativex(S, n, k, x, y) * x * (1-x^2-y^2))
+function evalderivativex(S::HalfDiskSpace, n, k, x, y)
+    H = Fun(S.H(S.a, S.b+k+0.5), [zeros(n-k); 1])
+    P = Fun(S.P(S.b, S.b), [zeros(k); 1])
+    ρ = S.ρ(x); h = H(x); p = P(y/ρ)
+    ρ^(k - 3) * (differentiateop(S.H(S.a, S.b+k+0.5), n-k)(x) * ρ^3 * p
+                 - x * k * h * ρ * p
+                 + x * y * h * differentiateop(S.P(S.b, S.b), k)(y/ρ))
 end
-function evalweightedderivativey(S::HalfDiskSpace, n, k, x, y)
-    j = Int((n+1)*n/2 + k)
-    x^(S.a) * (1-x^2-y^2)^(S.b-1) * (-2 * S.b * y * Fun(S, [zeros(j); 1])(x,y)
-                                        + evalderivativey(S, n, k, x, y) * (1-x^2-y^2))
+function evalderivativey(S::HalfDiskSpace, n, k, x, y)
+    H = Fun(S.H(S.a, S.b+k+0.5), [zeros(n-k); 1])
+    H(x) * S.ρ(x)^(k-1) * differentiateop(S.P(S.b, S.b), k)(y/S.ρ(x))
+end
+function getpartialoperatorx(S::HalfDiskSpace, N)
+    # Takes the space P^{a,b} -> P^{a+1,b+1}
+    Sx = differentiatespacex(S)
+    pts, w = pointswithweights(Sx, N^2)
+    getopnorms(Sx, sum(1:N+1))
+    getopptseval(Sx, N+1, pts)
+    getopptseval(S, N+1, pts)
+    getxderivopptseval(S, N+1, pts)
+    if N == 2
+        A = BandedBlockBandedMatrix(
+            Zeros{Float64}(sum(1:N),sum(1:(N+1))), (1:N, 1:N+1), (-1,2), (0, 2))
+    else
+        A = BandedBlockBandedMatrix(
+            Zeros{Float64}(sum(1:N),sum(1:(N+1))), (1:N, 1:N+1), (-1,2), (0, N-1))
+    end
+    n, k = 1, 0
+    j = getopindex(n, k)
+    jj = getopindex(n-1, k)
+    view(A, Block(n, n+1))[1, 1] = inner2(xderivopevalatpts(S, j, pts),
+                            opevalatpts(Sx, jj, pts), w) / Sx.opnorms[jj]
+    for n = 2:N, k = 0:n
+        j = getopindex(n, k)
+        if k == 0
+            inds1 = [0]
+            inds2 = [0]
+        elseif k == 1
+            inds1 = [1]
+            inds2 = [1]
+        elseif k == n - 1
+            inds1 = [n-3]
+            inds2 = [n-3, n-1]
+        elseif k == n
+            inds1 = [n-2]
+            inds2 = [n-2]
+        else
+            inds1 = [k-2, k]
+            inds2 = [k-2, k]
+        end
+        if !(n == 2 && k == 1)
+            for i in inds1
+                jj = getopindex(n-2, i)
+                view(A, Block(n-1, n+1))[i+1, k+1] = inner2(xderivopevalatpts(S, j, pts),
+                            opevalatpts(Sx, jj, pts), w) / Sx.opnorms[jj]
+            end
+        end
+        for i in inds2
+            jj = getopindex(n-1, i)
+            view(A, Block(n, n+1))[i+1, k+1] = inner2(xderivopevalatpts(S, j, pts),
+                            opevalatpts(Sx, jj, pts), w) / Sx.opnorms[jj]
+        end
+    end
+    A
+end
+function getpartialoperatory(S::HalfDiskSpace, N)
+    # Takes the space P^{a,b} -> P^{a,b+1}
+    A = BandedBlockBandedMatrix(
+        Zeros{Float64}(sum(1:N),sum(1:(N+1))), (1:N, 1:N+1), (-1,1), (-1,1))
+    Sy = differentiatespacey(S)
+    m = N^2 + 1 # TODO
+    pts, w = pointswithweights(Sy, m)
+    getopptseval(S, N+1, pts)
+    getyderivopptseval(S, N+1, pts)
+    getopptseval(Sy, N+1, pts)
+    getopnorms(Sy, sum(1:N+1))
+    for k = 1:N
+        j = getopindex(N, k)
+        jj = getopindex(N-1, k-1)
+        val = (inner2(yderivopevalatpts(S, j, pts), opevalatpts(Sy, jj, pts), w)
+                / Sy.opnorms[jj])
+        for i = k:N
+            view(A, Block(i, i+1))[k, k+1] = val
+        end
+    end
+    A
 end
 function getweightedpartialoperatorx(S::HalfDiskSpace, N)
-    W = BandedBlockBandedMatrix(Zeros{Float64}(sum(1:(N+3)),sum(1:(N+1))), (1:N+3, 1:N+1), (2,-1), (2,0))
+    # Takes weighted space ∂/∂y(W^{a,b}) -> W^{a-1,b-1}
+    W = BandedBlockBandedMatrix(
+        Zeros{Float64}(sum(1:(N+3)),sum(1:(N+1))), (1:N+3, 1:N+1), (2,-1), (2,0))
+    Sx = differentiateweightedspacex(S)
+    m = Int(ceil(N + 0.5S.a + S.b + 5)^2) # TODO
+    pts, w = pointswithweights((S.family)(0,0), m) # Weight of 1 for the inner product
+    getopptseval(S, N+1, pts)
+    getxderivopptseval(S, N+1, pts)
+    getopptseval(Sx, N+3, pts)
+    getopnorms(Sx, sum(1:N+3))
     for n = 0:N
-        m = Int((n+2+(2-S.a-S.b))*(n+3+(2-S.a-S.b)))
-        for k = 0:n-1
-            p = (x,y) -> (evalweightedderivativex(S, n, k, x, y) * x^(1-S.a) * (1-x^2-y^2)^(1-S.b))
-            cfs = pad(Fun(p, (S.family)(S.a-1, S.b-1), m).coefficients, sum(1:(n+3)))
-            cfs = PseudoBlockArray(cfs, 1:(n+3))
-            inds = k+1:2:k+3
-            view(W, Block(n+2, n+1))[inds, k+1] = cfs[Block(n+2)][inds]
-            view(W, Block(n+3, n+1))[inds, k+1] = cfs[Block(n+3)][inds]
+        for k = 0:n
+            j = getopindex(n, k)
+            dpxpts = [(weightderivativex(S, pts[i]) * opevalatpts(S, j, pts)[i]
+                       + weight(S, pts[i]) * xderivopevalatpts(S, j, pts)[i])
+                       for i = 1:length(pts)]
+            inds = [k, k+2]
+            for i in inds
+                if k < n || i == k
+                    jj = getopindex(n+1, i)
+                    view(W, Block(n+2, n+1))[i+1, k+1] = inner2(dpxpts, opevalatpts(Sx, jj, pts), w) / Sx.opnorms[jj]
+                end
+                jj = getopindex(n+2, i)
+                view(W, Block(n+3, n+1))[i+1, k+1] = inner2(dpxpts, opevalatpts(Sx, jj, pts), w) / Sx.opnorms[jj]
+            end
         end
-        k = n
-        m = Int((n+2+(2-S.a-S.b))*(n+3+(2-S.a-S.b)))
-        p = (x,y) -> (evalweightedderivativex(S, n, k, x, y) * x^(1-S.a) * (1-x^2-y^2)^(1-S.b))
-        cfs = pad(Fun(p, (S.family)(S.a-1, S.b-1), m).coefficients, sum(1:(n+3)))
-        cfs = PseudoBlockArray(cfs, 1:(n+3))
-        inds = k+1:2:k+3
-        view(W, Block(n+2, n+1))[k+1, k+1] = cfs[Block(n+2)][k+1]
-        view(W, Block(n+3, n+1))[inds, k+1] = cfs[Block(n+3)][inds]
     end
     W
-    # W = BandedBlockBandedMatrix(
-    #     Zeros{Float64}(sum(1:(N+3)),sum(1:(N+1))), (1:N+3, 1:N+1), (2,-1), (2,0))
-    # Sx = differentiateweightedspacex(S)
-    # getopnorms(Sx, getopindex(N+3, 0))
-    # for n = 0:N
-    #     pts, w = pointswithweights(Sx, Int(ceil(n+2.5)^2))
-    #     for k = 0:n-1
-    #         dpx = (x,y) -> (evalweightedderivativex(S, n, k, x, y)
-    #                         * x^(1-S.a) * (1-x^2-y^2)^(1-S.b))
-    #         inds = [k, k+2]
-    #         for i in inds
-    #             j = getopindex(n+1, i)
-    #             view(W, Block(n+2, n+1))[i+1, k+1] = inner(Sx, dpx, Fun(Sx, [zeros(j-1); 1]), pts, w) / Sx.opnorms[j]
-    #             j = getopindex(n+2, i)
-    #             view(W, Block(n+3, n+1))[i+1, k+1] = inner(Sx, dpx, Fun(Sx, [zeros(j-1); 1]), pts, w) / Sx.opnorms[j]
-    #         end
-    #     end
-    #     k = n
-    #     dpx = (x,y) -> (evalweightedderivativex(S, n, k, x, y) * x^(1-S.a) * (1-x^2-y^2)^(1-S.b))
-    #     j = getopindex(n+1, k)
-    #     view(W, Block(n+2, n+1))[k+1, k+1] = inner(Sx, dpx, Fun(Sx, [zeros(j-1); 1]), pts, w) / Sx.opnorms[j]
-    #     inds = [k, k+2]
-    #     for i in inds
-    #         j = getopindex(n+2, i)
-    #         view(W, Block(n+3, n+1))[i+1, k+1] = inner(Sx, dpx, Fun(Sx, [zeros(j-1); 1]), pts, w) / Sx.opnorms[j]
-    #     end
-    # end
-    # W
 end
 function getweightedpartialoperatory(S::HalfDiskSpace, N)
+    # Takes weighted space ∂/∂y(W^{a,b}) -> W^{a,b-1}
     W = BandedBlockBandedMatrix(
         Zeros{Float64}(sum(1:(N+2)),sum(1:(N+1))), (1:N+2, 1:N+1), (1,-1), (1,-1))
     Sy = differentiateweightedspacey(S)
+    m = Int(ceil(0.5 * (2N + S.a + 2S.b))^2) # TODO
+    pts, w = pointswithweights((S.family)(0,0), m) # Weight of 1 for the inner product
+    getopptseval(S, N+1, pts)
+    getyderivopptseval(S, N+1, pts)
+    getopptseval(Sy, N+1, pts)
     getopnorms(Sy, sum(1:N+2))
-    pts, w = pointswithweights(Sy, Int(ceil(N+1.5)^2))
-    for k=0:N
-        j = getopindex(N+1, k+1)
-        dpy = (x,y) -> (evalweightedderivativey(S, N, k, x, y) * x^(-S.a) * (1-x^2-y^2)^(1-S.b))
-        val = inner(Sy, dpy, Fun(Sy, [zeros(j-1); 1]), pts, w) / Sy.opnorms[j]
+    for k = 0:N
+        j = getopindex(N, k)
+        jj = getopindex(N+1, k+1)
+        dpypts = [(weightderivativey(S, pts[i]) * opevalatpts(S, j, pts)[i]
+                   + weight(S, pts[i]) * yderivopevalatpts(S, j, pts)[i])
+                   for i = 1:length(pts)]
+        val = inner2(dpypts, opevalatpts(Sy, jj, pts), w) / Sy.opnorms[jj]
         for i = k:N
             view(W, Block(i+2, i+1))[k+2, k+1] = val
         end
@@ -893,6 +880,7 @@ function getweightedpartialoperatory(S::HalfDiskSpace, N)
 end
 function gettransformoperator(S::HalfDiskSpace, N)
     if Int(S.a) == 1 && Int(S.b) == 0
+        # Takes the space xP^{1,0} -> P^{0,0}
         St = (S.family)(0.0, 0.0)
         T = BandedBlockBandedMatrix(Zeros{Float64}(sum(1:(N+2)),sum(1:(N+1))), (1:N+2, 1:N+1), (1,0), (0,0))
         getopnorms(St, sum(1:N+2))
@@ -907,6 +895,7 @@ function gettransformoperator(S::HalfDiskSpace, N)
         end
         T
     elseif Int(S.a) == 0 && Int(S.b) == 1
+        # Takes the space P^{0,1} -> P^{1,1}
         St = (S.family)(1.0, 1.0)
         getopnorms(St, sum(1:N+2))
         pts, w = pointswithweights(St, Int(ceil(N+1.5)^2))
@@ -924,6 +913,7 @@ function gettransformoperator(S::HalfDiskSpace, N)
         end
         T
     elseif Int(S.a) == 0 && Int(S.b) == 2
+        # Takes the space P^{0,2} -> P^{2,2}
         St = (S.family)(2.0, 2.0)
         getopnorms(St, sum(1:N+2))
         pts, w = pointswithweights(St, Int(ceil(N+1.5)^2))
@@ -954,6 +944,7 @@ function gettransformoperator(S::HalfDiskSpace, N)
 end
 
 function increaseparamsoperator(S, N)
+    # Takes the space P^{a,b} -> P^{a+1,b+1}
     St = (S.family)(S.a+1, S.b+1)
     m = 2N^2 - 1 # TODO: check how many points are required for all points() calls
     pts, w = pointswithweights(St, m)
@@ -1176,7 +1167,7 @@ resetopptseval(S) = resize!(S.opptseval, 0)
 # transform pts given
 function clenshawGtildex(n, z)
     sp = sparse(I, n+1, n+1)
-    [sp; z[2] * sp]
+    [sp; 0.0 * sp]
 end
 function getxderivopptseval(S, N, pts)
     resetxderivopptseval(S)
@@ -1187,20 +1178,6 @@ function getxderivopptseval(S, N, pts)
     S.xderivopptseval
 end
 resetxderivopptseval(S) = resize!(S.xderivopptseval, 0)
-function clenshawGtildey(n, z)
-    sp = sparse(I, n+1, n+1)
-    [z[1] * sp; sp]
-end
-function getyderivopptseval(S, N, pts)
-    resetyderivopptseval(S)
-    jj = [getopindex(n, 0) for n=0:N]
-    for j in jj
-        yderivopevalatpts(S, j, pts)
-    end
-    S.yderivopptseval
-end
-resetyderivopptseval(S) = resize!(S.yderivopptseval, 0)
-
 function xderivopevalatpts(S, j, pts)
     len = length(S.xderivopptseval)
     if len ≥ j
@@ -1249,6 +1226,19 @@ function xderivopevalatpts(S, j, pts)
     end
     S.xderivopptseval[j]
 end
+function clenshawGtildey(n, z)
+    sp = sparse(I, n+1, n+1)
+    [0.0 * sp; sp]
+end
+function getyderivopptseval(S, N, pts)
+    resetyderivopptseval(S)
+    jj = [getopindex(n, 0) for n=0:N]
+    for j in jj
+        yderivopevalatpts(S, j, pts)
+    end
+    S.yderivopptseval
+end
+resetyderivopptseval(S) = resize!(S.yderivopptseval, 0)
 function yderivopevalatpts(S, j, pts)
     len = length(S.yderivopptseval)
     if len ≥ j
@@ -1298,23 +1288,12 @@ function yderivopevalatpts(S, j, pts)
     S.yderivopptseval[j]
 end
 
-function getweightedpartialoperatory2(S::HalfDiskSpace, N, pts, w)
-    W = BandedBlockBandedMatrix(
-        Zeros{Float64}(sum(1:(N+2)),sum(1:(N+1))), (1:N+2, 1:N+1), (1,-1), (1,-1))
-    Sy = differentiateweightedspacey(S)
-    getopnorms(Sy, sum(1:N+2))
-    getopptseval(Sy, N+1, pts)
-    for k=0:N
-        j = getopindex(N+1, k+1)
-        dpy = (x,y) -> (evalweightedderivativey(S, N, k, x, y) * x^(-S.a) * (1-x^2-y^2)^(1-S.b))
-        dpypts = [dpy(pt...) for pt in pts]
-        val = inner2(dpypts, Sy.opptseval[j], w) / Sy.opnorms[j]
-        for i = k:N
-            view(W, Block(i+2, i+1))[k+2, k+1] = val
-        end
-    end
-    W
-end
+weightderivativex(S::HalfDiskSpace, x, y) =
+    x^(S.a-1) * (1 - x^2 - y^2)^(S.b-1) * (1 - (2*S.b + 1)*x^2 - y^2)
+weightderivativex(S::HalfDiskSpace, z) = weightderivativex(S, z[1], z[2])
+weightderivativey(S::HalfDiskSpace, x, y) =
+    - 2S.b * x^S.a * y * (1 - x^2 - y^2)^(S.b-1)
+weightderivativey(S::HalfDiskSpace, z) = weightderivativey(S, z[1], z[2])
 function inner2(fpts, gpts, w)
     n = length(w)
     sum(([fpts[pt] * gpts[pt] for pt = 1:n]
