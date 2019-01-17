@@ -1,7 +1,35 @@
 using OrthogonalPolynomialFamilies, ApproxFun
-using StaticArrays, LinearAlgebra, Test, Profile, BlockArrays,
-        BlockBandedMatrices, SparseArrays
-using Makie
+using Test, Profile
+using StaticArrays, LinearAlgebra, BlockArrays, BlockBandedMatrices,
+        SparseArrays
+# using Makie
+
+import OrthogonalPolynomialFamilies: points, pointswithweights, getopptseval,
+                    opevalatpts, inner2, laplace, getopindex, getnk
+
+#===#
+# Speed up the code! Add storage of the basis evaluated at the points from
+# points(), and use in a new basiseval method (using 3-term recurrence)
+
+a, b = 1.0, 1.0; D = HalfDiskFamily(); S = D(a, b)
+N = 15
+@time W = OrthogonalPolynomialFamilies.weightedpartialoperatorx(S, N)
+@time W = OrthogonalPolynomialFamilies.weightedpartialoperatory(S, N)
+@time A = OrthogonalPolynomialFamilies.partialoperatorx(S, N+2)
+@time A = OrthogonalPolynomialFamilies.partialoperatory(S, N+2)
+S = D(1, 0)
+@time T = OrthogonalPolynomialFamilies.transformoperator(S, N+1)
+S = D(0, 1)
+@time T = OrthogonalPolynomialFamilies.transformoperator(S, N+1)
+S = D(0, 2)
+@time T = OrthogonalPolynomialFamilies.transformoperator(S, N+1)
+
+D = HalfDiskFamily(); N = 15
+@time laplace(D, N)
+
+
+
+#====#
 
 # Model Problem: Δ(u*w)(x,y) = f(x,y) in Ω=halfdisk; u(x,y) ≡ 0 on ∂Ω.
 #   where w(x,y) = x*(1-x^2-y^2) is the weight of the D(1.0,1.0) basis.
@@ -45,13 +73,13 @@ f = Fun((x,y)->(2*(1-x^2-y^2)*cos(x) - 8*x*sin(x) - x*(1-x^2-y^2)*sin(x) - 4*x^2
         S, m)
 N = 2
 û = zeros(1)
-Δ = OrthogonalPolynomialFamilies.laplace(D, N-1)
+Δ = laplace(D, N-1)
 u = Δ \ f.coefficients[1:size(Δ)[1]]
 res = abs.(u - append!(û, zeros(size(u)[1]-size(û)[1])))
 plt = plot(res, yaxis=:log, label="N=$N")
 û = copy(u)
 for N = 3:10 # degree of estimation
-    Δ = OrthogonalPolynomialFamilies.laplace(D, N-1)
+    Δ = laplace(D, N-1)
     u = Δ \ f.coefficients[1:size(Δ)[1]]
     res = abs.(u - append!(û, zeros(size(u)[1]-size(û)[1])))
     plot!(plt, res, label="N=$N")
@@ -64,7 +92,7 @@ savefig("experiments/example4coeffs")
 #====#
 #=
 Model problem: Helmholtz eqn:
-    Δ(W*u)(x,y) + k²u(x,y) = -f(x,y)
+    Δ(W*u)(x,y) + k²(W*u)(x,y) = -f(x,y)
 where k is the wavenumber, u is the amplitude at a point (x,y) on the halfdisk,
 and W(x,y) is the P^{(1,1)} weight.
 =#
@@ -72,14 +100,15 @@ a, b = 1.0, 1.0; D = HalfDiskFamily(); S = D(a, b)
 wavenumberoperator(N, k) = sparse([sparse(I,sum(1:N),sum(1:N)) * k^2; zeros(N+1, sum(1:N))])
 k = rand(1)[1]
 
-# 1) f(x,y) = 8cx - ck^2 => u(x,y) ≡ c
-c = rand(1)[1]; f = Fun((x,y)->(8*c*x - c*k^2), S)
-N = 2
-K = wavenumberoperator(N, k)
-Δ = OrthogonalPolynomialFamilies.laplace(D, N-1)
-uc = sparse(Δ + K) \ (-OrthogonalPolynomialFamilies.resizecoeffs!(f, N))
+# 1) f(x,y) = 8cx - W(x,y)*c*k^2 => u(x,y) ≡ c
+c = rand(1)[1]; f = Fun((x,y)->(8*c*x - x^(S.a) * (1-x^2-y^2)^(S.b)*c*k^2), S)
+N = 4
+C = OrthogonalPolynomialFamilies.convertweightedtononoperator(S, N)
+Δ = OrthogonalPolynomialFamilies.laplacesquare(D, N-1)
+uc = - C * (sparse(Δ + C*k^2) \ OrthogonalPolynomialFamilies.resizecoeffs!(f, N))
 u = Fun(S, uc)
-@test u(z) ≈ c
+@show u(z)
+c
 
 # 2) f(x,y) = -k^2(x+y) - (2 - 12xy - 14x^2 - 2y^2) => u(x,y) = x + y
 U = Fun((x,y)->x+y, S)
@@ -129,79 +158,15 @@ U = Fun(S, û)
 û
 U(z)
 
-
-function operatorclenshawG(n, Jx, Jy)
-    G = Matrix{SparseMatrixCSC{Float64}}(undef, 2(n+1), n+1)
-    for i = 1:n+1
-        for j = 1:n+1
-            if i == j
-                G[i,j] = Jx
-                G[i+n+1,j] = Jy
-            else
-                G[i,j] = zeros(size(Jx))
-                G[i+n+1,j] = zeros(size(Jy))
-            end
-        end
-    end
-    G
-end
-function converttooperatorclenshawmatrix(A, Jx)
-    nn = size(Jx)
-    B = Array{SparseMatrixCSC{Float64}}(undef, size(A))
-    for ij = 1:length(A)
-        B[ij] = sparse(I, nn) * A[ij]
-    end
-    B
-end
-function operatorclenshaw(cfs, S::HalfDiskSpace)
-    # TODO: ρ(Jx) doesnt work, how to implement (i.e. get operator version of P_1)
-    m̃ = length(cfs)
-    N = -1 + Int(round(sqrt(1+2(m̃-1))))
-    OrthogonalPolynomialFamilies.resizedata!(S, N+1)
-    m = Int((N+1)*(N+2)/2)
-    Jx = OrthogonalPolynomialFamilies.jacobix(S, N)
-    Jy = OrthogonalPolynomialFamilies.jacobiy(S, N)
-    if m̃ < m
-        resize!(cfs, m)
-        cfs[m̃+1:end] .= 0.0
-    end
-    P0 = 1.0
-    id = sparse(I, size(Jx))
-    if N == 0
-        return cfs[1] * id * P0
-    end
-    ρx = S.ρ(z[1])
-    P1 = converttooperatorclenshawmatrix([Fun(S.H(S.a, S.b+0.5), [0, 1])(z[1]);
-          ρx * Fun(S.P(S.b, S.b), [0, 1])(z[2]/ρx)], Jx)
-    if N == 1
-        return cfs[1] * P0 + dot(view(cfs, 2:3), P1)
-    end
-    inds2 = m-N:m
-    γ2 = converttooperatorclenshawmatrix(view(cfs, inds2), Jx)'
-    inds1 = (m-2N):(m-N-1)
-    γ1 = (converttooperatorclenshawmatrix(view(cfs, inds1), Jx)'
-        - γ2 * converttooperatorclenshawmatrix(S.DT[N], Jx) * (converttooperatorclenshawmatrix(S.B[N], Jx)
-                                                                - operatorclenshawG(N-1, Jx, Jy)))
-    for n = N-2:-1:1
-        ind = sum(1:n)
-        γ = (converttooperatorclenshawmatrix(view(cfs, ind+1:ind+n+1), Jx)'
-             - γ1 * converttooperatorclenshawmatrix(S.DT[n+1], Jx) * (converttooperatorclenshawmatrix(S.B[n+1], Jx) - operatorclenshawG(n, Jx, Jy))
-             - γ2 * converttooperatorclenshawmatrix(S.DT[n+2] * S.C[n+2], Jx))
-        γ2 = copy(γ1)
-        γ1 = copy(γ)
-    end
-    cfs[1] * P0 * id, (gg[1] * P1[1] + gg[2] * P1[2]), - sparse((P0 * γ2 * converttooperatorclenshawmatrix(S.DT[2] * S.C[2], Jx))[1])
-    # cfs[1] * P0 + γ1 * P1 - (P0 * γ2 * S.DT[2] * S.C[2])[1]
-end
-
-cfs = Fun((x,y)->x*y, S).coefficients
-aa, bb, cc = operatorclenshaw(cfs, S)
+#===#
 
 
 
 
 #===#
 # General 2D Family/Space code
+
+import Base: in
 
 # R should be Float64
 abstract type AbstractOrthogonalPolynomialFamily2D{R} end
@@ -221,7 +186,7 @@ struct OrthogonalPolynomialSpace2D{FAM, R, FA, F} <: Space{OrthogonalPolynomialD
     DT::Vector{SparseMatrixCSC{R}}
 end
 
-#TODO
+# TODO
 function OrthogonalPolynomialSpace2D(fam::AbstractOrthogonalPolynomialFamily2D{R},
                                         a::R, b::R) where R
     OrthogonalPolynomialSpace2D{typeof(fam), typeof(a)}(fam, a, b,
@@ -238,33 +203,50 @@ spacescompatible(A::OrthogonalPolynomialSpace2D, B::OrthogonalPolynomialSpace2D)
     (A.a == B.a && A.b == B.b)
 
 # R should be Float64
-struct OrthogonalPolynomialFamily2D{R, FN, OPF} <: AbstractOrthogonalPolynomialFamily2D{R}
-    α::R
-    β::R
-    γ::R
+struct OrthogonalPolynomialFamily2D{R, IN, FN, OPF} <: AbstractOrthogonalPolynomialFamily2D{R}
+    α::IN
+    β::IN
+    γ::IN
     ρ::Fun
     w1a::Fun
-    w1a::Fun
+    w1b::Fun
     w2::Fun
     H::OPF
     P::OPF
-    spaces::Dict{NTuple{2,R}, HalfDiskSpace}
+    spaces::Dict{NTuple{2,R}, OrthogonalPolynomialSpace2D}
 end
 
-function OrthogonalPolynomialFamily2D(α::R, β::R, γ::R, ρ::Fun, w1a::Fun,
-                                        w1a::Fun, w2::Fun)
-    WW = Fun
+function OrthogonalPolynomialFamily2D(α, β, γ, ρ::Fun, w1a::Fun,
+                                        w1b::Fun, w2::Fun)
     R = Float64
-    spaces = Dict{NTuple{2,R}, HalfDiskSpace}()
+    spaces = Dict{NTuple{2,R}, OrthogonalPolynomialSpace2D}()
     H = OrthogonalPolynomialFamilies.OrthogonalPolynomialFamily(w1a, w1b, ρ)
     P = OrthogonalPolynomialFamilies.OrthogonalPolynomialFamily(w2)
-    OrthogonalPolynomialFamily2D{R, typeof(ρ), typeof(H)}(α, β, γ, ρ, w1a, w1a,
+    OrthogonalPolynomialFamily2D{R, typeof(α), typeof(ρ), typeof(H)}(α, β, γ, ρ, w1a, w1b,
                                                             w2, H, P, spaces)
 end
 
 function (D::OrthogonalPolynomialFamily2D{R})(a::R, b::R) where R
     haskey(D.spaces,(a,b)) && return D.spaces[(a,b)]
-    D.spaces[(a,b)] = HalfDiskSpace(D, a, b)
+    D.spaces[(a,b)] = OrthogonalPolynomialSpace2D(D, a, b)
 end
 
 (D::OrthogonalPolynomialFamily2D{R})(a, b) where R = D(convert(R,a), convert(R,b))
+
+α = 0
+β = 1
+γ = 1
+X = Fun(identity, α..β)
+Y = Fun(identity, -γ..γ)
+ρ = sqrt(1-X^2)
+w1a = X
+w1b = (1-X^2)
+w2 = (1-Y^2)
+D = OrthogonalPolynomialFamily2D(α, β, γ, ρ, w1a, w1b, w2)
+
+R = Float64
+spaces = Dict{NTuple{2,R}, OrthogonalPolynomialSpace2D}()
+H = OrthogonalPolynomialFamilies.OrthogonalPolynomialFamily(w1a, w1b, ρ)
+P = OrthogonalPolynomialFamilies.OrthogonalPolynomialFamily(w2)
+OrthogonalPolynomialFamily2D{R, typeof(α), typeof(ρ), typeof(H)}(α, β, γ, ρ, w1a, w1b,
+                                                        w2, H, P, spaces)
