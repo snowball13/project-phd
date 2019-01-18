@@ -231,11 +231,11 @@ end
     weight(S) = z -> (z[1]^S.a * (1-z[1]^2-z[2]^2)^S.b)
     St = (S.family)(S.a-1, S.b-1)
     maxop = 100
-    N = getnk(maxop)[1] + 1
+    N = getnk(maxop)[1] + 3
     W = convertweightedtononoperator(S, N)
     for j = 1:maxop
         p = Fun(S, [zeros(j-1); 1])
-        resizecoeffs!(p, N+3)
+        resizecoeffs!(p, N)
         q = Fun(St, W * p.coefficients)
         res = abs(q(z) - p(z)*weight(S)(z))
         @test res < tol

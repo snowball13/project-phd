@@ -869,6 +869,7 @@ end
 
 function transformoperator(S::HalfDiskSpace, N)
     if Int(S.a) == 1 && Int(S.b) == 0
+        # Outputs the relevant sum(1:N+2) × sum(1:N+1) matrix operator
         # Takes the space xP^{1,0} -> P^{0,0}
         St = (S.family)(0.0, 0.0)
         T = BandedBlockBandedMatrix(
@@ -888,6 +889,7 @@ function transformoperator(S::HalfDiskSpace, N)
         end
         T
     elseif Int(S.a) == 0 && Int(S.b) == 1
+        # Outputs the relevant sum(1:N+1) × sum(1:N+1) matrix operator
         # Takes the space P^{0,1} -> P^{1,1}
         St = (S.family)(1.0, 1.0)
         T = BandedBlockBandedMatrix(
@@ -908,6 +910,7 @@ function transformoperator(S::HalfDiskSpace, N)
         end
         T
     elseif Int(S.a) == 0 && Int(S.b) == 2
+        # Outputs the relevant sum(1:N+1) × sum(1:N+1) matrix operator
         # Takes the space P^{0,2} -> P^{2,2}
         St = (S.family)(2.0, 2.0)
         T = BandedBlockBandedMatrix(
@@ -941,6 +944,7 @@ end
 
 function increaseparamsoperator(S, N)
     # Takes the space P^{a,b} -> P^{a+1,b+1}
+    # Outputs the sum(1:N+1) × sum(1:N+1) matrix operator
     St = (S.family)(S.a+1, S.b+1)
     m = 2N^2 - 1 # TODO: check how many points are required for all points() calls
     pts, w = pointswithweights(St, m)
@@ -965,6 +969,7 @@ end
 
 function convertweightedtononoperator(S, N)
     # NOTE: Only works for W11 -> P00
+    # Outputs the sum(1:N+4) × sum(1:N+1) matrix operator
     St = (S.family)(S.a-1, S.b-1)
     Sinner = (S.family)(2S.a-1, 2S.b-1)
     m = 2(N+3)N - 1 # TODO: check how many points are required for all points() calls
@@ -972,7 +977,7 @@ function convertweightedtononoperator(S, N)
     getopptseval(St, N+4, pts)
     getopptseval(S, N+1, pts)
     W = BandedBlockBandedMatrix(
-            Zeros{Float64}(sum(1:(N+4)),sum(1:(N+4))), (1:N+4, 1:N+4), (3,0), (2,0))
+            Zeros{Float64}(sum(1:(N+4)),sum(1:(N+1))), (1:N+4, 1:N+1), (3,0), (2,0))
     for n = 0:N, k = 0:n
         j = getopindex(n, k)
         for nn = n:n+3
@@ -986,6 +991,31 @@ function convertweightedtononoperator(S, N)
     end
     W
 end
+function convertweightedtononoperatorsquare(S, N)
+    # Outputs the sum(1:N+1) × sum(1:N+1) matrix operator
+    C = BandedBlockBandedMatrix(
+        Zeros{Float64}(sum(1:(N+1)),sum(1:(N+1))), (1:N+1, 1:N+1), (3,0), (2,0))
+    W = convertweightedtononoperator(S, N+3)
+    i = 1
+    view(C, Block(i, i)) .= view(W, Block(i, i))
+    N == 0 && return C
+    i = 2
+    view(C, Block(i, i-1)) .= view(W, Block(i, i-1))
+    view(C, Block(i, i)) .= view(W, Block(i, i))
+    N == 1 && return C
+    i = 3
+    view(C, Block(i, i-2)) .= view(W, Block(i, i-2))
+    view(C, Block(i, i-1)) .= view(W, Block(i, i-1))
+    view(C, Block(i, i)) .= view(W, Block(i, i))
+    N == 2 && return C
+    for i = 4:N+1
+        view(C, Block(i, i-3)) .= view(W, Block(i, i-3))
+        view(C, Block(i, i-2)) .= view(W, Block(i, i-2))
+        view(C, Block(i, i-1)) .= view(W, Block(i, i-1))
+        view(C, Block(i, i)) .= view(W, Block(i, i))
+    end
+    C
+end
 
 function laplace(D::HalfDiskFamily, N)
     A = partialoperatorx(D(0.0,0.0), N+2)
@@ -998,7 +1028,24 @@ function laplace(D::HalfDiskFamily, N)
 end
 
 function laplacesquare(D::HalfDiskFamily, N)
-    sparse([laplace(D, N) zeros(sum(1:N+2), sum(1:N+2)-sum(1:N+1))])
+    # sparse([laplace(D, N) zeros(sum(1:N+2), sum(1:N+2)-sum(1:N+1))])
+
+    # Outputs the sum(1:N+1) × sum(1:N+1) matrix operator
+    Δ = BandedBlockBandedMatrix(
+        Zeros{Float64}(sum(1:(N+1)),sum(1:(N+1))), (1:N+1, 1:N+1), (1,1), (2,5))
+    L = laplace(D, N+1)
+    i = 1
+    view(Δ, Block(i, i)) .= view(L, Block(i, i))
+    view(Δ, Block(i, i+1)) .= view(L, Block(i, i+1))
+    for i = 2:N
+        view(Δ, Block(i, i-1)) .= view(L, Block(i, i-1))
+        view(Δ, Block(i, i)) .= view(L, Block(i, i))
+        view(Δ, Block(i, i+1)) .= view(L, Block(i, i+1))
+    end
+    i = N+1
+    view(Δ, Block(i, i-1)) .= view(L, Block(i, i-1))
+    view(Δ, Block(i, i)) .= view(L, Block(i, i))
+    Δ
 end
 
 
