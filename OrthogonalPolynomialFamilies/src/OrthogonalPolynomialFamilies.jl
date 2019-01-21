@@ -23,6 +23,8 @@ function lanczos!(w, P, β, γ, N₀=0)
 
     # x * P[n](x) == (γ[n] * P[n+1](x) + β[n] * P[n](x) + γ[n-1] * P[n-1](x))
 
+    # We use our own quadrature rule here, as given by pts and w
+
     N = length(β)
     # x = Fun(identity, space(w)) # NOTE: space(w) does not "work" sometimes
     x = Fun(identity, domain(w))
@@ -61,9 +63,11 @@ end
 
 abstract type SpaceFamily{D,R} end
 
-struct OrthogonalPolynomialSpace{F,WW,D,R,FN} <: PolynomialSpace{D,R}
+struct OrthogonalPolynomialSpace{F,WW,D,R,N,FN} <: PolynomialSpace{D,R}
     family::F # Pointer back to the family
     weight::WW # The full product weight
+    params::NTuple{N,R} # The powers of the weight factors (i.e. key to this
+                        # space in the dict of the family)
     a::Vector{R} # Diagonal recurrence coefficients
     b::Vector{R} # Off diagonal recurrence coefficients
     ops::Vector{FN} # Cache the Funs given back from lanczos
@@ -74,8 +78,8 @@ canonicaldomain(S::OrthogonalPolynomialSpace) = domain(S)
 tocanonical(S::OrthogonalPolynomialSpace, x) = x
 
 
-OrthogonalPolynomialSpace(fam::SpaceFamily{D,R}, w::Fun) where {D,R,N} =
-    OrthogonalPolynomialSpace{typeof(fam),typeof(w),D,R,Fun}(fam, w, Vector{R}(), Vector{R}(), Vector{Fun}())
+OrthogonalPolynomialSpace(fam::SpaceFamily{D,R}, w::Fun, α::NTuple{N,R}) where {D,R,N} =
+    OrthogonalPolynomialSpace{typeof(fam),typeof(w),D,R,N,Fun}(fam, w, α, Vector{R}(), Vector{R}(), Vector{Fun}())
 
 function resizedata!(S::OrthogonalPolynomialSpace, n)
     N₀ = length(S.a) - 1
@@ -95,7 +99,7 @@ end
 
 function OrthogonalPolynomialFamily(w::Vararg{Fun{<:Space{D,R}},N}) where {D,R,N}
     all(domain.(w) .== Ref(domain(first(w)))) || throw(ArgumentError("domains incompatible"))
-    WW =  Fun
+    WW = Fun
     spaces = Dict{NTuple{N,R}, OrthogonalPolynomialSpace{OrthogonalPolynomialFamily{typeof(w),WW,D,R,N},WW,D,R}}()
     OrthogonalPolynomialFamily{typeof(w),WW,D,R,N}(w, spaces)
 end
@@ -103,10 +107,10 @@ end
 function (P::OrthogonalPolynomialFamily{<:Any,<:Any,<:Any,R,N})(α::Vararg{R,N}) where {R,N}
     if length(α) == 1
         haskey(P.spaces,α) && return P.spaces[α]
-        P.spaces[α] = OrthogonalPolynomialSpace(P, (P.factors.^α)[1])
+        P.spaces[α] = OrthogonalPolynomialSpace(P, (P.factors.^α)[1], α)
     else
         haskey(P.spaces,α) && return P.spaces[α]
-        P.spaces[α] = OrthogonalPolynomialSpace(P, prod(P.factors.^α))
+        P.spaces[α] = OrthogonalPolynomialSpace(P, prod(P.factors.^α), α)
     end
 end
 
