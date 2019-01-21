@@ -242,7 +242,7 @@ uuid = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
 version = "1.0.2"
 
 [[OrthogonalPolynomialFamilies]]
-deps = ["ApproxFun", "BlockBandedMatrices", "FastGaussQuadrature", "LinearAlgebra", "SingularIntegralEquations", "SparseArrays", "StaticArrays", "Test"]
+deps = ["ApproxFun", "BlockArrays", "BlockBandedMatrices", "FastGaussQuadrature", "LinearAlgebra", "SingularIntegralEquations", "SparseArrays", "StaticArrays", "Test"]
 path = "OrthogonalPolynomialFamilies"
 uuid = "6ac299c7-a9e4-55d9-a157-c2154070f31b"
 version = "0.0.0"
