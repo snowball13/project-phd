@@ -1,9 +1,9 @@
-using ApproxFun, OrthogonalPolynomialFamilies, FastGaussQuadrature, SingularIntegralEquations, Test
-import OrthogonalPolynomialFamilies: golubwelsch, lanczos, halfdiskquadrule, gethalfdiskOP,
-                                        jacobix, jacobiy, evalderivativex, evalderivativey,
-                                        differentiatex, differentiatey, resizecoeffs!, laplace,
-                                        transformoperator, operatorclenshaw, getnk,
-                                        convertweightedtononoperator, increaseparamsoperator
+using ApproxFun, OrthogonalPolynomialFamilies, FastGaussQuadrature,
+        SingularIntegralEquations, Test
+import OrthogonalPolynomialFamilies: golubwelsch, lanczos, halfdiskquadrule,
+        gethalfdiskOP, jacobix, jacobiy, differentiatex, differentiatey,
+        resizecoeffs!, laplace, transformoperator, operatorclenshaw, getnk,
+        convertweightedtononoperator, increaseparamsoperator, getopindex
 
 
 
@@ -42,9 +42,8 @@ end
 
     N = 3; a = 0.5; b = 0.5; d = 5
     f = x->(x^d)
-    S = Fun(identity, 0..1)
-    ω = S^a * (1 - S^2)^(b+0.5)
-    x, w = golubwelsch(ω, N)
+    X = Fun(identity, 0..1)
+    x, w = golubwelsch(H(a, b+0.5), N)
     @test w'*f.(x) ≈ g(a + d, b + 0.5, 0, 1)
 end
 
@@ -59,19 +58,6 @@ end
     f = (x,y)-> x*y^3
     @test sum(wo .* f.(xo, yo)) < 1e-12 # Should be zero
 end
-
-# @testset "Fun expansion in OP basis" begin
-#     N = 5; a = 0.5; b = 0.5
-#     X = Fun(identity, 0..1)
-#     Y = Fun(identity, -1..1)
-#     ρ = sqrt(1-X^2)
-#     H = OrthogonalPolynomialFamily(X, (1-X^2))
-#     P = OrthogonalPolynomialFamily(1+Y, 1-Y)
-#     f = (x,y)-> x^2 * y^2 + y^4 * x
-#     c = halfdiskfun2coeffs(f, N, a, b)
-#     x = 0.6; y = -0.3
-#     @test f(x, y) ≈ c'*[gethalfdiskOP(H, P, ρ, n, k, a, b)(x,y) for n = 0:N for k = 0:n] # zero for N >= deg(f)
-# end
 
 @testset "Transform" begin
     n = 20; a = 0.5; b = -0.5
@@ -149,18 +135,6 @@ end
     @test evaluate(Jy'[1:m, 1:m] * cfs, S, z) ≈ z[2] * f(z...)
 end
 
-@testset "Evaluate partial derivative of HalfDiskSpace OP" begin
-    a, b = 0.5, -0.5
-    x, y = 0.5, 0.3; x^2 + y^2 < 1
-    D = HalfDiskFamily(); S = D(a, b)
-    h = 0.0001
-    for n=0:5, k=0:n
-        f = Fun(S, [zeros(sum(0:n)+k); 1])
-        @test evalderivativex(S, n, k, x, y) ≈ (f(x+h,y) - f(x,y))/h atol=100h
-        @test evalderivativey(S, n, k, x, y) ≈ (f(x,y+h) - f(x,y))/h atol=100h
-    end
-end
-
 @testset "Evaluate partial derivative of (random) function" begin
     a, b = 0.5, 0.5
     x, y = 0.5, 0.3; x^2 + y^2 < 1
@@ -189,7 +163,7 @@ end
     N = 2 # degree of f
     f = Fun((x,y)->(2 - 12x*y - 14x^2 - 2y^2), S)
     Δ = laplace(D, N-1)
-    u = Fun(S, Δ \ resizecoeffs!(f, N))
+    u = Fun(S, Δ \ f.coefficients[1:getopindex(N,N)])
     @test u(z) ≈ U(z)
 end
 

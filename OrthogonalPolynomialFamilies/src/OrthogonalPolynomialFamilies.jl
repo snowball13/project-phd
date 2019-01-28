@@ -23,8 +23,6 @@ function lanczos!(w, P, β, γ, N₀=0)
 
     # x * P[n](x) == (γ[n] * P[n+1](x) + β[n] * P[n](x) + γ[n-1] * P[n-1](x))
 
-    # We use our own quadrature rule here, as given by pts and w
-
     N = length(β)
     # x = Fun(identity, space(w)) # NOTE: space(w) does not "work" sometimes
     x = Fun(identity, domain(w))
@@ -50,6 +48,38 @@ function lanczos!(w, P, β, γ, N₀=0)
 
     P,β,γ
 end
+function lanczos2!(S, pts, w, F, N₀=0)
+    # F is the added factor as a Fun
+    P, β, γ = S.ops, S.a, S.b
+
+    # x * P[n](x) == (γ[n] * P[n+1](x) + β[n] * P[n](x) + γ[n-1] * P[n-1](x))
+
+    # We use our own quadrature rule here, as given by pts and w
+
+    N = length(β)
+    X = Fun(identity, domain(S.weight))
+
+    if N₀ <= 0
+        N₀ = 1
+        f1 = Fun(1 / sqrt(sum(S.weight)), space(X))
+        P[1] = f1
+        v = X * P[1]
+        β[1] = inner(S, v * F, P[1], pts, w)
+        v = v - β[1] * P[1]
+        γ[1] = sqrt(inner(S, v * F, v, pts, w))
+        P[2] = v / γ[1]
+    end
+
+    for k = N₀+1:N
+        v = X * P[k] - γ[k-1] * P[k-1]
+        β[k] = inner(S, v * F, P[k], pts, w)
+        v = v - β[k] * P[k]
+        γ[k] = sqrt(inner(S, v * F, v, pts, w))
+        P[k+1] = v / γ[k]
+    end
+
+    P, β, γ
+end
 
 # Finds the OPs and recurrence for weight w
 function lanczos(w, N)
@@ -58,6 +88,38 @@ function lanczos(w, N)
     β = Array{eltype(w)}(undef, N)
     γ = Array{eltype(w)}(undef, N)
     lanczos!(w, P, β, γ)
+end
+
+# Decides which lanczos! to call depending on if we would run into
+# ill-conditioned errors etc., and then calls it
+function lanczosdecider(S, N₀)
+    # TODO: Make this cleaner...
+    ϕ = Vector{Float64}(undef, length(S.params))
+    ψ = []
+    for i = 1:length(S.params)
+        α = S.params[i]
+        if floor(α) == α || α < 1
+            ϕ[i] = α
+        else # We have non-integer parameter
+            ϕ[i] = α - floor(α)
+            append!(ψ, i)
+        end
+    end
+    if length(ψ) == 0
+        lanczos!(S.weight, S.ops, S.a, S.b, N₀)
+    elseif length(ψ) == 1
+        m = 100 # TODO
+        pts, w = pointswithweights((S.family)(ϕ...), m)
+        fctr = ((S.family).factors[ψ[1]])^(S.params[ψ[1]]-0.5)
+        lanczos2!(S, pts, w, fctr, N₀)
+    else
+        m = 100 # TODO
+        pts, w = pointswithweights((S.family)(ϕ...), m)
+        pwrs = [S.params[i]-ϕ[i] for i in ψ]
+        fctrs = [(S.family).factors[i] for i in ψ]
+        fctr = prod(fctrs.^pwrs)
+        lanczos2!(S, pts, w, fctr, N₀)
+    end
 end
 
 
@@ -71,6 +133,7 @@ struct OrthogonalPolynomialSpace{F,WW,D,R,N,FN} <: PolynomialSpace{D,R}
     a::Vector{R} # Diagonal recurrence coefficients
     b::Vector{R} # Off diagonal recurrence coefficients
     ops::Vector{FN} # Cache the Funs given back from lanczos
+    opptseval::Vector{Vector{R}}
 end
 
 domain(S::OrthogonalPolynomialSpace) = domain(S.weight)
@@ -79,7 +142,8 @@ tocanonical(S::OrthogonalPolynomialSpace, x) = x
 
 
 OrthogonalPolynomialSpace(fam::SpaceFamily{D,R}, w::Fun, α::NTuple{N,R}) where {D,R,N} =
-    OrthogonalPolynomialSpace{typeof(fam),typeof(w),D,R,N,Fun}(fam, w, α, Vector{R}(), Vector{R}(), Vector{Fun}())
+    OrthogonalPolynomialSpace{typeof(fam),typeof(w),D,R,N,Fun}(
+        fam, w, α, Vector{R}(), Vector{R}(), Vector{Fun}(), Vector{Vector{R}}())
 
 function resizedata!(S::OrthogonalPolynomialSpace, n)
     N₀ = length(S.a) - 1
@@ -87,7 +151,7 @@ function resizedata!(S::OrthogonalPolynomialSpace, n)
     resize!(S.a, n)
     resize!(S.b, n)
     resize!(S.ops, n + 1)
-    S.ops[:], S.a[:], S.b[:] = lanczos!(S.weight, S.ops, S.a, S.b, N₀)
+    S.ops[:], S.a[:], S.b[:] = lanczosdecider(S, N₀)
     S
 end
 
@@ -138,14 +202,13 @@ recC(::Type{T}, S::OrthogonalPolynomialSpace, n) where T =
 
 
 # Returns weights and nodes for N-point quad rule for given weight
-function golubwelsch( ω::Fun, N::Integer )
+function golubwelsch(S::OrthogonalPolynomialSpace, N::Integer)
     # Golub--Welsch algorithm. Used here for N<=20.
-    β = zeros(N); γ = zeros(N)
-    p, β[:], γ[:] = lanczos(ω, N)       # 3-term recurrence
-    J = SymTridiagonal(β, γ[1:end-1])     # Jacobi matrix
+    resizedata!(S, N)       # 3-term recurrence
+    J = SymTridiagonal(S.a[1:N], S.b[1:N-1])   # Jacobi matrix
     D, V = eigen(J)                     # Eigenvalue decomposition
     indx = sortperm(D)                  # Hermite points
-    μ = sum(ω)                          # Integral of weight function
+    μ = sum(S.weight)                          # Integral of weight function
     w = μ * V[1, indx].^2               # quad rule weights to output
     x = D[indx]                         # quad rule nodes to output
     # # Enforce symmetry:
@@ -154,14 +217,11 @@ function golubwelsch( ω::Fun, N::Integer )
     # w = w[ii]
     return x, w
 end
-
-golubwelsch(sp::OrthogonalPolynomialSpace, N) = golubwelsch(sp.weight, N)
+points(S::OrthogonalPolynomialSpace, n) = golubwelsch(S, n)[1]
+pointswithweights(S::OrthogonalPolynomialSpace, n) = golubwelsch(S, n)
 
 spacescompatible(A::OrthogonalPolynomialSpace, B::OrthogonalPolynomialSpace) =
     A.weight ≈ B.weight
-
-points(S::OrthogonalPolynomialSpace, n) = golubwelsch(S, n)[1]
-pointswithweights(S::OrthogonalPolynomialSpace, n) = golubwelsch(S, n)
 
 # Inputs: OP space, f(pts) for desired f
 # Output: Coeffs of the function f for its expansion in the OPSpace OPs
@@ -223,6 +283,58 @@ function differentiateop(S::OrthogonalPolynomialSpace, n)
     dp1
 end
 
+
+# Method to gather and evaluate the ops of space S at the transform pts given
+function getopptseval(S::OrthogonalPolynomialSpace, N, pts)
+    resetopptseval(S)
+    for n = 0:N
+        opevalatpts(S, n+1, pts)
+    end
+    S.opptseval
+end
+function opevalatpts(S::OrthogonalPolynomialSpace, j, pts)
+    # Here, j refers to the index (i.e. deg(p) - 1)
+    N = length(S.opptseval) - 1
+    if N ≥ j - 1
+        return S.opptseval[j]
+    end
+
+    # We iterate up from the last obtained pts eval
+    if  N != j - 2
+        error("Invalid index")
+    end
+
+    resizedata!(S, j)
+    resize!(S.opptseval, j)
+    S.opptseval[j] = Vector{Float64}(undef, length(pts))
+
+    # p_{n+1} = (A_n x + B_n)p_n - C_n p_{n-1}
+    T = Float64
+    n = j - 1
+    if n == 0
+        S.opptseval[j][:] .= 1.0
+    elseif n == 1
+        A = recA(T, S, n)
+        B = recB(T, S, n)
+        P1 = opevalatpts(S, j-1, pts)
+        for r = 1:length(pts)
+            S.opptseval[j][r] = (A * pts[r] + B) * P1[r]
+        end
+    else
+        A = recA(T, S, n)
+        B = recB(T, S, n)
+        C = recC(T, S, n)
+        P1 = opevalatpts(S, j-1, pts)
+        P2 = opevalatpts(S, j-2, pts)
+        for r = 1:length(pts)
+            S.opptseval[j][r] = (A * pts[r] + B) * P1[r] - C * P2[r]
+        end
+    end
+    S.opptseval[j]
+end
+resetopptseval(S::OrthogonalPolynomialSpace) = resize!(S.opptseval, 0)
+
+
 #=====#
 # Half Disk
 
@@ -236,12 +348,11 @@ function halfdiskquadrule(N, a, b)
 
     S = Fun(identity, 0..1)
     T = Fun(identity, -1..1)
-    ωt = (1 - T^2)^b
-    t, wt = golubwelsch(ωt, N)
-    ωse = S^a * (1 - S^2)^(b + 0.5)
-    se, wse = golubwelsch(ωse, N)
-    ωso = S^a * (1 - S^2)^b
-    so, wso = golubwelsch(ωso, N)
+    H = OrthogonalPolynomialFamily(S, 1-S^2)
+    P = OrthogonalPolynomialFamily(1-T^2)
+    t, wt = golubwelsch(P(b), N)
+    se, wse = golubwelsch(H(a, b+0.5), N)
+    so, wso = golubwelsch(H(a, b), N)
 
     # Return the nodes and weights as single vectors
     xe = zeros(N^2)
@@ -335,8 +446,8 @@ function pointswithweights(S::HalfDiskSpace, n)
     # NOTE: the odd part of the quad rule will equal 0 for polynomials,
     #       so can be ignored.
     N = Int(ceil(sqrt(n)))
-    t, wt = golubwelsch((S.P)(S.b, S.b).weight, N)
-    s, ws = golubwelsch((S.H)(S.a, S.b + 0.5).weight, N)
+    t, wt = pointswithweights((S.P)(S.b, S.b), N)
+    s, ws = pointswithweights((S.H)(S.a, S.b + 0.5), N)
     pts = Vector{SArray{Tuple{2},Float64,1,2}}(undef, 2(N^2))
     w = zeros(N^2)
     for i = 1:N
@@ -1154,7 +1265,7 @@ operatorclenshaw(f::Fun, S::HalfDiskSpace) = operatorclenshaw(f.coefficients, S)
 
 
 # Method to gather and evaluate the ops of space S at the transform pts given
-function getopptseval(S, N, pts)
+function getopptseval(S::HalfDiskSpace, N, pts)
     resetopptseval(S)
     jj = [getopindex(n, 0) for n=0:N]
     for j in jj
@@ -1162,7 +1273,7 @@ function getopptseval(S, N, pts)
     end
     S.opptseval
 end
-function opevalatpts(S, j, pts)
+function opevalatpts(S::HalfDiskSpace, j, pts)
     len = length(S.opptseval)
     if len ≥ j
         return S.opptseval[j]
@@ -1208,7 +1319,7 @@ function opevalatpts(S, j, pts)
     end
     S.opptseval[j]
 end
-resetopptseval(S) = resize!(S.opptseval, 0)
+resetopptseval(S::HalfDiskSpace) = resize!(S.opptseval, 0)
 
 # Methods to gather and evaluate the derivatives of the ops of space S at the
 # transform pts given
@@ -1216,7 +1327,7 @@ function clenshawGtildex(n, z)
     sp = sparse(I, n+1, n+1)
     [sp; 0.0 * sp]
 end
-function getxderivopptseval(S, N, pts)
+function getxderivopptseval(S::HalfDiskSpace, N, pts)
     resetxderivopptseval(S)
     jj = [getopindex(n, 0) for n=0:N]
     for j in jj
@@ -1224,8 +1335,8 @@ function getxderivopptseval(S, N, pts)
     end
     S.xderivopptseval
 end
-resetxderivopptseval(S) = resize!(S.xderivopptseval, 0)
-function xderivopevalatpts(S, j, pts)
+resetxderivopptseval(S::HalfDiskSpace) = resize!(S.xderivopptseval, 0)
+function xderivopevalatpts(S::HalfDiskSpace, j, pts)
     len = length(S.xderivopptseval)
     if len ≥ j
         return S.xderivopptseval[j]
@@ -1277,7 +1388,7 @@ function clenshawGtildey(n, z)
     sp = sparse(I, n+1, n+1)
     [0.0 * sp; sp]
 end
-function getyderivopptseval(S, N, pts)
+function getyderivopptseval(S::HalfDiskSpace, N, pts)
     resetyderivopptseval(S)
     jj = [getopindex(n, 0) for n=0:N]
     for j in jj
@@ -1285,8 +1396,8 @@ function getyderivopptseval(S, N, pts)
     end
     S.yderivopptseval
 end
-resetyderivopptseval(S) = resize!(S.yderivopptseval, 0)
-function yderivopevalatpts(S, j, pts)
+resetyderivopptseval(S::HalfDiskSpace) = resize!(S.yderivopptseval, 0)
+function yderivopevalatpts(S::HalfDiskSpace, j, pts)
     len = length(S.yderivopptseval)
     if len ≥ j
         return S.yderivopptseval[j]
