@@ -110,7 +110,7 @@ function lanczosdecider(S, N₀)
     elseif length(ψ) == 1
         m = 100 # TODO
         pts, w = pointswithweights((S.family)(ϕ...), m)
-        fctr = ((S.family).factors[ψ[1]])^(S.params[ψ[1]]-0.5)
+        fctr = ((S.family).factors[ψ[1]])^(S.params[ψ[1]]-ϕ[ψ[1]])
         lanczos2!(S, pts, w, fctr, N₀)
     else
         m = 100 # TODO
@@ -253,7 +253,7 @@ function itransform(S::OrthogonalPolynomialSpace, cfs)
 end
 
 inner(S::OrthogonalPolynomialSpace, f::Fun, g::Fun, pts, w) =
-    sum(f.(pts) .* g.(pts) .* w)
+    Float64(sum(f.(BigFloat.(pts)) .* g.(BigFloat.(pts)) .* BigFloat.(w)))
 
 function differentiateop(S::OrthogonalPolynomialSpace, n)
     if n == 0
