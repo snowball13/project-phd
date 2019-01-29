@@ -474,6 +474,11 @@ end
 
 # NOTE these are squared norms
 function getopnorms(S::HalfDiskSpace, m)
+    # TODO: Need to decide how to do these inner products
+    #           - Can I use getopptseval()? Even though these are needed for the
+    #               entries in the clenshaw matrices
+    #           - Or do I use the same inner product technique from lanczos2!
+    #               That is, for H, get pts, w for H(a, 0.5) e.g. and use a factor 
     m̃ = length(S.opnorms)
     if m > m̃
         n = m̃ == 0 ? -1 : -1 + Int(round(sqrt(1 + 2(m̃ - 1))))
