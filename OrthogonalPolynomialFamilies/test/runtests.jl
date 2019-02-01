@@ -256,4 +256,5 @@ end
 
 a, b = 1.0, 1.0; D = HalfDiskFamily(); S = D(a, b)
 N = 5
+S.family.H(S.a,S.b)
 laplace(D, N)

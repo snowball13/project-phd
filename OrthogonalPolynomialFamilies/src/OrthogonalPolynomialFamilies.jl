@@ -18,6 +18,22 @@ using Test
 export OrthogonalPolynomialFamily, HalfDisk, HalfDiskSpace, HalfDiskFamily
 
 
+abstract type SpaceFamily{D,R} end
+
+struct OrthogonalPolynomialSpace{FA,WW,F,D,B,R,N} <: PolynomialSpace{D,R}
+    family::FA # Pointer back to the family
+    weight::WW # The full product weight
+    params::NTuple{N,B} # The powers of the weight factors (i.e. key to this
+                        # space in the dict of the family) (could be BigFloats)
+    ops::Vector{F}  # Cache the ops we get for free from lanczos
+    a::Vector{R} # Diagonal recurrence coefficients
+    b::Vector{R} # Off diagonal recurrence coefficients
+    opnorm::Vector{R} # The norm of the OPs (all OPs of a OPSpace have the same norm).
+                        # NOTE this is the value of the norm squared
+    opptseval::Vector{Vector{R}}
+end
+
+
 # Finds the OPs and recurrence for weight w, having already found N₀ OPs
 function lanczos!(w, P, β, γ, N₀=0)
 
@@ -46,7 +62,7 @@ function lanczos!(w, P, β, γ, N₀=0)
         P[k+1] = v/γ[k]
     end
 
-    P,β,γ
+    P, β, γ
 end
 function lanczos2!(S, pts, w, F, N₀=0)
     # F is the added factor as a Fun
@@ -91,10 +107,10 @@ function lanczos(w, N)
 end
 
 # Decides which lanczos! to call depending on if we would run into
-# ill-conditioned errors etc., and then calls it
-function lanczosdecider(S, N₀)
+# ill-conditioned errors etc., and then calls it FA,WW,F,D,B,R,N
+function lanczosdecider(S::OrthogonalPolynomialSpace{<:Any,<:Any,<:Any,<:Any,<:Any,T,<:Any}, N₀) where T
     # TODO: Make this cleaner...
-    ϕ = Vector{Float64}(undef, length(S.params))
+    ϕ = Vector{T}(undef, length(S.params))
     ψ = []
     for i = 1:length(S.params)
         α = S.params[i]
@@ -123,27 +139,16 @@ function lanczosdecider(S, N₀)
 end
 
 
-abstract type SpaceFamily{D,R} end
 
-struct OrthogonalPolynomialSpace{F,WW,D,R,N,FN} <: PolynomialSpace{D,R}
-    family::F # Pointer back to the family
-    weight::WW # The full product weight
-    params::NTuple{N,R} # The powers of the weight factors (i.e. key to this
-                        # space in the dict of the family)
-    a::Vector{R} # Diagonal recurrence coefficients
-    b::Vector{R} # Off diagonal recurrence coefficients
-    ops::Vector{FN} # Cache the Funs given back from lanczos
-    opptseval::Vector{Vector{R}}
-end
 
 domain(S::OrthogonalPolynomialSpace) = domain(S.weight)
 canonicaldomain(S::OrthogonalPolynomialSpace) = domain(S)
 tocanonical(S::OrthogonalPolynomialSpace, x) = x
 
-
-OrthogonalPolynomialSpace(fam::SpaceFamily{D,R}, w::Fun, α::NTuple{N,R}) where {D,R,N} =
-    OrthogonalPolynomialSpace{typeof(fam),typeof(w),D,R,N,Fun}(
-        fam, w, α, Vector{R}(), Vector{R}(), Vector{Fun}(), Vector{Vector{R}}())
+OrthogonalPolynomialSpace(fam::SpaceFamily{D,R}, w::Fun, α::NTuple{N,B}) where {D,R,B,N} =
+    OrthogonalPolynomialSpace{typeof(fam),typeof(w),Fun,D,B,R,N}(
+        fam, w, α, Vector{Fun}(), Vector{R}(), Vector{R}(), Vector{R}(),
+        Vector{Vector{R}}())
 
 function resizedata!(S::OrthogonalPolynomialSpace, n)
     N₀ = length(S.a) - 1
@@ -151,24 +156,30 @@ function resizedata!(S::OrthogonalPolynomialSpace, n)
     resize!(S.a, n)
     resize!(S.b, n)
     resize!(S.ops, n + 1)
-    S.ops[:], S.a[:], S.b[:] = lanczosdecider(S, N₀)
+    # lanczosdecider(S, N₀)
+    lanczos!(S.weight, S.ops, S.a, S.b, N₀)
     S
 end
 
-# R is range-type, which should be Float64.
-struct OrthogonalPolynomialFamily{FF,WW,D,R,N} <: SpaceFamily{D,R}
+# R is range-type, which should be Float64. B is the r-type of the weight Funs,
+# which could be BigFloats
+struct OrthogonalPolynomialFamily{OPS,FF,D,R,B,N} <: SpaceFamily{D,R}
     factors::FF
-    spaces::Dict{NTuple{N,R}, OrthogonalPolynomialSpace}
+    spaces::Dict{NTuple{N,B}, OPS}
 end
-
-function OrthogonalPolynomialFamily(w::Vararg{Fun{<:Space{D,R}},N}) where {D,R,N}
+function OrthogonalPolynomialFamily(w::Vararg{Fun{<:Space{D,B}},N}) where {D,B,N}
     all(domain.(w) .== Ref(domain(first(w)))) || throw(ArgumentError("domains incompatible"))
-    WW = Fun
-    spaces = Dict{NTuple{N,R}, OrthogonalPolynomialSpace{OrthogonalPolynomialFamily{typeof(w),WW,D,R,N},WW,D,R}}()
-    OrthogonalPolynomialFamily{typeof(w),WW,D,R,N}(w, spaces)
+    R = Float64 # TODO - is there a way to not hardcode this? (see below)
+    spaces = Dict{NTuple{N,R}, OrthogonalPolynomialSpace}()
+    OrthogonalPolynomialFamily{OrthogonalPolynomialSpace,typeof(w),D,R,B,N}(w, spaces)
+end
+function OrthogonalPolynomialFamily(::Type{R}, w::Vararg{Fun{<:Space{D,B}},N}) where {D,R,B,N}
+    all(domain.(w) .== Ref(domain(first(w)))) || throw(ArgumentError("domains incompatible"))
+    spaces = Dict{NTuple{N,R}, OrthogonalPolynomialSpace}()
+    OrthogonalPolynomialFamily{OrthogonalPolynomialSpace,typeof(w),D,R,B,N}(w, spaces)
 end
 
-function (P::OrthogonalPolynomialFamily{<:Any,<:Any,<:Any,R,N})(α::Vararg{R,N}) where {R,N}
+function (P::OrthogonalPolynomialFamily{<:Any,<:Any,<:Any,R,B,N})(α::Vararg{B,N}) where {R,B,N}
     if length(α) == 1
         haskey(P.spaces,α) && return P.spaces[α]
         P.spaces[α] = OrthogonalPolynomialSpace(P, (P.factors.^α)[1], α)
@@ -202,13 +213,13 @@ recC(::Type{T}, S::OrthogonalPolynomialSpace, n) where T =
 
 
 # Returns weights and nodes for N-point quad rule for given weight
-function golubwelsch(S::OrthogonalPolynomialSpace, N::Integer)
+function golubwelsch(S::OrthogonalPolynomialSpace{<:Any,<:Any,<:Any,<:Any,<:Any,T,<:Any}, N::Integer) where T
     # Golub--Welsch algorithm. Used here for N<=20.
     resizedata!(S, N)       # 3-term recurrence
     J = SymTridiagonal(S.a[1:N], S.b[1:N-1])   # Jacobi matrix
     D, V = eigen(J)                     # Eigenvalue decomposition
     indx = sortperm(D)                  # Hermite points
-    μ = sum(S.weight)                          # Integral of weight function
+    μ = T(sum(S.weight))                # Integral of weight function
     w = μ * V[1, indx].^2               # quad rule weights to output
     x = D[indx]                         # quad rule nodes to output
     # # Enforce symmetry:
@@ -225,11 +236,11 @@ spacescompatible(A::OrthogonalPolynomialSpace, B::OrthogonalPolynomialSpace) =
 
 # Inputs: OP space, f(pts) for desired f
 # Output: Coeffs of the function f for its expansion in the OPSpace OPs
-function transform(S::OrthogonalPolynomialSpace, vals)
+function transform(S::OrthogonalPolynomialSpace, vals::Vector{T}) where T
     n = length(vals)
     pts, w = pointswithweights(S, n)
     # Vandermonde matrix transposed, including weights and normalisations
-    Ṽ = Array{Float64}(undef, n, n)
+    Ṽ = Array{T}(undef, n, n)
     for k = 0:n-1
         pk = Fun(S, [zeros(k); 1])
         nrm = sum([pk(pts[j])^2 * w[j] for j = 1:n])
@@ -240,11 +251,11 @@ end
 
 # Inputs: OP space, coeffs of a function f for its expansion in the OPSpace OPs
 # Output: vals = {f(x_j)} where x_j are are the points(S,n)
-function itransform(S::OrthogonalPolynomialSpace, cfs)
+function itransform(S::OrthogonalPolynomialSpace, cfs::Vector{T}) where T
     n = length(cfs)
     pts, w = pointswithweights(S, n)
     # Vandermonde matrix
-    V = Array{Float64}(undef, n, n)
+    V = Array{T}(undef, n, n)
     for k = 0:n-1
         pk = Fun(S, [zeros(k); 1])
         V[:, k+1] = pk.(pts)
@@ -253,18 +264,18 @@ function itransform(S::OrthogonalPolynomialSpace, cfs)
 end
 
 inner(S::OrthogonalPolynomialSpace, f::Fun, g::Fun, pts, w) =
-    Float64(sum(f.(BigFloat.(pts)) .* g.(BigFloat.(pts)) .* BigFloat.(w)))
+    sum(f.(pts) .* g.(pts) .* w)
+inner2(S::OrthogonalPolynomialSpace, f, g, w) = sum(f .* g .* w)
 
-function differentiateop(S::OrthogonalPolynomialSpace, n)
+function differentiateop(S::OrthogonalPolynomialSpace{<:Any,<:Any,<:Any,<:Any,<:Any,T,<:Any}, n) where T
     if n == 0
         return Fun(S, [0])
     end
     f = Fun(S, [0,1])
     dom = domain(S)
     X = Fun(identity, dom)
-    T = Float64
     p0 = Fun(S, [1])
-    dp1 = (f(Float64(dom.right)) - f(Float64(dom.left))) / (Float64(dom.right) - Float64(dom.left)) # p1 is linear
+    dp1 = (f(T(dom.right)) - f(T(dom.left))) / (T(dom.right) - T(dom.left)) # p1 is linear
     if n == 1
         return Fun(dp1, dom)
     end
@@ -283,7 +294,6 @@ function differentiateop(S::OrthogonalPolynomialSpace, n)
     dp1
 end
 
-
 # Method to gather and evaluate the ops of space S at the transform pts given
 function getopptseval(S::OrthogonalPolynomialSpace, N, pts)
     resetopptseval(S)
@@ -292,7 +302,7 @@ function getopptseval(S::OrthogonalPolynomialSpace, N, pts)
     end
     S.opptseval
 end
-function opevalatpts(S::OrthogonalPolynomialSpace, j, pts)
+function opevalatpts(S::OrthogonalPolynomialSpace{<:Any,<:Any,<:Any,<:Any,<:Any,T,<:Any}, j, pts) where T
     # Here, j refers to the index (i.e. deg(p) - 1)
     N = length(S.opptseval) - 1
     if N ≥ j - 1
@@ -306,24 +316,23 @@ function opevalatpts(S::OrthogonalPolynomialSpace, j, pts)
 
     resizedata!(S, j)
     resize!(S.opptseval, j)
-    S.opptseval[j] = Vector{Float64}(undef, length(pts))
+    S.opptseval[j] = Vector{T}(undef, length(pts))
 
     # p_{n+1} = (A_n x + B_n)p_n - C_n p_{n-1}
-    T = Float64
     n = j - 1
     if n == 0
         S.opptseval[j][:] .= 1.0
     elseif n == 1
-        A = recA(T, S, n)
-        B = recB(T, S, n)
+        A = recA(T, S, n-1)
+        B = recB(T, S, n-1)
         P1 = opevalatpts(S, j-1, pts)
         for r = 1:length(pts)
             S.opptseval[j][r] = (A * pts[r] + B) * P1[r]
         end
     else
-        A = recA(T, S, n)
-        B = recB(T, S, n)
-        C = recC(T, S, n)
+        A = recA(T, S, n-1)
+        B = recB(T, S, n-1)
+        C = recC(T, S, n-1)
         P1 = opevalatpts(S, j-1, pts)
         P2 = opevalatpts(S, j-2, pts)
         for r = 1:length(pts)
@@ -333,6 +342,17 @@ function opevalatpts(S::OrthogonalPolynomialSpace, j, pts)
     S.opptseval[j]
 end
 resetopptseval(S::OrthogonalPolynomialSpace) = resize!(S.opptseval, 0)
+
+function getopnorm(S::OrthogonalPolynomialSpace)
+    # NOTE this is the squared norms
+    if length(S.opnorm) == 0
+        resize!(S.opnorm, 1)
+        pts, w = pointswithweights(S, 1)
+        p = opevalatpts(S, 1, pts)
+        S.opnorm[1] = inner2(S, p, p, w)
+    end
+    S
+end
 
 
 #=====#
@@ -390,21 +410,18 @@ function gethalfdiskOP(H, P, ρ, n, k, a, b)
 end
 
 # R should be Float64
-abstract type DiskSpaceFamily{R} end
+abstract type DiskSpaceFamily{B,R} end
 
-struct HalfDisk{R} <: Domain{SVector{2,R}} end
+struct HalfDisk{B,R} <: Domain{SVector{2,R}} end
 
-HalfDisk() = HalfDisk{Float64}()
+HalfDisk() = HalfDisk{BigFloat, Float64}()
 
 checkpoints(::HalfDisk) = [ SVector(0.1,0.23), SVector(0.3,0.12)]
 
-struct HalfDiskSpace{DF, R, FA, F} <: Space{HalfDisk{R}, R}
+struct HalfDiskSpace{DF, B, R} <: Space{HalfDisk{B,R}, R}
     family::DF # Pointer back to the family
-    a::R # Power of the "x" factor in the weight
-    b::R # Power of the "(1-x^2-y^2)" factor in the weight
-    H::FA # OPFamily in [0,1]
-    P::FA # OPFamily in [-1,1]
-    ρ::F # Fun of sqrt(1-X^2) in [0,1]
+    a::B # Power of the "x" factor in the weight
+    b::B # Power of the "(1-x^2-y^2)" factor in the weight
     opnorms::Vector{R} # squared norms
     opptseval::Vector{Vector{R}} # Store the ops evaluated at the transform pts
     xderivopptseval::Vector{Vector{R}} # Store the x deriv of the ops evaluated
@@ -417,19 +434,13 @@ struct HalfDiskSpace{DF, R, FA, F} <: Space{HalfDisk{R}, R}
     DT::Vector{SparseMatrixCSC{R}}
 end
 
-function HalfDiskSpace(fam::DiskSpaceFamily{R}, a::R, b::R) where R
-    X = Fun(identity, 0..1)
-    Y = Fun(identity, -1..1)
-    H = OrthogonalPolynomialFamily(X, 1-X^2)
-    P = OrthogonalPolynomialFamily(1+Y, 1-Y)
-    ρ = sqrt(1 - X^2)
-    HalfDiskSpace{typeof(fam), typeof(a), typeof(H), typeof(ρ)}(
-        fam, a, b, H, P, ρ, Vector{R}(), Vector{Vector{R}}(),
+function HalfDiskSpace(fam::DiskSpaceFamily{B,R}, a::B, b::B) where {B,R}
+    HalfDiskSpace{typeof(fam), B, R}(
+        fam, a, b, Vector{R}(), Vector{Vector{R}}(),
         Vector{Vector{R}}(), Vector{Vector{R}}(), Vector{SparseMatrixCSC{R}}(),
         Vector{SparseMatrixCSC{R}}(), Vector{SparseMatrixCSC{R}}(),
         Vector{SparseMatrixCSC{R}}())
 end
-HalfDiskSpace() = HalfDiskSpace(1.0, 1.0)
 
 in(x::SVector{2}, D::HalfDisk) = 0 ≤ x[1] ≤ 1 && -sqrt(1-x[1]^2) ≤ x[2] ≤ sqrt(1-x[1]^2)
 
@@ -439,16 +450,16 @@ weight(S::HalfDiskSpace, x, y) = x^S.a * (1 - x^2 - y^2)^S.b
 weight(S::HalfDiskSpace, z) = weight(S, z[1], z[2])
 
 # NOTE we output ≈n points (x,y), plus the ≈n points corresponding to (x,-y)
-function pointswithweights(S::HalfDiskSpace, n)
+function pointswithweights(S::HalfDiskSpace{<:Any, <:Any, T}, n) where T
     # Return the weights and nodes to use for the even
     # of a function, i.e. for the half disk Ω:
     #   int_Ω W^{a,b}(x,y) f(x,y) dydx ≈ Σ_j weⱼ*fe(xⱼ,yⱼ)
     # NOTE: the odd part of the quad rule will equal 0 for polynomials,
     #       so can be ignored.
     N = Int(ceil(sqrt(n)))
-    t, wt = pointswithweights((S.P)(S.b, S.b), N)
-    s, ws = pointswithweights((S.H)(S.a, S.b + 0.5), N)
-    pts = Vector{SArray{Tuple{2},Float64,1,2}}(undef, 2(N^2))
+    t, wt = pointswithweights((S.family.P)(S.b, S.b), N)
+    s, ws = pointswithweights((S.family.H)(S.a, S.b + 0.5), N)
+    pts = Vector{SArray{Tuple{2},T,1,2}}(undef, 2(N^2))
     w = zeros(N^2)
     for i = 1:N
         for k = 1:N
@@ -471,48 +482,43 @@ function inner(S::HalfDiskSpace, f, g, pts, w)
     sum(([f(pt...) * g(pt...) for pt in pts[1:n]]
             + [f(pt...) * g(pt...) for pt in pts[n+1:end]]) .* w) / 2
 end
+function inner2(S::HalfDiskSpace, fpts, gpts, w)
+    n = length(w)
+    sum(([fpts[pt] * gpts[pt] for pt = 1:n]
+            + [fpts[pt] * gpts[pt] for pt = n+1:2n]) .* w) / 2
+end
 
-# NOTE these are squared norms
 function getopnorms(S::HalfDiskSpace, m)
-    # TODO: Need to decide how to do these inner products
-    #           - Can I use getopptseval()? Even though these are needed for the
-    #               entries in the clenshaw matrices
-    #           - Or do I use the same inner product technique from lanczos2!
-    #               That is, for H, get pts, w for H(a, 0.5) e.g. and use a factor 
+    # NOTE these are squared norms
     m̃ = length(S.opnorms)
     if m > m̃
         n = m̃ == 0 ? -1 : -1 + Int(round(sqrt(1 + 2(m̃ - 1))))
         k = m̃ - Int((n + 1)n / 2)
         resize!(S.opnorms, m)
-        P = S.P(S.b, S.b)
-        p = Fun(P, [1])
-        ptsp, wp = pointswithweights(P, 1)
-        normP = inner(P, p, p, ptsp, wp)
+        P = S.family.P(S.b, S.b)
+        getopnorm(P)
         for j = m̃+1:m
             if k > n
                 n += 1
                 k = 0
             end
-            # Pnk = Fun(S, [zeros(j-1); 1])
-            # S.opnorms[j] = inner(S, Pnk, Pnk, pts, w)
-            H = S.H(S.a, S.b + k + 0.5)
-            h = Fun(H, [zeros(n-k); 1])
-            ptsh, wh = pointswithweights(H, Int(ceil(n-k+0.5)))
-            S.opnorms[j] = inner(H, h, h, ptsh, wh) * normP
+            H = S.family.H(S.a, S.b + k + 0.5)
+            getopnorm(H)
+            S.opnorms[j] = H.opnorm[1] * P.opnorm[1]
             k += 1
         end
     end
     S
 end
 
-struct HalfDiskTransformPlan
-    U::Diagonal{Float64,Vector{Float64}}
-    VTp::Matrix{Float64}
-    W::Diagonal{Float64,Vector{Float64}}
-    VTm::Matrix{Float64}
+struct HalfDiskTransformPlan{T}
+    U::Diagonal{T,Vector{T}}
+    VTp::Matrix{T}
+    W::Diagonal{T,Vector{T}}
+    VTm::Matrix{T}
 end
 
-function HalfDiskTransformPlan(S, vals)
+function HalfDiskTransformPlan(S::HalfDiskSpace{<:Any, <:Any, T}, vals) where T
     n = Int(length(vals) / 2)
     N = Int(sqrt(n)) - 1
     m = Int((N+1)*(N+2) / 2)
@@ -534,7 +540,7 @@ function HalfDiskTransformPlan(S, vals)
     W = Diagonal(w)
     U = Diagonal(1 ./ S.opnorms[1:m])
 
-    HalfDiskTransformPlan(U, VTp, W, VTm)
+    HalfDiskTransformPlan{T}(U, VTp, W, VTm)
 end
 
 transform(S::HalfDiskSpace, vals) = plan_transform(S, vals) * vals
@@ -550,12 +556,12 @@ plan_transform(S::HalfDiskSpace, vals) = HalfDiskTransformPlan(S, vals)
 
 # Inputs: OP space, coeffs of a function f for its expansion in the OPSpace OPs
 # Output: vals = {f(x_j)} where x_j are are the points(S,n)
-function itransform(S::HalfDiskSpace, cfs)
+function itransform(S::HalfDiskSpace{<:Any, <:Any, T}, cfs) where T
     m = length(cfs)
     N = Int(round(0.5 * (-1 + sqrt(1 + 8m))))
     n = N^2
     pts = points(S, n)
-    V = Array{Float64}(undef, 2n, m)
+    V = Array{T}(undef, 2n, m)
     for k = 1:m
         Pnk = Fun(S, [zeros(k-1); 1])
         V[:, k] = Pnk.(pts)
@@ -564,68 +570,68 @@ function itransform(S::HalfDiskSpace, cfs)
 end # TODO
 
 # TODO: Store these coeffs?
-function recα(S::HalfDiskSpace, n, k, j)
-    T = Float64 # TODO
-    H = (S.H)(S.a, S.b + k + 0.5)
+function recα(S::HalfDiskSpace{<:Any, <:Any, T}, n, k, j) where T
+    H = (S.family.H)(S.a, S.b + k + 0.5)
     if j == 1
-        return recγ(T, H, n-k+1)
+        recγ(T, H, n-k+1)
     elseif j == 2
-        return recα(T, H, n-k+1)
+        recα(T, H, n-k+1)
+    else
+        error("Invalid entry to function")
     end
-    error("Invalid entry to function")
 end
 
 # TODO
-function recβ(S::HalfDiskSpace, n, k, j)
-    T = Float64
-    P = (S.P)(S.b, S.b)
-    H1 = (S.H)(S.a, S.b + k - 0.5)
-    H2 = (S.H)(S.a, S.b + k + 0.5)
-    H3 = (S.H)(S.a, S.b + k + 1.5)
-
-    # We store the norms of the 2D OPs
+function recβ(S::HalfDiskSpace{<:Any, <:Any, T}, n, k, j) where T
+    # We get the norms of the 2D OPs
     m = Int((n+2)*(n+3) / 2)
     if length(S.opnorms) < m
-        # pts, w = pointswithweights(S, (n + 1.5)^2)
         getopnorms(S, m)
     end
 
-    # Doing this first ensures the 1D ops are calculated
-    resizedata!(H1, n-k+3)
-    resizedata!(H2, n-k+1)
-    resizedata!(H3, n-k+1)
+    H1 = (S.family.H)(S.a, S.b + k - 0.5)
+    H2 = (S.family.H)(S.a, S.b + k + 0.5)
+    H3 = (S.family.H)(S.a, S.b + k + 1.5)
+    P = (S.family.P)(S.b, S.b)
+    getopnorm(P)
+    δ1 = recβ(T, P, k+1) * P.opnorm[1]
 
-    ptsp, wp = pointswithweights(P, Int(ceil(k+1.5)))
-    h2 = Fun(H2, [zeros(n-k); 1])
     if isodd(j)
-        ptsh, wh = pointswithweights(H2, Int(ceil(n-k+1.5)))
-        p = Fun(P, [zeros(k-1); 1])
-        δ = recγ(T, P, k+1) * inner(P, p, p, ptsp, wp)
+        pts, w = pointswithweights(H2, Int(ceil(n-k+1.5)))
+        δ = recγ(T, P, k+1) * P.opnorm[1]
     else
-        ptsh, wh = pointswithweights(H3, Int(ceil(n-k+1.5)))
-        p = Fun(P, [zeros(k+1); 1])
-        δ = recβ(T, P, k+1) * inner(P, p, p, ptsp, wp)
+        pts, w = pointswithweights(H3, Int(ceil(n-k+1.5)))
+        δ = recβ(T, P, k+1) * P.opnorm[1]
     end
+    getopptseval(H2, n-k+1, pts)
+
     if j == 1
-        h1 = Fun(H1, [zeros(n-k); 1])
-        return inner(H2, h2, h1, ptsh, wh) * δ / S.opnorms[Int((n-1)n / 2) + k]
+        getopptseval(H1, n-k+1, pts)
+        (inner2(H2, opevalatpts(H2, n-k+1, pts), opevalatpts(H1, n-k+1, pts), w)
+            * δ / S.opnorms[getopindex(n-1, k-1)])
     elseif j == 2
-        h3 = Fun(H3, [zeros(n-k-2); 1])
-        return inner(H3, h2, h3, ptsh, wh) * δ / S.opnorms[Int((n-1)n / 2) + k + 2]
+        getopptseval(H3, n-k-1, pts)
+        (inner2(H3, opevalatpts(H2, n-k+1, pts), opevalatpts(H3, n-k-1, pts), w)
+            * δ / S.opnorms[getopindex(n-1, k+1)])
     elseif j == 3
-        h1 = Fun(H1, [zeros(n-k+1); 1])
-        return inner(H2, h2, h1, ptsh, wh) * δ / S.opnorms[Int((n+1)n / 2) + k]
+        getopptseval(H1, n-k+2, pts)
+        (inner2(H2, opevalatpts(H2, n-k+1, pts), opevalatpts(H1, n-k+2, pts), w)
+            * δ / S.opnorms[getopindex(n, k-1)])
     elseif j == 4
-        h3 = Fun(H3, [zeros(n-k-1); 1])
-        return inner(H3, h2, h3, ptsh, wh) * δ / S.opnorms[Int((n+1)n / 2) + k + 2]
+        getopptseval(H3, n-k, pts)
+        (inner2(H3, opevalatpts(H2, n-k+1, pts), opevalatpts(H3, n-k, pts), w)
+            * δ / S.opnorms[getopindex(n, k+1)])
     elseif j == 5
-        h1 = Fun(H1, [zeros(n-k+2); 1])
-        return inner(H2, h2, h1, ptsh, wh) * δ / S.opnorms[Int((n+1)*(n+2) / 2) + k]
+        getopptseval(H1, n-k+3, pts)
+        (inner2(H2, opevalatpts(H2, n-k+1, pts), opevalatpts(H1, n-k+3, pts), w)
+            * δ / S.opnorms[getopindex(n+1, k-1)])
     elseif j == 6
-        h3 = Fun(H3, [zeros(n-k); 1])
-        return inner(H3, h2, h3, ptsh, wh) * δ / S.opnorms[Int((n+1)*(n+2) / 2) + k + 2]
+        getopptseval(H3, n-k+1, pts)
+        (inner2(H3, opevalatpts(H2, n-k+1, pts), opevalatpts(H3, n-k+1, pts), w)
+            * δ / S.opnorms[getopindex(n+1, k+1)])
+    else
+        error("Invalid entry to function")
     end
-    error("Invalid entry to function")
 end
 
 function getAs!(S::HalfDiskSpace, N, N₀)
@@ -775,17 +781,11 @@ function clenshaw(cfs::AbstractVector, S::HalfDiskSpace, z)
     if N == 0
         return cfs[1] * P0
     end
-    ρx = S.ρ(z[1])
-    P1 = [Fun(S.H(S.a, S.b+0.5), [0, 1])(z[1]);
-          ρx * Fun(S.P(S.b, S.b), [0, 1])(z[2]/ρx)]
-    if N == 1
-        return cfs[1] * P0 + dot(view(cfs, 2:3), P1)
-    end
-    inds = m-N:m
-    γ2 = view(cfs, inds)'
-    inds = (m-2N):(m-N-1)
-    γ1 = view(cfs, inds)' - γ2 * S.DT[N] * (S.B[N] - clenshawG(N-1, z))
-    for n = N-2:-1:1
+    inds2 = m-N:m
+    inds1 = (m-2N):(m-N-1)
+    γ2 = view(cfs, inds2)'
+    γ1 = view(cfs, inds1)' - γ2 * S.DT[N] * (S.B[N] - clenshawG(N-1, z))
+    for n = N-2:-1:0
         ind = sum(1:n)
         γ = (view(cfs, ind+1:ind+n+1)'
              - γ1 * S.DT[n+1] * (S.B[n+1] - clenshawG(n, z))
@@ -793,28 +793,34 @@ function clenshaw(cfs::AbstractVector, S::HalfDiskSpace, z)
         γ2 = copy(γ1)
         γ1 = copy(γ)
     end
-    cfs[1] * P0 + γ1 * P1 - (P0 * γ2 * S.DT[2] * S.C[2])[1]
+    (γ1 * P0)[1]
 end
 evaluate(cfs::AbstractVector, S::HalfDiskSpace, z) = clenshaw(cfs, S, z)
 
-# R should be Float64
-struct HalfDiskFamily{R} <: DiskSpaceFamily{R}
-    spaces::Dict{NTuple{2,R}, HalfDiskSpace}
+# R should be Float64, B BigFloat
+struct HalfDiskFamily{B,R,FA,F} <: DiskSpaceFamily{B,R}
+    spaces::Dict{NTuple{2,B}, HalfDiskSpace}
+    H::FA # OPFamily in [0,1]
+    P::FA # OPFamily in [-1,1]
+    ρ::F # Fun of sqrt(1-X^2) in [0,1]
 end
 
-function HalfDiskFamily()
-    WW = Fun
-    R = Float64
-    spaces = Dict{NTuple{2,R}, HalfDiskSpace}()
-    HalfDiskFamily{R}(spaces)
+function HalfDiskFamily(::Type{B},::Type{R}) where {B,R}
+    X = Fun(identity, B(0)..1)
+    Y = Fun(identity, B(-1)..1)
+    H = OrthogonalPolynomialFamily(R, X, 1-X^2)
+    P = OrthogonalPolynomialFamily(R, 1+Y, 1-Y)
+    ρ = sqrt(1 - X^2)
+    spaces = Dict{NTuple{2,B}, HalfDiskSpace}()
+    HalfDiskFamily{B,R,typeof(H),typeof(ρ)}(spaces, H, P, ρ)
 end
+HalfDiskFamily() = HalfDiskFamily(BigFloat, Float64)
 
-function (D::HalfDiskFamily{R})(a::R, b::R) where R
+function (D::HalfDiskFamily{B,R,<:Any,<:Any})(a::B, b::B) where {B,R}
     haskey(D.spaces,(a,b)) && return D.spaces[(a,b)]
     D.spaces[(a,b)] = HalfDiskSpace(D, a, b)
 end
-
-(D::HalfDiskFamily{R})(a, b) where R = D(convert(R,a), convert(R,b))
+(D::HalfDiskFamily{B,R,<:Any,<:Any})(a, b) where {B,R} = D(convert(B,a), convert(B,b))
 
 
 # Partial derivatives:
@@ -857,7 +863,7 @@ function differentiatey(S::HalfDiskSpace, cfs::AbstractVector)
     end
 end
 
-function partialoperatorx(S::HalfDiskSpace, N)
+function partialoperatorx(S::HalfDiskSpace{<:Any, <:Any, T}, N) where T
     # Takes the space P^{a,b} -> P^{a+1,b+1}
     Sx = differentiatespacex(S)
     pts, w = pointswithweights(Sx, N^2)
@@ -867,15 +873,15 @@ function partialoperatorx(S::HalfDiskSpace, N)
     getxderivopptseval(S, N+1, pts)
     if N == 2
         A = BandedBlockBandedMatrix(
-            Zeros{Float64}(sum(1:N),sum(1:(N+1))), (1:N, 1:N+1), (-1,2), (0, 2))
+            Zeros{T}(sum(1:N),sum(1:(N+1))), (1:N, 1:N+1), (-1,2), (0, 2))
     else
         A = BandedBlockBandedMatrix(
-            Zeros{Float64}(sum(1:N),sum(1:(N+1))), (1:N, 1:N+1), (-1,2), (0, N-1))
+            Zeros{T}(sum(1:N),sum(1:(N+1))), (1:N, 1:N+1), (-1,2), (0, N-1))
     end
     n, k = 1, 0
     j = getopindex(n, k)
     jj = getopindex(n-1, k)
-    view(A, Block(n, n+1))[1, 1] = inner2(xderivopevalatpts(S, j, pts),
+    view(A, Block(n, n+1))[1, 1] = inner2(S, xderivopevalatpts(S, j, pts),
                             opevalatpts(Sx, jj, pts), w) / Sx.opnorms[jj]
     for n = 2:N, k = 0:n
         j = getopindex(n, k)
@@ -898,22 +904,22 @@ function partialoperatorx(S::HalfDiskSpace, N)
         if !(n == 2 && k == 1)
             for i in inds1
                 jj = getopindex(n-2, i)
-                view(A, Block(n-1, n+1))[i+1, k+1] = inner2(xderivopevalatpts(S, j, pts),
+                view(A, Block(n-1, n+1))[i+1, k+1] = inner2(S, xderivopevalatpts(S, j, pts),
                             opevalatpts(Sx, jj, pts), w) / Sx.opnorms[jj]
             end
         end
         for i in inds2
             jj = getopindex(n-1, i)
-            view(A, Block(n, n+1))[i+1, k+1] = inner2(xderivopevalatpts(S, j, pts),
+            view(A, Block(n, n+1))[i+1, k+1] = inner2(S, xderivopevalatpts(S, j, pts),
                             opevalatpts(Sx, jj, pts), w) / Sx.opnorms[jj]
         end
     end
     A
 end
-function partialoperatory(S::HalfDiskSpace, N)
+function partialoperatory(S::HalfDiskSpace{<:Any, <:Any, T}, N) where T
     # Takes the space P^{a,b} -> P^{a,b+1}
     A = BandedBlockBandedMatrix(
-        Zeros{Float64}(sum(1:N),sum(1:(N+1))), (1:N, 1:N+1), (-1,1), (-1,1))
+        Zeros{T}(sum(1:N),sum(1:(N+1))), (1:N, 1:N+1), (-1,1), (-1,1))
     Sy = differentiatespacey(S)
     m = N^2 + 1 # TODO
     pts, w = pointswithweights(Sy, m)
@@ -924,7 +930,7 @@ function partialoperatory(S::HalfDiskSpace, N)
     for k = 1:N
         j = getopindex(N, k)
         jj = getopindex(N-1, k-1)
-        val = (inner2(yderivopevalatpts(S, j, pts), opevalatpts(Sy, jj, pts), w)
+        val = (inner2(S, yderivopevalatpts(S, j, pts), opevalatpts(Sy, jj, pts), w)
                 / Sy.opnorms[jj])
         for i = k:N
             view(A, Block(i, i+1))[k, k+1] = val
@@ -932,10 +938,10 @@ function partialoperatory(S::HalfDiskSpace, N)
     end
     A
 end
-function weightedpartialoperatorx(S::HalfDiskSpace, N)
+function weightedpartialoperatorx(S::HalfDiskSpace{<:Any, <:Any, T}, N) where T
     # Takes weighted space ∂/∂y(W^{a,b}) -> W^{a-1,b-1}
     W = BandedBlockBandedMatrix(
-        Zeros{Float64}(sum(1:(N+3)),sum(1:(N+1))), (1:N+3, 1:N+1), (2,-1), (2,0))
+        Zeros{T}(sum(1:(N+3)),sum(1:(N+1))), (1:N+3, 1:N+1), (2,-1), (2,0))
     Sx = differentiateweightedspacex(S)
     m = Int(ceil(N + 0.5S.a + S.b + 5)^2) # TODO
     pts, w = pointswithweights((S.family)(0,0), m) # Weight of 1 for the inner product
@@ -953,19 +959,19 @@ function weightedpartialoperatorx(S::HalfDiskSpace, N)
             for i in inds
                 if k < n || i == k
                     jj = getopindex(n+1, i)
-                    view(W, Block(n+2, n+1))[i+1, k+1] = inner2(dpxpts, opevalatpts(Sx, jj, pts), w) / Sx.opnorms[jj]
+                    view(W, Block(n+2, n+1))[i+1, k+1] = inner2(S, dpxpts, opevalatpts(Sx, jj, pts), w) / Sx.opnorms[jj]
                 end
                 jj = getopindex(n+2, i)
-                view(W, Block(n+3, n+1))[i+1, k+1] = inner2(dpxpts, opevalatpts(Sx, jj, pts), w) / Sx.opnorms[jj]
+                view(W, Block(n+3, n+1))[i+1, k+1] = inner2(S, dpxpts, opevalatpts(Sx, jj, pts), w) / Sx.opnorms[jj]
             end
         end
     end
     W
 end
-function weightedpartialoperatory(S::HalfDiskSpace, N)
+function weightedpartialoperatory(S::HalfDiskSpace{<:Any, <:Any, T}, N) where T
     # Takes weighted space ∂/∂y(W^{a,b}) -> W^{a,b-1}
     W = BandedBlockBandedMatrix(
-        Zeros{Float64}(sum(1:(N+2)),sum(1:(N+1))), (1:N+2, 1:N+1), (1,-1), (1,-1))
+        Zeros{T}(sum(1:(N+2)),sum(1:(N+1))), (1:N+2, 1:N+1), (1,-1), (1,-1))
     Sy = differentiateweightedspacey(S)
     m = Int(ceil(0.5 * (2N + S.a + 2S.b))^2) # TODO
     pts, w = pointswithweights((S.family)(0,0), m) # Weight of 1 for the inner product
@@ -979,7 +985,7 @@ function weightedpartialoperatory(S::HalfDiskSpace, N)
         dpypts = [(weightderivativey(S, pts[i]) * opevalatpts(S, j, pts)[i]
                    + weight(S, pts[i]) * yderivopevalatpts(S, j, pts)[i])
                    for i = 1:length(pts)]
-        val = inner2(dpypts, opevalatpts(Sy, jj, pts), w) / Sy.opnorms[jj]
+        val = inner2(S, dpypts, opevalatpts(Sy, jj, pts), w) / Sy.opnorms[jj]
         for i = k:N
             view(W, Block(i+2, i+1))[k+2, k+1] = val
         end
@@ -987,13 +993,13 @@ function weightedpartialoperatory(S::HalfDiskSpace, N)
     W
 end
 
-function transformoperator(S::HalfDiskSpace, N)
+function transformoperator(S::HalfDiskSpace{<:Any, <:Any, T}, N) where T
     if Int(S.a) == 1 && Int(S.b) == 0
         # Outputs the relevant sum(1:N+2) × sum(1:N+1) matrix operator
         # Takes the space xP^{1,0} -> P^{0,0}
         St = (S.family)(0.0, 0.0)
-        T = BandedBlockBandedMatrix(
-            Zeros{Float64}(sum(1:(N+2)),sum(1:(N+1))), (1:N+2, 1:N+1), (1,0), (0,0))
+        C = BandedBlockBandedMatrix(
+            Zeros{T}(sum(1:(N+2)),sum(1:(N+1))), (1:N+2, 1:N+1), (1,0), (0,0))
         getopnorms(St, sum(1:N+2))
         pts, w = pointswithweights(St, (N+2)^2)
         getopptseval(St, N+2, pts)
@@ -1003,17 +1009,17 @@ function transformoperator(S::HalfDiskSpace, N)
             p = [opevalatpts(S, j, pts)[i] * pts[i][1] for i = 1:length(pts)]
             for m = n:n+1
                 jj = getopindex(m, k)
-                view(T, Block(m+1, n+1))[k+1, k+1] = inner2(
-                                p, opevalatpts(St, jj, pts), w) / St.opnorms[jj]
+                view(C, Block(m+1, n+1))[k+1, k+1] = inner2(
+                                S, p, opevalatpts(St, jj, pts), w) / St.opnorms[jj]
             end
         end
-        T
+        C
     elseif Int(S.a) == 0 && Int(S.b) == 1
         # Outputs the relevant sum(1:N+1) × sum(1:N+1) matrix operator
         # Takes the space P^{0,1} -> P^{1,1}
         St = (S.family)(1.0, 1.0)
-        T = BandedBlockBandedMatrix(
-            Zeros{Float64}(sum(1:(N+1)),sum(1:(N+1))), (1:N+1, 1:N+1), (0,1), (0,0))
+        C = BandedBlockBandedMatrix(
+            Zeros{T}(sum(1:(N+1)),sum(1:(N+1))), (1:N+1, 1:N+1), (0,1), (0,0))
         getopnorms(St, sum(1:N+2))
         pts, w = pointswithweights(St, (N+2)^2)
         getopptseval(St, N+2, pts)
@@ -1023,46 +1029,46 @@ function transformoperator(S::HalfDiskSpace, N)
                 j = getopindex(n, k)
                 for m = n-1:n
                     jj = getopindex(m, k)
-                    view(T, Block(m+1, n+1))[k+1, k+1] = inner2(opevalatpts(S, j, pts), opevalatpts(St, jj, pts), w) / St.opnorms[jj]
+                    view(C, Block(m+1, n+1))[k+1, k+1] = inner2(S, opevalatpts(S, j, pts), opevalatpts(St, jj, pts), w) / St.opnorms[jj]
                 end
             end
-            view(T, Block(n+1, n+1))[n+1, n+1] = 1.0
+            view(C, Block(n+1, n+1))[n+1, n+1] = 1.0
         end
-        T
+        C
     elseif Int(S.a) == 0 && Int(S.b) == 2
         # Outputs the relevant sum(1:N+1) × sum(1:N+1) matrix operator
         # Takes the space P^{0,2} -> P^{2,2}
         St = (S.family)(2.0, 2.0)
-        T = BandedBlockBandedMatrix(
-            Zeros{Float64}(sum(1:(N+1)),sum(1:(N+1))), (1:N+1, 1:N+1), (0,2), (0,0))
+        C = BandedBlockBandedMatrix(
+            Zeros{T}(sum(1:(N+1)),sum(1:(N+1))), (1:N+1, 1:N+1), (0,2), (0,0))
         getopnorms(St, sum(1:N+2))
         pts, w = pointswithweights(St, (N+2)^2)
         getopptseval(St, N+2, pts)
         getopptseval(S, N+2, pts)
-        n = 0; view(T, Block(n+1, n+1))[n+1, n+1] = 1.0
+        n = 0; view(C, Block(n+1, n+1))[n+1, n+1] = 1.0
         for n = 1:N
             for k = 0:n-2
                 j = getopindex(n, k)
                 for m = n-2:n
                     jj = getopindex(m, k)
-                    view(T, Block(m+1, n+1))[k+1, k+1] = inner2(opevalatpts(S, j, pts), opevalatpts(St, jj, pts), w) / St.opnorms[jj]
+                    view(C, Block(m+1, n+1))[k+1, k+1] = inner2(S, opevalatpts(S, j, pts), opevalatpts(St, jj, pts), w) / St.opnorms[jj]
                 end
             end
             k = n-1
             j = getopindex(n, k)
             for m = n-1:n
                 jj = getopindex(m, k)
-                view(T, Block(m+1, n+1))[k+1, k+1] = inner2(opevalatpts(S, j, pts), opevalatpts(St, jj, pts), w) / St.opnorms[jj]
+                view(C, Block(m+1, n+1))[k+1, k+1] = inner2(S, opevalatpts(S, j, pts), opevalatpts(St, jj, pts), w) / St.opnorms[jj]
             end
-            view(T, Block(n+1, n+1))[n+1, n+1] = 1.0
+            view(C, Block(n+1, n+1))[n+1, n+1] = 1.0
         end
-        T
+        C
     else
         error("Invalid HalfDiskSpace")
     end
 end
 
-function increaseparamsoperator(S, N)
+function increaseparamsoperator(S::HalfDiskSpace{<:Any, <:Any, T}, N) where T
     # Takes the space P^{a,b} -> P^{a+1,b+1}
     # Outputs the sum(1:N+1) × sum(1:N+1) matrix operator
     St = (S.family)(S.a+1, S.b+1)
@@ -1070,24 +1076,24 @@ function increaseparamsoperator(S, N)
     pts, w = pointswithweights(St, m)
     getopptseval(St, N-2, pts)
     getopptseval(S, N+1, pts)
-    T = BandedBlockBandedMatrix(
-            Zeros{Float64}(sum(1:(N+1)),sum(1:(N+1))), (1:N+1, 1:N+1), (0,3), (0,2))
+    C = BandedBlockBandedMatrix(
+            Zeros{T}(sum(1:(N+1)),sum(1:(N+1))), (1:N+1, 1:N+1), (0,3), (0,2))
     for n = 0:N, k = 0:n
         j = getopindex(n, k)
         for nn = max(0, n-3):n
             for kk = (k < 2 ? k : k-2):2:k
                 kk > nn && continue
                 jj = getopindex(nn, kk)
-                val = (inner2(opevalatpts(S, j, pts), opevalatpts(St, jj, pts), w)
+                val = (inner2(S, opevalatpts(S, j, pts), opevalatpts(St, jj, pts), w)
                         / St.opnorms[jj])
-                view(T, Block(nn+1, n+1))[kk+1, k+1] = val
+                view(C, Block(nn+1, n+1))[kk+1, k+1] = val
             end
         end
     end
-    T
+    C
 end
 
-function convertweightedtononoperator(S, N)
+function convertweightedtononoperator(S::HalfDiskSpace{<:Any, <:Any, T}, N) where T
     # NOTE: Only works for W11 -> P00
     # Outputs the sum(1:N+4) × sum(1:N+1) matrix operator
     St = (S.family)(S.a-1, S.b-1)
@@ -1097,13 +1103,13 @@ function convertweightedtononoperator(S, N)
     getopptseval(St, N+4, pts)
     getopptseval(S, N+1, pts)
     W = BandedBlockBandedMatrix(
-            Zeros{Float64}(sum(1:(N+4)),sum(1:(N+1))), (1:N+4, 1:N+1), (3,0), (2,0))
+            Zeros{T}(sum(1:(N+4)),sum(1:(N+1))), (1:N+4, 1:N+1), (3,0), (2,0))
     for n = 0:N, k = 0:n
         j = getopindex(n, k)
         for nn = n:n+3
             for kk = k:2:min(k+2, nn)
                 jj = getopindex(nn,kk)
-                val = (inner2(opevalatpts(S, j, pts), opevalatpts(St, jj, pts), w)
+                val = (inner2(S, opevalatpts(S, j, pts), opevalatpts(St, jj, pts), w)
                         / St.opnorms[jj])
                 view(W, Block(nn+1, n+1))[kk+1, k+1] = val
             end
@@ -1111,10 +1117,10 @@ function convertweightedtononoperator(S, N)
     end
     W
 end
-function convertweightedtononoperatorsquare(S, N)
+function convertweightedtononoperatorsquare(S::HalfDiskSpace{<:Any, <:Any, T}, N) where T
     # Outputs the sum(1:N+1) × sum(1:N+1) matrix operator
     C = BandedBlockBandedMatrix(
-        Zeros{Float64}(sum(1:(N+1)),sum(1:(N+1))), (1:N+1, 1:N+1), (3,0), (2,0))
+        Zeros{T}(sum(1:(N+1)),sum(1:(N+1))), (1:N+1, 1:N+1), (3,0), (2,0))
     W = convertweightedtononoperator(S, N+3)
     i = 1
     view(C, Block(i, i)) .= view(W, Block(i, i))
@@ -1147,12 +1153,12 @@ function laplace(D::HalfDiskFamily, N)
     A * B + C * E * F * G
 end
 
-function laplacesquare(D::HalfDiskFamily, N)
+function laplacesquare(D::HalfDiskFamily{<:Any, T, <:Any, <:Any}, N) where T
     # sparse([laplace(D, N) zeros(sum(1:N+2), sum(1:N+2)-sum(1:N+1))])
 
     # Outputs the sum(1:N+1) × sum(1:N+1) matrix operator
     Δ = BandedBlockBandedMatrix(
-        Zeros{Float64}(sum(1:(N+1)),sum(1:(N+1))), (1:N+1, 1:N+1), (1,1), (2,5))
+        Zeros{T}(sum(1:(N+1)),sum(1:(N+1))), (1:N+1, 1:N+1), (1,1), (2,5))
     L = laplace(D, N+1)
     i = 1
     view(Δ, Block(i, i)) .= view(L, Block(i, i))
@@ -1208,8 +1214,8 @@ function getnk(j)
 end
 
 # Operator Clenshaw
-function operatorclenshawG(n, Jx, Jy)
-    G = Matrix{SparseMatrixCSC{Float64}}(undef, 2(n+1), n+1)
+function operatorclenshawG(S::HalfDiskSpace{<:Any, <:Any, T}, n, Jx, Jy) where T
+    G = Matrix{SparseMatrixCSC{T}}(undef, 2(n+1), n+1)
     for i = 1:n+1
         for j = 1:n+1
             if i == j
@@ -1223,9 +1229,9 @@ function operatorclenshawG(n, Jx, Jy)
     end
     G
 end
-function converttooperatorclenshawmatrix(A, Jx)
+function converttooperatorclenshawmatrix(S::HalfDiskSpace{<:Any, <:Any, T}, A, Jx) where T
     nn = size(Jx)
-    B = Array{SparseMatrixCSC{Float64}}(undef, size(A))
+    B = Array{SparseMatrixCSC{T}}(undef, size(A))
     for ij = 1:length(A)
         B[ij] = sparse(I, nn) * A[ij]
     end
@@ -1248,19 +1254,19 @@ function operatorclenshaw(cfs, S::HalfDiskSpace)
         return cfs[1] * id * P0
     end
     if N == 1
-        P0 * (converttooperatorclenshawmatrix(cfs[1], Jx)[1] - (converttooperatorclenshawmatrix(S.DT[1], Jx) * (converttooperatorclenshawmatrix(S.B[1], Jx) - operatorclenshawG(0, Jx, Jy)))[1])
+        P0 * (converttooperatorclenshawmatrix(S, cfs[1], Jx)[1] - (converttooperatorclenshawmatrix(S, S.DT[1], Jx) * (converttooperatorclenshawmatrix(S.B[1], Jx) - operatorclenshawG(S, 0, Jx, Jy)))[1])
     end
     inds2 = m-N:m
-    γ2 = converttooperatorclenshawmatrix(view(cfs, inds2), Jx)'
+    γ2 = converttooperatorclenshawmatrix(S, view(cfs, inds2), Jx)'
     inds1 = (m-2N):(m-N-1)
-    γ1 = (converttooperatorclenshawmatrix(view(cfs, inds1), Jx)'
-        - γ2 * converttooperatorclenshawmatrix(S.DT[N], Jx) * (converttooperatorclenshawmatrix(S.B[N], Jx)
-                                                                - operatorclenshawG(N-1, Jx, Jy)))
+    γ1 = (converttooperatorclenshawmatrix(S, view(cfs, inds1), Jx)'
+        - γ2 * converttooperatorclenshawmatrix(S, S.DT[N], Jx) * (converttooperatorclenshawmatrix(S, S.B[N], Jx)
+                                                                - operatorclenshawG(S, N-1, Jx, Jy)))
     for n = N-2:-1:0
         ind = sum(1:n)
-        γ = (converttooperatorclenshawmatrix(view(cfs, ind+1:ind+n+1), Jx)'
-             - γ1 * converttooperatorclenshawmatrix(S.DT[n+1], Jx) * (converttooperatorclenshawmatrix(S.B[n+1], Jx) - operatorclenshawG(n, Jx, Jy))
-             - γ2 * converttooperatorclenshawmatrix(S.DT[n+2] * S.C[n+2], Jx))
+        γ = (converttooperatorclenshawmatrix(S, view(cfs, ind+1:ind+n+1), Jx)'
+             - γ1 * converttooperatorclenshawmatrix(S, S.DT[n+1], Jx) * (converttooperatorclenshawmatrix(S, S.B[n+1], Jx) - operatorclenshawG(S, n, Jx, Jy))
+             - γ2 * converttooperatorclenshawmatrix(S, S.DT[n+2] * S.C[n+2], Jx))
         γ2 = copy(γ1)
         γ1 = copy(γ)
     end
@@ -1278,7 +1284,7 @@ function getopptseval(S::HalfDiskSpace, N, pts)
     end
     S.opptseval
 end
-function opevalatpts(S::HalfDiskSpace, j, pts)
+function opevalatpts(S::HalfDiskSpace{<:Any, <:Any, T}, j, pts) where T
     len = length(S.opptseval)
     if len ≥ j
         return S.opptseval[j]
@@ -1295,7 +1301,7 @@ function opevalatpts(S::HalfDiskSpace, j, pts)
     resizedata!(S, n)
     resize!(S.opptseval, getopindex(n, n))
     for k = 0:n
-        S.opptseval[jj+k] = Vector{Float64}(undef, length(pts))
+        S.opptseval[jj+k] = Vector{T}(undef, length(pts))
     end
 
     if n == 0
@@ -1341,7 +1347,7 @@ function getxderivopptseval(S::HalfDiskSpace, N, pts)
     S.xderivopptseval
 end
 resetxderivopptseval(S::HalfDiskSpace) = resize!(S.xderivopptseval, 0)
-function xderivopevalatpts(S::HalfDiskSpace, j, pts)
+function xderivopevalatpts(S::HalfDiskSpace{<:Any, <:Any, T}, j, pts) where T
     len = length(S.xderivopptseval)
     if len ≥ j
         return S.xderivopptseval[j]
@@ -1358,7 +1364,7 @@ function xderivopevalatpts(S::HalfDiskSpace, j, pts)
     resizedata!(S, n)
     resize!(S.xderivopptseval, getopindex(n, n))
     for k = 0:n
-        S.xderivopptseval[jj+k] = Vector{Float64}(undef, length(pts))
+        S.xderivopptseval[jj+k] = Vector{T}(undef, length(pts))
     end
 
     if n == 0
@@ -1402,7 +1408,7 @@ function getyderivopptseval(S::HalfDiskSpace, N, pts)
     S.yderivopptseval
 end
 resetyderivopptseval(S::HalfDiskSpace) = resize!(S.yderivopptseval, 0)
-function yderivopevalatpts(S::HalfDiskSpace, j, pts)
+function yderivopevalatpts(S::HalfDiskSpace{<:Any, <:Any, T}, j, pts) where T
     len = length(S.yderivopptseval)
     if len ≥ j
         return S.yderivopptseval[j]
@@ -1419,7 +1425,7 @@ function yderivopevalatpts(S::HalfDiskSpace, j, pts)
     resizedata!(S, n)
     resize!(S.yderivopptseval, getopindex(n, n))
     for k = 0:n
-        S.yderivopptseval[jj+k] = Vector{Float64}(undef, length(pts))
+        S.yderivopptseval[jj+k] = Vector{T}(undef, length(pts))
     end
 
     if n == 0
@@ -1457,11 +1463,7 @@ weightderivativex(S::HalfDiskSpace, z) = weightderivativex(S, z[1], z[2])
 weightderivativey(S::HalfDiskSpace, x, y) =
     - 2S.b * x^S.a * y * (1 - x^2 - y^2)^(S.b-1)
 weightderivativey(S::HalfDiskSpace, z) = weightderivativey(S, z[1], z[2])
-function inner2(fpts, gpts, w)
-    n = length(w)
-    sum(([fpts[pt] * gpts[pt] for pt = 1:n]
-            + [fpts[pt] * gpts[pt] for pt = n+1:2n]) .* w) / 2
-end
+
 
 
 end # module
