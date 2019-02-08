@@ -193,7 +193,7 @@ The motivation for this work is solving partial differential equations on sub-do
 
  We present our procedure  to gain a (two-parameter) family of 2D orthogonal polynomials (OPs) on the half disk domain, by combining 1D OPs to the interval, to form 2D OPs on the disk. We will derive a quadrature rule on the half disk that can be used to expand a function in the OP basis up to a given order. We will demonstrate that these families will have sparse operators (including Jacobi operators representing multiplication by $x$ and $y$, and partial differential operators), and how we can implement function evaluation using the coefficients of the expansion of a given function using the Clenshaw algorithm. We can extend this work directly by projecting up to 3D OPs on the hemisphere, where sparse operators, function evaluation and expansion etc. can be found similarly. 
 
-\section{Orthogonal polynomials  on the half disk}
+\section{Orthogonal polynomials on the half disk}
 
 In this section we outline some basic properties of $P_{n,k}^{(a,b)}(x,y)$. The symmetry in the weight allows us to express the polynomials in terms of 1D OPs, and deduce certain properties such as recurrence relationships. 
 
@@ -278,7 +278,22 @@ Note that \(\ip<y \Pnkab, P_{m,j}^{(a,b)}>_\Wab = 0\) for \(m < n-1\) (and for \
 \end{proof}
 
 
-Three-term recurrences lead to Jacobi operators that correspond to multiplication by $x$ and $y$. Set \(J_x^{(a,b)}, J_y^{(a,b)}\) as the \(\half (N+1)(N+2) \times \half (N+1)(N+2)\) Jacobi matrices corresponding to
+Three-term recurrences lead to Jacobi operators that correspond to multiplication by $x$ and $y$. Define, for some $N \in \No$:
+\begin{align}
+\bigPab_n := \begin{bmatrix}
+		P^{(a,b)}_{n,-n}(x,y) \\
+		\vdots \\
+		P^{(a,b)}_{n,n}(x,y)
+	\end{bmatrix} \in \R^{n+1}, 
+\quad \quad 
+\bigPab := \begin{bmatrix}
+		\bigPab_0 \\
+		\bigPab_1 \\
+		\vdots \\
+		\bigPab_N
+	\end{bmatrix}
+\end{align}
+and set \(J_x^{(a,b)}, J_y^{(a,b)}\) as the \(\half (N+1)(N+2) \times \half (N+1)(N+2)\) Jacobi matrices corresponding to
 \begin{align}
 J_x^{(a,b)} \bigPab(x,y) = x \bigPab(x,y), \quad J_y^{(a,b)} \bigPab(x,y) = y \bigPab(x,y).
 \end{align}
