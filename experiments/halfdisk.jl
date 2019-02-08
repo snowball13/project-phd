@@ -14,20 +14,132 @@ import OrthogonalPolynomialFamilies: points, pointswithweights, getopptseval,
 # points(), and use in a new basiseval method (using 3-term recurrence)
 
 a, b = 1.0, 1.0; D = HalfDiskFamily(); S = D(a, b)
-N = 15
+x, y = 0.4, -0.2; z = [x; y]
+N = 10
+laplace(D, N)
+
+N = 30
+S = D(a, b)
+D
 @time W = OrthogonalPolynomialFamilies.weightedpartialoperatorx(S, N)
 @time W = OrthogonalPolynomialFamilies.weightedpartialoperatory(S, N)
 @time A = OrthogonalPolynomialFamilies.partialoperatorx(S, N+2)
 @time A = OrthogonalPolynomialFamilies.partialoperatory(S, N+2)
 S = D(1, 0)
-@time T = OrthogonalPolynomialFamilies.transformoperator(S, N+1)
+@time T = transformoperator(S, N+1)
 S = D(0, 1)
-@time T = OrthogonalPolynomialFamilies.transformoperator(S, N+1)
+@time T = transformoperator(S, N+1)
 S = D(0, 2)
-@time T = OrthogonalPolynomialFamilies.transformoperator(S, N+1)
+@time T = transformoperator(S, N+1)
 
 D = HalfDiskFamily(); N = 15
 @time laplace(D, N)
+
+#====#
+#=
+Sparsity of laplace operator
+=#
+using PyPlot
+a, b = 1.0, 1.0; D = HalfDiskFamily(); S = D(a, b)
+N = 30
+Δ = laplacesquare(D, N)
+DDD = copy(Δ)
+PyPlot.clf()
+PyPlot.spy(Array(sparse(Δ)))
+PyPlot.axis(xmin=0, xmax=500, ymin=500, ymax=0)
+PyPlot.title("Sparsity of Δ operator")
+savefig("experiments/sparsityoflaplacian")
+
+#=
+Solution of Δu = f, where f(x,y) = 1 + erf(5(1 - 10((x - 0.5)^2 + (y)^2)))
+                        # f = y*exp(x)*(2-11x-6x^2-x^3-2y^2-x*y^2)
+=#
+using SpecialFunctions
+using Makie, FileIO
+evalu(u, z) = isindomain(z, u.space.family) ? u(z) : 0.0
+isindomain(x, D::HalfDiskFamily) = 0 ≤ x[1] ≤ 1 && -sqrt(1-x[1]^2) ≤ x[2] ≤ sqrt(1-x[1]^2)
+function getvalidpoint()
+    x, y = rand(1)[1], rand(1)[1]
+    while true
+        if isindomain([x, y])
+            break
+        else
+            x, y = rand(1)[1], rand(1)[1]
+        end
+    end
+    x, y
+end
+
+N = 30
+# Δ = laplacesquare(D, N)
+m = 500
+f = Fun((x,y)->(1 + erf(5(1 - 10((x - 0.5)^2 + (y)^2)))), S, m)
+f.coefficients
+# u = Fun(S, sparse(Δ) \ f.coefficients[1:size(Δ)[1]])
+u = Fun(S, sparse(Δ) \ resizecoeffs!(f, N))
+
+# Create arrays of (x,y) points
+n = 100
+x = LinRange(0, 1, n)
+y = LinRange(-1, 1, n)
+sln = zeros(length(x), length(y))
+for i = 1:length(x)
+    for j = 1:length(y)
+        val = evalu(u, [x[i]; y[j]])
+        sln[i,j] = OrthogonalPolynomialFamilies.weight(S, x[i], y[j]) * val
+    end
+end
+sln
+scene = Scene()
+s = Makie.image(x, y, sln, colormap = :viridis)
+n = 20
+θ = [0;(0.5:n-0.5)/(2n);0.5]
+x = [cospi(θ) for θ in θ]
+y = [sinpi(θ) for θ in θ]
+pts = vec(Point2f0.(x, y))
+Makie.lines!(s, pts, linewidth = 2, color = :black)
+pts = vec(Point2f0.(x, -y))
+Makie.lines!(s, pts, linewidth = 2, color = :black)
+FileIO.save("experiments/solution.png", s)
+
+
+#=
+Plotting the norms of each block of coeffs for various function approximations
+=#
+m = 400
+f1 = Fun((x,y)->1.0, S, m)
+N = getnk(length(f1.coefficients))[1]
+f2 = Fun((x,y)->x^2 + y^2, S, m)
+f3 = Fun((x,y)->x^2*y^2*(1-x^2-y^2)^2, S, m)
+f4 = Fun((x,y)->exp(-1000((x-0.2)^2+(y-0.2)^2)), S, m)
+f1coeffs = PseudoBlockArray(f1.coefficients, [i+1 for i=0:N])
+f2coeffs = PseudoBlockArray(f2.coefficients, [i+1 for i=0:N])
+f3coeffs = PseudoBlockArray(f3.coefficients, [i+1 for i=0:N])
+f4coeffs = PseudoBlockArray(f4.coefficients, [i+1 for i=0:N])
+f1norms = zeros(N+1)
+f2norms = zeros(N+1)
+f3norms = zeros(N+1)
+f4norms = zeros(N+1)
+for i = 1:N+1
+    f1norms[i] = norm(view(f1coeffs, Block(i)))
+    f2norms[i] = norm(view(f2coeffs, Block(i)))
+    f3norms[i] = norm(view(f3coeffs, Block(i)))
+    f4norms[i] = norm(view(f4coeffs, Block(i)))
+end
+scene = Scene()
+s = lines(f1norms, xaxis=:log)# , color=:blue)
+lines!(f2norms, color=:red)
+lines!(f3norms, color=:green)
+lines!(f4norms, color=:purple)
+using Plots
+Plots.plot(f1norms, xscale=:log10, yscale=:log10)
+Plots.plot!(f2norms)
+Plots.plot!(f3norms)
+Plots.plot!(f4norms)
+savefig("experiments/functionblocknorms")
+
+
+
 
 
 
@@ -43,7 +155,6 @@ N = 1 # degree of f
 c = rand(1)[1]; f = Fun((x,y)->-c*8x, S)
 resizecoeffs!(f, N)
 Δ = laplacesquare(D, N)
-Δ \ f.coefficients
 u = Fun(S, sparse(Δ) \ resizecoeffs!(f, N))
 @test u(z) ≈ c # Result u(x,y) where Δ(u*w)(x,y) = f(x,y)
 # plot(x->u(x,y))
@@ -70,7 +181,7 @@ u(z) - U(z)
 
 # 4) f(x,y) = 2zcos(x) - 8xsin(x) - xzsin(x) - 4x^2cos(x) - 12xy => u(x,y) = sin(x) + y
 # (where z = 1-x^2-y^2)
-using Plots
+using PyPlot
 Uc = resizecoeffs!(Fun((x,y)->sin(x) + y, S), 15)
 m = 200
 f = Fun((x,y)->(2*(1-x^2-y^2)*cos(x) - 8*x*sin(x) - x*(1-x^2-y^2)*sin(x) - 4*x^2*cos(x) - 12*x*y),
@@ -88,6 +199,7 @@ for N = 4:2:15
     plot!(plt, res, label="N=$N")
 end
 plt
+title("A sinusoidally modulated sinusoid")
 savefig("experiments/example4coeffs")
 
 

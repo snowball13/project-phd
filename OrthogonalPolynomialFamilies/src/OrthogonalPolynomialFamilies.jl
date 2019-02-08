@@ -64,38 +64,6 @@ function lanczos!(w, P, β, γ, N₀=0)
 
     P, β, γ
 end
-function lanczos2!(S, pts, w, F, N₀=0)
-    # F is the added factor as a Fun
-    P, β, γ = S.ops, S.a, S.b
-
-    # x * P[n](x) == (γ[n] * P[n+1](x) + β[n] * P[n](x) + γ[n-1] * P[n-1](x))
-
-    # We use our own quadrature rule here, as given by pts and w
-
-    N = length(β)
-    X = Fun(identity, domain(S.weight))
-
-    if N₀ <= 0
-        N₀ = 1
-        f1 = Fun(1 / sqrt(sum(S.weight)), space(X))
-        P[1] = f1
-        v = X * P[1]
-        β[1] = inner(S, v * F, P[1], pts, w)
-        v = v - β[1] * P[1]
-        γ[1] = sqrt(inner(S, v * F, v, pts, w))
-        P[2] = v / γ[1]
-    end
-
-    for k = N₀+1:N
-        v = X * P[k] - γ[k-1] * P[k-1]
-        β[k] = inner(S, v * F, P[k], pts, w)
-        v = v - β[k] * P[k]
-        γ[k] = sqrt(inner(S, v * F, v, pts, w))
-        P[k+1] = v / γ[k]
-    end
-
-    P, β, γ
-end
 
 # Finds the OPs and recurrence for weight w
 function lanczos(w, N)
@@ -105,41 +73,6 @@ function lanczos(w, N)
     γ = Array{eltype(w)}(undef, N)
     lanczos!(w, P, β, γ)
 end
-
-# Decides which lanczos! to call depending on if we would run into
-# ill-conditioned errors etc., and then calls it FA,WW,F,D,B,R,N
-function lanczosdecider(S::OrthogonalPolynomialSpace{<:Any,<:Any,<:Any,<:Any,<:Any,T,<:Any}, N₀) where T
-    # TODO: Make this cleaner...
-    ϕ = Vector{T}(undef, length(S.params))
-    ψ = []
-    for i = 1:length(S.params)
-        α = S.params[i]
-        if floor(α) == α || α < 1
-            ϕ[i] = α
-        else # We have non-integer parameter
-            ϕ[i] = α - floor(α)
-            append!(ψ, i)
-        end
-    end
-    if length(ψ) == 0
-        lanczos!(S.weight, S.ops, S.a, S.b, N₀)
-    elseif length(ψ) == 1
-        m = 100 # TODO
-        pts, w = pointswithweights((S.family)(ϕ...), m)
-        fctr = ((S.family).factors[ψ[1]])^(S.params[ψ[1]]-ϕ[ψ[1]])
-        lanczos2!(S, pts, w, fctr, N₀)
-    else
-        m = 100 # TODO
-        pts, w = pointswithweights((S.family)(ϕ...), m)
-        pwrs = [S.params[i]-ϕ[i] for i in ψ]
-        fctrs = [(S.family).factors[i] for i in ψ]
-        fctr = prod(fctrs.^pwrs)
-        lanczos2!(S, pts, w, fctr, N₀)
-    end
-end
-
-
-
 
 domain(S::OrthogonalPolynomialSpace) = domain(S.weight)
 canonicaldomain(S::OrthogonalPolynomialSpace) = domain(S)
@@ -156,7 +89,6 @@ function resizedata!(S::OrthogonalPolynomialSpace, n)
     resize!(S.a, n)
     resize!(S.b, n)
     resize!(S.ops, n + 1)
-    # lanczosdecider(S, N₀)
     lanczos!(S.weight, S.ops, S.a, S.b, N₀)
     S
 end
