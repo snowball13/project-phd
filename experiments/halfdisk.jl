@@ -104,39 +104,47 @@ FileIO.save("experiments/solution.png", s)
 
 
 #=
-Plotting the norms of each block of coeffs for various function approximations
+Plotting the norms of each block of coeffs for solutions of Poisson for
+different RHSs
 =#
-m = 400
-f1 = Fun((x,y)->1.0, S, m)
-N = getnk(length(f1.coefficients))[1]
-f2 = Fun((x,y)->x^2 + y^2, S, m)
-f3 = Fun((x,y)->x^2*y^2*(1-x^2-y^2)^2, S, m)
+m = 800
 f4 = Fun((x,y)->exp(-1000((x-0.2)^2+(y-0.2)^2)), S, m)
-f1coeffs = PseudoBlockArray(f1.coefficients, [i+1 for i=0:N])
-f2coeffs = PseudoBlockArray(f2.coefficients, [i+1 for i=0:N])
-f3coeffs = PseudoBlockArray(f3.coefficients, [i+1 for i=0:N])
-f4coeffs = PseudoBlockArray(f4.coefficients, [i+1 for i=0:N])
-f1norms = zeros(N+1)
-f2norms = zeros(N+1)
-f3norms = zeros(N+1)
-f4norms = zeros(N+1)
+N = getnk(length(f4.coefficients))[1]
+Δc = Δ[1:getopindex(N, N), 1:getopindex(N, N)] # laplacesquare(D, N)
+f1 = Fun((x,y)->1.0, S)
+f2 = Fun((x,y)->x^2 + y^2 - 1, S)
+f3 = Fun((x,y)->x^2*y^2*(1-x^2-y^2)^2, S)
+u1 = Fun(S, sparse(Δc) \ resizecoeffs!(f1, N))
+u2 = Fun(S, sparse(Δc) \ resizecoeffs!(f2, N))
+u3 = Fun(S, sparse(Δc) \ resizecoeffs!(f3, N))
+u4 = Fun(S, sparse(Δc) \ f4.coefficients)
+u1coeffs = PseudoBlockArray(u1.coefficients, [i+1 for i=0:N])
+u2coeffs = PseudoBlockArray(u2.coefficients, [i+1 for i=0:N])
+u3coeffs = PseudoBlockArray(u3.coefficients, [i+1 for i=0:N])
+u4coeffs = PseudoBlockArray(u4.coefficients, [i+1 for i=0:N])
+u1norms = zeros(N+1)
+u2norms = zeros(N+1)
+u3norms = zeros(N+1)
+u4norms = zeros(N+1)
 for i = 1:N+1
-    f1norms[i] = norm(view(f1coeffs, Block(i)))
-    f2norms[i] = norm(view(f2coeffs, Block(i)))
-    f3norms[i] = norm(view(f3coeffs, Block(i)))
-    f4norms[i] = norm(view(f4coeffs, Block(i)))
+    u1norms[i] = norm(view(u1coeffs, Block(i)))
+    u2norms[i] = norm(view(u2coeffs, Block(i)))
+    u3norms[i] = norm(view(u3coeffs, Block(i)))
+    u4norms[i] = norm(view(u4coeffs, Block(i)))
 end
-scene = Scene()
-s = lines(f1norms, xaxis=:log)# , color=:blue)
-lines!(f2norms, color=:red)
-lines!(f3norms, color=:green)
-lines!(f4norms, color=:purple)
+# scene = Scene()
+# s = lines(f1norms, xaxis=:log)# , color=:blue)
+# lines!(f2norms, color=:red)
+# lines!(f3norms, color=:green)
+# lines!(f4norms, color=:purple)
 using Plots
-Plots.plot(f1norms, xscale=:log10, yscale=:log10)
-Plots.plot!(f2norms)
-Plots.plot!(f3norms)
-Plots.plot!(f4norms)
-savefig("experiments/functionblocknorms")
+Plots.plot(u1norms, label="f(x,y) = 1", xscale=:log10, yscale=:log10, legend=:bottomleft)
+Plots.plot!(u2norms, label="f(x,y) = x^2 + y^2 - 1")
+Plots.plot!(u3norms, label="f(x,y) = x^2 * y^2 * (1-x^2-y^2)^2")
+Plots.plot!(u4norms, label = "f(x,y) = exp(-1000((x-0.2)^2+(y-0.2)^2))")
+Plots.xlabel!("Block")
+Plots.ylabel!("Norm")
+savefig("experiments/solutionblocknorms")
 
 
 
