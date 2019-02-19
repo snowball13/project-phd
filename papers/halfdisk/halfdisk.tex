@@ -133,6 +133,7 @@
 \newcommand{\refelement}{\hat{\tau}}
 \newcommand{\FEset}{\mathcal{T}}
 \newcommand{\bigW}{\mathbb{W}}
+\newcommand{\bigWab}{\mathbb{W}^{(a,b)}}
 \newcommand{\bigWii}{{\mathbb{W}^{(1,1)}}}
 
 \usepackage{amsthm}
@@ -211,7 +212,7 @@ $$
 are orthogonal polynomials with respect to the weight \(W(x,y) := w_1(x) \: w_2(\frac{y}{\rho(x)}) \) on $\Omega$. 
 \end{proposition}
 
-For the half disk, the weight $W^{(a,b)}(x,y)$ results from setting:
+For the half disk, the weight $W^{(a,b)}(x,y) = x^a \: (1-x^2-y^2)^b$ results from setting:
 
 \begin{align}
 \begin{cases}
@@ -476,24 +477,32 @@ m &= \frac{n+1}{2} + 1, \quad \eta_0 = \frac{1}{\betaab_{n,n,6}}, \nonumber \\
 \label{fig:Laplace} 
 \end{figure}
 
+Firstly, we introduce further notation that
+\begin{align}
+\bigWab(x,y) := \Wab(x,y) \bigPab(x,y).
+\end{align}
+
 For general \(a,b\) and general functions \(f(x,y) = \bigPab(x,y)^\top \mathbf{f}\), there exist sparse operators \(D_x^{(a,b)}, \: D_y^{(a,b)}, \: W_x^{(a,b)}, \: W_y^{(a,b)}\) such that:
 \begin{align}
 \dx[f(x,y)] &= \bigP^{(a+1,b+1)}(x,y)^T \: D_x^{(a,b)} \: \mathbf{f}, \\
 \dy[f(x,y)] &= \bigP^{(a,b+1)}(x,y)^T \: D_y^{(a,b)} \: \mathbf{f}, \\
-\dx[\Wab(x,y) \: f(x,y)] &= W^{(a-1,b-1)}(x,y) \: \bigP^{(a-1,b-1)}(x,y)^T \: W_x^{(a,b)} \: \mathbf{f}, \\
-\dy[\Wab(x,y) \: f(x,y)] &= W^{(a,b-1)}(x,y) \: \bigP^{(a,b-1)}(x,y)^T \: W_y^{(a,b)} \: \mathbf{f}.
+\dx[\Wab(x,y) \: f(x,y)] &= \bigW^{(a-1,b-1)}(x,y)^T \: W_x^{(a,b)} \: \mathbf{f}, \\
+\dy[\Wab(x,y) \: f(x,y)] &= \bigW^{(a,b-1)}(x,y)^T \: W_y^{(a,b)} \: \mathbf{f}.
 \end{align}
 The incrementing and decrementing of parameters as seen here is analogous to other well known orthogonal polynomials families' derivatives, for example the Jacobi polynomials, as seen in the DLMF \cite{DLMFDerivatives}.
-Further, we note that there exist Banded-Block-Banded matrix operators \(T^{(1,0)\to(0,0)}\), \(T^{(0,1)\to(1,1)}\) and $T^{(0,2)\to(2,2)}$ such that:
+
+Further, we note that there exist "parameter transformation" Banded-Block-Banded matrix operators that increment/decrement the parameters, transforming the OPs from one (weighted or non-weighted) parameter space to another. We denote these operators as $T_W^{(1,0)\to(0,0)}$, $T_W^{(1,1)\to(0,0)}$, $T^{(0,1)\to(1,1)}$, $T^{(0,2)\to(2,2)}$ and the general $T^{(a,b)\to(a+1,b+1)}$ where:
 \begin{align}
-x \bigP^{(1,0)}(x,y) &= \Big(T^{(1,0)\to(0,0)} \Big)^T \: \bigP^{(0,0)}(x,y) \\
+\bigW^{(1,0)}(x,y) &= \Big(T_W^{(1,0)\to(0,0)} \Big)^T \: \bigP^{(0,0)}(x,y) \\
+\bigW^{(1,1)}(x,y) &= \Big(T_W^{(1,1)\to(0,0)} \Big)^T \: \bigP^{(0,0)}(x,y) \\
 \bigP^{(0,1)}(x,y) &= \Big(T^{(0,1)\to(1,1)} \Big)^T \: \bigP^{(1,1)}(x,y) \\
-\bigP^{(0,2)}(x,y) &= \Big(T^{(0,2)\to(2,2)} \Big)^T \: \bigP^{(2,2)}(x,y)
+\bigP^{(0,2)}(x,y) &= \Big(T^{(0,2)\to(2,2)} \Big)^T \: \bigP^{(2,2)}(x,y) \\
+\bigP^{(a,b)}(x,y) &= \Big(T^{(a,b)\to(a+1,b+1)} \Big)^T \: \bigP^{(a+1,b+1)}(x,y)
 \end{align}
 
 We can then obtain the matrix operator for \(\Delta\), that will take us from coefficients for expansion in the weighted space
 \[
-\Wii(x,y) \: \bigPii(x,y)
+\bigWii(x,y) = \Wii(x,y) \: \bigPii(x,y)
 \]
 to coefficients in the non-weighted space
 \[
@@ -501,7 +510,7 @@ to coefficients in the non-weighted space
 \]
 Importantly, this operator will have Banded-Block-Banded structure, and hence will be sparse. Note that this construction will ensure the imposition of the Dirichlet zero boundary conditions on $\Omega$. The matrix operator \(\Delta\) acting on the coefficients vector is then given by
 \begin{align}
-    \Delta := D_x^{(0,0)} \: W_x^{(1,1)} + T^{(0,1)\to(1,1)} \: D_y^{(0,0)} \: T^{(1,0)\to(0,0)} \: W_y^{(1,1)}.
+    \Delta := D_x^{(0,0)} \: W_x^{(1,1)} + T^{(0,1)\to(1,1)} \: D_y^{(0,0)} \: T_W^{(1,0)\to(0,0)} \: W_y^{(1,1)}.
 \end{align}
 
 Further, we can also obtain the matrix operator for \(\Delta\) that will take us from coefficients for expansion in the space
@@ -519,14 +528,17 @@ Importantly, again, this operator will have Banded-Block-Banded structure, and h
 
 The sparsity of the these operators can be shown using a simply integration by parts argument, again showing that the sparsity for differential operators is not dependent on the domain.
 
+
 \section{Computational aspects}
 
 \subsection{Constructing $H_n^{(a,b)}(x)$}
 
+????
+
+
 \subsection{Quadrature rules}
 
 In this section we construct a quadrature rule exact for polynomials in $\Omega$ that can be used to expand functions in $P_{n,k}^{(a,b)}(x,y)$. 
-
 
 \begin{theorem}
 
@@ -620,7 +632,136 @@ and is exact for any polynomial $f(x,y)$ where the degree in $x$ is $\le N$ and 
 for suitably large $N$.
 
 
+%
+\section{Examples on the half disk with zero BCs}
 
+
+\subsection{Poisson}
+
+\begin{figure}
+	\centering
+	\includegraphics[scale=0.4]{solutionblocknorms}
+	\caption{The norms of each block of the computed solution of the Poisson equation with the given right hand side functions.}
+	\centering
+	\label{fig:solutionblocknorms}
+\end{figure}
+
+Find \(u(x,y)\) given a function \(f(x,y)\) such that:
+\begin{align}
+	\begin{cases}
+    		\Delta u(x,y) = f(x,y) \quad \text{in } \Omega \\
+		u(x,y) = 0 \quad \text{on } \partial \Omega
+	\end{cases}.
+\end{align}
+noting the imposition of zero Dirichlet boundary conditions on $u$.
+
+We can tackle the problem as follows. Fix \(a, b = 1,1\). Denote the coefficient vector for expansion of $u$ in the $\bigWii$ OP basis up to degree $N$ by $\mathbf{u}$, and the coefficient vector for expansion of $f$ in the $\bigPii$ OP basis up to degree $N$ by $\mathbf{f}$. Since $f$ is known, we can obtain $\mathbf{f}$ using the quadrature rule above. In matrix-vector notation, our system hence becomes:
+\begin{align}
+    \Delta^{(1,1)} \mathbf{u} = \mathbf{f}
+\end{align}
+which can be solved to find $\mathbf{u}$.
+
+%\begin{figure}
+%	\includegraphics[scale=0.4]{example4coeffs}
+%\centering
+%\caption{Plot of the difference between the previous solution's coefficients and the current solution's coefficients under increasing degree of approximation (number of coefficients used) for $N = 2,\dots,10$, using RHS of $f(x,y) = 2(1-x^2-y^2)\cos(x) - 8x\sin(x) - x(1-x^2-y^2)\sin(x) - 4x^2 \cos(x) - 12xy$ for the Poisson equation. The solution is converging as seen by the decreasing (absolute value) difference of coefficient values.}
+%\centering
+%\label{fig:poisson}
+%\end{figure}
+
+\begin{figure}
+	\centering
+	\includegraphics[scale=0.4]{sparsityoflaplacian}
+        \label{fig:sparsity}
+    	\caption{A "spy" plot of the $\Delta$ operator for $\bigWii(x,y) \to \bigPii(x,y)$ showing its sparsity.}
+	\centering
+\end{figure}
+
+\subsection{Inhomogenous Helmholtz}
+
+Find \(u(x,y)\) given a function \(f(x,y)\) such that:
+\begin{align}
+	\begin{cases}
+    		\Delta u(x,y) + k^2 u(x,y) = f(x,y) \quad \text{in } \Omega \\
+		u(x,y) = 0 \quad \text{on } \partial \Omega
+	\end{cases}.
+\end{align}
+noting the imposition of zero Dirichlet boundary conditions on $u$.
+
+We can tackle the problem as follows. Fix \(a, b = 1,1\). Denote the coefficient vector for expansion of $u$ in the $\bigWii$ OP basis up to degree $N$ by $\mathbf{u}$, and the coefficient vector for expansion of $f$ in the $\bigPii$ OP basis up to degree $N$ by $\mathbf{f}$. Since $f$ is known, we can obtain $\mathbf{f}$ using the quadrature rule above. In matrix-vector notation, our system hence becomes:
+\begin{align}
+    (\Delta^{(1,1)} + k^2 T^{(0,0)\to(1,1)} T_W^{(1,1)\to(0,0)}) \mathbf{u} = \mathbf{f}
+\end{align}
+which can be solved to find $\mathbf{u}$.
+
+We can extend this to constant non-zero boundary conditions by simply noting that the problem 
+\begin{align}
+	\begin{cases}
+    		\Delta u(x,y) + k^2 u(x,y) = f(x,y) \quad \text{in } \Omega \\
+		u(x,y) = c \in \R \quad \text{on } \partial \Omega
+	\end{cases}
+\end{align}
+is equivalent to letting $u = v + c$ and solving
+\begin{align}
+	\begin{cases}
+    		\Delta v(x,y) + k^2 v(x,y) = f(x,y) - k^2 c =: g(x,y)  \quad \text{in } \Omega \\
+		v(x,y) = 0 \quad \text{on } \partial \Omega
+	\end{cases}.
+\end{align}
+
+\begin{figure}
+	\centering
+	\includegraphics[scale=0.3]{solution}
+        	\label{fig:solution}
+    	\caption{The computed solution to $\Delta u = f$ with zero boundary conditions with $f(x,y) = 1 + \text{erf}(5(1 - 10((x - 0.5)^2 + y^2)))$.}
+	\centering
+\end{figure}
+
+\subsection{Heat Equation}
+Consider
+\begin{align}
+	\begin{cases}
+		\frac{\partial u}{\partial t}(t,x,y) = \Delta u(t,x,y) \quad \text{in } \Omega \\
+		u(t, x, y) = 0 \quad \text{on } \partial \Omega \\
+		u(0, x, y) = u_0(x,y) := \Wii(x,y) \: f(x,y)
+	\end{cases}
+\end{align}
+noting the imposition of zero Dirichlet boundary conditions.
+
+Using a backward Euler time-stepping method, we can formulate this for \(t = 0,1,2,\dots\) and step length $h$:
+\begin{align}
+u_{t+1}(x,y) - u_t (x,y) = h \: \Delta u_{t+1}(x,y) \quad \text{for } (x,y) \in \Omega.
+\end{align}
+
+We can tackle the problem as follows. Fix \(a, b = 1,1\). Denote the coefficient vector for expansion of $u_0$ in the $\bigWii$ OP basis up to degree $N$ by $\mathbf{u}_0$, and similarly for each $t = 1,2,3,\dots,t_{max}$ we denote $\mathbf{u}_t$ as the coefficient vector of the expansion of $u_t$ in the $\bigWii$ OP basis up to degree $N$. Further, denote the coefficient vector for expansion of $u_0$ in the $\bigPii$ OP basis up to degree $N$ by $\mathbf{\tilde{u}}_0$, and similarly for each $t = 1,2,3,\dots,t_{max}$ denote $\mathbf{\tilde{u}}_t$ as the coefficient vector of the expansion of $u_t$ in the $\bigPii$ OP basis up to degree $N$.
+
+Then, using the operator $\Delta$, we can solve this system for the given initial condition $\mathbf{u_0}$ by iterating for $t = 0,1,2,\dots,t_{max}$:
+\begin{align}
+	&T^{(0,0)\to(1,1)} \: T_W^{(1,1)\to(0,0)} \: (\mathbf{u}_{t+1} - \mathbf{u}_t) = h \: \Delta^{(1,1)} \mathbf{u}_{t+1} \nonumber \\
+	\iff& (T^{(0,0)\to(1,1)} \:T_W^{(1,1)\to(0,0)} - h \: \Delta^{(1,1)}) \: \mathbf{u}_{t+1} = T^{(0,0)\to(1,1)} \: T_W^{(1,1)\to(0,0)} \: \mathbf{u}_t \nonumber \\
+	\iff& \mathbf{u}_{t+1} = (T^{(0,0)\to(1,1)} \: T_W^{(1,1)\to(0,0)} - h \: \Delta^{(1,1)})^{-1} T^{(0,0)\to(1,1)} \: T_W^{(1,1)\to(0,0)} \: \mathbf{u}_t \nonumber \\
+	\iff& \mathbf{\tilde{u}}_{t+1} = T^{(0,0)\to(1,1)} \: T_W^{(1,1)\to(0,0)} \: (T^{(0,0)\to(1,1)} \: T_W^{(1,1)\to(0,0)} - h \: \Delta^{(1,1)})^{-1} \: \mathbf{\tilde{u}}_t.
+\end{align}
+
+%\begin{figure}
+%	\includegraphics[scale=0.4]{example2timesteppingcovnvergence}
+%\centering
+%\caption{Plot of the current iteration's coefficients for the heat equation example, using degree of approximation $N = 5$ with initial condition of $u_0(x,y) = \Wii(x,y)$ and step size $h=0.01$, plotted for iterations $t=100, 120, \dots, 200$. The solution tends to zero, as seen by the decreasing (absolute value) coefficient values.}
+%\centering
+%\label{fig:heateqn}
+%\end{figure}
+
+
+
+%
+\section{Future work - orthogonal polynomials on the hemisphere and spherical triangles}
+
+We will use a similar idea of projecting up from 1D OPs to the interval, to 2D OPs on the disk, to 3D OPs on the sphere. Initially, we will add to the ApproxFun library by adding capability to work with OPs on the half disk (2D) with weights governed by parameters that will be incremented/decremented after an application of an operator (e.g. partial derivative). With this, we can obtain a family of OPs on the hemisphere, with sparse relations.
+
+Beyond this, solving PDEs on isosceles triangles should follow using the same procedure. However, we are expecting that to solve PDEs on spherical triangles (as is our ultimate goal) will require further ideas beyond the procedures given in this document.
+
+%
+\appendix
 %
 \section{P-finite element methods using sparse operators}
 
@@ -710,85 +851,14 @@ and the load vector $\tilde{\mathbf{f}}$ is given by
 
 Note the since we have sparse operator matrices for partial derivatives and basis-transform, we obtain a symmetric sparse (element) stiffness matrix, as well as a sparse operator matrix for calculating the load vector (rhs).
 
+\section{Disk Slices}
 
-
-%
-\section{Examples on the half disk with zero BCs}
-
-
-\subsection{Poisson}
-
-Fix \(a, b = 1,1\). Find \(u(x,y)\) given a function \(f(x,y)\) such that:
+The work in this paper on the half disk can be easily transferred to the domain of a disk slice by which we mean
 \begin{align}
-    \Delta(\Wii \: u)(x,y) = f(x,y) \quad \text{in } \Omega
+	\Omega := \{(x,y) \in \R^2 \quad | \quad \alpha < x < \beta, \: \gamma \rho(x) < y < \delta \rho(x)\}
 \end{align}
-    where we recall
-\begin{align}
-    \Wii(x,y) = x \: (1-x^2-y^2)
-\end{align}
-which ensures a boundary condition that \((\Wii \: u)(x,y) = 0\) on \(\partial \Omega\).
+with $\alpha, \beta \in [0,1]$, $\rho(x) = \sqrt{1-x^2}$, and  $-\gamma = \delta  = $
 
-The first step is to obtain the expansion of \(f\) in the \(\Pii\) basis, i.e. obtain the vector \(\mathbf{f}\) such that \(f(x,y) = \mathbf{f}^T \: \bigP^{(1,1)}(x,y) = \sum_{n=0}^N \mathbf{f}_n^T \: \bigP_n^{(1,1)}(x,y)\) for some \(N \in \N\). The coefficients of \(u\) in the \(\Pii\) basis are then given by 
-\begin{align}
-    \mathbf{u} = \Delta \text{\textbackslash} \mathbf{f}.
-\end{align}
-
-\begin{figure}
-	\includegraphics[scale=0.4]{example4coeffs}
-\centering
-\caption{Plot of the difference between the previous solution's coefficients and the current solution's coefficients under increasing degree of approximation (number of coefficients used) for $N = 2,\dots,10$, using RHS of $f(x,y) = 2(1-x^2-y^2)\cos(x) - 8x\sin(x) - x(1-x^2-y^2)\sin(x) - 4x^2 \cos(x) - 12xy$ for the Poisson equation. The solution is converging as seen by the decreasing (absolute value) difference of coefficient values.}
-\centering
-\label{fig:poisson}
-\end{figure}
-
-
-\subsection{Inhomogenous Helmholtz}
-
-Fix \(a, b = 1,1\). Find \(u(x,y)\) given a function \(f(x,y)\) such that:
-\begin{align}
-    \Delta(\Wii u)(x,y) + k^2 u(x,y) = - f(x,y) \quad \text{in } \Omega
-\end{align}
-noting that this ensures a boundary condition that \((\Wii \: u)(x,y) = 0\) on \(\partial \Omega\).
-
-Again, the first step is to obtain the expansion of \(f\) in the \(\Pii\) basis. The coefficients of \(u\) in the \(\Pii\) basis are then given by 
-\begin{align}
-    \mathbf{u} = - (k^2I + \Delta) \text{\textbackslash} \mathbf{f}.
-\end{align}
-
-
-\subsection{Heat Equation}
-Fix \(a, b = 1,1\), and consider
-\begin{align}
-\frac{\partial u}{\partial t}(x,y) = \Delta(\Wii \: u)(x,y) \quad \text{in } \Omega
-\end{align}
-
-Using a backward Euler time-stepping method, we can formulate this for \(t = 0,1,2,\dots\) and step length $h$:
-\begin{align}
-u_{t+1}(x,y) - u_t (x,y) = h \Delta(\Wii \: u_{t+1})(x,y) \quad \text{for } (x,y) \in \Omega.
-\end{align}
-
-There exist $N \in \N$ such that, for each $t = 0,1,2,\dots$, $u_t (x,y) = \sum_{n=0}^N \mathbf{u_t}_n^T \: \bigP_n^{(1,1)}(x,y) = \mathbf{u}_t^T \; \bigP^{(1,1)}(x,y)$. Then, using the operator $\Delta$, we can solve this system for a given initial condition $\mathbf{u_0}$ by iterating for $t = 0,1,2,\dots,t_{max}$:
-\begin{align}
-    \mathbf{u_{t+1}} &= (I - h \Delta) \: \text{\textbackslash} \: \mathbf{u_t}, \\
-    \big( u_{t+1}(x,y) &= \mathbf{u}_{t+1}^T \; \bigP^{(1,1)}(x,y) \big) \nonumber.
-\end{align}
-
-\begin{figure}
-	\includegraphics[scale=0.4]{example2timesteppingcovnvergence}
-\centering
-\caption{Plot of the current iteration's coefficients for the heat equation example, using degree of approximation $N = 5$ with initial condition of $u_0(x,y) = \Wii(x,y)$ and step size $h=0.01$, plotted for iterations $t=100, 120, \dots, 200$. The solution tends to zero, as seen by the decreasing (absolute value) coefficient values.}
-\centering
-\label{fig:heateqn}
-\end{figure}
-
-
-
-%
-\section{Future work - orthogonal polynomials on the hemisphere and spherical triangles}
-
-We will use a similar idea of projecting up from 1D OPs to the interval, to 2D OPs on the disk, to 3D OPs on the sphere. Initially, we will add to the ApproxFun library by adding capability to work with OPs on the half disk (2D) with weights governed by parameters that will be incremented/decremented after an application of an operator (e.g. partial derivative). With this, we can obtain a family of OPs on the hemisphere, with sparse relations.
-
-Beyond this, solving PDEs on isosceles triangles should follow using the same procedure. However, we are expecting that to solve PDEs on spherical triangles (as is our ultimate goal) will require further ideas beyond the procedures given in this document.
 
 
 \bibliography{halfdisk-bib}
