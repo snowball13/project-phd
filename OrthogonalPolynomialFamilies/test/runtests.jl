@@ -2,8 +2,8 @@ using ApproxFun, OrthogonalPolynomialFamilies, FastGaussQuadrature,
         SingularIntegralEquations, Test
 import OrthogonalPolynomialFamilies: golubwelsch, lanczos, halfdiskquadrule,
         gethalfdiskOP, jacobix, jacobiy, differentiatex, differentiatey,
-        resizecoeffs!, laplace, transformoperator, operatorclenshaw, getnk,
-        convertweightedtononoperator, increaseparamsoperator, getopindex
+        resizecoeffs!, laplace, transformparamsoperator, operatorclenshaw, getnk,
+        getopindex
 
 
 
@@ -171,17 +171,20 @@ end
     a, b = 1.0, 1.0; D = HalfDiskFamily(); S = D(a, b)
     x, y = 0.457, -0.209; z = [x; y] # Test point
     N = 5
-    f1 = Fun(D(0.0, 2.0), rand(sum(1:N+1)))
-    T = transformoperator(D(0.0, 2.0), N)
-    f2 = Fun(D(2.0, 2.0), T * f1.coefficients)
+    Sfrom = D(0.0, 2.0); Sto = D(2.0, 2.0)
+    f1 = Fun(Sfrom, rand(sum(1:N+1)))
+    T = transformparamsoperator(Sfrom, Sto, N)
+    f2 = Fun(D(Sto, T * f1.coefficients)
     @test f2(z) ≈ f1(z)
-    f1 = Fun(D(0.0, 1.0), rand(sum(1:N+1)))
-    T = transformoperator(D(0.0, 1.0), N)
-    f2 = Fun(D(1.0, 1.0), T * f1.coefficients)
+    Sfrom = D(0.0, 1.0); Sto = D(1.0, 1.0)
+    f1 = Fun(Sfrom, rand(sum(1:N+1)))
+    T = transformparamsoperator(Sfrom, Sto, N)
+    f2 = Fun(D(Sto, T * f1.coefficients)
     @test f2(z) ≈ f1(z)
-    f1 = Fun(D(1.0, 0.0), rand(sum(1:N+1)))
-    T = transformoperator(D(1.0, 0.0), N)
-    f2 = Fun(D(0.0, 0.0), T * f1.coefficients)
+    Sfrom = D(1.0, 0.0); Sto = D(0.0, 0.0)
+    f1 = Fun(Sfrom, rand(sum(1:N+1)))
+    T = transformparamsoperator(Sfrom, Sto, N, weightedfrom=true)
+    f2 = Fun(D(Sto, T * f1.coefficients)
     @test f2(z) ≈ x*f1(z)
 end
 
@@ -206,7 +209,7 @@ end
     St = (S.family)(S.a-1, S.b-1)
     maxop = 100
     N = getnk(maxop)[1] + 3
-    W = convertweightedtononoperator(S, N)
+    W = transformparamsoperator(S, St, N, weightedfrom=true)
     for j = 1:maxop
         p = Fun(S, [zeros(j-1); 1])
         resizecoeffs!(p, N)
@@ -226,7 +229,7 @@ end
     St = (S.family)(S.a+1, S.b+1)
     maxop = 150
     N = getnk(maxop)[1] + 1
-    C = increaseparamsoperator(S, N)
+    C = transformparamsoperator(S, (S.family)(S.a+1, S.b+1), N)
     for j = 1:maxop
         p = Fun(S, [zeros(j-1); 1])
         resizecoeffs!(p, N)
@@ -241,7 +244,7 @@ end
     St = (S.family)(S.a+1, S.b+1)
     maxop = 150
     N = getnk(maxop)[1] + 1
-    C = increaseparamsoperator(S, N)
+    C = transformparamsoperator(S, (S.family)(S.a+1, S.b+1), N)
     for j = 1:maxop
         p = Fun(S, [zeros(j-1); 1])
         resizecoeffs!(p, N)

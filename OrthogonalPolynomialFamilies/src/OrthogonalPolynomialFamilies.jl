@@ -378,7 +378,7 @@ in(x::SVector{2}, D::HalfDisk) = 0 ≤ x[1] ≤ 1 && -sqrt(1-x[1]^2) ≤ x[2] �
 
 spacescompatible(A::HalfDiskSpace, B::HalfDiskSpace) = (A.a == B.a && A.b == B.b)
 
-weight(S::HalfDiskSpace, x, y) = x^S.a * (1 - x^2 - y^2)^S.b
+weight(S::HalfDiskSpace{<:Any, <:Any, T}, x, y) where T = x^T(S.a) * (1 - x^2 - y^2)^T(S.b)
 weight(S::HalfDiskSpace, z) = weight(S, z[1], z[2])
 
 # NOTE we output ≈n points (x,y), plus the ≈n points corresponding to (x,-y)
@@ -490,13 +490,11 @@ plan_transform(S::HalfDiskSpace, vals) = HalfDiskTransformPlan(S, vals)
 # Output: vals = {f(x_j)} where x_j are are the points(S,n)
 function itransform(S::HalfDiskSpace{<:Any, <:Any, T}, cfs) where T
     m = length(cfs)
-    N = Int(round(0.5 * (-1 + sqrt(1 + 8m))))
-    n = N^2
-    pts = points(S, n)
-    V = Array{T}(undef, 2n, m)
+    pts = points(S, m)
+    getopptseval(S, getnk(m)[1], pts)
+    V = Array{Float64}(undef, length(pts), m)
     for k = 1:m
-        Pnk = Fun(S, [zeros(k-1); 1])
-        V[:, k] = Pnk.(pts)
+        V[:, k] = S.opptseval[k]
     end
     V * cfs
 end # TODO
@@ -925,11 +923,16 @@ function weightedpartialoperatory(S::HalfDiskSpace{<:Any, <:Any, T}, N) where T
     W
 end
 
-function transformoperator(S::HalfDiskSpace{<:Any, <:Any, T}, N) where T
-    if Int(S.a) == 1 && Int(S.b) == 0
+function transformparamsoperator(S::HalfDiskSpace{<:Any, <:Any, T},
+            St::HalfDiskSpace{<:Any, <:Any, T}, N;
+            weightedfrom=false, weightedto=false
+            ) where T
+
+    # Cases we can handle:
+    # Case 1
+    if Int(S.a) == 1 && Int(S.b) == 0 && weightedfrom == true && weightedto == false
         # Outputs the relevant sum(1:N+2) × sum(1:N+1) matrix operator
         # Takes the space xP^{1,0} -> P^{0,0}
-        St = (S.family)(0.0, 0.0)
         C = BandedBlockBandedMatrix(
             Zeros{T}(sum(1:(N+2)),sum(1:(N+1))), (1:N+2, 1:N+1), (1,0), (0,0))
         getopnorms(St, sum(1:N+2))
@@ -946,10 +949,33 @@ function transformoperator(S::HalfDiskSpace{<:Any, <:Any, T}, N) where T
             end
         end
         C
-    elseif Int(S.a) == 0 && Int(S.b) == 1
+    # Case 2
+    elseif Int(S.a) == 1 && Int(S.b) == 1 && weightedfrom == true && weightedto == false
+        # NOTE: Only works for W11 -> P00
+        # Outputs the sum(1:N+4) × sum(1:N+1) matrix operator
+        Sinner = (S.family)(2S.a-1, 2S.b-1)
+        m = 2(N+3)N - 1 # TODO: check how many points are required for all points() calls
+        pts, w = pointswithweights(Sinner, m)
+        getopptseval(St, N+4, pts)
+        getopptseval(S, N+1, pts)
+        W = BandedBlockBandedMatrix(
+                Zeros{T}(sum(1:(N+4)),sum(1:(N+1))), (1:N+4, 1:N+1), (3,0), (2,0))
+        for n = 0:N, k = 0:n
+            j = getopindex(n, k)
+            for nn = n:n+3
+                for kk = k:2:min(k+2, nn)
+                    jj = getopindex(nn,kk)
+                    val = (inner2(S, opevalatpts(S, j, pts), opevalatpts(St, jj, pts), w)
+                            / St.opnorms[jj])
+                    view(W, Block(nn+1, n+1))[kk+1, k+1] = val
+                end
+            end
+        end
+        W
+    # Case 3
+    elseif Int(S.a) == 0 && Int(S.b) == 1 && weightedfrom == false && weightedto == false
         # Outputs the relevant sum(1:N+1) × sum(1:N+1) matrix operator
         # Takes the space P^{0,1} -> P^{1,1}
-        St = (S.family)(1.0, 1.0)
         C = BandedBlockBandedMatrix(
             Zeros{T}(sum(1:(N+1)),sum(1:(N+1))), (1:N+1, 1:N+1), (0,1), (0,0))
         getopnorms(St, sum(1:N+2))
@@ -967,10 +993,10 @@ function transformoperator(S::HalfDiskSpace{<:Any, <:Any, T}, N) where T
             view(C, Block(n+1, n+1))[n+1, n+1] = 1.0
         end
         C
-    elseif Int(S.a) == 0 && Int(S.b) == 2
+    # Case 4
+    elseif Int(S.a) == 0 && Int(S.b) == 2 && weightedfrom == false && weightedto == false
         # Outputs the relevant sum(1:N+1) × sum(1:N+1) matrix operator
         # Takes the space P^{0,2} -> P^{2,2}
-        St = (S.family)(2.0, 2.0)
         C = BandedBlockBandedMatrix(
             Zeros{T}(sum(1:(N+1)),sum(1:(N+1))), (1:N+1, 1:N+1), (0,2), (0,0))
         getopnorms(St, sum(1:N+2))
@@ -995,92 +1021,75 @@ function transformoperator(S::HalfDiskSpace{<:Any, <:Any, T}, N) where T
             view(C, Block(n+1, n+1))[n+1, n+1] = 1.0
         end
         C
+    # Case 5
+    elseif St.a == S.a+1 && St.b == S.b+1 && weightedfrom == false && weightedto == false
+        # Takes the space P^{a,b} -> P^{a+1,b+1}
+        # Outputs the sum(1:N+1) × sum(1:N+1) matrix operator
+        m = 2N^2 - 1 # TODO: check how many points are required for all points() calls
+        pts, w = pointswithweights(St, m)
+        getopptseval(St, N-2, pts)
+        getopptseval(S, N+1, pts)
+        C = BandedBlockBandedMatrix(
+                Zeros{T}(sum(1:(N+1)),sum(1:(N+1))), (1:N+1, 1:N+1), (0,3), (0,2))
+        for n = 0:N, k = 0:n
+            j = getopindex(n, k)
+            for nn = max(0, n-3):n
+                for kk = (k < 2 ? k : k-2):2:k
+                    kk > nn && continue
+                    jj = getopindex(nn, kk)
+                    val = (inner2(S, opevalatpts(S, j, pts), opevalatpts(St, jj, pts), w)
+                            / St.opnorms[jj])
+                    view(C, Block(nn+1, n+1))[kk+1, k+1] = val
+                end
+            end
+        end
+        C
+    else
+        error("Invalid HalfDiskSpace")
+    end
+
+end
+
+function transformparamsoperatorsquare(S::HalfDiskSpace{<:Any, <:Any, T},
+            St::HalfDiskSpace{<:Any, <:Any, T}, N;
+            weightedfrom=false, weightedto=false
+            ) where T
+    # Only case here is W11->P00
+    if Int(S.a) == 1 && Int(S.b) == 1 && weightedfrom == true && weightedto == false
+        # Outputs the sum(1:N+1) × sum(1:N+1) matrix operator
+        C = BandedBlockBandedMatrix(
+            Zeros{T}(sum(1:(N+1)),sum(1:(N+1))), (1:N+1, 1:N+1), (3,0), (2,0))
+        W = transformparamsoperator(S, St, N+3, weightedfrom=weightedfrom, weightedto=weightedto)
+        i = 1
+        view(C, Block(i, i)) .= view(W, Block(i, i))
+        N == 0 && return C
+        i = 2
+        view(C, Block(i, i-1)) .= view(W, Block(i, i-1))
+        view(C, Block(i, i)) .= view(W, Block(i, i))
+        N == 1 && return C
+        i = 3
+        view(C, Block(i, i-2)) .= view(W, Block(i, i-2))
+        view(C, Block(i, i-1)) .= view(W, Block(i, i-1))
+        view(C, Block(i, i)) .= view(W, Block(i, i))
+        N == 2 && return C
+        for i = 4:N+1
+            view(C, Block(i, i-3)) .= view(W, Block(i, i-3))
+            view(C, Block(i, i-2)) .= view(W, Block(i, i-2))
+            view(C, Block(i, i-1)) .= view(W, Block(i, i-1))
+            view(C, Block(i, i)) .= view(W, Block(i, i))
+        end
+        C
     else
         error("Invalid HalfDiskSpace")
     end
 end
 
-function increaseparamsoperator(S::HalfDiskSpace{<:Any, <:Any, T}, N) where T
-    # Takes the space P^{a,b} -> P^{a+1,b+1}
-    # Outputs the sum(1:N+1) × sum(1:N+1) matrix operator
-    St = (S.family)(S.a+1, S.b+1)
-    m = 2N^2 - 1 # TODO: check how many points are required for all points() calls
-    pts, w = pointswithweights(St, m)
-    getopptseval(St, N-2, pts)
-    getopptseval(S, N+1, pts)
-    C = BandedBlockBandedMatrix(
-            Zeros{T}(sum(1:(N+1)),sum(1:(N+1))), (1:N+1, 1:N+1), (0,3), (0,2))
-    for n = 0:N, k = 0:n
-        j = getopindex(n, k)
-        for nn = max(0, n-3):n
-            for kk = (k < 2 ? k : k-2):2:k
-                kk > nn && continue
-                jj = getopindex(nn, kk)
-                val = (inner2(S, opevalatpts(S, j, pts), opevalatpts(St, jj, pts), w)
-                        / St.opnorms[jj])
-                view(C, Block(nn+1, n+1))[kk+1, k+1] = val
-            end
-        end
-    end
-    C
-end
-
-function convertweightedtononoperator(S::HalfDiskSpace{<:Any, <:Any, T}, N) where T
-    # NOTE: Only works for W11 -> P00
-    # Outputs the sum(1:N+4) × sum(1:N+1) matrix operator
-    St = (S.family)(S.a-1, S.b-1)
-    Sinner = (S.family)(2S.a-1, 2S.b-1)
-    m = 2(N+3)N - 1 # TODO: check how many points are required for all points() calls
-    pts, w = pointswithweights(Sinner, m)
-    getopptseval(St, N+4, pts)
-    getopptseval(S, N+1, pts)
-    W = BandedBlockBandedMatrix(
-            Zeros{T}(sum(1:(N+4)),sum(1:(N+1))), (1:N+4, 1:N+1), (3,0), (2,0))
-    for n = 0:N, k = 0:n
-        j = getopindex(n, k)
-        for nn = n:n+3
-            for kk = k:2:min(k+2, nn)
-                jj = getopindex(nn,kk)
-                val = (inner2(S, opevalatpts(S, j, pts), opevalatpts(St, jj, pts), w)
-                        / St.opnorms[jj])
-                view(W, Block(nn+1, n+1))[kk+1, k+1] = val
-            end
-        end
-    end
-    W
-end
-function convertweightedtononoperatorsquare(S::HalfDiskSpace{<:Any, <:Any, T}, N) where T
-    # Outputs the sum(1:N+1) × sum(1:N+1) matrix operator
-    C = BandedBlockBandedMatrix(
-        Zeros{T}(sum(1:(N+1)),sum(1:(N+1))), (1:N+1, 1:N+1), (3,0), (2,0))
-    W = convertweightedtononoperator(S, N+3)
-    i = 1
-    view(C, Block(i, i)) .= view(W, Block(i, i))
-    N == 0 && return C
-    i = 2
-    view(C, Block(i, i-1)) .= view(W, Block(i, i-1))
-    view(C, Block(i, i)) .= view(W, Block(i, i))
-    N == 1 && return C
-    i = 3
-    view(C, Block(i, i-2)) .= view(W, Block(i, i-2))
-    view(C, Block(i, i-1)) .= view(W, Block(i, i-1))
-    view(C, Block(i, i)) .= view(W, Block(i, i))
-    N == 2 && return C
-    for i = 4:N+1
-        view(C, Block(i, i-3)) .= view(W, Block(i, i-3))
-        view(C, Block(i, i-2)) .= view(W, Block(i, i-2))
-        view(C, Block(i, i-1)) .= view(W, Block(i, i-1))
-        view(C, Block(i, i)) .= view(W, Block(i, i))
-    end
-    C
-end
-
 function laplace(D::HalfDiskFamily, N)
     A = partialoperatorx(D(0.0,0.0), N+2)
     B = weightedpartialoperatorx(D(1.0,1.0), N)
-    C = transformoperator(D(0.0,1.0), N+1)
+    C = transformparamsoperator(D(0.0,1.0), D(1.0,1.0), N+1)
     E = partialoperatory(D(0.0,0.0), N+2)
-    F = transformoperator(D(1.0,0.0), N+1)
+    F = transformparamsoperator(D(1.0,0.0), D(0.0,0.0), N+1, weightedfrom=true)
     G = weightedpartialoperatory(D(1.0,1.0), N)
     A * B + C * E * F * G
 end
