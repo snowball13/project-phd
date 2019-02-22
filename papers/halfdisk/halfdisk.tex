@@ -799,7 +799,7 @@ Define $\Lambda^{(a,b)} := \langle \bigP^{(a,b)}, \: {\bigP^{(a,b)}}^T \rangle_{
 		\Wii(a,y) \: \Pii_{n,n}(x,y)
 	\end{bmatrix} \in \R^{n+1} \quad \forall n = 0,1,2,\dots,p,
 \end{align}
-and rewrite (63) in matrix form:
+and rewrite (73) in matrix form:
 \begin{align}
 	a(u_h,v_h) &= \int_\element \nabla u_h \cdot \nabla v_h \: d\mathbf{x} \\
 	&= \int_\element \begin{bmatrix}
@@ -828,11 +828,12 @@ where $\mathbf{u}, \mathbf{v}$ are the coefficient vectors of the expansions of 
 \begin{align}
 	L(v_h) &= \int_\element \: v_h \: f \: d\mathbf{x} \\
 	&= \int_\element \: \mathbf{v}^T \: \bigWii \: \bigPii^T \: \mathbf{f} \: d\mathbf{x} \\
+	&= \mathbf{v}^T \: \langle \bigPii, {\bigPii}^T \rangle_{\Wii} \: d\mathbf{x} \\
 	&= \mathbf{v}^T \Lambda^{(1,1)} \: \mathbf{f},
 \end{align}
-where $\mathbf{f}$ is the coefficient vector for the expansion of the function $f(x,y)$ in the $\bigPii$ OP basis. We can also not that naturally $\langle \bigPii, {\bigPii}^T \rangle_{\Wii}$ is just a diagonal matrix. 
+where $\mathbf{f}$ is the coefficient vector for the expansion of the function $f(x,y)$ in the $\bigPii$ OP basis.
 
-Since (63) is equivalent to stating that
+Since (73) is equivalent to stating that
 \begin{align}
 	L(\Wii \Pii_{n,k}) = a(u_h,\Wii \Pii_{n,k}) \quad \forall \: n = 0,\dots,p, \: k = 0,\dots,n,
 \end{align}
@@ -851,14 +852,39 @@ and the load vector $\tilde{\mathbf{f}}$ is given by
 
 Note the since we have sparse operator matrices for partial derivatives and basis-transform, we obtain a symmetric sparse (element) stiffness matrix, as well as a sparse operator matrix for calculating the load vector (rhs).
 
-\section{Disk Slices}
+\section{Disk slices}
 
 The work in this paper on the half disk can be easily transferred to the domain of a disk slice by which we mean
 \begin{align}
 	\Omega := \{(x,y) \in \R^2 \quad | \quad \alpha < x < \beta, \: \gamma \rho(x) < y < \delta \rho(x)\}
 \end{align}
-with $\alpha, \beta \in [0,1]$, $\rho(x) = \sqrt{1-x^2}$, and  $-\gamma = \delta  = $
+with 
+\begin{align}
+\begin{cases}
+-1 \le \alpha < &\beta \le 1 \\
+(\gamma, \delta) &:= (-1,1) \\
+\rho(x) &:= (1-x^2)^{\half} \\
+w^{(a,b,c)}_1(x) &:= (\beta - x)^a \: (x - \alpha)^{b} \: \rho(x)^{2c} = (\beta - x)^a \: (x - \alpha)^{b} \: (1-x^2)^{c} \\
+w^{(b)}_2(x) &:= (1-x^2)^b = (1-x)^b \: (1+x)^b.
+\end{cases}
+\end{align}
+The weight $w^{(b)}_2(x)$ is a still an ultraspherical weight, and the corresponding OPs are the Jacobi polynomials $\{P_n^{(b, b)}\}$. $w^{(a,b,c)}_1(x)$ is the (non-classical) weight for the OPs denoted $\{H_n^{(a, b,c)}\}\). Thus we arrive at the two parameter family of 2D orthogonal polynomials $\{\Pnk\}$ on $\Omega$ given by, for \(0 \le k \le n, \: n = 0,1,2,\dots,\)
+\begin{align}
+	\Pnk^{(a,b,c)}(x,y) := H_{n-k}^{(c, a, b+k+\half)}(x) \: \rho(x)^k \: P_k^{(b,b)}(\frac{y}{\rho(x)}), \quad (x,y) \in \Omega, 
+\end{align}
+orthogonal with respect to the weight
+\begin{align}
+	W^{(a,b,c)}(x,y) &:= w^{(c,a,b)}_1(x) w^{(b)}_2(\frac{y}{\rho(x)}) \nonumber \\
+	&= (\beta - x)^c \: (x - \alpha)^{a} \: (\rho(x)^2 -y^2)^b \nonumber \\
+	&= (\beta - x)^c \: (x - \alpha)^{a} \: (1 - x^2 -y^2)^b , \quad (x,y) \in \Omega.
+\end{align}
 
+Note that by setting $c = 0$, $\alpha = 0$ and $\beta = 1$ we obtain the 2D orthogonal polynomials on the half disk.
+
+
+\section{Hemisphere}
+
+We can use the similar idea of projecting up from the 2D orthogonal polynomials on the half disk to 3D OPs on the hemisphere.
 
 
 \bibliography{halfdisk-bib}
