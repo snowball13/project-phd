@@ -222,8 +222,9 @@ end
     end
 end
 
-@testset "Increment parameters operator" begin
+@testset "Increment/decrement parameters operators" begin
     tol = 1e-8
+
     a, b = 1.0, 1.0; D = HalfDiskFamily(); S = D(a-1, b-1)
     x, y = 0.4, -0.2; z = [x; y] # Test point
     St = (S.family)(S.a+1, S.b+1)
@@ -250,6 +251,37 @@ end
         resizecoeffs!(p, N)
         q = Fun(St, C * p.coefficients)
         res = abs(q(z) - p(z))
+        res > tol && @show getnk(j), j, res
+        @test res < tol
+    end
+
+    tol = 1e-13
+    
+    a, b = 2.0, 4.0; D = HalfDiskFamily(); S = D(a, b)
+    x, y = 0.4, -0.2; z = [x; y] # Test point
+    St = (S.family)(S.a, S.b+1)
+    maxop = 150
+    N = getnk(maxop)[1] + 1
+    C = transformparamsoperator(S, St, N)
+    for j = 1:maxop
+        p = Fun(S, [zeros(j-1); 1])
+        resizecoeffs!(p, N)
+        q = Fun(St, C * p.coefficients)
+        res = abs(q(z) - p(z))
+        res > tol && @show getnk(j), j, res
+        @test res < tol
+    end
+
+    a, b = 2.0, 4.0; D = HalfDiskFamily(); S = D(a, b)
+    x, y = 0.4, -0.2; z = [x; y] # Test point
+    St = (S.family)(S.a, S.b-1)
+    maxop = 150
+    N = getnk(maxop)[1] + 1
+    C = transformparamsoperator(S, St, N, weightedfrom=true)
+    for j = 1:maxop
+        p = Fun(S, [zeros(j-1); 1])
+        q = Fun(St, C * pad(p.coefficients, size(C)[1]))
+        res = abs(q(z) - (1-z[1]^2-z[2]^2) * p(z))
         res > tol && @show getnk(j), j, res
         @test res < tol
     end

@@ -950,7 +950,8 @@ function transformparamsoperator(S::HalfDiskSpace{<:Any, <:Any, T},
         end
         C
     # Case 2
-    elseif Int(S.a) == 1 && Int(S.b) == 1 && weightedfrom == true && weightedto == false
+elseif (Int(St.a) == 0 && Int(St.b) == 0 && Int(S.a) == 1 && Int(S.b) == 1
+            && weightedfrom == true && weightedto == false)
         # NOTE: Only works for W11 -> P00
         # Outputs the sum(1:N+4) × sum(1:N+1) matrix operator
         Sinner = (S.family)(2S.a-1, 2S.b-1)
@@ -1035,6 +1036,52 @@ function transformparamsoperator(S::HalfDiskSpace{<:Any, <:Any, T},
             j = getopindex(n, k)
             for nn = max(0, n-3):n
                 for kk = (k < 2 ? k : k-2):2:k
+                    kk > nn && continue
+                    jj = getopindex(nn, kk)
+                    val = (inner2(S, opevalatpts(S, j, pts), opevalatpts(St, jj, pts), w)
+                            / St.opnorms[jj])
+                    view(C, Block(nn+1, n+1))[kk+1, k+1] = val
+                end
+            end
+        end
+        C
+    elseif St.a == S.a && St.b == S.b+1 && weightedfrom == false && weightedto == false
+        # Takes the space P^{a,b} -> P^{a,b+1}
+        # Outputs the sum(1:N+1) × sum(1:N+1) matrix operator
+        m = 2N^2 - 1 # TODO: check how many points are required for all points() calls
+        pts, w = pointswithweights(St, m)
+        getopptseval(St, N-2, pts)
+        getopptseval(S, N+1, pts)
+        C = BandedBlockBandedMatrix(
+                Zeros{T}(sum(1:(N+1)),sum(1:(N+1))), (1:N+1, 1:N+1), (0,2), (0,2))
+        for n = 0:N, k = 0:n
+            j = getopindex(n, k)
+            for nn = max(0, n-2):n
+                for kk = (k < 2 ? k : k-2):2:k
+                    kk > nn && continue
+                    jj = getopindex(nn, kk)
+                    val = (inner2(S, opevalatpts(S, j, pts), opevalatpts(St, jj, pts), w)
+                            / St.opnorms[jj])
+                    view(C, Block(nn+1, n+1))[kk+1, k+1] = val
+                end
+            end
+        end
+        C
+    elseif St.a == S.a && St.b == S.b-1 && weightedfrom == true && weightedto == false
+        # Takes the space W^{0,1}*P^{a,b} -> P^{a,b-1}
+        # Outputs the sum(1:N+3) × sum(1:N+3) matrix operator
+        M = N+2
+        m = 2M^2 - 1 # TODO: check how many points are required for all points() calls
+        pts, w = pointswithweights(S, m)
+        getopnorms(St, getopindex(M,M))
+        getopptseval(St, M+3, pts)
+        getopptseval(S, M+1, pts)
+        C = BandedBlockBandedMatrix(
+                Zeros{T}(sum(1:(M+1)),sum(1:(M+1))), (1:M+1, 1:M+1), (2,0), (2,0))
+        for n = 0:M, k = 0:n
+            j = getopindex(n, k)
+            for nn = n:min(n+2, M)
+                for kk = k:2:min(k+2, nn)
                     kk > nn && continue
                     jj = getopindex(nn, kk)
                     val = (inner2(S, opevalatpts(S, j, pts), opevalatpts(St, jj, pts), w)
