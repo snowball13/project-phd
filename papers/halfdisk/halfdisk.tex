@@ -554,7 +554,7 @@ w_{l+(k-1)N} &:= w_k^{(s)} w_l^{(t)}, \quad k,l = 1,\dots,N.
 \end{align}
 If $f(x,y)$ is an at most degree $N$ polynomial in $x$ and at most degree $2N-1$ in $y$ then
 $$
-\iint_\Omega f(x,y) \D A =\sum_{j=1}^{N^2} w_j \: \big[ f(x_j, y_j) + f(x_j, -y_j) \big],
+\iint_\Omega f(x,y) \: \Wab(x,y) \: \D A = \half \sum_{j=1}^{N^2} w_j \: \big[ f(x_j, y_j) + f(x_j, -y_j) \big],
 $$
 
 \end{theorem}
@@ -577,9 +577,9 @@ W^{(a,b)}(x,y) &= x^a \: (1-x^2-y^2)^b, \quad \text{for } (x,y) \in \Omega, \\
 
 \subsection{Obtaining the coefficients for expansion of a function}
 
-Fix \(a,b \in \R\). Then for any function \(f : \Omega \to \R\) we can approximate (or exactly express) \(f\) by
+Fix \(a,b \in \R\). Then for any function \(f : \Omega \to \R\) of degree $N$ we can express \(f\) by
 \begin{align*}
-f(x,y) \approx \sum_{n=0}^N \bigP_n^{(a,b)}(x,y)^T \: \mathbf{f}_n
+f(x,y) = \sum_{n=0}^N \bigP_n^{(a,b)}(x,y)^T \: \mathbf{f}_n
 \end{align*}
 where
 \begin{align*}
@@ -627,7 +627,7 @@ Then our quadrature rule for any polynomial \(f(x,y)\) on \(\Omega\) is:
 \begin{align}
 \int \int_\Omega W^{(a,b)}(x,y) \: f(x,y) \: dy \: dx \approx \half \: \sum_{j=1}^{N^2} w_j \: \big[ f(x_j, y_j) + f(x_j, -y_j) \big],
 \end{align}
-and is exact for any polynomial $f(x,y)$ where the degree in $x$ is $\le N$ and the degree in $y$ is $\le 2N-1$. Thus,
+and is exact for any polynomial $f(x,y)$ where the degree in $x$ is $\le N$ and the degree in $y$ is $\le 2N-1$. Note that for a general polynomial where the overall degree is $N$, we still would hence need $N^2$ points and weights to make the rule exact. Thus,
 \begin{align}
 \ip< f, \: \Pnk^{(a,b)} >_{W^{(a,b)}} &= \half \: \sum_{j=1}^{N^2} w_j \: \big[ \big(f(x_j, y_j) \: \Pnk^{(a,b)}(x_j, y_j)\big) +\big(f(x_j, -y_j) \: \Pnk^{(a,b)}(x_j, -y_j)\big) \big], \\
 || \Pnk^{(a,b)} ||_{W^{(a,b)}}^2 &= \half \: \sum_{j=1}^{N^2} w_j \: \big[ \Pnk^{(a,b)}(x_j, y_j)^2 + \Pnk^{(a,b)}(x_j, -y_j)^2 \big],
@@ -859,7 +859,7 @@ and the load vector $\tilde{\mathbf{f}}$ is given by
 Note the since we have sparse operator matrices for partial derivatives and basis-transform, we obtain a symmetric sparse (element) stiffness matrix, as well as a sparse operator matrix for calculating the load vector (rhs).
 
 \subsection{Two-element p-FEM on the disk (without BCs)}
-We now consider the case of using two elements to discretise a unit disk domain $\Omega$, that is the each element $\element$ is a half-disk, with common edge defined by the line $x=0$ for $y \in [-1,1]$. To ensure continuity across the edge interface, we need to expand our basis functions to be used. We require basis functions that correspond to each edge (in this case there is only one edge), that is basis functions with support as the two elements connected by said edge (for more than two elements - and hence more than one edge - we would also stipulate that each edge's corresponding basis functions would vanish on any other edge). We then also require the remaining (interior) basis functions be such that they have support of one element only, and vanish on (each) edge. Using this, our basis functions for $\le N$-degree polynomials can then be written as
+We now consider the case of using two elements to discretise a unit disk domain $\Omega$, that is the each element $\element$ is a half-disk, with common edge defined by the line $x=0$ for $y \in [-1,1]$. We take inspiration from \cite{karniadakis2013spectral, beuchler2006new}. To ensure continuity across the edge interface, we need to expand our basis functions to be used. We require basis functions that correspond to each edge (in this case there is only one edge), that is basis functions with support as the two elements connected by said edge (for more than two elements - and hence more than one edge - we would also stipulate that each edge's corresponding basis functions would vanish on any other edge). We then also require the remaining (interior) basis functions be such that they have support of one element only, and vanish on (each) edge. Using this, our basis functions for $\le N$-degree polynomials can then be written as
 \begin{align}
 	\bigQab_n(x,y) := \begin{bmatrix}
 		P^{(a,b)}_{n,n}(x,y) \\
