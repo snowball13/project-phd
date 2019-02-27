@@ -938,13 +938,14 @@ The relations for multiplication by $x, y$ are then trivial. For multiplication 
 A simple calculation shows that the expansions are sparse, that is that most coefficients $c_{n,k,m,j}^{(a,b)\to(a,b+1)}$ and $d_{n,k,m,j}^{(a,b)\to(a,b-1)}$ are $0$, and are also given by
 \begin{align}
 	c_{n,k,m,j}^{(a,b)\to(a,b+1)} &= \frac{\ip< \Pnkab, \: P^{(a,b+1)}_{m,j} >_{W^{(a,b+1)}}}{\norm{P^{(a,b+1)}_{m,j}}^2_{W^{(a,b+1)}}} \\
-	d_{n,k,m,j}^{(a,b)\to(a,b-1)} &= \frac{\ip< W^{(0,1)} \Pnkab, \: P^{(a,b-1)}_{m,j} >_{W^{(a,b-1)}}}{\norm{P^{(a,b-1)}_{m,j}}^2_{W^{(a,b-1)}}} \\
-	&= \frac{\norm{\Pnkab}_\Wab^2}{\norm{P^{(a,b-1)}_{m,j}}^2_{W^{(a,b-1)}}} \: c_{m,j,n,k}^{(a,b-1)\to(a,b)} .
+	d_{n,k,m,j}^{(a,b)\to(a,b-1)} &= \frac{\ip< W^{(0,1)} \Pnkab, \: P^{(a,b-1)}_{m,j} >_{W^{(a,b-1)}}}{\norm{P^{(a,b-1)}_{m,j}}^2_{W^{(a,b-1)}}} \nonumber \\
+	&= \frac{\ip< \Pnkab, \: P^{(a,b-1)}_{m,j} >_{W^{(a,b)}}}{\norm{P^{(a,b-1)}_{m,j}}^2_{W^{(a,b-1)}}} \nonumber \\
+	&= \frac{\norm{\Pnkab}_\Wab^2}{\norm{P^{(a,b-1)}_{m,j}}^2_{W^{(a,b-1)}}} \: c_{m,j,n,k}^{(a,b-1)\to(a,b)}.
 \end{align}
 The coefficients $c_{n,k,m,j}^{(a,b)\to(a,b+1)}$ and $d_{n,k,m,j}^{(a,b)\to(a,b-1)}$ are just the entries to the parameter tranformation operator matrices
 \begin{align}
 	\bigP^{(a,b)}(x,y) &= \Big(T^{(a,b)\to(a,b+1)} \Big)^T \: \bigP^{(a,b+1)}(x,y) \\
-	W^{(0,1)}(x,y) \bigP^{(a,b)}(x,y) &= \Big(T^{(a,b)\to(a,b-1)}_ \Big)^T \: \bigP^{(a,b-1)}(x,y)
+	W^{(0,1)}(x,y) \bigP^{(a,b)}(x,y) &= \Big(T^{(a,b)\to(a,b-1)} \Big)^T \: \bigP^{(a,b-1)}(x,y)
 \end{align}
 respectively.
 
