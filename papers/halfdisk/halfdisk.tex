@@ -113,6 +113,7 @@
 \newcommand{\unitvec}{\hat{\bm{k}}}
 
 \newcommand{\Pnk}{P_{n,k}}
+\newcommand{\Pab}{P^{(a,b)}}
 \newcommand{\Pnkab}{P_{n,k}^{(a,b)}}
 \newcommand{\Wab}{{W^{(a,b)}}}
 \newcommand{\Pmjab}{P_{m,j}^{(a,b)}}
@@ -135,6 +136,8 @@
 \newcommand{\bigW}{\mathbb{W}}
 \newcommand{\bigWab}{\mathbb{W}^{(a,b)}}
 \newcommand{\bigWii}{{\mathbb{W}^{(1,1)}}}
+\newcommand{\bigQ}{\mathbb{Q}}
+\newcommand{\bigQab}{\bigQ^{(a,b)}}
 
 \usepackage{amsthm}
 
@@ -777,7 +780,10 @@ This has the weak formulation for any test function $v \in V := H_0^1(\Omega) = 
 	L(v) := \int_\Omega f \: v \: d\mathbf{x} = \int_\Omega \nabla u \cdot \nabla v \: d\mathbf{x} =: a(u,v).
 \end{align}
 
-In general, we would let $\FEset$ be the set of elements $\element$ that make up our finite element discretisation of the domain, where each $\element$ is a rhombus or disk slice for example. For the purposes of this paper, we limit this to a single element, that is we let $\element = \Omega$ for a half disk/disk slice/rhombus domain. We can choose our finite dimensional space $V_h = \{v_h \in V \quad | \quad deg(v_h|_\element) \le p\}$ for some $p \in \N$.
+In general, we would let $\FEset$ be the set of elements $\element$ that make up our finite element discretisation of the domain, where each $\element$ is a rhombus or disk slice for example. 
+
+\subsection{Single element p-FEM}
+In this section, we limit our discretisation to a single element, that is we let $\element = \Omega$ for a half disk/disk slice/rhombus domain. We can choose our finite dimensional space $V_h = \{v_h \in V \quad | \quad deg(v_h|_\element) \le p\}$ for some $p \in \N$.
 
 We seek $u_h \in V_h$ s.t.
 \begin{align}
@@ -852,6 +858,24 @@ and the load vector $\tilde{\mathbf{f}}$ is given by
 
 Note the since we have sparse operator matrices for partial derivatives and basis-transform, we obtain a symmetric sparse (element) stiffness matrix, as well as a sparse operator matrix for calculating the load vector (rhs).
 
+\subsection{Two-element p-FEM on the disk (without BCs)}
+We now consider the case of using two elements to discretise a unit disk domain $\Omega$, that is the each element $\element$ is a half-disk, with common edge defined by the line $x=0$ for $y \in [-1,1]$. To ensure continuity across the edge interface, we need to expand our basis functions to be used. We require basis functions that correspond to each edge (in this case there is only one edge), that is basis functions with support as the two elements connected by said edge (for more than two elements - and hence more than one edge - we would also stipulate that each edge's corresponding basis functions would vanish on any other edge). We then also require the remaining (interior) basis functions be such that they have support of one element only, and vanish on (each) edge. Using this, our basis functions for $\le N$-degree polynomials can then be written as
+\begin{align}
+	\bigQab_n(x,y) := \begin{bmatrix}
+		P^{(a,b)}_{n,n}(x,y) \\
+		x \: \bigPab_{n-1}(x,y)
+	\end{bmatrix} \in \R^{n+1}, 
+	\quad \quad 
+	\bigQab := \begin{bmatrix}
+		\bigQab_0 \\
+		\bigQab_1 \\
+		\vdots \\
+		\bigQab_N
+	\end{bmatrix}.
+\end{align}
+We note that for each $n = 0,\dots,N$, $P^{(a,b)}_{n,n}(x,y) = \rho(x)^n \: P^{(a,b)}_{n}(\frac{y}{\rho(x)})$ and so at $x=0$ these become just the Jacobi polynomials in $y$, thus span the edge interface. The polynomials that make up the $\bigQab$ basis can also be shown to have similar sparse relations and yield similar sparse operator matrices. We can then proceed to use a similar approach to section A.1 on a reference element.
+
+
 \section{Disk slices}
 
 The work in this paper on the half disk can be easily transferred to the domain of a disk slice by which we mean
@@ -884,7 +908,47 @@ Note that by setting $c = 0$, $\alpha = 0$ and $\beta = 1$ we obtain the 2D orth
 
 \section{Hemisphere}
 
-We can use the similar idea of projecting up from the 2D orthogonal polynomials on the half disk to 3D OPs on the hemisphere.
+We can use the similar idea of projecting up from the 2D orthogonal polynomials on the half disk to 3D OPs on the hemisphere. Define $\rho(x) := (1-x^2)^\half$ for $x \in [0,1]$ and let the half disk be denoted by $\omega$, that is let
+\begin{align}
+	\omega := \{(x,y) \in \R^2 \quad | \quad 1 < x < 0, \: \rho(x) < y < \rho(x)\}.
+\end{align}
+Further, define the hemisphere by
+\begin{align}
+	\Omega := \{(x,y,z) \in \R^3 \quad | \quad (x,y) \in \omega, \: x^2 + y^2 + z^2 = 1\}.
+\end{align}
+We can define the 3D OP family on the hemisphere as the set of polynomials $\bigQab(x,y,z)$ where
+\begin{align}
+	\bigQab_n(x,y,z) := \begin{bmatrix}
+		\bigPab_n(x,y) \\
+		z \: \bigP^{(a,b+1)}_{n-1}(x,y)
+	\end{bmatrix} \in \R^{2n+1}, 
+	\quad \quad 
+	\bigQab := \begin{bmatrix}
+		\bigQab_0 \\
+		\bigQab_1 \\
+		\vdots \\
+		\bigQab_N
+	\end{bmatrix}.
+\end{align}
+The relations for multiplication by $x, y$ are then trivial. For multiplication by $z$, note that $z^2 = W^{(0,1)}(x,y)$ for $(x,y,z) \in \Omega$ and consider that (as the 2D OPs for any parameters form a 2D basis of $\omega$):
+\begin{align}
+	z \: \Pnkab(x,y) &= \sum_{m,j} c_{n,k,m,j}^{(a,b)\to(a,b+1)} \: z \: P^{(a,b+1)}_{m,j}(x,y), \\
+	z^2 \: \Pnkab(x,y) &= \sum_{m,j} d_{n,k,m,j}^{(a,b)\to(a,b-1)} \: z \: P^{(a,b-1)}_{m,j}(x,y).
+\end{align}
+A simple calculation shows that the expansions are sparse, that is that most coefficients $c_{n,k,m,j}^{(a,b)\to(a,b+1)}$ and $d_{n,k,m,j}^{(a,b)\to(a,b-1)}$ are $0$, and are also given by
+\begin{align}
+	c_{n,k,m,j}^{(a,b)\to(a,b+1)} &= \frac{\ip< \Pnkab, \: P^{(a,b+1)}_{m,j} >_{W^{(a,b+1)}}}{\norm{P^{(a,b+1)}_{m,j}}^2_{W^{(a,b+1)}}} \\
+	d_{n,k,m,j}^{(a,b)\to(a,b-1)} &= \frac{\ip< W^{(0,1)} \Pnkab, \: P^{(a,b-1)}_{m,j} >_{W^{(a,b-1)}}}{\norm{P^{(a,b-1)}_{m,j}}^2_{W^{(a,b-1)}}} \\
+	&= \frac{\norm{\Pnkab}_\Wab^2}{\norm{P^{(a,b-1)}_{m,j}}^2_{W^{(a,b-1)}}} \: c_{m,j,n,k}^{(a,b-1)\to(a,b)} .
+\end{align}
+The coefficients $c_{n,k,m,j}^{(a,b)\to(a,b+1)}$ and $d_{n,k,m,j}^{(a,b)\to(a,b-1)}$ are just the entries to the parameter tranformation operator matrices
+\begin{align}
+	\bigP^{(a,b)}(x,y) &= \Big(T^{(a,b)\to(a,b+1)} \Big)^T \: \bigP^{(a,b+1)}(x,y) \\
+	W^{(0,1)}(x,y) \bigP^{(a,b)}(x,y) &= \Big(T^{(a,b)\to(a,b-1)}_ \Big)^T \: \bigP^{(a,b-1)}(x,y)
+\end{align}
+respectively.
+
+
 
 
 \bibliography{halfdisk-bib}
