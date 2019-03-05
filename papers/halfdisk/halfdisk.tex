@@ -198,7 +198,7 @@ where $C_{n,k} \neq 0$ and ``lower order terms'' can  include degree $n$ polynom
 
  Sparsity comes from expanding the domain and range of an operator  using different choices of $a$ and $b$. Where the sparsity pattern and entries derived in \cite{olver2018recurrence,olver2019triangle} for equations on the triangle  results from manipulations of Jacobi polynomials, in the present work we use a more general integration-by-parts argument to deduce the sparsity structure, alongside quadrature rules to determine the entries.  Furthermore, we use this framework to derive sparse $p$-finite element methods that are analogous to those of Beuchler and Sch\"oberl on tetrahedra \cite{beuchler2006new}. 
 
-The motivation for this work is solving partial differential equations on sub-domains of the sphere. In particular, OPs on a half-sphere can be represented using two families of OPs on the half-disk\sotodo{Explain this}. Constructing sparse spectral methods for surface PDEs on half-spheres, spherical caps, and spherical triangles is future work, and has applications in weather prediction. Other extensions include a full $hp$-finite element method on sections of a disk, which has applications in fluids. 
+The motivation for this work is solving partial differential equations on sub-domains of the sphere. In particular, OPs on a half-sphere can be represented using two families of OPs on the half-disk, where we would require $2n+1$ 3D OPs for each degree $n$, of which $n+1$ would be the $n+1$ degree $n$ OPs on the half-disk of the first family (polynomials in $x,y$) while the remaining $n$ OPs would be given by $z$ multiplied by the $n$ degree $n-1$ OPs on the half-disk of the second family\bstodo{Is this OK?}. Constructing sparse spectral methods for surface PDEs on half-spheres, spherical caps, and spherical triangles is future work, and has applications in weather prediction. Other extensions include a full $hp$-finite element method on sections of a disk, which has applications in fluids. 
 
 Here is an overview of the paper:  
 
@@ -299,7 +299,7 @@ Note that \(\ip<y \Pnkab, P_{m,j}^{(a,b)}>_\Wab = 0\) for \(m < n-1\) (and for \
 \end{proof}
 
 
-Three-term recurrences lead to Jacobi operators that correspond to multiplication by $x$ and $y$. Define, for some $N \in \No$: \sotodo{Why bmatrix, not pmatrix?}
+Three-term recurrences lead to Jacobi operators that correspond to multiplication by $x$ and $y$. Define, for $n=0,1,2,\dots$: \sotodo{Why bmatrix, not pmatrix?}\bstodo{No reason, I am not familiar with pmatrix}
 \begin{align}
 \bigPab_n := \begin{bmatrix}
 		P^{(a,b)}_{n,-n}(x,y) \\
@@ -310,15 +310,15 @@ Three-term recurrences lead to Jacobi operators that correspond to multiplicatio
 \bigPab := \begin{bmatrix}
 		\bigPab_0 \\
 		\bigPab_1 \\
+		\bigPab_2 \\
 		\vdots \\
-		\bigPab_N
 	\end{bmatrix}
 \end{align}
-\sotodo{Why not just make $\bigPab$ infinite for now?}and set \(J_x^{(a,b)}, J_y^{(a,b)}\) as the \(\half (N+1)(N+2) \times \half (N+1)(N+2)\) Jacobi matrices corresponding to
+\sotodo{Why not just make $\bigPab$ infinite for now?}and set $J_x^{(a,b)}, J_y^{(a,b)}$ as the Jacobi matrices corresponding to
 \begin{align}
-J_x^{(a,b)} \bigPab(x,y) = x \bigPab(x,y), \quad J_y^{(a,b)} \bigPab(x,y) = y \bigPab(x,y).
+J_x^{(a,b)} \: \bigPab(x,y) = x \: \bigPab(x,y), \quad J_y^{(a,b)} \: \bigPab(x,y) = y \: \bigPab(x,y).
 \end{align}
-Then  \(J_x^{(a,b)}, J_y^{(a,b)}\) have the Banded-Block-Banded structures
+Then $J_x^{(a,b)}, J_y^{(a,b)}$ have the Banded-Block-Banded structures
 \begin{align}
 J_{x/y}^{(a,b)} &= \begin{bmatrix}
 		B^{x/y}_0 & A^{x/y}_0 & & & & \\
@@ -334,36 +334,36 @@ A^x_n &:= \begin{bmatrix}
 		\alphaab_{n+1,0,1} & 0 & \hdots & 0 \\
 		& \ddots & & \vdots & \\
 		& & \alphaab_{n+1,n,1} & 0 \\
-	    \end{bmatrix} \in \R^{(n+1)\times(n+2)}, \quad n = 0,1,2,\dots,N-1 \\
+	    \end{bmatrix} \in \R^{(n+1)\times(n+2)}, \quad n = 0,1,2,\dots \\
 B^x_n &:= \begin{bmatrix}
 		\alphaab_{n,0,2} & & \\
 		& \ddots & \\
 		& & \alphaab_{n,n,2} \\
-	    \end{bmatrix} \in \R^{(n+1)\times(n+1)} \quad n = 0,1,2,\dots,N \\
-C^x_n &:= \big( A^x_n \big)^T \in \R^{(n+1)\times n},  \quad n = 1,2,\dots,N, \\ 
+	    \end{bmatrix} \in \R^{(n+1)\times(n+1)} \quad n = 0,1,2,\dots \\
+C^x_n &:= \big( A^x_n \big)^T \in \R^{(n+1)\times n},  \quad n = 1,2,\dots \\ 
 \nonumber \\
 A^y_n &:= \begin{bmatrix}
 		0 & \betaab_{n,0,6} & & & \\
 		\betaab_{n,1,5} & 0 & & & \\
 		& \ddots & \ddots & \ddots & \\
 		& & \betaab_{n,n,5}& 0 & \betaab_{n,n,6} \\
-	    \end{bmatrix} \in \R^{(n+1)\times(n+2)}, \quad n = 0,1,2,\dots,N-1 \\
+	    \end{bmatrix} \in \R^{(n+1)\times(n+2)}, \quad n = 0,1,2,\dots \\
 B^y_n &:= \begin{bmatrix}
 		0 & \betaab_{n,0,4} & & \\
 		\betaab_{n,1,3} & 0 & \ddots & \\
 		& \ddots & \ddots & \betaab_{n,n-1,4} \\
 		& & \betaab_{n,n,3} & 0
-	    \end{bmatrix} \in \R^{(n+1)\times(n+1)}  \quad n = 0,1,2,\dots,N \\
+	    \end{bmatrix} \in \R^{(n+1)\times(n+1)}  \quad n = 0,1,2,\dots \\
 C^y_n &:= \begin{bmatrix}
 		0 & \betaab_{n,0,2} & & \\
 		\betaab_{n,1,1} & 0 & \ddots & \\
 		& \ddots & \ddots & \betaab_{n,n-2,2} \\
 		& & \ddots & 0 \\
 		& & & \betaab_{n,n,1} \\
-	    \end{bmatrix} \in \R^{(n+1)\times n}, \quad n = 1,2,\dots,N.
+	    \end{bmatrix} \in \R^{(n+1)\times n}, \quad n = 1,2,\dots
 \end{align}
 
-Note that the sparsity of the Jacobi matrices (in particular the sparsity of the sub-blocks) comes from the natural sparsity of the three-term recurrences of the 1D OPs. In other words, sparsity is not dependent on the domain\sotodo{Huh?}.
+Note that the sparsity of the Jacobi matrices (in particular the sparsity of the sub-blocks) comes from the natural sparsity of the three-term recurrences of the 1D OPs, meaning that the sparsity is not limited to the specific half-disk case.
 
 
 
@@ -388,7 +388,7 @@ Combining each system in (71) we can write the block-tridiagonal system
 	P^{(a,b)}_{0,0} \\ 0 \\ 0 \\ \vdots \\ 0 \\
 \end{bmatrix}.
 \end{align}
-where we note \(P^{(a,b)}_{0,0}(x,y) \equiv H_0^{(a,b)} \: P_0^{(b,b)}\), and for each \(n = 0,1,\dots,N\):
+where we note \(P^{(a,b)}_{0,0}(x,y) \equiv H_0^{(a,b)} \: P_0^{(b,b)}\), and for each $n = 0,1,2\dots$:
 \begin{align}
 A_n &:= \begin{bmatrix}
 		A^x_n \\
@@ -409,12 +409,12 @@ G_n(x,y) := \begin{bmatrix}
 	    \end{bmatrix} \in \R^{2(n+1)\times(n+1)}.
 \end{align}
  
-For each \(n = 0,1,\dots,N-1\) let \(\Dnt\) be any matrix that is a left inverse of \(A_n\), i.e. such that \(\Dnt A_n = I_{n+3}\). Multiplying our system by the preconditioner matrix that is given by the block diagonal matrix of the \(\Dnt\)'s, we obtain a lower triangular system \cite[p78]{dunkl2014orthogonal}, which can be expanded to obtain the recurrence:
+For each $n = 0,1,2\dots$ let $\Dnt$ be any matrix that is a left inverse of $A_n$, i.e. such that $\Dnt A_n = I_{n+3}$. Multiplying our system by the preconditioner matrix that is given by the block diagonal matrix of the $\Dnt$'s, we obtain a lower triangular system \cite[p78]{dunkl2014orthogonal}, which can be expanded to obtain the recurrence:
 \begin{align}
 \begin{cases}
 \bigPab_{-1}(x,y) := 0 \\
 \bigPab_{0}(x,y) := P^{(a,b)}_{0,0} \\
-\bigPab_{n+1}(x,y) = -\Dnt (B_n-G_n(x,y)) \bigPab_n - \Dnt C_n  \,\bigPab_{n-1}(x,y), \quad n = 1,2,3,\dots,N.
+\bigPab_{n+1}(x,y) = -\Dnt (B_n-G_n(x,y)) \bigPab_n - \Dnt C_n  \,\bigPab_{n-1}(x,y), \quad n = 1,2,3,\dots.
 \end{cases}
 \end{align}
 
@@ -553,7 +553,7 @@ The sparsity of the these operators can be shown using a simply integration by p
 
 \subsection{Constructing $H_n^{(a,b)}(x)$}
 
-????
+To obtain the recurrence coefficients for the $\{H_n^{(a,b)}\}$ OPs in (4), we use the Lanczos algorithm. \bstodo{Not sure if this is required / what else to say here}
 
 
 \subsection{Quadrature rules}
@@ -617,12 +617,7 @@ f_{n,k} := \frac{\langle f, \: \Pnk^{(a,b)} \rangle_{W^{(a,b)}}}{|| \Pnk^{(a,b)}
 \end{align*}
 
 
-
-
-We can develop a quadrature rule on the half disk \(\Omega\) in order to evaluate (40) and obtain the coefficient vectors \(\mathbf{f}_n\) as follows.
-
-
-
+\bstodo{This section contains repetition / expansion on the quadrature rule section above - not sure if we should remove it or move it?} We can develop a quadrature rule on the half disk \(\Omega\) in order to evaluate (40) and obtain the coefficient vectors \(\mathbf{f}_n\) as follows.
 
 Let \(f(x,y)\) be polynomial that is even in \(y\) of degree $d_1$ in $x$ and degree $d_2$ in $y$ (i.e. $f(\cdot, y)$ with $y$ fixed is a degree $d_1$ polynomial, and $f(x, \cdot)$ with $x$ fixed is an even degree $d_2$ polynomial). Then there exists a polynomial \(\tilde{f}(x,y)\) in \(x,y\) such that \(g(s,t) := f(x, y) = f(s, (1-s^2)^\half t) = \tilde{f}(s, (1-s^2) t^2)\) (i.e. that $d_2$ is an even integer). Now, as \(\tilde{f}\) is a polynomial, so must \(g\) be a polynomial of degree $d_1+\frac{d_2}{2}$ in $s$ and degree $d_2$ in $t$. Thus a quadrature rule of the following will be exact for the polynomial $f(x,y)$ (even in \(y\) of degree $\le d_1$ in $x$ and degree $\le d_2$ in $y$):
 \begin{align}
