@@ -21,7 +21,7 @@
 
 \usepackage{todonotes}
 
-\graphicspath{ {../papers/halfdisk/images/} }
+% \graphicspath{ {../papers/halfdisk/images/} }
 \graphicspath{ {images/} }
 
 \newcommand{\sotodo}{\todo[color=green]}
@@ -186,7 +186,7 @@
   \leftbox{96}{
         \section{Abstract}
         
-In recent years, sparse spectral methods have been derived using hierarchies of classical orthogonal polynomials (OPs) on intervals, disks, and triangles (e.g. \cite{olver2018recurrence}). Here, we extend this methodology to a hierarchy of non-classical orthogonal polynomials on disk slices (e.g. a half disk), building on the observation that sparsity is guaranteed due to the boundary being defined by an algebraic curve, and that the entries of partial differential operators can be determined using formulae in terms of (non-classical) univariate OPs. 
+In recent years, sparse spectral methods have been derived using hierarchies of classical orthogonal polynomials (OPs) on intervals, disks, and triangles (e.g. \cite{olver2019triangle}). Here, we extend this methodology to a hierarchy of non-classical orthogonal polynomials on disk slices (e.g. a half disk), building on the observation that sparsity is guaranteed due to the boundary being defined by an algebraic curve, and that the entries of partial differential operators can be determined using formulae in terms of (non-classical or semi-classical) univariate OPs. 
  
     }
     
@@ -248,7 +248,7 @@ J_x^{(a,b)} \bigPab(x,y) = x \bigPab(x,y), \quad J_y^{(a,b)} \bigPab(x,y) = y \b
 \end{align}
 Then  \(J_x^{(a,b)}, J_y^{(a,b)}\) have similar sparse (block-tridiagonal) Banded-Block-Banded structures.
 \end{lemma}
-Combining each system in (4) we can write this as a block-tridiagonal system of equations. Applying a preconditioner matrix to the system \citep{dunkl2014orthogonal} (p78), we can expand the resulting lower-triangular system to obtain the recurrence:
+Combining each system in (4) we can write this as a block-tridiagonal system of equations. Applying a preconditioner matrix to the system \cite[p78]{dunkl2014orthogonal}, we can expand the resulting lower-triangular system to obtain the recurrence:
     \begin{align}
 \begin{cases}
 \bigPab_{-1}(x,y) := 0, \quad \bigPab_{0}(x,y) := P^{(a,b)}_{0,0} \\
@@ -287,45 +287,45 @@ x \bigP^{(1,0)}(x,y) &= \Big(T^{(1,0)\to(0,0)} \Big)^T \: \bigP^{(0,0)}(x,y) \\
     \end{subfigure}
    \begin{subfigure}[t]{0.3\textwidth}
          \centering
-        \includegraphics[scale=0.6]{solution}
+        \includegraphics[scale=0.65]{solution}
         \label{fig:solution}
     \end{subfigure}
-    \begin{subfigure}[t]{0.3\textwidth}
+    \begin{subfigure}[t]{0.6\textwidth}
                 \center
         \begin{tikzpicture} 
         % Box/square (4x4)
-        \draw[black,solid,ultra thin] (0,0)--(0,4);
-        \draw[black,solid,ultra thin] (0,0)--(4,0);
-        \draw[black,solid,ultra thin] (4,0)--(4,4);
-        \draw[black,solid,ultra thin] (0,4)--(4,4);
+        \draw[black,solid,ultra thin] (0,0)--(0,6);
+        \draw[black,solid,ultra thin] (0,0)--(6,0);
+        \draw[black,solid,ultra thin] (6,0)--(6,6);
+        \draw[black,solid,ultra thin] (0,6)--(6,6);
         % Dots
         \draw[black,fill=black] (0,0) circle (.5ex);
-        \draw[black,fill=black] (2,2) circle (.5ex);
-        \draw[black,fill=black] (4,4) circle (.5ex);
-        \draw[black,fill=black] (0,2) circle (.5ex);
-        \draw[black,fill=black] (0,4) circle (.5ex);
+        \draw[black,fill=black] (3,3) circle (.5ex);
+        \draw[black,fill=black] (6,6) circle (.5ex);
+        \draw[black,fill=black] (0,3) circle (.5ex);
+        \draw[black,fill=black] (0,6) circle (.5ex);
         % Arrows
-        \draw[black,thick,->] (0.2,0.2)--(1.8,1.8);
-        \draw[black,thick,->] (2.2,2.2)--(3.8,3.8);
-        \draw[black,thick,->] (0,0.2)--(0,1.8);
-        \draw[black,thick,->] (0,2.2)--(0,3.8);
-        \draw [black,thick,->] (0.2,4.2) to [out=20,in=160] (3.8,4.2);
+        \draw[black,thick,->] (0.3,0.3)--(2.7,2.7);
+        \draw[black,thick,->] (3.3,3.3)--(5.7,5.7);
+        \draw[black,thick,->] (0,0.5)--(0,2.5);
+        \draw[black,thick,->] (0,3.5)--(0,5.5);
+        \draw [black,thick,->] (0.3,6.3) to [out=20,in=160] (5.7,6.3);
         % Node (parameter) labels
         \draw[] (0,0) node[anchor=east] {$(0,0)$};
-        \draw[] (0,4) node[anchor=east] {$(0,2)$};
-        \draw[] (4,0) node[anchor=west] {$(2,0)$};
-        \draw[] (4,4) node[anchor=west] {$(2,2)$};
+        \draw[] (0,6) node[anchor=east] {$(0,2)$};
+        \draw[] (6,0) node[anchor=west] {$(2,0)$};
+        \draw[] (6,6) node[anchor=west] {$(2,2)$};
         % Arrow labels
-        \draw[] (1,1) node[anchor=north] {$\tfrac{\partial}{\partial x}$};
-        \draw[] (3,3) node[anchor=north] {$\tfrac{\partial}{\partial x}$};
-        \draw[] (0,1) node[anchor=west] {$\tfrac{\partial}{\partial y}$};
-        \draw[] (0,3) node[anchor=west] {$\tfrac{\partial}{\partial y}$};
+        \draw[] (2.2,2.2) node[anchor=north] {$\tfrac{\partial}{\partial x}$};
+        \draw[] (5,5) node[anchor=north] {$\tfrac{\partial}{\partial x}$};
+        \draw[] (-1.8,1.5) node[anchor=west] {$\tfrac{\partial}{\partial y}$};
+        \draw[] (-1.8,4.5) node[anchor=west] {$\tfrac{\partial}{\partial y}$};
         % The key and headings
-        \draw[black,thick,->] (-2.5,3.4)--(-2.5,4);
-        \draw[black,thick,->] (-2.5,3.4)--(-1.9,3.4);
-        \draw[] (-2.3,3.2) node[anchor=west] {$a$};
-        \draw[] (-2.7,3.6) node[anchor=south] {$b$};
-        \draw[] (2,4.6) node[anchor=south] {basis conversion};
+        \draw[black,thick,->] (8.5,2.5)--(8.5,3.5);
+        \draw[black,thick,->] (8.5,2.5)--(9.5,2.5);
+        \draw[] (9.5,2.5) node[anchor=west] {$a$};
+        \draw[] (8.5,3.5) node[anchor=south] {$b$};
+        \draw[] (3,6.9) node[anchor=south] {basis conversion};
         \end{tikzpicture} 
 	\label{fig:Laplace}
    \end{subfigure}
@@ -334,17 +334,15 @@ x \bigP^{(1,0)}(x,y) &= \Big(T^{(1,0)\to(0,0)} \Big)^T \: \bigP^{(0,0)}(x,y) \\
     \caption{Left: A "spy" plot of the $\Delta$ operator for $\Wii(x,y) \: \bigPii(x,y) \to \bigPii(x,y)$ showing its sparsity. Right: The computed solution to $\Delta u = f$ with zero boundary conditions with $f(x,y) = 1 + \text{erf}(5(1 ? 10((x ? 0.5)^2 + y^2)))$. Bottom: Diagram illustrating how the parameters change under partial differentiation. }
 \end{wrapfigure}
 
-where $\Delta^{(1,1)}$ is the matrix operator for the Laplacian, that will take us from coefficients for expansion in the weighted space $\Wii(x,y) \: \bigPii(x,y)$ to coefficients in the non-weighted space $\bigPii(x,y)$. This operator will have Banded-Block-Banded structure, and hence sparse. Note that this construction ensures imposition of Dirichlet zero boundary conditions.
-
-The sparsity of the these operators can be shown using a simply integration by parts argument, again showing that the sparsity for differential operators is not dependent on the domain.
+where $\Delta^{(1,1)}$ is the matrix operator for the Laplacian, that will take us from coefficients for expansion in the weighted space $\Wii(x,y) \: \bigPii(x,y)$ to coefficients in the non-weighted space $\bigPii(x,y)$. This operator will have Banded-Block-Banded structure, and hence sparse. Note that this construction ensures imposition of Dirichlet zero boundary conditions. The sparsity of the these operators can be shown using a simply integration by parts argument.
  
     }
     
-     \rightbox{30.5}{
+     \rightbox{32}{
       \section{Summary and Future Work}
       
 \begin{itemize}
-  \item We have detailed a method for obtaining families of 2D OPs on certain domains. Using the three-term recurrence relationships the OPs have, we can calculate sparse operator matrices for multiplication by $x, y$ and in turn sparse differential operators, allowing us to solve PDEs on the half disk.
+  \item We have detailed a method for obtaining families of 2D OPs on certain domains. Using the three-term recurrence relationships the OPs have, we can calculate sparse operator matrices for multiplication by $x, y$ and in turn sparse differential operators, allowing us to solve PDEs on the half disk. We can extend this to p-FEM on the disk using half-disk elements.
   \item The same (or similar) relations hold for other suitable domains (namely, disk slices). 
   \item This 2D half disk framework can be extended for a family of OPs on the hemisphere, with sparse relations.
    \item To solve PDEs on spherical triangles (as is our ultimate goal) will require further ideas.
