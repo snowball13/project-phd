@@ -299,68 +299,68 @@ Note that \(\ip<y \Pnkab, P_{m,j}^{(a,b)}>_\Wab = 0\) for \(m < n-1\) (and for \
 \end{proof}
 
 
-Three-term recurrences lead to Jacobi operators that correspond to multiplication by $x$ and $y$. Define, for $n=0,1,2,\dots$: \sotodo{Why bmatrix, not pmatrix?}\bstodo{No reason, I am not familiar with pmatrix}
+Three-term recurrences lead to Jacobi operators that correspond to multiplication by $x$ and $y$. Define, for $n=0,1,2,\dots$: 
 \begin{align}
-\bigPab_n := \begin{bmatrix}
+\bigPab_n := \begin{pmatrix}
 		P^{(a,b)}_{n,-n}(x,y) \\
 		\vdots \\
 		P^{(a,b)}_{n,n}(x,y)
-	\end{bmatrix} \in \R^{n+1}, 
+	\end{pmatrix} \in \R^{n+1}, 
 \quad \quad 
-\bigPab := \begin{bmatrix}
+\bigPab := \begin{pmatrix}
 		\bigPab_0 \\
 		\bigPab_1 \\
 		\bigPab_2 \\
 		\vdots \\
-	\end{bmatrix}
+	\end{pmatrix}
 \end{align}
-\sotodo{Why not just make $\bigPab$ infinite for now?}and set $J_x^{(a,b)}, J_y^{(a,b)}$ as the Jacobi matrices corresponding to
+and set $J_x^{(a,b)}, J_y^{(a,b)}$ as the Jacobi matrices corresponding to
 \begin{align}
 J_x^{(a,b)} \: \bigPab(x,y) = x \: \bigPab(x,y), \quad J_y^{(a,b)} \: \bigPab(x,y) = y \: \bigPab(x,y).
 \end{align}
 Then $J_x^{(a,b)}, J_y^{(a,b)}$ have the Banded-Block-Banded structures
 \begin{align}
-J_{x/y}^{(a,b)} &= \begin{bmatrix}
+J_{x/y}^{(a,b)} &= \begin{pmatrix}
 		B^{x/y}_0 & A^{x/y}_0 & & & & \\
 		C^{x/y}_1 & B^{x/y}_1 & A^{x/y}_1 & & & \\
 		& C^{x/y}_2 & B^{x/y}_2 & A^{x/y}_2  & & & \\
 		& & C^{x/y}_3 & \ddots & \ddots & \\
 		& & & \ddots & \ddots & \ddots \\
-	\end{bmatrix}
+	\end{pmatrix}
 \end{align}
 where
 \begin{align}
-A^x_n &:= \begin{bmatrix}
+A^x_n &:= \begin{pmatrix}
 		\alphaab_{n+1,0,1} & 0 & \hdots & 0 \\
 		& \ddots & & \vdots & \\
 		& & \alphaab_{n+1,n,1} & 0 \\
-	    \end{bmatrix} \in \R^{(n+1)\times(n+2)}, \quad n = 0,1,2,\dots \\
-B^x_n &:= \begin{bmatrix}
+	    \end{pmatrix} \in \R^{(n+1)\times(n+2)}, \quad n = 0,1,2,\dots \\
+B^x_n &:= \begin{pmatrix}
 		\alphaab_{n,0,2} & & \\
 		& \ddots & \\
 		& & \alphaab_{n,n,2} \\
-	    \end{bmatrix} \in \R^{(n+1)\times(n+1)} \quad n = 0,1,2,\dots \\
+	    \end{pmatrix} \in \R^{(n+1)\times(n+1)} \quad n = 0,1,2,\dots \\
 C^x_n &:= \big( A^x_n \big)^T \in \R^{(n+1)\times n},  \quad n = 1,2,\dots \\ 
 \nonumber \\
-A^y_n &:= \begin{bmatrix}
+A^y_n &:= \begin{pmatrix}
 		0 & \betaab_{n,0,6} & & & \\
 		\betaab_{n,1,5} & 0 & & & \\
 		& \ddots & \ddots & \ddots & \\
 		& & \betaab_{n,n,5}& 0 & \betaab_{n,n,6} \\
-	    \end{bmatrix} \in \R^{(n+1)\times(n+2)}, \quad n = 0,1,2,\dots \\
-B^y_n &:= \begin{bmatrix}
+	    \end{pmatrix} \in \R^{(n+1)\times(n+2)}, \quad n = 0,1,2,\dots \\
+B^y_n &:= \begin{pmatrix}
 		0 & \betaab_{n,0,4} & & \\
 		\betaab_{n,1,3} & 0 & \ddots & \\
 		& \ddots & \ddots & \betaab_{n,n-1,4} \\
 		& & \betaab_{n,n,3} & 0
-	    \end{bmatrix} \in \R^{(n+1)\times(n+1)}  \quad n = 0,1,2,\dots \\
-C^y_n &:= \begin{bmatrix}
+	    \end{pmatrix} \in \R^{(n+1)\times(n+1)}  \quad n = 0,1,2,\dots \\
+C^y_n &:= \begin{pmatrix}
 		0 & \betaab_{n,0,2} & & \\
 		\betaab_{n,1,1} & 0 & \ddots & \\
 		& \ddots & \ddots & \betaab_{n,n-2,2} \\
 		& & \ddots & 0 \\
 		& & & \betaab_{n,n,1} \\
-	    \end{bmatrix} \in \R^{(n+1)\times n}, \quad n = 1,2,\dots
+	    \end{pmatrix} \in \R^{(n+1)\times n}, \quad n = 1,2,\dots
 \end{align}
 
 Note that the sparsity of the Jacobi matrices (in particular the sparsity of the sub-blocks) comes from the natural sparsity of the three-term recurrences of the 1D OPs, meaning that the sparsity is not limited to the specific half-disk case.
@@ -384,29 +384,29 @@ Combining each system in (71) we can write the block-tridiagonal system
 \mright]
 \bigPab(x,y)
 =
-\begin{bmatrix}
+\begin{pmatrix}
 	P^{(a,b)}_{0,0} \\ 0 \\ 0 \\ \vdots \\ 0 \\
-\end{bmatrix}.
+\end{pmatrix}.
 \end{align}
 where we note \(P^{(a,b)}_{0,0}(x,y) \equiv H_0^{(a,b)} \: P_0^{(b,b)}\), and for each $n = 0,1,2\dots$:
 \begin{align}
-A_n &:= \begin{bmatrix}
+A_n &:= \begin{pmatrix}
 		A^x_n \\
 		A^y_n \\
 		A^z_n
-	    \end{bmatrix} \in \R^{2(n+1)\times(n+3)} \quad (n \ne N), \quad
-C_n := \begin{bmatrix}
+	    \end{pmatrix} \in \R^{2(n+1)\times(n+3)} \quad (n \ne N), \quad
+C_n := \begin{pmatrix}
 		C^x_n \\
 		C^y_n
-	    \end{bmatrix} \in \R^{2(n+1)\times n} \quad (n \ne 0), \nonumber \\
-B_n &:= \begin{bmatrix}
+	    \end{pmatrix} \in \R^{2(n+1)\times n} \quad (n \ne 0), \nonumber \\
+B_n &:= \begin{pmatrix}
 		B^x_n \\
 		B^y_n
-	    \end{bmatrix} \in \R^{2(n+1)\times(n+1)}, \quad
-G_n(x,y) := \begin{bmatrix}
+	    \end{pmatrix} \in \R^{2(n+1)\times(n+1)}, \quad
+G_n(x,y) := \begin{pmatrix}
 		xI_{n+1} \\
 		yI_{n+1}
-	    \end{bmatrix} \in \R^{2(n+1)\times(n+1)}.
+	    \end{pmatrix} \in \R^{2(n+1)\times(n+1)}.
 \end{align}
  
 For each $n = 0,1,2\dots$ let $\Dnt$ be any matrix that is a left inverse of $A_n$, i.e. such that $\Dnt A_n = I_{n+3}$. Multiplying our system by the preconditioner matrix that is given by the block diagonal matrix of the $\Dnt$'s, we obtain a lower triangular system \cite[p78]{dunkl2014orthogonal}, which can be expanded to obtain the recurrence:
@@ -420,12 +420,12 @@ For each $n = 0,1,2\dots$ let $\Dnt$ be any matrix that is a left inverse of $A_
 
 Note that we can define an explicit \(\Dnt\) as follows. For \(n\) even:
 \begin{align}
-\Dnt := \begin{bmatrix}
+\Dnt := \begin{pmatrix}
 		\frac{1}{\alphaab_{n+1,0,1}} & & &  \\
 		& \ddots & & & \\
 		& & \frac{1}{\alphaab_{n+1,n,1}} & \\
 		0 & \hdots & 0 & \eta_{m-1} & \hdots & 0 & \eta_1 & 0 & \eta_0
-	    \end{bmatrix},
+	    \end{pmatrix},
 \end{align}
 where
 \begin{align}
@@ -436,13 +436,13 @@ m &= \frac{n}{2} + 1, \quad \eta_0 = \frac{1}{\betaab_{n,n,6}},\qqand \nonumber 
 For \(n\) odd:
 
 \begin{align}
-\Dnt := \begin{bmatrix}
+\Dnt := \begin{pmatrix}
 		\frac{1}{\alphaab_{n+1,0,1}} & &  \\
 		& \ddots & & &  \\
 		& & \ddots & & \\
 		& & & \frac{1}{\alphaab_{n+1,n,1}} & \\
 		\xi & 0 & \hdots & 0 & 0 & \eta_{m-2} & \hdots & 0 & \eta_0
-	    \end{bmatrix},
+	    \end{pmatrix},
 \end{align}
  where
 \begin{align}
@@ -600,19 +600,19 @@ f(x,y) = \sum_{n=0}^N \bigP_n^{(a,b)}(x,y)^T \: \mathbf{f}_n
 \end{align*}
 where
 \begin{align*}
-\bigP_n(x,y) &:= \begin{bmatrix}
+\bigP_n(x,y) &:= \begin{pmatrix}
 		P_{n,0}(x,y) \\
 		\vdots \\
 		P_{n,n}(x,y)
-	\end{bmatrix} \in \R^{n+1} \quad \forall n = 0,1,2,\dots,N,
+	\end{pmatrix} \in \R^{n+1} \quad \forall n = 0,1,2,\dots,N,
 \end{align*}
 and where
 \begin{align*}
-\mathbf{f}_n &:= \begin{bmatrix}
+\mathbf{f}_n &:= \begin{pmatrix}
 		f_{n,0} \\
 		\vdots \\
 		f_{n,n}
-	\end{bmatrix} \in \R^{n+1} \quad \forall n = 0,1,2,\dots,N, \quad
+	\end{pmatrix} \in \R^{n+1} \quad \forall n = 0,1,2,\dots,N, \quad
 f_{n,k} := \frac{\langle f, \: \Pnk^{(a,b)} \rangle_{W^{(a,b)}}}{|| \Pnk^{(a,b)} ||_{W^{(a,b)}}}
 \end{align*}
 
@@ -804,39 +804,39 @@ We seek $u_h \in V_h$ s.t.
 
 Define $\Lambda^{(a,b)} := \langle \bigP^{(a,b)}, \: {\bigP^{(a,b)}}^T \rangle_{W^{(a,b)}}$ where $W^{(a,b)}$ is the weight with which the OPs in $\bigP^{(a,b)}$ are orthogonal with respect to. Note that due to orthogonality this is a diagonal matrix. We can choose a basis for $V_h$ by using the weighted orthogonal polynomials on $\element$ with parameters $a = b = 1$:
 \begin{align}
-\bigWii(x,y) &:= \begin{bmatrix}
+\bigWii(x,y) &:= \begin{pmatrix}
 		\bigWii_0(x,y) \\
 		\bigWii_1(x,y) \\
 		\bigWii_2(x,y) \\
 		\vdots \\
 		\bigWii_p(x,y)
-	\end{bmatrix}, \\
-\bigWii_n(x,y) &:= \begin{bmatrix}
+	\end{pmatrix}, \\
+\bigWii_n(x,y) &:= \begin{pmatrix}
 		\Wii(x,y) \: \Pii_{n,0}(x,y) \\
 		\vdots \\
 		\Wii(a,y) \: \Pii_{n,n}(x,y)
-	\end{bmatrix} \in \R^{n+1} \quad \forall n = 0,1,2,\dots,p,
+	\end{pmatrix} \in \R^{n+1} \quad \forall n = 0,1,2,\dots,p,
 \end{align}
 and rewrite (73) in matrix form:
 \begin{align}
 	a(u_h,v_h) &= \int_\element \nabla u_h \cdot \nabla v_h \: d\mathbf{x} \\
-	&= \int_\element \begin{bmatrix}
+	&= \int_\element \begin{pmatrix}
 					\partial_x v_h \\
 					\partial_y v_h
-				\end{bmatrix}^T 
-				\begin{bmatrix}
+				\end{pmatrix}^T 
+				\begin{pmatrix}
 					\partial_x u_h \\
 					\partial_y u_h
-				\end{bmatrix}
+				\end{pmatrix}
 				\\
-	&= \int_\element \begin{bmatrix}
+	&= \int_\element \begin{pmatrix}
 					\bigPoo^T \Wii_x \mathbf{v} \\
 					\bigPoo^T T^{(1,0)\to(0,0)} \Wii_y \mathbf{v}
-				\end{bmatrix}^T 
-				\begin{bmatrix}
+				\end{pmatrix}^T 
+				\begin{pmatrix}
 					\bigPoo^T \Wii_x \mathbf{u} \\
 					\bigPoo^T T^{(1,0)\to(0,0)} \Wii_y \mathbf{u}
-				\end{bmatrix}
+				\end{pmatrix}
 				\\
 	&= \int_\element \Big( \mathbf{v}^T {\Wii_x}^T \bigPoo \bigPoo^T \Wii_x \mathbf{u} \nonumber \\
 					& \quad \quad \quad + \mathbf{v}^T ({T^{(1,0)\to(0,0)} \Wii_y})^T \bigPoo \bigPoo^T T^{(1,0)\to(0,0)} \Wii_y \mathbf{u}  \Big) \: d\mathbf{x} \\
@@ -873,17 +873,17 @@ Note the since we have sparse operator matrices for partial derivatives and basi
 \subsection{Two-element p-FEM on the disk (without BCs)}
 We now consider the case of using two elements to discretise a unit disk domain $\Omega$, that is the each element $\element$ is a half-disk, with common edge defined by the line $x=0$ for $y \in [-1,1]$. We take inspiration from \cite{karniadakis2013spectral, beuchler2006new}. To ensure continuity across the edge interface, we need to expand our basis functions to be used. We require basis functions that correspond to each edge (in this case there is only one edge), that is basis functions with support as the two elements connected by said edge (for more than two elements - and hence more than one edge - we would also stipulate that each edge's corresponding basis functions would vanish on any other edge). We then also require the remaining (interior) basis functions be such that they have support of one element only, and vanish on (each) edge. Using this, our basis functions for $\le N$-degree polynomials can then be written as
 \begin{align}
-	\bigQab_n(x,y) := \begin{bmatrix}
+	\bigQab_n(x,y) := \begin{pmatrix}
 		P^{(a,b)}_{n,n}(x,y) \\
 		x \: \bigPab_{n-1}(x,y)
-	\end{bmatrix} \in \R^{n+1}, 
+	\end{pmatrix} \in \R^{n+1}, 
 	\quad \quad 
-	\bigQab := \begin{bmatrix}
+	\bigQab := \begin{pmatrix}
 		\bigQab_0 \\
 		\bigQab_1 \\
 		\vdots \\
 		\bigQab_N
-	\end{bmatrix}.
+	\end{pmatrix}.
 \end{align}
 We note that for each $n = 0,\dots,N$, $P^{(a,b)}_{n,n}(x,y) = \rho(x)^n \: P^{(a,b)}_{n}(\frac{y}{\rho(x)})$ and so at $x=0$ these become just the Jacobi polynomials in $y$, thus span the edge interface. The polynomials that make up the $\bigQab$ basis can also be shown to have similar sparse relations and yield similar sparse operator matrices. We can then proceed to use a similar approach to section A.1 on a reference element.
 
@@ -930,17 +930,17 @@ Further, define the hemisphere by
 \end{align}
 We can define the 3D OP family on the hemisphere as the set of polynomials $\bigQab(x,y,z)$ where
 \begin{align}
-	\bigQab_n(x,y,z) := \begin{bmatrix}
+	\bigQab_n(x,y,z) := \begin{pmatrix}
 		\bigPab_n(x,y) \\
 		z \: \bigP^{(a,b+1)}_{n-1}(x,y)
-	\end{bmatrix} \in \R^{2n+1}, 
+	\end{pmatrix} \in \R^{2n+1}, 
 	\quad \quad 
-	\bigQab := \begin{bmatrix}
+	\bigQab := \begin{pmatrix}
 		\bigQab_0 \\
 		\bigQab_1 \\
 		\vdots \\
 		\bigQab_N
-	\end{bmatrix}.
+	\end{pmatrix}.
 \end{align}
 The relations for multiplication by $x, y$ are then trivial. For multiplication by $z$, note that $z^2 = W^{(0,1)}(x,y)$ for $(x,y,z) \in \Omega$ and consider that (as the 2D OPs for any parameters form a 2D basis of $\omega$):
 \begin{align}
