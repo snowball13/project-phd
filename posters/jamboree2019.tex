@@ -36,6 +36,7 @@
 %SetFonts
 
 \usepackage{natbib}
+\setlength{\bibsep}{0.0pt}
 \usepackage{url}
 \bibliographystyle{abbrv}
 
@@ -330,28 +331,28 @@ x \bigP^{(1,0)}(x,y) &= \Big(T^{(1,0)\to(0,0)} \Big)^T \: \bigP^{(0,0)}(x,y) \\
 	\label{fig:Laplace}
    \end{subfigure}
     \centering
-    \captionsetup{width=.7\linewidth}
-    \caption{Left: A "spy" plot of the $\Delta$ operator for $\Wii(x,y) \: \bigPii(x,y) \to \bigPii(x,y)$ showing its sparsity. Right: The computed solution to $\Delta u = f$ with zero boundary conditions with $f(x,y) = 1 + \text{erf}(5(1 ? 10((x ? 0.5)^2 + y^2)))$. Bottom: Diagram illustrating how the parameters change under partial differentiation. }
+    \captionsetup{width=.8\linewidth}
+    \caption{Left: A "spy" plot of the $\Delta$ operator for $\Wii(x,y) \: \bigPii(x,y) \to \bigPii(x,y)$ showing its sparsity. Right: The computed solution to $\Delta u = f$ with zero boundary conditions with $f(x,y) = 1 + \text{erf}(5(1 ? 10((x ? 0.5)^2 + y^2)))$. Code using ApproxFun \cite{ApproxFun}. Bottom: Diagram illustrating how the parameters change under partial differentiation. }
 \end{wrapfigure}
 
 where $\Delta^{(1,1)}$ is the matrix operator for the Laplacian, that will take us from coefficients for expansion in the weighted space $\Wii(x,y) \: \bigPii(x,y)$ to coefficients in the non-weighted space $\bigPii(x,y)$. This operator will have Banded-Block-Banded structure, and hence sparse. Note that this construction ensures imposition of Dirichlet zero boundary conditions. The sparsity of the these operators can be shown using a simply integration by parts argument.
  
     }
     
-     \rightbox{32}{
+     \rightbox{31.5}{
       \section{Summary and Future Work}
       
 \begin{itemize}
   \item We have detailed a method for obtaining families of 2D OPs on certain domains. Using the three-term recurrence relationships the OPs have, we can calculate sparse operator matrices for multiplication by $x, y$ and in turn sparse differential operators, allowing us to solve PDEs on the half disk. We can extend this to p-FEM on the disk using half-disk elements.
   \item The same (or similar) relations hold for other suitable domains (namely, disk slices). 
   \item This 2D half disk framework can be extended for a family of OPs on the hemisphere, with sparse relations.
-   \item To solve PDEs on spherical triangles (as is our ultimate goal) will require further ideas.
+   \item The aim of solving PDEs on spherical triangles will require further ideas.
 \end{itemize}
   
     }
     
 %Also do graphics.
-    \rightbox{11}{
+    \rightbox{11.2}{
         {\footnotesize\bibliography{../papers/halfdisk/halfdisk-bib}}
         
     }
