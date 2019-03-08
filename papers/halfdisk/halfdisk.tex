@@ -145,6 +145,7 @@
 \newtheorem{lemma}{Lemma} 
 \newtheorem{theorem}{Theorem} 
 \newtheorem{definition}{Definition}
+\newtheorem{algorithm}{Algorithm}
 
 \include{somacros}
 
@@ -553,7 +554,61 @@ The sparsity of the these operators can be shown using a simply integration by p
 
 \subsection{Constructing $H_n^{(a,b)}(x)$}
 
-To obtain the recurrence coefficients for the $\{H_n^{(a,b)}\}$ OPs in (4), we use the Lanczos algorithm. \bstodo{Not sure if this is required / what else to say here}
+To obtain the recurrence coefficients for the $\{H_n^{(a,b)}\}$ OPs in (4), we use a version of the Stieltjes algorithm. Recall that
+\begin{align}
+x H_n^{(a,b)}(x) &= \beta_n^{(a,b)} H_{n+1}^{(a,b)}(x) + \alpha_n^{(a,b)} H_n^{(a,b)}(x) + \beta_{n-1}^{(a,b)} H_{n-1}^{(a,b)}(x), \quad n = 0,1,2,\dots
+\end{align}
+where we define $\beta_{-1}^{(a,b)} = 0$ and $H_{-1}^{(a,b)}(x) \equiv 0$.
+
+\begin{algorithm}
+Inputs: max degree $N$, weight $w(x)$
+\begin{flalign*}
+	&\text{Define } H_0(x) \equiv \frac{1}{\norm{1}_w} \\
+	&\text{Define } v(x) = x  H_0(x) \\
+	&\text{Set } \alpha_0 = \ip<v, H_0>_w \\
+	&\text{Define } \tilde{v}(x) = v(x) - \alpha_0 H_0(x) \\
+	&\text{Set } \beta_0 = \norm{\tilde{v}}_w \\
+	&\text{Define } H_1(x) = \frac{\tilde{v}(x)}{\beta_0} \\
+	&\text{FOR } n = 1:N \\
+		& \quad \quad \text{Define } v(x) = x H_n - \beta_{n-1} H_{n-1} \\
+		& \quad \quad \text{Set } \alpha_n = \ip<v, H_n>_w \\
+		& \quad \quad \text{Define } \tilde{v}(x) = v(x) - \alpha_n H_n(x) \\
+		& \quad \quad \text{Set } \beta_n = \norm{\tilde{v}}_w \\
+		& \quad \quad \text{Define } H_{n+1}(x) = \frac{\tilde{v}(x)}{\beta_n} \\
+	&\text{END }
+\end{flalign*}
+Outputs: OP set $(H_0, \dots, H_N)$, coefficients $(\alpha_0, \dots, \alpha_N)$ and $(\beta_0, \dots, \beta_N)$
+\end{algorithm}
+We use the ApproxFun \cite{ApproxFun} package to calculate the inner products and norms in this algorithm to obtain the coefficients.
+
+
+%    # x * P[n](x) == (?[n] * P[n+1](x) + ?[n] * P[n](x) + ?[n-1] * P[n-1](x))
+%
+%    N = length(?)
+%    # x = Fun(identity, space(w)) # NOTE: space(w) does not "work" sometimes
+%    x = Fun(identity, domain(w))
+%
+%    if N? <= 0
+%        N? = 1
+%        f1 = Fun(1/sqrt(sum(w)),space(x))
+%        P[1] = f1
+%        v = x*P[1]
+%        ?[1] = sum(w*v*P[1])
+%        v = v - ?[1]*P[1]
+%        ?[1] = sqrt(sum(w*v^2))
+%        P[2] = v/?[1]
+%    end
+%
+%    for k = N?+1:N
+%        v = x*P[k] - ?[k-1]*P[k-1]
+%        ?[k] = sum(w*v*P[k])
+%        v = v - ?[k]*P[k]
+%        ?[k] = sqrt(sum(w*v^2))
+%        P[k+1] = v/?[k]
+%    end
+%
+%    P, ?, ?
+
 
 
 \subsection{Quadrature rules}
