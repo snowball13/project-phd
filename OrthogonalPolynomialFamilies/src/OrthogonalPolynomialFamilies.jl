@@ -958,32 +958,60 @@ function partialoperatory(S::HalfDiskSpace{<:Any, <:Any, T}, N) where T
     end
     A
 end
+function getweightedpartialoperatorxval(S::HalfDiskSpace{<:Any, <:Any, T},
+                                    ptsp, wp, ptsh, wh, n, k, m, j) where T
+    # We should have already called getopptseval etc for
+    Sx = differentiateweightedspacex(S)
+    P = S.family.P(S.b, S.b)
+    Px = Sx.family.P(Sx.b, Sx.b)
+    H = S.family.H(S.a, S.b+k+0.5)
+    Hx = S.family.H(Sx.a, Sx.b+j+0.5)
+    valp = inner2(Px, (-ptsp.^2 .+ 1) .* opevalatpts(P, k+1, ptsp),
+                    opevalatpts(Px, j+1, ptsp), wp)
+    valh = inner2(H, (ptsh.^2) .* opevalatpts(H, n-k+1, ptsh),
+                    (T.(S.family.ρ.(ptsh)).^(k+j)) .* opevalatpts(Hx, m-j+1, ptsh), wh)
+
+    val = S.a * valp * inner2(H, (T.(S.family.ρ.(ptsh)).^(k+j+2)) .* opevalatpts(H, n-k+1, ptsh),
+                     opevalatpts(Hx, m-j+1, ptsh), wh)
+    val += - 2S.b * valh * inner2(Px, opevalatpts(P, k+1, ptsp),
+                                    opevalatpts(Px, j+1, ptsp), wp)
+    val += valp * inner2(H, ptsh .* derivopevalatpts(H, n-k+1, ptsh),
+                            (T.(S.family.ρ.(ptsh)).^(k+j+2)) .* opevalatpts(Hx, m-j+1, ptsh), wh)
+    val -= k * valh * valp
+    val += valh * inner2(Px, ptsp .* derivopevalatpts(P, k+1, ptsp),
+                            (-ptsp.^2 .+ 1) .* opevalatpts(Px, j+1, ptsp), wp)
+    val /= Sx.opnorms[getopindex(m, j)]
+    val
+end
 function weightedpartialoperatorx(S::HalfDiskSpace{<:Any, <:Any, T}, N) where T
     # Takes weighted space ∂/∂x(W^{a,b}) -> W^{a-1,b-1}
     W = BandedBlockBandedMatrix(
         Zeros{T}(sum(1:(N+3)),sum(1:(N+1))), (1:N+3, 1:N+1), (2,-1), (2,0))
     Sx = differentiateweightedspacex(S)
-    m = Int(ceil(N + 0.5S.a + S.b + 5)^2) # TODO
-    pts, w = pointswithweights((S.family)(0,0), m) # Weight of 1 for the inner product
-    getopptseval(S, N+1, pts)
-    getxderivopptseval(S, N+1, pts)
-    getopptseval(Sx, N+3, pts)
+    P = S.family.P(S.b, S.b)
+    Px = Sx.family.P(Sx.b, Sx.b)
+    ptsp, wp = pointswithweights(Px, N+3)
+    getopptseval(P, N, ptsp)
+    getopptseval(Px, N+1, ptsp)
+    getderivopptseval(P, N, ptsp)
+    ptsh, wh = pointswithweights(S.family.H(S.a-1, S.b-0.5), 2N+2)
     getopnorms(Sx, sum(1:N+3))
-    for n = 0:N
-        for k = 0:n
-            j = getopindex(n, k)
-            dpxpts = [(weightderivativex(S, pts[i]) * opevalatpts(S, j, pts)[i]
-                       + weight(S, pts[i]) * xderivopevalatpts(S, j, pts)[i])
-                       for i = 1:length(pts)]
-            inds = [k, k+2]
-            for i in inds
-                if k < n || i == k
-                    jj = getopindex(n+1, i)
-                    view(W, Block(n+2, n+1))[i+1, k+1] = inner2(S, dpxpts, opevalatpts(Sx, jj, pts), w) / Sx.opnorms[jj]
-                end
-                jj = getopindex(n+2, i)
-                view(W, Block(n+3, n+1))[i+1, k+1] = inner2(S, dpxpts, opevalatpts(Sx, jj, pts), w) / Sx.opnorms[jj]
-            end
+
+    # Get pt evals for the H OPs
+    for k = 0:N
+        H = S.family.H(S.a, S.b+k+0.5)
+        getopptseval(H, N-k, ptsh)
+        getderivopptseval(H, N-k, ptsh)
+        for j = k:2:k+2
+            Hx = Sx.family.H(Sx.a, Sx.b+j+0.5)
+            getopptseval(Hx, N-k+1, ptsh)
+        end
+    end
+    for n = 0:N, k = 0:n
+        for m = n+1:n+2, j = k:2:min(m,k+2)
+            val = getweightedpartialoperatorxval(S, ptsp, wp, ptsh,
+                                                    wh, n, k, m, j)
+            view(W, Block(m+1, n+1))[j+1, k+1] = val
         end
     end
     W
