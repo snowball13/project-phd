@@ -31,6 +31,7 @@ struct OrthogonalPolynomialSpace{FA,WW,F,D,B,R,N} <: PolynomialSpace{D,R}
     opnorm::Vector{R} # The norm of the OPs (all OPs of a OPSpace have the same norm).
                         # NOTE this is the value of the norm squared
     opptseval::Vector{Vector{R}}
+    derivopptseval::Vector{Vector{R}}
 end
 
 
@@ -81,7 +82,7 @@ tocanonical(S::OrthogonalPolynomialSpace, x) = x
 OrthogonalPolynomialSpace(fam::SpaceFamily{D,R}, w::Fun, α::NTuple{N,B}) where {D,R,B,N} =
     OrthogonalPolynomialSpace{typeof(fam),typeof(w),Fun,D,B,R,N}(
         fam, w, α, Vector{Fun}(), Vector{R}(), Vector{R}(), Vector{R}(),
-        Vector{Vector{R}}())
+        Vector{Vector{R}}(), Vector{Vector{R}}())
 
 function resizedata!(S::OrthogonalPolynomialSpace, n)
     N₀ = length(S.a) - 1
@@ -275,15 +276,68 @@ function opevalatpts(S::OrthogonalPolynomialSpace{<:Any,<:Any,<:Any,<:Any,<:Any,
 end
 resetopptseval(S::OrthogonalPolynomialSpace) = resize!(S.opptseval, 0)
 
+# Method to gather and evaluate the op derivatives of space S at the transform pts given
+# NOTE: getopptseval() has to be called first
+function getderivopptseval(S::OrthogonalPolynomialSpace, N, pts)
+    resetderivopptseval(S)
+    for n = 0:N
+        derivopevalatpts(S, n+1, pts)
+    end
+    S.derivopptseval
+end
+function derivopevalatpts(S::OrthogonalPolynomialSpace{<:Any,<:Any,<:Any,<:Any,<:Any,T,<:Any}, j, pts) where T
+    # Here, j refers to the index (i.e. deg(p) - 1)
+    N = length(S.derivopptseval) - 1
+    if N ≥ j - 1
+        return S.derivopptseval[j]
+    end
+
+    # We iterate up from the last obtained pts eval
+    if  N != j - 2
+        error("Invalid index")
+    end
+
+    resizedata!(S, j)
+    resize!(S.derivopptseval, j)
+    S.derivopptseval[j] = Vector{T}(undef, length(pts))
+
+    # p_{n+1} = (A_n x + B_n)p_n - C_n p_{n-1}
+    # => dxp_{n+1} = A_n p_n + (A_n x + B_n)dxp_n - C_n dxp_{n-1}
+    n = j - 1
+    if n == 0 # Scalar
+        S.derivopptseval[j][:] .= 0.0 # Scalar
+    elseif n == 1 # Linear
+        A = recA(T, S, n-1)
+        B = recB(T, S, n-1)
+        P1 = opevalatpts(S, n, pts)
+        dP1 = derivopevalatpts(S, n, pts)
+        for r = 1:length(pts)
+            S.derivopptseval[j][r] = A * P1[r] + (A * pts[r] + B) * dP1[r]
+        end
+    else
+        A = recA(T, S, n-1)
+        B = recB(T, S, n-1)
+        C = recC(T, S, n-1)
+        P1 = opevalatpts(S, n, pts)
+        dP1 = derivopevalatpts(S, n, pts)
+        dP2 = derivopevalatpts(S, n-1, pts)
+        for r = 1:length(pts)
+            S.derivopptseval[j][r] = A * P1[r] + (A * pts[r] + B) * dP1[r] - C * dP2[r]
+        end
+    end
+    S.derivopptseval[j]
+end
+resetderivopptseval(S::OrthogonalPolynomialSpace) = resize!(S.derivopptseval, 0)
+
 function getopnorm(S::OrthogonalPolynomialSpace)
     # NOTE this is the squared norms
     if length(S.opnorm) == 0
         resize!(S.opnorm, 1)
         pts, w = pointswithweights(S, 1)
-        p = opevalatpts(S, 1, pts)
+        p = [1] # p = opevalatpts(S, 1, pts)
         S.opnorm[1] = inner2(S, p, p, w)
     end
-    S
+    S.opnorm[1]
 end
 
 
@@ -389,6 +443,7 @@ function pointswithweights(S::HalfDiskSpace{<:Any, <:Any, T}, n) where T
     # NOTE: the odd part of the quad rule will equal 0 for polynomials,
     #       so can be ignored.
     N = Int(ceil(sqrt(n)))
+    @show "begin pointswithweights()", n, N
     t, wt = pointswithweights((S.family.P)(S.b, S.b), N)
     s, ws = pointswithweights((S.family.H)(S.a, S.b + 0.5), N)
     pts = Vector{SArray{Tuple{2},T,1,2}}(undef, 2(N^2))
@@ -401,6 +456,7 @@ function pointswithweights(S::HalfDiskSpace{<:Any, <:Any, T}, n) where T
             w[i + (k - 1)N] = ws[k] * wt[i]
         end
     end
+    @show "end pointswithweights()"
     # # Reset the calculated OP pt evals, and return the pts and wghts
     # resetopptseval(S)
     pts, w
@@ -736,6 +792,15 @@ struct HalfDiskFamily{B,R,FA,F} <: DiskSpaceFamily{B,R}
 end
 
 function HalfDiskFamily(::Type{B},::Type{R}) where {B,R}
+    # setprecision(850) do
+    #     X = Fun(identity, B(0)..1)
+    #     Y = Fun(identity, B(-1)..1)
+    #     H = OrthogonalPolynomialFamily(R, X, 1-X^2)
+    #     P = OrthogonalPolynomialFamily(R, 1+Y, 1-Y)
+    #     ρ = sqrt(1 - X^2)
+    #     spaces = Dict{NTuple{2,B}, HalfDiskSpace}()
+    #     HalfDiskFamily{B,R,typeof(H),typeof(ρ)}(spaces, H, P, ρ)
+    # end
     X = Fun(identity, B(0)..1)
     Y = Fun(identity, B(-1)..1)
     H = OrthogonalPolynomialFamily(R, X, 1-X^2)
@@ -750,8 +815,12 @@ function (D::HalfDiskFamily{B,R,<:Any,<:Any})(a::B, b::B) where {B,R}
     haskey(D.spaces,(a,b)) && return D.spaces[(a,b)]
     D.spaces[(a,b)] = HalfDiskSpace(D, a, b)
 end
-(D::HalfDiskFamily{B,R,<:Any,<:Any})(a, b) where {B,R} = D(convert(B,a), convert(B,b))
-
+function (D::HalfDiskFamily{B,R,<:Any,<:Any})(a, b) where {B,R}
+    # setprecision(850) do
+    #     D(B(a), B(b))
+    # end
+    D(B(a), B(b))
+end
 
 # Partial derivatives:
 # Seems that: dx takes (a,b)->(a+1,b+1) with nonzero for m=n-1,n-2
@@ -793,55 +862,76 @@ function differentiatey(S::HalfDiskSpace, cfs::AbstractVector)
     end
 end
 
+function getpartialoperatorxval(S::HalfDiskSpace{<:Any, <:Any, T},
+                                    ptsp, wp, ptsh, wh, n, k, m, j) where T
+    Sx = differentiatespacex(S)
+    P = S.family.P(S.b, S.b)
+    Px = Sx.family.P(Sx.b, Sx.b)
+    H = S.family.H(S.a, S.b+k+0.5)
+    Hx = S.family.H(Sx.a, Sx.b+j+0.5)
+    getopptseval(H, n-k, ptsh)
+    getderivopptseval(H, n-k, ptsh)
+    getopptseval(Hx, m-j, ptsh)
+    valp = inner2(Px, opevalatpts(P, k+1, ptsp), opevalatpts(Px, j+1, ptsp), wp)
+    valh = inner2(H, (ptsh.^2) .* opevalatpts(H, n-k+1, ptsh),
+                    (T.(S.family.ρ.(ptsh)).^(k+j)) .* opevalatpts(Hx, m-j+1, ptsh), wh)
+    val = valp * inner2(H, ptsh .* derivopevalatpts(H, n-k+1, ptsh),
+                        (T.(S.family.ρ.(ptsh)).^(k+j+2)) .* opevalatpts(Hx, m-j+1, ptsh), wh)
+    val -= k * valh * valp
+    val += valh * inner2(Px, ptsp .* derivopevalatpts(P, k+1, ptsp),
+                            opevalatpts(Px, j+1, ptsp), wp)
+    val /= Sx.opnorms[getopindex(m, j)]
+    val
+end
 function partialoperatorx(S::HalfDiskSpace{<:Any, <:Any, T}, N) where T
     # Takes the space P^{a,b} -> P^{a+1,b+1}
     Sx = differentiatespacex(S)
-    pts, w = pointswithweights(Sx, N^2)
-    getopnorms(Sx, sum(1:N+1))
-    getopptseval(Sx, N+1, pts)
-    getopptseval(S, N+1, pts)
-    getxderivopptseval(S, N+1, pts)
-    if N == 2
-        A = BandedBlockBandedMatrix(
-            Zeros{T}(sum(1:N),sum(1:(N+1))), (1:N, 1:N+1), (-1,2), (0, 2))
-    else
-        A = BandedBlockBandedMatrix(
-            Zeros{T}(sum(1:N),sum(1:(N+1))), (1:N, 1:N+1), (-1,2), (0, N-1))
-    end
+    P = S.family.P(S.b, S.b)
+    Px = Sx.family.P(Sx.b, Sx.b)
+    ptsp, wp = pointswithweights(Px, N+2) # TODO
+    getopptseval(P, N, ptsp)
+    getderivopptseval(P, N, ptsp)
+    getopptseval(Px, N, ptsp)
+    H = S.family.H(S.a, S.b+0.5)
+    ptsh, wh = pointswithweights(H, 2N+2)
+    getopnorms(Sx, getopindex(N-1, N-1))
+
+    A = BandedBlockBandedMatrix(
+        Zeros{T}(sum(1:N),sum(1:(N+1))), (1:N, 1:N+1), (-1,2), (0, 2))
+
     n, k = 1, 0
-    j = getopindex(n, k)
-    jj = getopindex(n-1, k)
-    view(A, Block(n, n+1))[1, 1] = inner2(S, xderivopevalatpts(S, j, pts),
-                            opevalatpts(Sx, jj, pts), w) / Sx.opnorms[jj]
+    m, j = n-1, k
+    H = S.family.H(S.a, S.b+k+0.5)
+    Hx = S.family.H(Sx.a, Sx.b+j+0.5)
+    getopptseval(H, n-k, ptsh)
+    getderivopptseval(H, n-k, ptsh)
+    getopptseval(Hx, m-j, ptsh)
+    val = getpartialoperatorxval(S, ptsp, wp, ptsh, wh, n, k, m, j)
+    view(A, Block(m+1, n+1))[1, 1] = val
+
     for n = 2:N, k = 0:n
-        j = getopindex(n, k)
-        if k == 0
-            inds1 = [0]
-            inds2 = [0]
-        elseif k == 1
-            inds1 = [1]
-            inds2 = [1]
+        if k < 2
+            inds1 = (n == 2 && k == 1 ? [] : [k])
+            inds2 = [k]
         elseif k == n - 1
-            inds1 = [n-3]
-            inds2 = [n-3, n-1]
+            inds1 = [k-2]
+            inds2 = [k-2, k]
         elseif k == n
-            inds1 = [n-2]
-            inds2 = [n-2]
+            inds1 = [k-2]
+            inds2 = [k-2]
         else
             inds1 = [k-2, k]
             inds2 = [k-2, k]
         end
-        if !(n == 2 && k == 1)
-            for i in inds1
-                jj = getopindex(n-2, i)
-                view(A, Block(n-1, n+1))[i+1, k+1] = inner2(S, xderivopevalatpts(S, j, pts),
-                            opevalatpts(Sx, jj, pts), w) / Sx.opnorms[jj]
-            end
+        m = n-2
+        for j in inds1
+            val = getpartialoperatorxval(S, ptsp, wp, ptsh, wh, n, k, m, j)
+            view(A, Block(m+1, n+1))[j+1, k+1] = val
         end
-        for i in inds2
-            jj = getopindex(n-1, i)
-            view(A, Block(n, n+1))[i+1, k+1] = inner2(S, xderivopevalatpts(S, j, pts),
-                            opevalatpts(Sx, jj, pts), w) / Sx.opnorms[jj]
+        m = n-1
+        for j in inds2
+            val = getpartialoperatorxval(S, ptsp, wp, ptsh, wh, n, k, m, j)
+            view(A, Block(m+1, n+1))[j+1, k+1] = val
         end
     end
     A
@@ -851,16 +941,16 @@ function partialoperatory(S::HalfDiskSpace{<:Any, <:Any, T}, N) where T
     A = BandedBlockBandedMatrix(
         Zeros{T}(sum(1:N),sum(1:(N+1))), (1:N, 1:N+1), (-1,1), (-1,1))
     Sy = differentiatespacey(S)
-    m = N^2 + 1 # TODO
-    pts, w = pointswithweights(Sy, m)
-    getopptseval(S, N+1, pts)
-    getyderivopptseval(S, N+1, pts)
-    getopptseval(Sy, N+1, pts)
-    getopnorms(Sy, sum(1:N+1))
+    P = S.family.P(S.b, S.b)
+    Py = Sy.family.P(Sy.b, Sy.b)
+    pts, w = pointswithweights(Py, N)
+    getderivopptseval(P, N, pts)
+    getopptseval(Py, N, pts)
+    getopnorms(Sy, getopindex(N-1, N-1))
     for k = 1:N
-        j = getopindex(N, k)
         jj = getopindex(N-1, k-1)
-        val = (inner2(S, yderivopevalatpts(S, j, pts), opevalatpts(Sy, jj, pts), w)
+        val = (getopnorm(Sy.family.H(S.a, S.b+k+0.5))
+                * inner2(Py, derivopevalatpts(P, k+1, pts), opevalatpts(Py, k, pts), w)
                 / Sy.opnorms[jj])
         for i = k:N
             view(A, Block(i, i+1))[k, k+1] = val
@@ -869,7 +959,7 @@ function partialoperatory(S::HalfDiskSpace{<:Any, <:Any, T}, N) where T
     A
 end
 function weightedpartialoperatorx(S::HalfDiskSpace{<:Any, <:Any, T}, N) where T
-    # Takes weighted space ∂/∂y(W^{a,b}) -> W^{a-1,b-1}
+    # Takes weighted space ∂/∂x(W^{a,b}) -> W^{a-1,b-1}
     W = BandedBlockBandedMatrix(
         Zeros{T}(sum(1:(N+3)),sum(1:(N+1))), (1:N+3, 1:N+1), (2,-1), (2,0))
     Sx = differentiateweightedspacex(S)
@@ -903,19 +993,23 @@ function weightedpartialoperatory(S::HalfDiskSpace{<:Any, <:Any, T}, N) where T
     W = BandedBlockBandedMatrix(
         Zeros{T}(sum(1:(N+2)),sum(1:(N+1))), (1:N+2, 1:N+1), (1,-1), (1,-1))
     Sy = differentiateweightedspacey(S)
-    m = Int(ceil(0.5 * (2N + S.a + 2S.b))^2) # TODO
-    pts, w = pointswithweights((S.family)(0,0), m) # Weight of 1 for the inner product
-    getopptseval(S, N+1, pts)
-    getyderivopptseval(S, N+1, pts)
-    getopptseval(Sy, N+1, pts)
+    P = S.family.P(S.b, S.b)
+    Py = Sy.family.P(Sy.b, Sy.b)
+    ptsp, wp = pointswithweights(Py, N+2)
+    getopptseval(P, N, ptsp)
+    getopptseval(Py, N+1, ptsp)
+    getderivopptseval(P, N, ptsp)
     getopnorms(Sy, sum(1:N+2))
+
+    n, m = N, N+1
     for k = 0:N
-        j = getopindex(N, k)
-        jj = getopindex(N+1, k+1)
-        dpypts = [(weightderivativey(S, pts[i]) * opevalatpts(S, j, pts)[i]
-                   + weight(S, pts[i]) * yderivopevalatpts(S, j, pts)[i])
-                   for i = 1:length(pts)]
-        val = inner2(S, dpypts, opevalatpts(Sy, jj, pts), w) / Sy.opnorms[jj]
+        j = k + 1
+        val = - 2S.b * inner2(P, ptsp .* opevalatpts(P, k+1, ptsp),
+                                opevalatpts(Py, j+1, ptsp), wp)
+        val += inner2(P, (-ptsp.^2 .+ 1) .* derivopevalatpts(P, k+1, ptsp),
+                        opevalatpts(Py, j+1, ptsp), wp)
+        val *= getopnorm(Sy.family.H(S.a, S.b+k+0.5))
+        val /= Sy.opnorms[getopindex(m, j)]
         for i = k:N
             view(W, Block(i+2, i+1))[k+2, k+1] = val
         end
@@ -1133,11 +1227,17 @@ end
 
 function laplace(D::HalfDiskFamily, N)
     A = partialoperatorx(D(0.0,0.0), N+2)
+    @show "A done"
     B = weightedpartialoperatorx(D(1.0,1.0), N)
+    @show "B done"
     C = transformparamsoperator(D(0.0,1.0), D(1.0,1.0), N+1)
+    @show "C done"
     E = partialoperatory(D(0.0,0.0), N+2)
+    @show "E done"
     F = transformparamsoperator(D(1.0,0.0), D(0.0,0.0), N+1, weightedfrom=true)
+    @show "F done"
     G = weightedpartialoperatory(D(1.0,1.0), N)
+    @show "G done"
     A * B + C * E * F * G
 end
 
@@ -1226,13 +1326,12 @@ function converttooperatorclenshawmatrix(S::HalfDiskSpace{<:Any, <:Any, T}, A, J
     B
 end
 function operatorclenshaw(cfs, S::HalfDiskSpace)
-    # TODO: ρ(Jx) doesnt work, how to implement (i.e. get operator version of P_1)
     m̃ = length(cfs)
     N = -1 + Int(round(sqrt(1+2(m̃-1))))
-    OrthogonalPolynomialFamilies.resizedata!(S, N+1)
+    resizedata!(S, N+1)
     m = Int((N+1)*(N+2)/2)
-    Jx = OrthogonalPolynomialFamilies.jacobix(S, N)
-    Jy = OrthogonalPolynomialFamilies.jacobiy(S, N)' # TODO: Need to transpose in the method!
+    Jx = jacobix(S, N)
+    Jy = jacobiy(S, N)' # TODO: Need to transpose in the method!
     if m̃ < m
         resize!(cfs, m)
         cfs[m̃+1:end] .= 0.0
@@ -1265,11 +1364,14 @@ operatorclenshaw(f::Fun, S::HalfDiskSpace) = operatorclenshaw(f.coefficients, S)
 
 # Method to gather and evaluate the ops of space S at the transform pts given
 function getopptseval(S::HalfDiskSpace, N, pts)
+    @show "begin getopptseval()"
     resetopptseval(S)
     jj = [getopindex(n, 0) for n=0:N]
     for j in jj
+        @show jj[end], j
         opevalatpts(S, j, pts)
     end
+    @show "end getopptseval()"
     S.opptseval
 end
 function opevalatpts(S::HalfDiskSpace{<:Any, <:Any, T}, j, pts) where T
