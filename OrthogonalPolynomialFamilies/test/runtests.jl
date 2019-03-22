@@ -209,7 +209,7 @@ end
     St = (S.family)(S.a-1, S.b-1)
     maxop = 100
     N = getnk(maxop)[1] + 3
-    W = transformparamsoperator(S, St, N, weightedfrom=true)
+    W = transformparamsoperator(S, St, N, weighted=true)
     for j = 1:maxop
         p = Fun(S, [zeros(j-1); 1])
         resizecoeffs!(p, N)
@@ -256,7 +256,7 @@ end
     end
 
     tol = 1e-13
-    
+
     a, b = 2.0, 4.0; D = HalfDiskFamily(); S = D(a, b)
     x, y = 0.4, -0.2; z = [x; y] # Test point
     St = (S.family)(S.a, S.b+1)
@@ -277,7 +277,7 @@ end
     St = (S.family)(S.a, S.b-1)
     maxop = 150
     N = getnk(maxop)[1] + 1
-    C = transformparamsoperator(S, St, N, weightedfrom=true)
+    C = transformparamsoperator(S, St, N, weighted=true)
     for j = 1:maxop
         p = Fun(S, [zeros(j-1); 1])
         q = Fun(St, C * pad(p.coefficients, size(C)[1]))
