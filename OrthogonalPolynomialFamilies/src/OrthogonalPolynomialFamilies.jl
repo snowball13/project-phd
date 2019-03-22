@@ -864,19 +864,19 @@ end
 
 function getpartialoperatorxval(S::HalfDiskSpace{<:Any, <:Any, T},
                                     ptsp, wp, ptsh, wh, n, k, m, j) where T
+    # NOTE: ρ(x) is explicitly assumed to be sqrt(1-x^2), as calling ρ(x) is too
+    # expensive
+    # We should have already called getopptseval etc
     Sx = differentiatespacex(S)
     P = S.family.P(S.b, S.b)
     Px = Sx.family.P(Sx.b, Sx.b)
     H = S.family.H(S.a, S.b+k+0.5)
     Hx = S.family.H(Sx.a, Sx.b+j+0.5)
-    getopptseval(H, n-k, ptsh)
-    getderivopptseval(H, n-k, ptsh)
-    getopptseval(Hx, m-j, ptsh)
     valp = inner2(Px, opevalatpts(P, k+1, ptsp), opevalatpts(Px, j+1, ptsp), wp)
     valh = inner2(H, (ptsh.^2) .* opevalatpts(H, n-k+1, ptsh),
-                    (T.(S.family.ρ.(ptsh)).^(k+j)) .* opevalatpts(Hx, m-j+1, ptsh), wh)
+                    (-ptsh.^2 .+ 1).^(0.5k + 0.5j) .* opevalatpts(Hx, m-j+1, ptsh), wh)
     val = valp * inner2(H, ptsh .* derivopevalatpts(H, n-k+1, ptsh),
-                        (T.(S.family.ρ.(ptsh)).^(k+j+2)) .* opevalatpts(Hx, m-j+1, ptsh), wh)
+                        (-ptsh.^2 .+ 1).^(0.5k + 0.5j + 1) .* opevalatpts(Hx, m-j+1, ptsh), wh)
     val -= k * valh * valp
     val += valh * inner2(Px, ptsp .* derivopevalatpts(P, k+1, ptsp),
                             opevalatpts(Px, j+1, ptsp), wp)
@@ -899,16 +899,25 @@ function partialoperatorx(S::HalfDiskSpace{<:Any, <:Any, T}, N) where T
     A = BandedBlockBandedMatrix(
         Zeros{T}(sum(1:N),sum(1:(N+1))), (1:N, 1:N+1), (-1,2), (0, 2))
 
+    # Get pt evals for the H OPs
+    for k = 0:N
+        H = S.family.H(S.a, S.b+k+0.5)
+        getopptseval(H, N-k, ptsh)
+        getderivopptseval(H, N-k, ptsh)
+        if k > 1
+            j = k - 2
+            Hx = Sx.family.H(Sx.a, Sx.b+j+0.5)
+            getopptseval(Hx, N-k+1, ptsh)
+        end
+        j = k
+        Hx = Sx.family.H(Sx.a, Sx.b+j+0.5)
+        getopptseval(Hx, N-k-1, ptsh)
+    end
+
     n, k = 1, 0
     m, j = n-1, k
-    H = S.family.H(S.a, S.b+k+0.5)
-    Hx = S.family.H(Sx.a, Sx.b+j+0.5)
-    getopptseval(H, n-k, ptsh)
-    getderivopptseval(H, n-k, ptsh)
-    getopptseval(Hx, m-j, ptsh)
     val = getpartialoperatorxval(S, ptsp, wp, ptsh, wh, n, k, m, j)
     view(A, Block(m+1, n+1))[1, 1] = val
-
     for n = 2:N, k = 0:n
         if k < 2
             inds1 = (n == 2 && k == 1 ? [] : [k])
@@ -960,7 +969,9 @@ function partialoperatory(S::HalfDiskSpace{<:Any, <:Any, T}, N) where T
 end
 function getweightedpartialoperatorxval(S::HalfDiskSpace{<:Any, <:Any, T},
                                     ptsp, wp, ptsh, wh, n, k, m, j) where T
-    # We should have already called getopptseval etc for
+    # NOTE: ρ(x) is explicitly assumed to be sqrt(1-x^2), as calling ρ(x) is too
+    # expensive
+    # We should have already called getopptseval etc
     Sx = differentiateweightedspacex(S)
     P = S.family.P(S.b, S.b)
     Px = Sx.family.P(Sx.b, Sx.b)
@@ -969,14 +980,13 @@ function getweightedpartialoperatorxval(S::HalfDiskSpace{<:Any, <:Any, T},
     valp = inner2(Px, (-ptsp.^2 .+ 1) .* opevalatpts(P, k+1, ptsp),
                     opevalatpts(Px, j+1, ptsp), wp)
     valh = inner2(H, (ptsh.^2) .* opevalatpts(H, n-k+1, ptsh),
-                    (T.(S.family.ρ.(ptsh)).^(k+j)) .* opevalatpts(Hx, m-j+1, ptsh), wh)
-
-    val = S.a * valp * inner2(H, (T.(S.family.ρ.(ptsh)).^(k+j+2)) .* opevalatpts(H, n-k+1, ptsh),
-                     opevalatpts(Hx, m-j+1, ptsh), wh)
+                    (-ptsh.^2 .+ 1).^(0.5k + 0.5j) .* opevalatpts(Hx, m-j+1, ptsh), wh)
+    val = S.a * valp * inner2(H, (-ptsh.^2 .+ 1).^(0.5k + 0.5j + 1) .* opevalatpts(H, n-k+1, ptsh),
+                                opevalatpts(Hx, m-j+1, ptsh), wh)
     val += - 2S.b * valh * inner2(Px, opevalatpts(P, k+1, ptsp),
                                     opevalatpts(Px, j+1, ptsp), wp)
     val += valp * inner2(H, ptsh .* derivopevalatpts(H, n-k+1, ptsh),
-                            (T.(S.family.ρ.(ptsh)).^(k+j+2)) .* opevalatpts(Hx, m-j+1, ptsh), wh)
+                            (-ptsh.^2 .+ 1).^(0.5k + 0.5j + 1) .* opevalatpts(Hx, m-j+1, ptsh), wh)
     val -= k * valh * valp
     val += valh * inner2(Px, ptsp .* derivopevalatpts(P, k+1, ptsp),
                             (-ptsp.^2 .+ 1) .* opevalatpts(Px, j+1, ptsp), wp)
