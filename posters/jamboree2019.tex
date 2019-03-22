@@ -156,7 +156,7 @@
 \usepackage{listings}
 
 \title{Sparse Spectral Methods on Disk Slices}
-\author{Ben Snowball (Supervisors: Sheehan Olver (Main), Colin Cotter)}
+\author{Ben Snowball, Sheehan Olver}
 \department{Department of Mathematics, MPE CDT}
 \institution{Imperial College London}
 
@@ -185,14 +185,14 @@
 % LHS
 
   \leftbox{96}{
-        \section{Abstract}
+        \section{Introduction}
         
-In recent years, sparse spectral methods have been derived using hierarchies of classical orthogonal polynomials (OPs) on intervals, disks, and triangles (e.g. \cite{olver2019triangle}). Here, we extend this methodology to a hierarchy of non-classical orthogonal polynomials on disk slices (e.g. a half disk), building on the observation that sparsity is guaranteed due to the boundary being defined by an algebraic curve, and that the entries of partial differential operators can be determined using formulae in terms of (non-classical or semi-classical) univariate OPs. 
+In recent years, \textbf{sparse spectral methods} have been derived using hierarchies of classical \textbf{orthogonal polynomials} (OPs) on intervals, disks, and triangles (e.g. \cite{olver2019triangle}). We extend this methodology to a hierarchy of non-classical orthogonal polynomials on \textbf{disk slices} (e.g. a half disk). Sparsity is guaranteed due to the boundary being defined by an algebraic curve, and the entries of partial differential operators can be determined using formulae in terms of (non/semi-classical) univariate OPs. This work will lead to investigating p-FEM using disk-slice elements, and further to solving PDEs on the 3D hemisphere.
  
     }
     
     
-  \leftbox{81}{
+  \leftbox{79.5}{
       \section{Orthogonal polynomials on the half disk}
 
 By using a similar process to \cite[p55--56]{dunkl2014orthogonal} we can construct 2D orthogonal polynomials on $\Omega$ from 1D orthogonal polynomials on the intervals \([0,1]\) and \([-1,1]\).
@@ -216,7 +216,7 @@ w_2(x) &:= (1-x^2)^b = (1-x)^b \: (1+x)^b.
 \end{cases}
 \end{align}
 
-The weight $w_2(x)$ corresponds to the weight for the Jacobi polynomials \(\{P_n^{(b, b)}\}\). The weight $w_1(x)$ is non-classical and we introduce the notation \(\{H_n^{(a, b)}\}\) for the orthonormal polynomials. Thus we arrive at a two parameter family of 2D OPs \(\{\Pnk\}\) given by, for \(0 \le k \le n, \: n = 0,1,2,\dots,\)
+The weight $w_2(x)$ corresponds to the weight for the Jacobi polynomials \(\{P_n^{(b, b)}\}\). The weight $w_1(x)$ is non-classical and we introduce the notation \(\{H_n^{(a, b)}\}\) for the orthonormal polynomials. Thus we arrive at a \textbf{two parameter family of 2D OPs} \(\{\Pnk\}\) given by, for \(0 \le k \le n, \: n = 0,1,2,\dots,\)
 \begin{align}
  \Pnk^{(a,b)}(x,y) := H_{n-k}^{(a, b+k+\half)}(x) \: \rho(x)^k \: P_k^{(b,b)}(\frac{y}{\rho(x)}), \quad (x,y) \in \Omega, 
 \end{align}
@@ -224,7 +224,7 @@ orthogonal on \(\Omega\) with respect to the weight $W^{(a,b)}(x,y)$.
 
     }
     
-    \leftbox{37}{
+    \leftbox{35.5}{
     	\section{Jacobi matrices and building the OPs}
 Define, for some $N \in \No$:
 \begin{align}
@@ -236,18 +236,17 @@ Define, for some $N \in \No$:
 \quad \quad 
 \bigPab := \begin{bmatrix}
 		\bigPab_0 \\
-		\bigPab_1 \\
 		\vdots \\
 		\bigPab_N
 	\end{bmatrix}.
 \end{align}
 
 \begin{lemma}
-The three-term recurrences that $\Pnk^{(a,b)}(x,y)$ satisfies lead to Jacobi operators that correspond to multiplication by $x$ and $y$. Set $J_x^{(a,b)}, J_y^{(a,b)} \in \R^{\half (N+1)(N+2) \times \half (N+1)(N+2)}$ as the Jacobi matrices corresponding to
+The three-term recurrences that $\Pnk^{(a,b)}(x,y)$ satisfies lead to Jacobi operators $J_x^{(a,b)}, J_y^{(a,b)} \in \R^{\half (N+1)(N+2) \times \half (N+1)(N+2)}$ that correspond to multiplication by $x$ and $y$, i.e.
 \begin{align}
 J_x^{(a,b)} \bigPab(x,y) = x \bigPab(x,y), \quad J_y^{(a,b)} \bigPab(x,y) = y \bigPab(x,y).
 \end{align}
-Then  \(J_x^{(a,b)}, J_y^{(a,b)}\) have similar sparse (block-tridiagonal) Banded-Block-Banded structures.
+Then \(J_x^{(a,b)}, J_y^{(a,b)}\) have similar sparse (block-tridiagonal) Banded-Block-Banded structures.
 \end{lemma}
 Combining each system in (4) we can write this as a block-tridiagonal system of equations. Applying a preconditioner matrix to the system \cite[p78]{dunkl2014orthogonal}, we can expand the resulting lower-triangular system to obtain the recurrence:
     \begin{align}
@@ -263,7 +262,7 @@ where the matrix coefficients $\Dnt, B_n, C_n, G_n(x,y)$ can be explicitly found
     \rightbox{96}{
     	\section{Sparse partial differential operators}
 
-For general \(a,b\) and general functions \(f(x,y) = \bigPab(x,y)^\top \mathbf{f}\), there exist sparse operators \(D_x^{(a,b)}, \: D_y^{(a,b)}, \: W_x^{(a,b)}, \: W_y^{(a,b)}\) such that (as seen in the DLMF \cite{DLMFDerivatives} for other OP families):
+For general \(a,b\) and general functions \(f(x,y) = \bigPab(x,y)^\top \mathbf{f}\), there exist \textbf{sparse operators} \(D_x^{(a,b)}, \: D_y^{(a,b)}, \: W_x^{(a,b)}, \: W_y^{(a,b)}\) such that (as seen in the DLMF \cite{DLMFDerivatives} for other OP families):
 \begin{align*}
 \dx[f(x,y)] &= \bigP^{(a+1,b+1)}(x,y)^T \: D_x^{(a,b)} \: \mathbf{f}, \\
 \dy[f(x,y)] &= \bigP^{(a,b+1)}(x,y)^T \: D_y^{(a,b)} \: \mathbf{f}, \\
@@ -332,10 +331,10 @@ x \bigP^{(1,0)}(x,y) &= \Big(T^{(1,0)\to(0,0)} \Big)^T \: \bigP^{(0,0)}(x,y) \\
    \end{subfigure}
     \centering
     \captionsetup{width=.8\linewidth}
-    \caption{Left: A "spy" plot of the $\Delta$ operator for $\Wii(x,y) \: \bigPii(x,y) \to \bigPii(x,y)$ showing its sparsity. Right: The computed solution to $\Delta u = f$ with zero boundary conditions with $f(x,y) = 1 + \text{erf}(5(1 ? 10((x ? 0.5)^2 + y^2)))$. Code using ApproxFun \cite{ApproxFun}. Bottom: Diagram illustrating how the parameters change under partial differentiation. }
+    \caption{Left: A "spy" plot of the $\Delta$ operator for $\Wii(x,y) \: \bigPii(x,y) \to \bigPii(x,y)$ showing its sparsity. Right: The computed solution to $\Delta u = f$ with zero boundary conditions with $f(x,y) = 1 + \text{erf}(5(1 - 10((x - 0.5)^2 + y^2)))$. Code using ApproxFun \cite{ApproxFun}. Bottom: Diagram illustrating how the parameters change under partial differentiation. }
 \end{wrapfigure}
 
-where $\Delta^{(1,1)}$ is the matrix operator for the Laplacian, that will take us from coefficients for expansion in the weighted space $\Wii(x,y) \: \bigPii(x,y)$ to coefficients in the non-weighted space $\bigPii(x,y)$. This operator will have Banded-Block-Banded structure, and hence sparse. Note that this construction ensures imposition of Dirichlet zero boundary conditions. The sparsity of the these operators can be shown using a simply integration by parts argument.
+where $\Delta^{(1,1)}$ is the matrix operator for the \textbf{Laplacian}, that will take us from coefficients for expansion in the weighted space $\Wii(x,y) \: \bigPii(x,y)$ to coefficients in the non-weighted space $\bigPii(x,y)$. This operator will have \textbf{Banded-Block-Banded} structure, and hence is \textbf{sparse}. Note that this construction ensures imposition of Dirichlet zero boundary conditions. The sparsity of the these operators can be shown using a simple integration by parts argument.
  
     }
     
