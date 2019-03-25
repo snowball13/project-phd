@@ -53,6 +53,8 @@
 \newcommand{\chat}{\hat{c}^m_l}
 \newcommand{\chatmod}{\hat{c}^{|m|}_l}
 \newcommand{\ddx}{\frac{\mathrm{d}}{\mathrm{d}x}}
+\newcommand{\pddx}{\frac{\partial}{\partial x}}
+\newcommand{\pddy}{\frac{\partial}{\partial y}}
 \newcommand{\dmdxm}{\frac{\mathrm{d}^m}{\mathrm{d}x^m}}
 
 \newcommand{\Atilde}{\tilde{A}_{l,m}}
@@ -154,7 +156,7 @@
 
 
 
-\title{Sparse spectral and $p$-finite element methods on disk-slices and rhombi I: zero boundary conditions}
+\title{Sparse spectral and $p$-finite element methods on disk-slices and trapeziums I: zero boundary conditions}
 \author{Sheehan Olver, Ben Snowball}
 %\date{}							% Activate to display a given date or no date
 
@@ -164,14 +166,14 @@
 \maketitle
 
 \begin{abstract}
-In recent years, sparse spectral methods for solving partial differential equations have been derived using hierarchies of classical orthogonal polynomials on intervals, disks, and triangles. In this work we extend this methodology to a hierarchy of non-classical orthogonal polynomials on disk slices (e.g. a half disk) and rhombi. This builds on the observation that sparsity is guaranteed due to the boundary being defined by an algebraic curve, and that the entries of partial differential operators can be determined using formulae in terms of (non-classical) univariate orthogonal polynomials. 
+In recent years, sparse spectral methods for solving partial differential equations have been derived using hierarchies of classical orthogonal polynomials on intervals, disks, and triangles. In this work we extend this methodology to a hierarchy of non-classical orthogonal polynomials on disk slices (e.g. a half disk) and trapeziums. This builds on the observation that sparsity is guaranteed due to the boundary being defined by an algebraic curve, and that the entries of partial differential operators can be determined using formulae in terms of (non-classical) univariate orthogonal polynomials. 
 \end{abstract}
 
 
 %
 \section{Introduction}
 
-This paper develops sparse spectral methods for solving linear partial differential equations on a special class of geometries that includes disk slices and rhombi.  
+This paper develops sparse spectral methods for solving linear partial differential equations on a special class of geometries that includes disk slices and trapeziums.  
 More precisely, let  \(\rho \: : \: (\alpha,\beta) \: \to (0,\infty)\) be such that either:
 
 \begin{enumerate}
@@ -503,7 +505,9 @@ Firstly, we introduce further notation that
 \bigWab(x,y) := \Wab(x,y) \bigPab(x,y).
 \end{align}
 
-For general \(a,b\) and general functions \(f(x,y) = \bigPab(x,y)^\top \mathbf{f}\), there exist sparse operators \(D_x^{(a,b)}, \: D_y^{(a,b)}, \: W_x^{(a,b)}, \: W_y^{(a,b)}\) such that:
+Let $a, b$ be general parameters and a function $f(x,y)$ defined on $\Omega$ be approximated by its expansion $f(x,y) = \bigPab(x,y)^\top \mathbf{f}$. Recall that $\Wab(x,y) := w_H^{(a,b)}(x) \: w_P^{(b)}(\frac{y}{\rho(x)})$, where $\rho(x) := (1-x^2)^\half$, $w_H^{(a,b)}(x) := x^a \: (1-x^2)^b$ and $w_P^{(b)}(y) := (1-y^2)^b$ for the half disk case.
+
+There exist sparse operators \(D_x^{(a,b)}, \: D_y^{(a,b)}, \: W_x^{(a,b)}, \: W_y^{(a,b)}\) such that:
 \begin{align}
 \dx[f(x,y)] &= \bigP^{(a+1,b+1)}(x,y)^T \: D_x^{(a,b)} \: \mathbf{f}, \\
 \dy[f(x,y)] &= \bigP^{(a,b+1)}(x,y)^T \: D_y^{(a,b)} \: \mathbf{f}, \\
@@ -512,13 +516,14 @@ For general \(a,b\) and general functions \(f(x,y) = \bigPab(x,y)^\top \mathbf{f
 \end{align}
 The incrementing and decrementing of parameters as seen here is analogous to other well known orthogonal polynomials families' derivatives, for example the Jacobi polynomials, as seen in the DLMF \cite{DLMFDerivatives}.
 
-Further, we note that there exist "parameter transformation" Banded-Block-Banded matrix operators that increment/decrement the parameters, transforming the OPs from one (weighted or non-weighted) parameter space to another. We denote these operators as $T_W^{(1,0)\to(0,0)}$, $T_W^{(1,1)\to(0,0)}$, $T^{(0,1)\to(1,1)}$, $T^{(0,2)\to(2,2)}$ and the general $T^{(a,b)\to(a+1,b+1)}$ where:
+Further, we note that there exist "parameter transformation" Banded-Block-Banded matrix operators that increment/decrement the parameters, transforming the OPs from one (weighted or non-weighted) parameter space to another. We denote these operators as $T^{(a,b)\to(a+1,b)}$, $T^{(a,b)\to(a,b+1)}$ and $T^{(a,b)\to(a+1,b+1)}$ for conversion between non-weighted spaces, and similarly $T^{(a,b)\to(a-1,b)}$, $T^{(a,b)\to(a,b-1)}$ and $T^{(a,b)\to(a-1,b-1)}$ for conversion between weighted spaces, where:
 \begin{align}
-\bigW^{(1,0)}(x,y) &= \Big(T_W^{(1,0)\to(0,0)} \Big)^T \: \bigP^{(0,0)}(x,y) \\
-\bigW^{(1,1)}(x,y) &= \Big(T_W^{(1,1)\to(0,0)} \Big)^T \: \bigP^{(0,0)}(x,y) \\
-\bigP^{(0,1)}(x,y) &= \Big(T^{(0,1)\to(1,1)} \Big)^T \: \bigP^{(1,1)}(x,y) \\
-\bigP^{(0,2)}(x,y) &= \Big(T^{(0,2)\to(2,2)} \Big)^T \: \bigP^{(2,2)}(x,y) \\
-\bigP^{(a,b)}(x,y) &= \Big(T^{(a,b)\to(a+1,b+1)} \Big)^T \: \bigP^{(a+1,b+1)}(x,y)
+\bigP^{(a,b)}(x,y) &= \Big(T^{(a,b)\to(a+1,b)} \Big)^T \: \bigP^{(a+1,b)}(x,y) \\
+\bigP^{(a,b)}(x,y) &= \Big(T^{(a,b)\to(a,b+1)} \Big)^T \: \bigP^{(a,b+1)}(x,y) \\
+\bigP^{(a,b)}(x,y) &= \Big(T^{(a,b)\to(a+1,b+1)} \Big)^T \: \bigP^{(a+1,b+1)}(x,y) \\
+\bigW^{(a,b)}(x,y) &= \Big(T_W^{(a,b)\to(a+1,b)} \Big)^T \: \bigW^{(a-1,b)}(x,y) \\
+\bigW^{(a,b)}(x,y) &= \Big(T_W^{(a,b)\to(a,b+1)} \Big)^T \: \bigW^{(a,b-1)}(x,y) \\
+\bigW^{(a,b)}(x,y) &= \Big(T_W^{(a,b)\to(a+1,b+1)} \Big)^T \: \bigW^{(a-1,b-1)}(x,y) \\
 \end{align}
 
 We can then obtain the matrix operator for \(\Delta\), that will take us from coefficients for expansion in the weighted space
@@ -544,10 +549,50 @@ to coefficients in the space
 \]
 Importantly, again, this operator will have Banded-Block-Banded structure, and hence will be sparse. The matrix operator \(\Delta\) acting on the coefficients vector is then given by
 \begin{align}
-    D := D_x^{(1,1)} \: D_x^{(0,0)} + T^{(0,2)\to(2,2)} \: D_y^{(0,1)} \: D_y^{(0,0)}.
+    \Delta := D_x^{(1,1)} \: D_x^{(0,0)} + T^{(1,2)\to(2,2)} \: T^{(0,2)\to(1,2)}  \: D_y^{(0,1)} \: D_y^{(0,0)}.
 \end{align}
 
-The sparsity of the these operators can be shown using a simply integration by parts argument, again showing that the sparsity for differential operators is not dependent on the domain.
+The sparsity of the these operators can be shown using a simple integration by parts argument. We note that the non-zero entries of the differential operators are calculated as follows. 
+
+Note that we can expand $\pddx \Pnkab = \sum_{m=0}^{n} \sum_{j=0}^m c_{m,j} \: P^{(a+1, b+1)}_{m,j}$. The coefficients of these expansion are then the entries of the relevant operator matrix. By a simple integration by parts argument, we have that the only non-zero coefficients of this expansion are when $m = n-1, n-2$, $j = k, k-2$ and $0 \le j \le m$. These are then calculated by taking inner products, i.e. 
+\begin{align*}
+c_{m,j} = \frac{\ip<\pddx \Pnkab, P^{(a+1, b+1)}_{m,j} >_{W^{(a+1, b+1)}}}{\norm{P^{(a+1, b+1)}_{m,j}}^2_{W^{(a+1, b+1)}}}
+\end{align*}
+where 
+\begin{align}
+	&\ip<\pddx \Pnkab, P^{(a+1, b+1)}_{m,j} >_{W^{(a+1, b+1)}} \nonumber \\ 
+	&= \ip< x \: H_{n-k}^{(a, b+k+\half)} \prime (x), \: \rho(x)^{k+j+2} \: H_{m-j}^{(a, b+1+j+\half)} >_{w_H^{(a, b+\half)}} 
+		\: \ip< P_k^{(b,b)}, \: P_j^{(b+1,b+1)} >_{w_P^{(b+1)}}  \nonumber \\ 
+	& \quad - k \: \ip< x^2 \: H_{n-k}^{(a, b+k+\half)}(x), \: \rho(x)^{k+j} \: H_{m-j}^{(a, b+1+j+\half)} >_{w_H^{(a, b+\half)}} 
+		\: \ip< P_k^{(b,b)}, \: P_j^{(b+1,b+1)} >_{w_P^{(b+1)}}  \nonumber \\ 
+	& \quad + \: \ip< x^2 \: H_{n-k}^{(a, b+k+\half)}(x), \: \rho(x)^{k+j} \: H_{m-j}^{(a, b+1+j+\half)} >_{w_H^{(a, b+\half)}} 
+		\: \ip< y \: P_k^{(b,b)} \prime (y), \: P_j^{(b+1,b+1)} >_{w_P^{(b+1)}}  
+\end{align}
+We can then use quadrature to calculate the 1D inner products. This is much cheaper than using the 2D quadrature rule.
+
+Further, we can expand $\pddy \Pnkab = \sum_{m=0}^{n} \sum_{j=0}^m c_{m,j} \: P^{(a, b+1)}_{m,j}$. The coefficients of these expansion are then the entries of the relevant operator matrix. By a simple integration by parts argument, we have that the only non-zero coefficient of this expansion is when $m = n-1$, $j = k-1$. This is then calculated by taking inner products, i.e. 
+\begin{align*}
+c_{n-1,k-1} = \frac{\ip<\pddx \Pnkab, P^{(a, b+1)}_{n-1,k-1} >_{W^{(a, b+1)}}}{\norm{P^{(a, b+1)}_{n-1,k-1}}^2_{W^{(a, b+1)}}}
+\end{align*}
+where 
+\begin{align}
+	\ip<\pddx \Pnkab, P^{(a, b+1)}_{n-1,k-1} >_{W^{(a, b+1)}} = \norm{H_0^{(a,b+k+\half)}}^2_{w_H^{(a, b+k+\half)}} 
+		\: \ip< P_k^{(b,b)} \prime, \: P_{k-1}^{(b+1,b+1)} >_{w_P^{(b+1)}}
+\end{align}
+where we note that $\norm{H_n^{(a,b)}}_{w_H^{(a,b)}} = \norm{H_m^{(a,b)}}_{w_H^{(a,b)}}$ $\forall m, n \in \N_0$. 
+
+We can gain the non-zero entries of the weighted differential operators similarly, by noting that
+\begin{align}
+	\pddx \Wab(x,y) &= a W^{(a-1, b)}(x,y) - 2bW^{(a+1, b-1)}(x,y) \\
+	\pddy \Wab(x,y) &= -2b \: y \: W^{(a, b-1)}(x,y)
+\end{align}
+and also that
+\begin{align}
+	\ip< \Wab \Pnkab, \Wab \Pab_{m,j} >_{W^{(-a, -b)}} = \ip< \Pnkab, \Pab_{m,j} >_\Wab = \delta_{n,m} \: \delta_{k,j}.
+\end{align}
+
+Calculating the non-zero entries of the parameter transformation operators is similarly done, i.e. use a substitution in the 2D inner product integral to yield a product of 1D inner product integrals. 
+
 
 
 \section{Computational aspects}\label{Section:Computation}
@@ -580,35 +625,6 @@ Inputs: max degree $N$, weight $w(x)$
 Outputs: OP set $(H_0, \dots, H_N)$, coefficients $(\alpha_0, \dots, \alpha_N)$ and $(\beta_0, \dots, \beta_N)$
 \end{algorithm}
 We use the ApproxFun \cite{ApproxFun} package to calculate the inner products and norms in this algorithm to obtain the coefficients.
-
-
-%    # x * P[n](x) == (?[n] * P[n+1](x) + ?[n] * P[n](x) + ?[n-1] * P[n-1](x))
-%
-%    N = length(?)
-%    # x = Fun(identity, space(w)) # NOTE: space(w) does not "work" sometimes
-%    x = Fun(identity, domain(w))
-%
-%    if N? <= 0
-%        N? = 1
-%        f1 = Fun(1/sqrt(sum(w)),space(x))
-%        P[1] = f1
-%        v = x*P[1]
-%        ?[1] = sum(w*v*P[1])
-%        v = v - ?[1]*P[1]
-%        ?[1] = sqrt(sum(w*v^2))
-%        P[2] = v/?[1]
-%    end
-%
-%    for k = N?+1:N
-%        v = x*P[k] - ?[k-1]*P[k-1]
-%        ?[k] = sum(w*v*P[k])
-%        v = v - ?[k]*P[k]
-%        ?[k] = sqrt(sum(w*v^2))
-%        P[k+1] = v/?[k]
-%    end
-%
-%    P, ?, ?
-
 
 
 \subsection{Quadrature rules}
@@ -847,10 +863,10 @@ This has the weak formulation for any test function $v \in V := H_0^1(\Omega) = 
 	L(v) := \int_\Omega f \: v \: d\mathbf{x} = \int_\Omega \nabla u \cdot \nabla v \: d\mathbf{x} =: a(u,v).
 \end{align}
 
-In general, we would let $\FEset$ be the set of elements $\element$ that make up our finite element discretisation of the domain, where each $\element$ is a rhombus or disk slice for example. 
+In general, we would let $\FEset$ be the set of elements $\element$ that make up our finite element discretisation of the domain, where each $\element$ is a trapezium or disk slice for example. 
 
 \subsection{Single element p-FEM}
-In this section, we limit our discretisation to a single element, that is we let $\element = \Omega$ for a half disk/disk slice/rhombus domain. We can choose our finite dimensional space $V_h = \{v_h \in V \quad | \quad deg(v_h|_\element) \le p\}$ for some $p \in \N$.
+In this section, we limit our discretisation to a single element, that is we let $\element = \Omega$ for a half disk/disk slice/trapezium domain. We can choose our finite dimensional space $V_h = \{v_h \in V \quad | \quad deg(v_h|_\element) \le p\}$ for some $p \in \N$.
 
 We seek $u_h \in V_h$ s.t.
 \begin{align}
