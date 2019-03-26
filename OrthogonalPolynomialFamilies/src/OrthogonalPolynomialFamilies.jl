@@ -520,10 +520,10 @@ function HalfDiskTransformPlan(S::HalfDiskSpace{<:Any, <:Any, T}, vals) where T
     # Vandermonde matrices transposed, for each set of pts (x, ±y)
     VTp = Array{Float64}(undef, m, n)
     VTm = copy(VTp)
+    getopptseval(S, N, pts)
     for k = 1:m
-        Pnk = Fun(S, [zeros(k-1); 1])
-        VTp[k, :] = Pnk.(pts[1:n])
-        VTm[k, :] = Pnk.(pts[n+1:end])
+        VTp[k, :] = opevalatpts(S, k, pts)[1:n]
+        VTm[k, :] = opevalatpts(S, k, pts)[n+1:end]
     end
     W = Diagonal(w)
     U = Diagonal(1 ./ S.opnorms[1:m])
@@ -567,7 +567,8 @@ function recα(S::HalfDiskSpace{<:Any, <:Any, T}, n, k, j) where T
     end
 end
 
-# TODO
+# TODO: Speed up clenshaw! Maybe call pointswithweights(H) outide of this once,
+# and just adjust the inner products...
 function recβ(S::HalfDiskSpace{<:Any, <:Any, T}, n, k, j) where T
     # We get the norms of the 2D OPs
     m = Int((n+2)*(n+3) / 2)
@@ -580,7 +581,6 @@ function recβ(S::HalfDiskSpace{<:Any, <:Any, T}, n, k, j) where T
     H3 = (S.family.H)(S.a, S.b + k + 1.5)
     P = (S.family.P)(S.b, S.b)
     getopnorm(P)
-    δ1 = recβ(T, P, k+1) * P.opnorm[1]
 
     if isodd(j)
         pts, w = pointswithweights(H2, Int(ceil(n-k+1.5)))
