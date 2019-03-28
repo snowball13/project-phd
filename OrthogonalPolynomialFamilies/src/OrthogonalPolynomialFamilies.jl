@@ -56,6 +56,7 @@ function lanczos!(w, P, β, γ, N₀=0)
     end
 
     for k = N₀+1:N
+        @show k
         v = x*P[k] - γ[k-1]*P[k-1]
         β[k] = sum(w*v*P[k])
         v = v - β[k]*P[k]
@@ -85,8 +86,8 @@ OrthogonalPolynomialSpace(fam::SpaceFamily{D,R}, w::Fun, α::NTuple{N,B}) where 
         Vector{Vector{R}}(), Vector{Vector{R}}())
 
 function resizedata!(S::OrthogonalPolynomialSpace, n)
-    N₀ = length(S.a) - 1
-    n ≤ N₀ + 1 && return S
+    N₀ = length(S.a)
+    n ≤ N₀ && return S
     resize!(S.a, n)
     resize!(S.b, n)
     resize!(S.ops, n + 1)
@@ -1327,6 +1328,7 @@ function operatorclenshaw(cfs, S::HalfDiskSpace)
     (γ1 * P0)[1]
 end
 operatorclenshaw(f::Fun, S::HalfDiskSpace) = operatorclenshaw(f.coefficients, S)
+operatorclenshaw(f::Fun, S::HalfDiskSpace, N) = operatorclenshaw(resizecoeffs!(f, N), S)
 
 
 # Method to gather and evaluate the ops of space S at the transform pts given
