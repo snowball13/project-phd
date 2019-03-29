@@ -3,7 +3,7 @@ using ApproxFun, OrthogonalPolynomialFamilies, FastGaussQuadrature,
 import OrthogonalPolynomialFamilies: golubwelsch, lanczos, halfdiskquadrule,
         gethalfdiskOP, jacobix, jacobiy, differentiatex, differentiatey,
         resizecoeffs!, laplace, transformparamsoperator, operatorclenshaw, getnk,
-        getopindex
+        getopindex, weight
 
 
 
@@ -154,38 +154,17 @@ end
     # 1) f(x,y) = -8x => u(x,y) ≡ 1
     N = 1 # degree of f
     c = rand(1)[1]; f = Fun((x,y)->-c*8x, S)
-    Δ = laplace(D, N-1)
-    u = Fun(S, Δ \ resizecoeffs!(f, N))
+    Δ = laplacesquare(D, N)
+    u = Fun(S, sparse(Δ) \ resizecoeffs!(f, N))
     @test u(z) ≈ c # Result u(x,y) where Δ(u*w)(x,y) = f(x,y)
 
     # 2) f(x,y) = 2 - 12xy - 14x^2 - 2y^2 => u(x,y) = x + y
     U = Fun((x,y)->x+y, S)
     N = 2 # degree of f
     f = Fun((x,y)->(2 - 12x*y - 14x^2 - 2y^2), S)
-    Δ = laplace(D, N-1)
-    u = Fun(S, Δ \ f.coefficients[1:getopindex(N,N)])
+    Δ = laplacesquare(D, N)
+    u = Fun(S, sparse(Δ) \ f.coefficients[1:getopindex(N,N)])
     @test u(z) ≈ U(z)
-end
-
-@testset "Conversion operators" begin
-    a, b = 1.0, 1.0; D = HalfDiskFamily(); S = D(a, b)
-    x, y = 0.457, -0.209; z = [x; y] # Test point
-    N = 5
-    Sfrom = D(0.0, 2.0); Sto = D(2.0, 2.0)
-    f1 = Fun(Sfrom, rand(sum(1:N+1)))
-    T = transformparamsoperator(Sfrom, Sto, N)
-    f2 = Fun(D(Sto, T * f1.coefficients)
-    @test f2(z) ≈ f1(z)
-    Sfrom = D(0.0, 1.0); Sto = D(1.0, 1.0)
-    f1 = Fun(Sfrom, rand(sum(1:N+1)))
-    T = transformparamsoperator(Sfrom, Sto, N)
-    f2 = Fun(D(Sto, T * f1.coefficients)
-    @test f2(z) ≈ f1(z)
-    Sfrom = D(1.0, 0.0); Sto = D(0.0, 0.0)
-    f1 = Fun(Sfrom, rand(sum(1:N+1)))
-    T = transformparamsoperator(Sfrom, Sto, N, weightedfrom=true)
-    f2 = Fun(D(Sto, T * f1.coefficients)
-    @test f2(z) ≈ x*f1(z)
 end
 
 @testset "Operator Clenshaw" begin
@@ -240,50 +219,39 @@ end
         @test res < tol
     end
 
-    a, b = 2.0, 1.0; D = HalfDiskFamily(); S = D(a-1, b-1)
-    x, y = 0.4, -0.2; z = [x; y] # Test point
-    St = (S.family)(S.a+1, S.b+1)
-    maxop = 150
-    N = getnk(maxop)[1] + 1
-    C = transformparamsoperator(S, (S.family)(S.a+1, S.b+1), N)
-    for j = 1:maxop
-        p = Fun(S, [zeros(j-1); 1])
-        resizecoeffs!(p, N)
-        q = Fun(St, C * p.coefficients)
-        res = abs(q(z) - p(z))
-        res > tol && @show getnk(j), j, res
-        @test res < tol
-    end
-
     tol = 1e-13
 
-    a, b = 2.0, 4.0; D = HalfDiskFamily(); S = D(a, b)
-    x, y = 0.4, -0.2; z = [x; y] # Test point
-    St = (S.family)(S.a, S.b+1)
-    maxop = 150
-    N = getnk(maxop)[1] + 1
-    C = transformparamsoperator(S, St, N)
-    for j = 1:maxop
-        p = Fun(S, [zeros(j-1); 1])
-        resizecoeffs!(p, N)
-        q = Fun(St, C * p.coefficients)
-        res = abs(q(z) - p(z))
-        res > tol && @show getnk(j), j, res
-        @test res < tol
+    paramslist = [(1,1), (1,0), (0,1)]
+    for params in paramslist
+        a, b = 2.0, 4.0; D = HalfDiskFamily(); S = D(a, b)
+        x, y = 0.4, -0.2; z = [x; y] # Test point
+        St = (S.family)(S.a+params[1], S.b+params[2])
+        maxop = 150
+        N = getnk(maxop)[1] + 1
+        C = transformparamsoperator(S, St, N)
+        for j = 1:maxop
+            p = Fun(S, [zeros(j-1); 1])
+            resizecoeffs!(p, N)
+            q = Fun(St, C * p.coefficients)
+            res = abs(q(z) - p(z))
+            res > tol && @show getnk(j), j, res
+            @test res < tol
+        end
     end
-
-    a, b = 2.0, 4.0; D = HalfDiskFamily(); S = D(a, b)
-    x, y = 0.4, -0.2; z = [x; y] # Test point
-    St = (S.family)(S.a, S.b-1)
-    maxop = 150
-    N = getnk(maxop)[1] + 1
-    C = transformparamsoperator(S, St, N, weighted=true)
-    for j = 1:maxop
-        p = Fun(S, [zeros(j-1); 1])
-        q = Fun(St, C * pad(p.coefficients, size(C)[1]))
-        res = abs(q(z) - (1-z[1]^2-z[2]^2) * p(z))
-        res > tol && @show getnk(j), j, res
-        @test res < tol
+    for params in paramslist
+        a, b = 2.0, 4.0; D = HalfDiskFamily(); S = D(a, b)
+        x, y = 0.4, -0.2; z = [x; y] # Test point
+        St = (S.family)(S.a-params[1], S.b-params[2])
+        maxop = 150
+        N = getnk(maxop)[1] + 1
+        C = transformparamsoperator(S, St, N, weighted=true)
+        for j = 1:maxop
+            p = Fun(S, [zeros(j-1); 1])
+            q = Fun(St, C * pad(p.coefficients, size(C)[2]))
+            res = abs(weight(St, z) * q(z) - weight(S, z) * p(z))
+            res > tol && @show getnk(j), j, res
+            @test res < tol
+        end
     end
 end
 

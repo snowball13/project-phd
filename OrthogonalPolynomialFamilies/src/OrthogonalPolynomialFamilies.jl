@@ -954,6 +954,7 @@ function partialoperatory(S::HalfDiskSpace{<:Any, <:Any, T}, N) where T
     P = S.family.P(S.b, S.b)
     Py = Sy.family.P(Sy.b, Sy.b)
     pts, w = pointswithweights(Py, N)
+    getopptseval(P, N, pts)
     getderivopptseval(P, N, pts)
     getopptseval(Py, N, pts)
     getopnorms(Sy, getopindex(N-1, N-1))
@@ -1064,9 +1065,9 @@ function transformparamsoperator(S::HalfDiskSpace{<:Any, <:Any, T},
         # Outputs the relevant sum(1:N+1) × sum(1:N+1) matrix operator
         C = BandedBlockBandedMatrix(Zeros{T}(sum(1:(N+1)),sum(1:(N+1))),
                                     (1:N+1, 1:N+1), (0,1), (0,0))
-
         P = S.family.P(S.b, S.b)
         ptsh, wh = pointswithweights(St.family.H(St.a, St.b + 0.5), N+1)
+        rho2ptsh = -ptsh.^2 .+ 1
         getopnorms(St, sum(1:N+1))
 
         # Get pt evals for H OPs
@@ -1085,18 +1086,52 @@ function transformparamsoperator(S::HalfDiskSpace{<:Any, <:Any, T},
             M = (k == n ? [n] : [n-1, n])
             for m in M
                 val = inner2(H, opevalatpts(H, n-k+1, ptsh),
-                                (-ptsh.^2 .+ 1).^k .* opevalatpts(Ht, m-k+1, ptsh), wh)
+                                rho2ptsh.^k .* opevalatpts(Ht, m-k+1, ptsh), wh)
                 val *= getopnorm(P)
                 view(C, Block(m+1, n+1))[k+1, k+1] = val / St.opnorms[getopindex(m, k)]
             end
         end
         C
-    # Case 2: Takes the space W^{a,b} -> W^{a-1,b}
+    # Case 2: Takes the space P^{a,b} -> P^{a,b+1}
+    # and Case 3: Takes the space P^{a,b} -> P^{a+1,b+1}
+    elseif ((weighted == false && St.a == S.a && St.b == S.b+1)
+            || (weighted == false && St.a == S.a+1 && St.b == S.b+1))
+        # Outputs the relevant sum(1:N+1) × sum(1:N+1) matrix operator
+        C = BandedBlockBandedMatrix(Zeros{T}(sum(1:(N+1)),sum(1:(N+1))),
+                                    (1:N+1, 1:N+1), (0,3), (0,2))
+        P = S.family.P(S.b, S.b)
+        Pt = S.family.P(St.b, St.b)
+        ptsp, wp = pointswithweights(Pt, N+2)
+        ptsh, wh = pointswithweights(St.family.H(St.a, St.b + 0.5), N+1)
+        rho2ptsh = -ptsh.^2 .+ 1
+        # Get pt evals for 1D OPs
+        getopptseval(P, N, ptsp)
+        getopptseval(Pt, N, ptsp)
+        getopnorms(St, sum(1:N+1))
+        for k = 0:N
+            H = S.family.H(S.a, S.b+k+0.5)
+            Ht = St.family.H(St.a, St.b+k+0.5)
+            getopptseval(H, N-k, ptsh)
+            getopptseval(Ht, N-k, ptsh)
+        end
+        for n=0:N, k=0:n
+            H = S.family.H(S.a, S.b+k+0.5)
+            for m = n-3:n, j = k-2:2:k
+                if m ≥ 0 && 0 ≤ j ≤ m
+                    Ht = St.family.H(St.a, St.b+j+0.5)
+                    val = inner2(H, opevalatpts(H, n-k+1, ptsh),
+                                    rho2ptsh.^Int(0.5*(k+j)) .* opevalatpts(Ht, m-j+1, ptsh), wh)
+                    val *= inner2(P, opevalatpts(P, k+1, ptsp), opevalatpts(Pt, j+1, ptsp), wp)
+                    view(C, Block(m+1, n+1))[j+1, k+1] = val / St.opnorms[getopindex(m, j)]
+                end
+            end
+        end
+        C
+    # Case 4: Takes the space W^{a,b} -> W^{a-1,b}
     elseif weighted == true && St.a == S.a-1 && St.b == S.b
         # Outputs the relevant sum(1:N+2) × sum(1:N+1) matrix operator
         C = BandedBlockBandedMatrix(Zeros{T}(sum(1:(N+2)),sum(1:(N+1))),
                                     (1:N+2, 1:N+1), (1,0), (0,0))
-
         P = S.family.P(S.b, S.b)
         ptsh, wh = pointswithweights(S.family.H(S.a, S.b + 0.5), N+1)
         getopnorms(St, sum(1:N+2))
@@ -1120,17 +1155,18 @@ function transformparamsoperator(S::HalfDiskSpace{<:Any, <:Any, T},
             end
         end
         C
-    # Case 3: Takes the space W^{a,b} -> W^{a-1,b-1}
-    elseif weighted == true && St.a == S.a-1 && St.b == S.b-1
+    # Case 5: Takes the space W^{a,b} -> W^{a,b-1}
+    # and Case 6: Takes the space W^{a,b} -> W^{a-1,b-1}
+    elseif ((weighted == true && St.a == S.a && St.b == S.b-1)
+            || (weighted == true && St.a == S.a-1 && St.b == S.b-1))
         # Outputs the relevant sum(1:N+4) × sum(1:N+1) matrix operator
         C = BandedBlockBandedMatrix(Zeros{T}(sum(1:(N+4)),sum(1:(N+1))),
                                     (1:N+4, 1:N+1), (3,0), (2,0))
-
         P = S.family.P(S.b, S.b)
         Pt = S.family.P(St.b, St.b)
         ptsp, wp = pointswithweights(P, N+2)
         ptsh, wh = pointswithweights(S.family.H(S.a, S.b + 0.5), N+1)
-        rhoptsh = sqrt.(-ptsh.^2 .+ 1)
+        rho2ptsh = -ptsh.^2 .+ 1
         getopnorms(St, sum(1:N+4))
 
         # Get pt evals for P and H OPs
@@ -1147,45 +1183,13 @@ function transformparamsoperator(S::HalfDiskSpace{<:Any, <:Any, T},
 
         for n=0:N, k=0:n
             H = S.family.H(S.a, S.b+k+0.5)
-            for m = n:n+3, j = k:min(k+2, m)
+            for m = n:n+3, j = k:2:min(k+2, m)
                 Ht = St.family.H(St.a, St.b+j+0.5)
                 val = inner2(H, opevalatpts(H, n-k+1, ptsh),
-                                rhoptsh.^(k+j) .* opevalatpts(Ht, m-j+1, ptsh), wh)
+                                rho2ptsh.^Int(0.5(k+j)) .* opevalatpts(Ht, m-j+1, ptsh), wh)
                 val *= inner2(P, opevalatpts(P, k+1, ptsp), opevalatpts(Pt, j+1, ptsp), wp)
                 view(C, Block(m+1, n+1))[j+1, k+1] = val / St.opnorms[getopindex(m, j)]
             end
-        end
-        C
-    else
-        error("Invalid HalfDiskSpace")
-    end
-end
-
-function transformparamsoperatorsquare(S::HalfDiskSpace{<:Any, <:Any, T},
-            St::HalfDiskSpace{<:Any, <:Any, T}, N; weighted=false) where T
-    # Only case here is W11->W00
-    if weighted == true && St.a == S.a-1 && St.b == S.b-1
-        # Outputs the sum(1:N+1) × sum(1:N+1) matrix operator
-        C = BandedBlockBandedMatrix(
-            Zeros{T}(sum(1:(N+1)),sum(1:(N+1))), (1:N+1, 1:N+1), (3,0), (2,0))
-        W = transformparamsoperator(S, St, N+3, weighted=weighted)
-        i = 1
-        view(C, Block(i, i)) .= view(W, Block(i, i))
-        N == 0 && return C
-        i = 2
-        view(C, Block(i, i-1)) .= view(W, Block(i, i-1))
-        view(C, Block(i, i)) .= view(W, Block(i, i))
-        N == 1 && return C
-        i = 3
-        view(C, Block(i, i-2)) .= view(W, Block(i, i-2))
-        view(C, Block(i, i-1)) .= view(W, Block(i, i-1))
-        view(C, Block(i, i)) .= view(W, Block(i, i))
-        N == 2 && return C
-        for i = 4:N+1
-            view(C, Block(i, i-3)) .= view(W, Block(i, i-3))
-            view(C, Block(i, i-2)) .= view(W, Block(i, i-2))
-            view(C, Block(i, i-1)) .= view(W, Block(i, i-1))
-            view(C, Block(i, i)) .= view(W, Block(i, i))
         end
         C
     else
