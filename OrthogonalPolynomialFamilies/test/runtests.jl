@@ -145,28 +145,6 @@ end
     h = 1e-5; @test (f(x,y+h)-f(x,y))/h ≈ differentiatey(f, f.space)(x,y) atol=100h
 end
 
-@testset "Poisson" begin
-    # Model Problem: Δ(u*w)(x,y) = f(x,y) in Ω=halfdisk; u(x,y) ≡ 0 on ∂Ω.
-    #   where w(x,y) = x*(1-x^2-y^2) is the weight of the D(1.0,1.0) basis.
-    a, b = 1.0, 1.0; D = HalfDiskFamily(); S = D(a, b)
-    x, y = 0.4, -0.2; z = [x; y] # Test point
-
-    # 1) f(x,y) = -8x => u(x,y) ≡ 1
-    N = 1 # degree of f
-    c = rand(1)[1]; f = Fun((x,y)->-c*8x, S)
-    Δ = laplacesquare(D, N)
-    u = Fun(S, sparse(Δ) \ resizecoeffs!(f, N))
-    @test u(z) ≈ c # Result u(x,y) where Δ(u*w)(x,y) = f(x,y)
-
-    # 2) f(x,y) = 2 - 12xy - 14x^2 - 2y^2 => u(x,y) = x + y
-    U = Fun((x,y)->x+y, S)
-    N = 2 # degree of f
-    f = Fun((x,y)->(2 - 12x*y - 14x^2 - 2y^2), S)
-    Δ = laplacesquare(D, N)
-    u = Fun(S, sparse(Δ) \ f.coefficients[1:getopindex(N,N)])
-    @test u(z) ≈ U(z)
-end
-
 @testset "Operator Clenshaw" begin
     a, b = 1.0, 1.0; D = HalfDiskFamily(); S = D(a, b)
     x, y = 0.4, -0.2; z = [x; y] # Test point
@@ -177,28 +155,6 @@ end
     resizecoeffs!(f, N)
     foper = Fun(S, A*f.coefficients)
     @test foper(z) ≈ f(z) * oper(z)
-end
-
-@testset "Weighted to non-weighted space conversion" begin
-    # NOTE: Operator takes W11*P11 -> P00 only
-    tol = 1e-8
-    a, b = 1.0, 1.0; D = HalfDiskFamily(); S = D(a, b)
-    x, y = 0.4, -0.2; z = [x; y] # Test point
-    weight(S) = z -> (z[1]^S.a * (1-z[1]^2-z[2]^2)^S.b)
-    St = (S.family)(S.a-1, S.b-1)
-    maxop = 100
-    N = getnk(maxop)[1] + 3
-    W = transformparamsoperator(S, St, N, weighted=true)
-    for j = 1:maxop
-        p = Fun(S, [zeros(j-1); 1])
-        resizecoeffs!(p, N)
-        q = Fun(St, W * p.coefficients)
-        res = abs(q(z) - p(z)*weight(S)(z))
-        @test res < tol
-        if res >= tol
-            @show getnk(j), j, res
-        end
-    end
 end
 
 @testset "Increment/decrement parameters operators" begin
@@ -252,6 +208,59 @@ end
             res > tol && @show getnk(j), j, res
             @test res < tol
         end
+    end
+end
+
+@testset "laplaceoperator" begin
+    function dxweight(S::HalfDiskSpace{<:Any, <:Any, T}, x, y) where T
+        D = S.family
+        T(S.a) * weight(D(S.a-1, S.b), x, y) - 2 * T(S.b) * weight(D(S.a+1,S.b-1), x, y)
+    end
+    dxweight(S::HalfDiskSpace, z) = dxweight(S, z[1], z[2])
+    function dyweight(S::HalfDiskSpace{<:Any, <:Any, T}, x, y) where T
+        D = S.family
+        - 2 * T(S.b) * y * weight(D(S.a,S.b-1), x, y)
+    end
+    dyweight(S::HalfDiskSpace, z) = dyweight(S, z[1], z[2])
+    function d2xweight(S::HalfDiskSpace{<:Any, <:Any, T}, x, y) where T
+        D = S.family
+        ret = T(S.a) * ((T(S.a) - 1) * weight(D(S.a-2,S.b), x, y) - 2 * T(S.b) * weight(D(S.a,S.b-1), x, y))
+        ret -= 2 * T(S.b) * ((T(S.a) + 1) * weight(D(S.a,S.b-1), x, y) - 2 * (T(S.b) - 1) * weight(D(S.a+2,S.b-2), x, y))
+        ret
+    end
+    d2xweight(S::HalfDiskSpace, z) = d2xweight(S, z[1], z[2])
+    function d2yweight(S::HalfDiskSpace{<:Any, <:Any, T}, x, y) where T
+        D = S.family
+        - 2 * T(S.b) * (weight(D(S.a,S.b-1), x, y) - 2 * T(S.b) * (T(S.b) - 1) * y^2 * weight(D(S.a,S.b-2), x, y))
+    end
+    d2yweight(S::HalfDiskSpace, z) = d2yweight(S, z[1], z[2])
+
+    # W11->P11
+    D = HalfDiskFamily()
+    a, b = 1.0, 1.0; S = D(a, b)
+    N = 15
+    L = laplaceoperator(S, S, N, weighted=true)
+    for n = 1:10
+        u = Fun((x,y)->y*x^(n-1)+y^n, S)
+        f = Fun((x,y)->(u(x,y)*d2xweight(S,x,y) + 2*y*(n-1)*x^(n-2)*dxweight(S,x,y) + y*(n-2)*(n-1)*x^(n-3)*weight(S,x,y)
+                        + u(x,y)*d2yweight(S,x,y) + 2*(n*y^(n-1) + x^(n-1))*dyweight(S,x,y) + n*(n-1)*y^(n-2)*weight(S,x,y)), S)
+        resizecoeffs!(f, N)
+        cfs = sparse(L) \ f.coefficients
+        @test Fun(S, cfs)(z) ≈ u(z)
+    end
+    # W22->P00
+    # TODO
+    # P00->P22
+    D = HalfDiskFamily()
+    a, b = 0.0, 0.0; S = D(a, b)
+    N = 15
+    L = laplaceoperator(S, D(a+2, a+2), N, weighted=false)
+    n = 1; u = Fun((x,y)->2y, S); resizecoeffs!(u, N); @test abs(Fun(D(a+2, b+2), L * u.coefficients)(z)) < 1e-12
+    for n = 2:10
+        u = Fun((x,y)->y*x^(n-1)+y^n, S)
+        resizecoeffs!(u, N)
+        cfs = L * u.coefficients
+        @test Fun(D(a+2, b+2), cfs)(z) ≈ y*(n-2)*(n-1)*x^(n-3) + n*(n-1)*y^(n-2)
     end
 end
 

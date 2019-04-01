@@ -895,7 +895,9 @@ function partialoperatorx(S::HalfDiskSpace{<:Any, <:Any, T}, N) where T
     getopptseval(Px, N, ptsp)
     H = S.family.H(S.a, S.b+0.5)
     ptsh, wh = pointswithweights(H, 2N+2)
+    @show N
     getopnorms(Sx, getopindex(N-1, N-1))
+    @show "done"
 
     A = BandedBlockBandedMatrix(
         Zeros{T}(sum(1:N),sum(1:(N+1))), (1:N, 1:N+1), (-1,2), (0, 2))
@@ -1213,25 +1215,94 @@ function laplace(D::HalfDiskFamily, N)
     A * B + C * E * F * G
 end
 
-function laplacesquare(D::HalfDiskFamily{<:Any, T, <:Any, <:Any}, N) where T
-    # sparse([laplace(D, N) zeros(sum(1:N+2), sum(1:N+2)-sum(1:N+1))])
-
-    # Outputs the sum(1:N+1) × sum(1:N+1) matrix operator
-    Δ = BandedBlockBandedMatrix(
-        Zeros{T}(sum(1:(N+1)),sum(1:(N+1))), (1:N+1, 1:N+1), (1,1), (2,5))
-    L = laplace(D, N+1)
-    i = 1
-    view(Δ, Block(i, i)) .= view(L, Block(i, i))
-    view(Δ, Block(i, i+1)) .= view(L, Block(i, i+1))
-    for i = 2:N
-        view(Δ, Block(i, i-1)) .= view(L, Block(i, i-1))
-        view(Δ, Block(i, i)) .= view(L, Block(i, i))
-        view(Δ, Block(i, i+1)) .= view(L, Block(i, i+1))
+function laplaceoperator(S::HalfDiskSpace{<:Any, <:Any, T},
+            St::HalfDiskSpace{<:Any, <:Any, T}, N;
+            weighted=false, square=true) where T
+    # Outputs the sum(1:N+1) × sum(1:N+1) matrix operator if square=true
+    # TODO: Is it more efficient to allocate blocks manually?
+    D = S.family
+    if (weighted == true && Int(S.a) == 1 && Int(S.b) == 1
+            && Int(St.a) == 1 && Int(St.b) == 1)
+        A = partialoperatorx(D(S.a-1,S.b-1), N+2)
+        @show "A done"
+        B = weightedpartialoperatorx(D(S.a,S.b), N)
+        @show "B done"
+        C = transformparamsoperator(D(S.a-1,S.b), D(S.a,S.b), N+1)
+        @show "C done"
+        E = partialoperatory(D(S.a-1,S.b-1), N+2)
+        @show "E done"
+        F = transformparamsoperator(D(S.a,S.b-1), D(S.a-1,S.b-1), N+1, weighted=true)
+        @show "F done"
+        G = weightedpartialoperatory(D(S.a,S.b), N)
+        @show "G done"
+        L = A * B + C * E * F * G
+        if square
+            m = sum(1:(N+1))
+            Δ = BandedBlockBandedMatrix(L[1:m, 1:m], (1:N+1, 1:N+1), (1,1), (2,2))
+        else
+            L
+        end
+    elseif (weighted == true && Int(S.a) == 2 && Int(S.b) == 2
+            && Int(St.a) == 0 && Int(St.b) == 0)
+        A = weightedpartialoperatorx(D(S.a-1,S.b-1), N+2)
+        @show "A done"
+        B = weightedpartialoperatorx(D(S.a,S.b), N)
+        @show "B done"
+        C = transformparamsoperator(D(S.a-1,S.b-2), D(S.a-2,S.b-2), N+3, weighted=true)
+        @show "C done"
+        E = weightedpartialoperatory(D(S.a-1,S.b-1), N+2)
+        @show "E done"
+        F = transformparamsoperator(D(S.a,S.b-1), D(S.a-1,S.b-1), N+1, weighted=true)
+        @show "F done"
+        G = weightedpartialoperatory(D(S.a,S.b), N)
+        @show "G done"
+        L = A * B + C * E * F * G
+        if square
+            m = sum(1:(N+1))
+            Δ = BandedBlockBandedMatrix(L[1:m, 1:m], (1:N+1, 1:N+1), (4,-2), (4,0))
+        else
+            L
+        end
+    elseif (weighted == false && Int(S.a) == 0 && Int(S.b) == 0
+            && Int(St.a) == 2 && Int(St.b) == 2)
+        A = partialoperatorx(D(S.a+1,S.b+1), N+1)
+        @show "A done"
+        B = partialoperatorx(D(S.a,S.b), N+2)
+        @show "B done"
+        C = transformparamsoperator(D(S.a+1,S.b+2), D(S.a+2,S.b+2), N)
+        @show "C done"
+        E = partialoperatory(D(S.a+1,S.b+1), N+1)
+        @show "E done"
+        F = transformparamsoperator(D(S.a,S.b+1), D(S.a+1,S.b+1), N+1)
+        @show "F done"
+        G = partialoperatory(D(S.a,S.b), N+2)
+        @show "G done"
+        L = BandedBlockBandedMatrix(sparse(sparse(A * B) + C * E * F * G), (1:N+1, 1:N+3), (-2,4), (0,4))
+        if square
+            m = sum(1:(N+1))
+            Δ = BandedBlockBandedMatrix(L[1:m, 1:m], (1:N+1, 1:N+1), (-2,4), (0,4))
+        else
+            L
+        end
+    else
+        error("Invalid HalfDiskSpace for Laplacian operator")
     end
-    i = N+1
-    view(Δ, Block(i, i-1)) .= view(L, Block(i, i-1))
-    view(Δ, Block(i, i)) .= view(L, Block(i, i))
-    Δ
+end
+
+function biharmonicoperator(S::HalfDiskSpace{<:Any, <:Any, T}, N; square=true) where T
+    D = S.family
+    if Int(S.a) == 2 && Int(S.b) == 2
+        B = (laplaceoperator(D(S.a-2, S.b-2), S, N+2; square=false)
+                * laplaceoperator(S, D(S.a-2, S.b-2), N; weighted=true, square=false))
+        if square
+            m = sum(1:(N+1))
+            Δ = BandedBlockBandedMatrix(B[1:m, 1:m], (1:N+1, 1:N+1), (2,2), (4,4))
+        else
+            B
+        end
+    else
+        error("Invalid HalfDiskSpace for Laplacian operator")
+    end
 end
 
 
