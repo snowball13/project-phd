@@ -55,6 +55,7 @@
 \newcommand{\ddx}{\frac{\mathrm{d}}{\mathrm{d}x}}
 \newcommand{\pddx}{\frac{\partial}{\partial x}}
 \newcommand{\pddy}{\frac{\partial}{\partial y}}
+\newcommand{\pddn}{\frac{\partial}{\partial n}}
 \newcommand{\dmdxm}{\frac{\mathrm{d}^m}{\mathrm{d}x^m}}
 
 \newcommand{\Atilde}{\tilde{A}_{l,m}}
@@ -132,6 +133,11 @@
 \newcommand{\Pio}{P^{(1,0)}}
 \newcommand{\dx}{\frac{\partial}{\partial x}}
 \newcommand{\dy}{\frac{\partial}{\partial y}}
+\newcommand{\laplacewii}{\Delta_W^{(1,1)\to(1,1)}}
+\newcommand{\laplacewtt}{\Delta_W^{(2,2)\to(0,0)}}
+\newcommand{\laplaceoo}{\Delta^{(0,0)\to(2,2)}}
+\newcommand{\biharmonic}{_2\Delta_W^{(2,2)\to(2,2)}}
+
 \newcommand{\element}{\tau}
 \newcommand{\refelement}{\hat{\tau}}
 \newcommand{\FEset}{\mathcal{T}}
@@ -201,7 +207,7 @@ where $C_{n,k} \neq 0$ and ``lower order terms'' can  include degree $n$ polynom
 
  Sparsity comes from expanding the domain and range of an operator  using different choices of $a$ and $b$. Where the sparsity pattern and entries derived in \cite{olver2018recurrence,olver2019triangle} for equations on the triangle  results from manipulations of Jacobi polynomials, in the present work we use a more general integration-by-parts argument to deduce the sparsity structure, alongside quadrature rules to determine the entries.  Furthermore, we use this framework to derive sparse $p$-finite element methods that are analogous to those of Beuchler and Sch\"oberl on tetrahedra \cite{beuchler2006new}. 
 
-The motivation for this work is solving partial differential equations on sub-domains of the sphere. In particular, OPs on a half-sphere can be represented using two families of OPs on the half-disk, where we would require $2n+1$ 3D OPs for each degree $n$, of which $n+1$ would be the $n+1$ degree $n$ OPs on the half-disk of the first family (polynomials in $x,y$) while the remaining $n$ OPs would be given by $z$ multiplied by the $n$ degree $n-1$ OPs on the half-disk of the second family\bstodo{Is this OK?}. Constructing sparse spectral methods for surface PDEs on half-spheres, spherical caps, and spherical triangles is future work, and has applications in weather prediction. Other extensions include a full $hp$-finite element method on sections of a disk, which has applications in fluids. 
+The motivation for this work is solving partial differential equations on sub-domains of the sphere. In particular, OPs on a half-sphere can be represented using two families of OPs on the half-disk, where we would require $2n+1$ 3D OPs for each degree $n$, of which $n+1$ would be the $n+1$ degree $n$ OPs on the half-disk of the first family (polynomials in $x,y$) while the remaining $n$ OPs would be given by $z$ multiplied by the $n$ degree $n-1$ OPs on the half-disk of the second family. Constructing sparse spectral methods for surface PDEs on half-spheres, spherical caps, and spherical triangles is future work, and has applications in weather prediction. Other extensions include a full $hp$-finite element method on sections of a disk, which has applications in fluids. 
 
 Here is an overview of the paper:  
 
@@ -533,7 +539,7 @@ Further, we note that there exist "parameter transformation" Banded-Block-Banded
 \bigW^{(a,b)}(x,y) &= \Big(T_W^{(a,b)\to(a+1,b+1)} \Big)^T \: \bigW^{(a-1,b-1)}(x,y) \\
 \end{align}
 
-We can then obtain the matrix operator for \(\Delta\), that will take us from coefficients for expansion in the weighted space
+We can then obtain the matrix operator for the Laplacian \(\Delta\), that will take us from coefficients for expansion in the weighted space
 \[
 \bigWii(x,y) = \Wii(x,y) \: \bigPii(x,y)
 \]
@@ -541,64 +547,39 @@ to coefficients in the non-weighted space
 \[
 \bigPii(x,y).
 \]
-Importantly, this operator will have Banded-Block-Banded structure, and hence will be sparse. Note that this construction will ensure the imposition of the Dirichlet zero boundary conditions on $\Omega$. The matrix operator \(\Delta\) acting on the coefficients vector is then given by
+Importantly, this operator will have Banded-Block-Banded structure, and hence will be sparse, as seen in FIGURE. Note that this construction will ensure the imposition of the Dirichlet zero boundary conditions on $\Omega$. The matrix operator for the Laplacian we denote $\laplacewii$ acting on the coefficients vector is then given by
 \begin{align}
-    \Delta := D_x^{(0,0)} \: W_x^{(1,1)} + T^{(0,1)\to(1,1)} \: D_y^{(0,0)} \: T_W^{(1,0)\to(0,0)} \: W_y^{(1,1)}.
+    \laplacewii := D_x^{(0,0)} \: W_x^{(1,1)} + T^{(0,1)\to(1,1)} \: D_y^{(0,0)} \: T_W^{(1,0)\to(0,0)} \: W_y^{(1,1)}.
 \end{align}
 
-Further, we can also obtain the matrix operator for \(\Delta\) that will take us from coefficients for expansion in the space
-\[
+Further, we can also obtain the matrix operator for the Laplacian $\Delta$ that will take us from coefficients for expansion in the space
+$$
 \bigPoo(x,y)
-\]
+$$
 to coefficients in the space
-\[
+$$
 \bigP^{(2,2)}(x,y).
-\]
-Importantly, again, this operator will have Banded-Block-Banded structure, and hence will be sparse. The matrix operator \(\Delta\) acting on the coefficients vector is then given by
+$$
+Importantly, again, this operator will have Banded-Block-Banded structure, and hence will be sparse, as seen in FIGURE. We denote this matrix operator that acts on the coefficients vector as $\laplaceoo$, and is given by
 \begin{align}
-    \Delta := D_x^{(1,1)} \: D_x^{(0,0)} + T^{(1,2)\to(2,2)} \: T^{(0,2)\to(1,2)}  \: D_y^{(0,1)} \: D_y^{(0,0)}.
+    \laplaceoo := D_x^{(1,1)} \: D_x^{(0,0)} + T^{(1,2)\to(2,2)} \: D_y^{(1,1)} \: T^{(0,1)\to(1,1)} \: D_y^{(0,0)}.
 \end{align}
 
-The sparsity of the these operators can be shown using a simple integration by parts argument. We note that the non-zero entries of the differential operators are calculated as follows. 
-
-Note that we can expand $\pddx \Pnkab = \sum_{m=0}^{n} \sum_{j=0}^m c_{m,j} \: P^{(a+1, b+1)}_{m,j}$. The coefficients of these expansion are then the entries of the relevant operator matrix. By a simple integration by parts argument, we have that the only non-zero coefficients of this expansion are when $m = n-1, n-2$, $j = k, k-2$ and $0 \le j \le m$. These are then calculated by taking inner products, i.e. 
-\begin{align*}
-c_{m,j} = \frac{\ip<\pddx \Pnkab, P^{(a+1, b+1)}_{m,j} >_{W^{(a+1, b+1)}}}{\norm{P^{(a+1, b+1)}_{m,j}}^2_{W^{(a+1, b+1)}}}
-\end{align*}
-where 
+We can use the same technique for constructing a sparse Laplacian operator to construct the Biharmonic operator $\Delta^2$, that ensures we use a basis that satisfies both zero Dirichlet and Neumann conditions. On this note, we can further represent the Laplacian as a map from coefficients in the space 
+$$
+\bigW^{(2,2)}
+$$
+to coefficients in the space
+$$
+\bigPoo.
+$$
+Note that a function expanded in the $\bigW^{(2,2)}$ basis will satisfy both zero Dirichlet and Neumann boundary conditions on $\Omega$. We denote this matrix operator as $\laplacewtt$, and is given by
 \begin{align}
-	&\ip<\pddx \Pnkab, P^{(a+1, b+1)}_{m,j} >_{W^{(a+1, b+1)}} \nonumber \\ 
-	&= \ip< x \: H_{n-k}^{(a, b+k+\half)} \prime (x), \: \rho(x)^{k+j+2} \: H_{m-j}^{(a, b+1+j+\half)} >_{w_H^{(a, b+\half)}} 
-		\: \ip< P_k^{(b,b)}, \: P_j^{(b+1,b+1)} >_{w_P^{(b+1)}}  \nonumber \\ 
-	& \quad - k \: \ip< x^2 \: H_{n-k}^{(a, b+k+\half)}(x), \: \rho(x)^{k+j} \: H_{m-j}^{(a, b+1+j+\half)} >_{w_H^{(a, b+\half)}} 
-		\: \ip< P_k^{(b,b)}, \: P_j^{(b+1,b+1)} >_{w_P^{(b+1)}}  \nonumber \\ 
-	& \quad + \: \ip< x^2 \: H_{n-k}^{(a, b+k+\half)}(x), \: \rho(x)^{k+j} \: H_{m-j}^{(a, b+1+j+\half)} >_{w_H^{(a, b+\half)}} 
-		\: \ip< y \: P_k^{(b,b)} \prime (y), \: P_j^{(b+1,b+1)} >_{w_P^{(b+1)}}  
+	\laplacewtt := W_x^{(1,1)} \: W_x^{(2,2)} + T_W^{(1,0)\to(0,0)} \: W_y^{(1,1)} \: T_W^{(2,1)\to(1,1)} \: W_y^{(2,2)}.
 \end{align}
-We can then use quadrature to calculate the 1D inner products. This is much cheaper than using the 2D quadrature rule.
+The sparsity and structure of this matrix can be seen in FIGURE.
 
-Further, we can expand $\pddy \Pnkab = \sum_{m=0}^{n} \sum_{j=0}^m c_{m,j} \: P^{(a, b+1)}_{m,j}$. The coefficients of these expansion are then the entries of the relevant operator matrix. By a simple integration by parts argument, we have that the only non-zero coefficient of this expansion is when $m = n-1$, $j = k-1$. This is then calculated by taking inner products, i.e. 
-\begin{align*}
-c_{n-1,k-1} = \frac{\ip<\pddx \Pnkab, P^{(a, b+1)}_{n-1,k-1} >_{W^{(a, b+1)}}}{\norm{P^{(a, b+1)}_{n-1,k-1}}^2_{W^{(a, b+1)}}}
-\end{align*}
-where 
-\begin{align}
-	\ip<\pddx \Pnkab, P^{(a, b+1)}_{n-1,k-1} >_{W^{(a, b+1)}} = \norm{H_0^{(a,b+k+\half)}}^2_{w_H^{(a, b+k+\half)}} 
-		\: \ip< P_k^{(b,b)} \prime, \: P_{k-1}^{(b+1,b+1)} >_{w_P^{(b+1)}}
-\end{align}
-where we note that $\norm{H_n^{(a,b)}}_{w_H^{(a,b)}} = \norm{H_m^{(a,b)}}_{w_H^{(a,b)}}$ $\forall m, n \in \N_0$. 
-
-We can gain the non-zero entries of the weighted differential operators similarly, by noting that
-\begin{align}
-	\pddx \Wab(x,y) &= a W^{(a-1, b)}(x,y) - 2bW^{(a+1, b-1)}(x,y) \\
-	\pddy \Wab(x,y) &= -2b \: y \: W^{(a, b-1)}(x,y)
-\end{align}
-and also that
-\begin{align}
-	\ip< \Wab \Pnkab, \Wab \Pab_{m,j} >_{W^{(-a, -b)}} = \ip< \Pnkab, \Pab_{m,j} >_\Wab = \delta_{n,m} \: \delta_{k,j}.
-\end{align}
-
-Calculating the non-zero entries of the parameter transformation operators is similarly done, i.e. use a substitution in the 2D inner product integral to yield a product of 1D inner product integrals. 
+The sparsity of the these operators can be shown using a simple integration by parts argument, and can be seen in FIGURE.
 
 
 
@@ -729,6 +710,48 @@ Using the quadrature rule detailed in Section 4.2, we can calculate exactly the 
 %for suitably large $N$.
 
 
+\subsection{Calculating non-zero entries of the operator matrices}
+
+First, note that we can expand $\pddx \Pnkab = \sum_{m=0}^{n} \sum_{j=0}^m c_{m,j} \: P^{(a+1, b+1)}_{m,j}$. The coefficients of the expansion are then the entries of the relevant operator matrix. By a simple integration by parts argument, we have that the only non-zero coefficients of this expansion are when $m = n-1, n-2$, $j = k, k-2$ and $0 \le j \le m$. These are then calculated by taking inner products, i.e. 
+\begin{align*}
+c_{m,j} = \frac{\ip<\pddx \Pnkab, P^{(a+1, b+1)}_{m,j} >_{W^{(a+1, b+1)}}}{\norm{P^{(a+1, b+1)}_{m,j}}^2_{W^{(a+1, b+1)}}}
+\end{align*}
+where 
+\begin{align}
+	&\ip<\pddx \Pnkab, P^{(a+1, b+1)}_{m,j} >_{W^{(a+1, b+1)}} \nonumber \\ 
+	&= \ip< x \: H_{n-k}^{(a, b+k+\half)} \prime (x), \: \rho(x)^{k+j+2} \: H_{m-j}^{(a, b+1+j+\half)} >_{w_H^{(a, b+\half)}} 
+		\: \ip< P_k^{(b,b)}, \: P_j^{(b+1,b+1)} >_{w_P^{(b+1)}}  \nonumber \\ 
+	& \quad - k \: \ip< x^2 \: H_{n-k}^{(a, b+k+\half)}(x), \: \rho(x)^{k+j} \: H_{m-j}^{(a, b+1+j+\half)} >_{w_H^{(a, b+\half)}} 
+		\: \ip< P_k^{(b,b)}, \: P_j^{(b+1,b+1)} >_{w_P^{(b+1)}}  \nonumber \\ 
+	& \quad + \: \ip< x^2 \: H_{n-k}^{(a, b+k+\half)}(x), \: \rho(x)^{k+j} \: H_{m-j}^{(a, b+1+j+\half)} >_{w_H^{(a, b+\half)}} 
+		\: \ip< y \: P_k^{(b,b)} \prime (y), \: P_j^{(b+1,b+1)} >_{w_P^{(b+1)}}  
+\end{align}
+We can then use quadrature to calculate the 1D inner products. This is much cheaper than using the 2D quadrature rule.
+
+Further, we can expand $\pddy \Pnkab = \sum_{m=0}^{n} \sum_{j=0}^m c_{m,j} \: P^{(a, b+1)}_{m,j}$. The coefficients of the expansion are then the entries of the relevant operator matrix. By a simple integration by parts argument, we have that the only non-zero coefficient of this expansion is when $m = n-1$, $j = k-1$. This is then calculated by taking inner products, i.e. 
+\begin{align*}
+c_{n-1,k-1} = \frac{\ip<\pddx \Pnkab, P^{(a, b+1)}_{n-1,k-1} >_{W^{(a, b+1)}}}{\norm{P^{(a, b+1)}_{n-1,k-1}}^2_{W^{(a, b+1)}}}
+\end{align*}
+where 
+\begin{align}
+	\ip<\pddx \Pnkab, P^{(a, b+1)}_{n-1,k-1} >_{W^{(a, b+1)}} = \norm{H_0^{(a,b+k+\half)}}^2_{w_H^{(a, b+k+\half)}} 
+		\: \ip< P_k^{(b,b)} \prime, \: P_{k-1}^{(b+1,b+1)} >_{w_P^{(b+1)}}
+\end{align}
+where we note that $\norm{H_n^{(a,b)}}_{w_H^{(a,b)}} = \norm{H_m^{(a,b)}}_{w_H^{(a,b)}}$ $\forall m, n = 0, 1, 2, \dots$. 
+
+We can gain the non-zero entries of the weighted differential operators similarly, by noting that
+\begin{align}
+	\pddx \Wab(x,y) &= a W^{(a-1, b)}(x,y) - 2bW^{(a+1, b-1)}(x,y) \\
+	\pddy \Wab(x,y) &= -2b \: y \: W^{(a, b-1)}(x,y)
+\end{align}
+and also that
+\begin{align}
+	\ip< \Wab \Pnkab, \Wab \Pab_{m,j} >_{W^{(-a, -b)}} = \ip< \Pnkab, \Pab_{m,j} >_\Wab = \delta_{n,m} \: \delta_{k,j}.
+\end{align}
+
+Calculating the non-zero entries of the parameter transformation operators is similarly done, i.e. use a substitution in the 2D inner product integral to yield a product of 1D inner product integrals. 
+
+
 %
 \section{Examples on the half disk with zero BCs}\label{Section:Examples}
 
@@ -754,9 +777,10 @@ noting the imposition of zero Dirichlet boundary conditions on $u$.
 
 We can tackle the problem as follows. Fix \(a, b = 1,1\). Denote the coefficient vector for expansion of $u$ in the $\bigWii$ OP basis up to degree $N$ by $\mathbf{u}$, and the coefficient vector for expansion of $f$ in the $\bigPii$ OP basis up to degree $N$ by $\mathbf{f}$. Since $f$ is known, we can obtain $\mathbf{f}$ using the quadrature rule above. In matrix-vector notation, our system hence becomes:
 \begin{align}
-    \Delta^{(1,1)} \mathbf{u} = \mathbf{f}
+    \laplacewii \mathbf{u} = \mathbf{f}
 \end{align}
 which can be solved to find $\mathbf{u}$.
+In FIGURE we see the solution to the Poisson equation with zero boundary conditions given in EQN in the half-disk $\Omega$. In FIGURE we show the norms of each block of calculated coefficients of the approximation for four right-hand sides of the Poisson equation with N = 999????. The rate of decay in the coefficients is a proxy for the rate of convergence of the computed solution. \bstodo{Describe what plot tells us}
 
 %\begin{figure}
 %	\includegraphics[scale=0.4]{example4coeffs}
@@ -770,39 +794,39 @@ which can be solved to find $\mathbf{u}$.
 	\centering
 	\includegraphics[scale=0.4]{sparsityoflaplacian}
         \label{fig:sparsity}
-    	\caption{A "spy" plot of the $\Delta$ operator for $\bigWii(x,y) \to \bigPii(x,y)$ showing its sparsity.}
+    	\caption{A "spy" plot of the $\laplacewii$ matrix operator for the Laplacian showing its sparsity.}
 	\centering
 \end{figure}
 
-\subsection{Inhomogenous Helmholtz}
+\subsection{Inhomogenous variable-coefficient Helmholtz}
 
-Find \(u(x,y)\) given a function \(f(x,y)\) such that:
+Find \(u(x,y)\) given functions $v$, $f : \Omega \to \R$ such that:
 \begin{align}
 	\begin{cases}
-    		\Delta u(x,y) + k^2 u(x,y) = f(x,y) \quad \text{in } \Omega \\
+    		\Delta u(x,y) + k^2 v(x,y) \; u(x,y) = f(x,y) \quad \text{in } \Omega \\
 		u(x,y) = 0 \quad \text{on } \partial \Omega
 	\end{cases}.
 \end{align}
-noting the imposition of zero Dirichlet boundary conditions on $u$.
+where $k \in \R$, noting the imposition of zero Dirichlet boundary conditions on $u$.
 
-We can tackle the problem as follows. Fix \(a, b = 1,1\). Denote the coefficient vector for expansion of $u$ in the $\bigWii$ OP basis up to degree $N$ by $\mathbf{u}$, and the coefficient vector for expansion of $f$ in the $\bigPii$ OP basis up to degree $N$ by $\mathbf{f}$. Since $f$ is known, we can obtain $\mathbf{f}$ using the quadrature rule above. In matrix-vector notation, our system hence becomes:
+We can tackle the problem as follows. Fix \(a, b = 1,1\). Denote the coefficient vector for expansion of $u$ in the $\bigWii$ OP basis up to degree $N$ by $\mathbf{u}$, and the coefficient vector for expansion of $f$ in the $\bigPii$ OP basis up to degree $N$ by $\mathbf{f}$. Since $f$ is known, we can obtain $\mathbf{f}$ using the quadrature rule above. We can obtain the matrix operator for the variable-coefficient function $v(x,y)$ by using the Clenshaw algorithm with matrix inputs as the Jacobi matrices ${J_x^{(0,0)}}^T, {J_y^{(0,0)}}^T$, yielding an operator matrix of the same dimension as the input Jacobi matries. We can denote the resulting operator acting on coefficients in the $\bigPoo$ space by $V({J_x^{(0,0)}}^T, {J_y^{(0,0)}}^T)$. In matrix-vector notation, our system hence becomes:
 \begin{align}
-    (\Delta^{(1,1)} + k^2 T^{(0,0)\to(1,1)} T_W^{(1,1)\to(0,0)}) \mathbf{u} = \mathbf{f}
+    (\laplacewii + k^2 T^{(0,0)\to(1,1)} \: V({J_x^{(0,0)}}^T, {J_y^{(0,0)}}^T) \: T_W^{(1,1)\to(0,0)}) \mathbf{u} = \mathbf{f}
 \end{align}
-which can be solved to find $\mathbf{u}$.
+which can be solved to find $\mathbf{u}$. We can see the sparsity and structure of this matrix system in FIGURE with $v(x,y) = xy^2$ as an example. In FIGURE we see the solution to the inhomogenous variable-coefficient Helmholtz equation with zero boundary conditions given in EQN in the half-disk $\Omega$, with  $v(x,y) = xy^2$ and $f(x,y) = xy e^x$.
 
 We can extend this to constant non-zero boundary conditions by simply noting that the problem 
 \begin{align}
 	\begin{cases}
-    		\Delta u(x,y) + k^2 u(x,y) = f(x,y) \quad \text{in } \Omega \\
+    		\Delta u(x,y) + k^2 v(x,y) \; u(x,y) = f(x,y) \quad \text{in } \Omega \\
 		u(x,y) = c \in \R \quad \text{on } \partial \Omega
 	\end{cases}
 \end{align}
-is equivalent to letting $u = v + c$ and solving
+is equivalent to letting $u = \tilde{u} + c$ and solving
 \begin{align}
 	\begin{cases}
-    		\Delta v(x,y) + k^2 v(x,y) = f(x,y) - k^2 c =: g(x,y)  \quad \text{in } \Omega \\
-		v(x,y) = 0 \quad \text{on } \partial \Omega
+    		\Delta \tilde{u}(x,y) + k^2 v(x,y) \; \tilde{u}(x,y) = f(x,y) - k^2 v(x,y) \; =: g(x,y)  \quad \text{in } \Omega \\
+		\tilde{u}(x,y) = 0 \quad \text{on } \partial \Omega
 	\end{cases}.
 \end{align}
 
@@ -814,7 +838,32 @@ is equivalent to letting $u = v + c$ and solving
 	\centering
 \end{figure}
 
-\subsection{Heat Equation}
+
+\subsection{Biharmonic equation}
+
+Find \(u(x,y)\) given a function \(f(x,y)\) such that:
+\begin{align}
+	\begin{cases}
+    		\Delta^2 u(x,y) = 0 \quad \text{in } \Omega \\
+		u(x,y) = 0, \quad \frac{\partial u}{\partial n}(x,y) = 0 \quad \text{on } \partial \Omega
+	\end{cases}.
+\end{align}
+where $\Delta^2$ is the Biharmonic operator, noting the imposition of zero Dirichlet and Neumann boundary conditions on $u$. We can construct a matrix operator for $\Delta^2$ that will take coefficients in the space
+$$
+\bigW^{(2,2)}
+$$
+to coefficients in the space
+$$
+\bigP^{(2,2)}.
+$$
+Note that any function expanded in the $\bigW^{(2,2)}$ basis will satisfy both zero Dirichlet and zero Neumann boundary conditions on $\Omega$. The matrix operator for the Biharmonic operator is then given by
+\begin{align}
+	\biharmonic = \laplaceoo \: \laplacewtt.
+\end{align}
+In FIGURE we see the solution to the Biharmonic equation EQN in the half-disk $\Omega$.
+
+
+\subsection{Heat equation}
 Consider
 \begin{align}
 	\begin{cases}
@@ -832,12 +881,12 @@ u_{t+1}(x,y) - u_t (x,y) = h \: \Delta u_{t+1}(x,y) \quad \text{for } (x,y) \in 
 
 We can tackle the problem as follows. Fix \(a, b = 1,1\). Denote the coefficient vector for expansion of $u_0$ in the $\bigWii$ OP basis up to degree $N$ by $\mathbf{u}_0$, and similarly for each $t = 1,2,3,\dots,t_{max}$ we denote $\mathbf{u}_t$ as the coefficient vector of the expansion of $u_t$ in the $\bigWii$ OP basis up to degree $N$. Further, denote the coefficient vector for expansion of $u_0$ in the $\bigPii$ OP basis up to degree $N$ by $\mathbf{\tilde{u}}_0$, and similarly for each $t = 1,2,3,\dots,t_{max}$ denote $\mathbf{\tilde{u}}_t$ as the coefficient vector of the expansion of $u_t$ in the $\bigPii$ OP basis up to degree $N$.
 
-Then, using the operator $\Delta$, we can solve this system for the given initial condition $\mathbf{u_0}$ by iterating for $t = 0,1,2,\dots,t_{max}$:
+We can solve this system for the given initial condition $\mathbf{u_0}$ by iterating for $t = 0,1,2,\dots,t_{max}$:
 \begin{align}
-	&T^{(0,0)\to(1,1)} \: T_W^{(1,1)\to(0,0)} \: (\mathbf{u}_{t+1} - \mathbf{u}_t) = h \: \Delta^{(1,1)} \mathbf{u}_{t+1} \nonumber \\
-	\iff& (T^{(0,0)\to(1,1)} \:T_W^{(1,1)\to(0,0)} - h \: \Delta^{(1,1)}) \: \mathbf{u}_{t+1} = T^{(0,0)\to(1,1)} \: T_W^{(1,1)\to(0,0)} \: \mathbf{u}_t \nonumber \\
-	\iff& \mathbf{u}_{t+1} = (T^{(0,0)\to(1,1)} \: T_W^{(1,1)\to(0,0)} - h \: \Delta^{(1,1)})^{-1} T^{(0,0)\to(1,1)} \: T_W^{(1,1)\to(0,0)} \: \mathbf{u}_t \nonumber \\
-	\iff& \mathbf{\tilde{u}}_{t+1} = T^{(0,0)\to(1,1)} \: T_W^{(1,1)\to(0,0)} \: (T^{(0,0)\to(1,1)} \: T_W^{(1,1)\to(0,0)} - h \: \Delta^{(1,1)})^{-1} \: \mathbf{\tilde{u}}_t.
+	&T^{(0,0)\to(1,1)} \: T_W^{(1,1)\to(0,0)} \: (\mathbf{u}_{t+1} - \mathbf{u}_t) = h \: \laplacewii \mathbf{u}_{t+1} \nonumber \\
+	\iff& (T^{(0,0)\to(1,1)} \:T_W^{(1,1)\to(0,0)} - h \: \laplacewii) \: \mathbf{u}_{t+1} = T^{(0,0)\to(1,1)} \: T_W^{(1,1)\to(0,0)} \: \mathbf{u}_t \nonumber \\
+	\iff& \mathbf{u}_{t+1} = (T^{(0,0)\to(1,1)} \: T_W^{(1,1)\to(0,0)} - h \: \laplacewii)^{-1} T^{(0,0)\to(1,1)} \: T_W^{(1,1)\to(0,0)} \: \mathbf{u}_t \nonumber \\
+	\iff& \mathbf{\tilde{u}}_{t+1} = T^{(0,0)\to(1,1)} \: T_W^{(1,1)\to(0,0)} \: (T^{(0,0)\to(1,1)} \: T_W^{(1,1)\to(0,0)} - h \: \laplacewii)^{-1} \: \mathbf{\tilde{u}}_t.
 \end{align}
 
 %\begin{figure}
@@ -851,7 +900,7 @@ Then, using the operator $\Delta$, we can solve this system for the given initia
 
 
 %
-\section{Future work - orthogonal polynomials on the half-spheres and spherical triangles}
+\section{Future work - orthogonal polynomials on half-spheres and spherical triangles}
 
 We will use a similar idea of projecting up from 1D OPs to the interval, to 2D OPs on the disk, to 3D OPs on the sphere. Initially, we will add to the ApproxFun library by adding capability to work with OPs on the half disk (2D) with weights governed by parameters that will be incremented/decremented after an application of an operator (e.g. partial derivative). With this, we can obtain a family of OPs on the half-sphere, with sparse relations, and construct sparse spectral methods for surface PDEs on half-spheres. An extension to this will be to look at a $p$-finite element method on the sphere using two half-sphere elements. We plan to extend this work to construct similar methods on other 3D spherical domains, such as spherical caps and spherical triangles, which will have applications in numerical weather prediction. 
 
