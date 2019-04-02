@@ -56,7 +56,6 @@ function lanczos!(w, P, β, γ, N₀=0)
     end
 
     for k = N₀+1:N
-        @show k
         v = x*P[k] - γ[k-1]*P[k-1]
         β[k] = sum(w*v*P[k])
         v = v - β[k]*P[k]
@@ -114,13 +113,24 @@ function OrthogonalPolynomialFamily(::Type{R}, w::Vararg{Fun{<:Space{D,B}},N}) w
 end
 
 function (P::OrthogonalPolynomialFamily{<:Any,<:Any,<:Any,R,B,N})(α::Vararg{B,N}) where {R,B,N}
-    if length(α) == 1
-        haskey(P.spaces,α) && return P.spaces[α]
-        P.spaces[α] = OrthogonalPolynomialSpace(P, (P.factors.^α)[1], α)
+    haskey(P.spaces,α) && return P.spaces[α]
+    # NOTE: This ensures we dont hang on calculating the weight for large
+    # parameter values
+    maxp = 100
+    if any(α .> maxp)
+        β = []
+        f = []
+        for j = 1:length(α)
+            r = α[j] % maxp
+            t = Int(div(α[j], maxp))
+            β = append!(β, [tt == 0 ? r : maxp for tt=0:t])
+            f = append!(f, [P.factors[j] for tt=0:t])
+        end
+        W = length(α) == 1 ? (f.^β)[1] : prod(f.^β)
     else
-        haskey(P.spaces,α) && return P.spaces[α]
-        P.spaces[α] = OrthogonalPolynomialSpace(P, prod(P.factors.^α), α)
+        W = length(α) == 1 ? (P.factors.^α)[1] : prod(P.factors.^α)
     end
+    P.spaces[α] = OrthogonalPolynomialSpace(P, W, α)
 end
 
 #####
@@ -890,30 +900,28 @@ function partialoperatorx(S::HalfDiskSpace{<:Any, <:Any, T}, N) where T
     Px = Sx.family.P(Sx.b, Sx.b)
     ptsp, wp = pointswithweights(Px, N+2) # TODO
     getopptseval(P, N, ptsp)
+    @show "here1"
     getderivopptseval(P, N, ptsp)
+    @show "here2"
     getopptseval(Px, N, ptsp)
+    @show "here3"
     H = S.family.H(S.a, S.b+0.5)
     ptsh, wh = pointswithweights(H, 2N+2)
-    @show N
+    @show "here4"
     getopnorms(Sx, N-1)
-    @show "done"
+    @show "done initial bit"
 
     A = BandedBlockBandedMatrix(
         Zeros{T}(sum(1:N),sum(1:(N+1))), (1:N, 1:N+1), (-1,2), (0, 2))
 
     # Get pt evals for the H OPs
     for k = 0:N
+        @show k
         H = S.family.H(S.a, S.b+k+0.5)
         getopptseval(H, N-k, ptsh)
         getderivopptseval(H, N-k, ptsh)
-        if k > 1
-            j = k - 2
-            Hx = Sx.family.H(Sx.a, Sx.b+j+0.5)
-            getopptseval(Hx, N-k+1, ptsh)
-        end
-        j = k
-        Hx = Sx.family.H(Sx.a, Sx.b+j+0.5)
-        getopptseval(Hx, N-k-1, ptsh)
+        Hx = Sx.family.H(Sx.a, Sx.b+k+0.5)
+        getopptseval(Hx, N-k+1, ptsh)
     end
 
     n, k = 1, 0
