@@ -539,6 +539,14 @@ Further, we note that there exist "parameter transformation" Banded-Block-Banded
 \bigW^{(a,b)}(x,y) &= \Big(T_W^{(a,b)\to(a+1,b+1)} \Big)^T \: \bigW^{(a-1,b-1)}(x,y) \\
 \end{align}
 
+\begin{figure}
+	\centering
+	\includegraphics[scale=0.4]{sparsityoflaplacian}
+    	\caption{A "spy" plot of the $\laplacewii$ matrix operator for the Laplacian showing its sparsity.}
+        \label{fig:sparsity}
+	\centering
+\end{figure}
+
 We can then obtain the matrix operator for the Laplacian \(\Delta\), that will take us from coefficients for expansion in the weighted space
 \[
 \bigWii(x,y) = \Wii(x,y) \: \bigPii(x,y)
@@ -547,7 +555,7 @@ to coefficients in the non-weighted space
 \[
 \bigPii(x,y).
 \]
-Importantly, this operator will have Banded-Block-Banded structure, and hence will be sparse, as seen in FIGURE. Note that this construction will ensure the imposition of the Dirichlet zero boundary conditions on $\Omega$. The matrix operator for the Laplacian we denote $\laplacewii$ acting on the coefficients vector is then given by
+Importantly, this operator will have Banded-Block-Banded structure, and hence will be sparse, as seen in Figure \ref{fig:sparsity}. Note that this construction will ensure the imposition of the Dirichlet zero boundary conditions on $\Omega$. The matrix operator for the Laplacian we denote $\laplacewii$ acting on the coefficients vector is then given by
 \begin{align}
     \laplacewii := D_x^{(0,0)} \: W_x^{(1,1)} + T^{(0,1)\to(1,1)} \: D_y^{(0,0)} \: T_W^{(1,0)\to(0,0)} \: W_y^{(1,1)}.
 \end{align}
@@ -560,7 +568,7 @@ to coefficients in the space
 $$
 \bigP^{(2,2)}(x,y).
 $$
-Importantly, again, this operator will have Banded-Block-Banded structure, and hence will be sparse, as seen in FIGURE. We denote this matrix operator that acts on the coefficients vector as $\laplaceoo$, and is given by
+Importantly, again, this operator will have Banded-Block-Banded structure, and hence will be sparse, as seen in Figure \ref{fig:sparsity}. We denote this matrix operator that acts on the coefficients vector as $\laplaceoo$, and is given by
 \begin{align}
     \laplaceoo := D_x^{(1,1)} \: D_x^{(0,0)} + T^{(1,2)\to(2,2)} \: D_y^{(1,1)} \: T^{(0,1)\to(1,1)} \: D_y^{(0,0)}.
 \end{align}
@@ -577,9 +585,9 @@ Note that a function expanded in the $\bigW^{(2,2)}$ basis will satisfy both zer
 \begin{align}
 	\laplacewtt := W_x^{(1,1)} \: W_x^{(2,2)} + T_W^{(1,0)\to(0,0)} \: W_y^{(1,1)} \: T_W^{(2,1)\to(1,1)} \: W_y^{(2,2)}.
 \end{align}
-The sparsity and structure of this matrix can be seen in FIGURE.
+The sparsity and structure of this matrix can be seen in Figure \ref{fig:sparsity}.
 
-The sparsity of the these operators can be shown using a simple integration by parts argument, and can be seen in FIGURE.
+The sparsity of the these operators can be shown using a simple integration by parts argument.
 
 
 
@@ -759,12 +767,23 @@ Calculating the non-zero entries of the parameter transformation operators is si
 \subsection{Poisson}
 
 \begin{figure}
+	\begin{subfigure}[t]{0.3\textwidth}
+	\includegraphics[scale=0.3]{solution}
 	\centering
-	\includegraphics[scale=0.4]{solutionblocknorms}
-	\caption{The norms of each block of the computed solution of the Poisson equation with the given right hand side functions.}
+	\caption{}
+        	\label{fig:solution-poisson}
+	\end{subfigure}
+	\begin{subfigure}[t]{0.4\textwidth}
+        	\includegraphics[scale=0.4]{solutionblocknorms}
 	\centering
-	\label{fig:solutionblocknorms}
+	\caption{}
+        	\label{fig:solutionblocknorms}
+	\end{subfigure}
+	\caption{(a) The computed solution to $\Delta u = f$ with zero boundary conditions with $f(x,y) = 1 + \text{erf}(5(1 - 10((x - 0.5)^2 + y^2)))$. (b) The norms of each block of the computed solution of the Poisson equation with the given right hand side functions.}
+	\centering
 \end{figure}
+
+
 
 Find \(u(x,y)\) given a function \(f(x,y)\) such that:
 \begin{align}
@@ -772,6 +791,7 @@ Find \(u(x,y)\) given a function \(f(x,y)\) such that:
     		\Delta u(x,y) = f(x,y) \quad \text{in } \Omega \\
 		u(x,y) = 0 \quad \text{on } \partial \Omega
 	\end{cases}.
+	\label{eqn:poisson}
 \end{align}
 noting the imposition of zero Dirichlet boundary conditions on $u$.
 
@@ -780,23 +800,8 @@ We can tackle the problem as follows. Fix \(a, b = 1,1\). Denote the coefficient
     \laplacewii \mathbf{u} = \mathbf{f}
 \end{align}
 which can be solved to find $\mathbf{u}$.
-In FIGURE we see the solution to the Poisson equation with zero boundary conditions given in EQN in the half-disk $\Omega$. In FIGURE we show the norms of each block of calculated coefficients of the approximation for four right-hand sides of the Poisson equation with N = 999????. The rate of decay in the coefficients is a proxy for the rate of convergence of the computed solution. \bstodo{Describe what plot tells us}
+In Figure \ref{fig:solution-poisson} we see the solution to the Poisson equation with zero boundary conditions given in (\ref{eqn:poisson}) in the half-disk $\Omega$. In Figure \ref{fig:solutionblocknorms} we show the norms of each block of calculated coefficients of the approximation for four right-hand sides of the Poisson equation with N = 200. The rate of decay in the coefficients is a proxy for the rate of convergence of the computed solution. \bstodo{Describe what plot tells us}
 
-%\begin{figure}
-%	\includegraphics[scale=0.4]{example4coeffs}
-%\centering
-%\caption{Plot of the difference between the previous solution's coefficients and the current solution's coefficients under increasing degree of approximation (number of coefficients used) for $N = 2,\dots,10$, using RHS of $f(x,y) = 2(1-x^2-y^2)\cos(x) - 8x\sin(x) - x(1-x^2-y^2)\sin(x) - 4x^2 \cos(x) - 12xy$ for the Poisson equation. The solution is converging as seen by the decreasing (absolute value) difference of coefficient values.}
-%\centering
-%\label{fig:poisson}
-%\end{figure}
-
-\begin{figure}
-	\centering
-	\includegraphics[scale=0.4]{sparsityoflaplacian}
-        \label{fig:sparsity}
-    	\caption{A "spy" plot of the $\laplacewii$ matrix operator for the Laplacian showing its sparsity.}
-	\centering
-\end{figure}
 
 \subsection{Inhomogenous variable-coefficient Helmholtz}
 
@@ -806,6 +811,7 @@ Find \(u(x,y)\) given functions $v$, $f : \Omega \to \R$ such that:
     		\Delta u(x,y) + k^2 v(x,y) \; u(x,y) = f(x,y) \quad \text{in } \Omega \\
 		u(x,y) = 0 \quad \text{on } \partial \Omega
 	\end{cases}.
+	\label{eqn:helmholtz}
 \end{align}
 where $k \in \R$, noting the imposition of zero Dirichlet boundary conditions on $u$.
 
@@ -813,7 +819,7 @@ We can tackle the problem as follows. Fix \(a, b = 1,1\). Denote the coefficient
 \begin{align}
     (\laplacewii + k^2 T^{(0,0)\to(1,1)} \: V({J_x^{(0,0)}}^T, {J_y^{(0,0)}}^T) \: T_W^{(1,1)\to(0,0)}) \mathbf{u} = \mathbf{f}
 \end{align}
-which can be solved to find $\mathbf{u}$. We can see the sparsity and structure of this matrix system in FIGURE with $v(x,y) = xy^2$ as an example. In FIGURE we see the solution to the inhomogenous variable-coefficient Helmholtz equation with zero boundary conditions given in EQN in the half-disk $\Omega$, with  $v(x,y) = xy^2$ and $f(x,y) = xy e^x$.
+which can be solved to find $\mathbf{u}$. We can see the sparsity and structure of this matrix system in FIGURE with $v(x,y) = xy^2$ as an example. In FIGURE we see the solution to the inhomogenous variable-coefficient Helmholtz equation with zero boundary conditions given in (\ref{eqn:helmholtz}) in the half-disk $\Omega$, with  $v(x,y) = xy^2$ and $f(x,y) = xy e^x$.
 
 We can extend this to constant non-zero boundary conditions by simply noting that the problem 
 \begin{align}
@@ -830,14 +836,6 @@ is equivalent to letting $u = \tilde{u} + c$ and solving
 	\end{cases}.
 \end{align}
 
-\begin{figure}
-	\centering
-	\includegraphics[scale=0.3]{solution}
-        	\label{fig:solution}
-    	\caption{The computed solution to $\Delta u = f$ with zero boundary conditions with $f(x,y) = 1 + \text{erf}(5(1 - 10((x - 0.5)^2 + y^2)))$.}
-	\centering
-\end{figure}
-
 
 \subsection{Biharmonic equation}
 
@@ -847,6 +845,7 @@ Find \(u(x,y)\) given a function \(f(x,y)\) such that:
     		\Delta^2 u(x,y) = 0 \quad \text{in } \Omega \\
 		u(x,y) = 0, \quad \frac{\partial u}{\partial n}(x,y) = 0 \quad \text{on } \partial \Omega
 	\end{cases}.
+	\label{eqn:biharmonic}
 \end{align}
 where $\Delta^2$ is the Biharmonic operator, noting the imposition of zero Dirichlet and Neumann boundary conditions on $u$. We can construct a matrix operator for $\Delta^2$ that will take coefficients in the space
 $$
@@ -860,7 +859,7 @@ Note that any function expanded in the $\bigW^{(2,2)}$ basis will satisfy both z
 \begin{align}
 	\biharmonic = \laplaceoo \: \laplacewtt.
 \end{align}
-In FIGURE we see the solution to the Biharmonic equation EQN in the half-disk $\Omega$.
+In FIGURE we see the solution to the Biharmonic equation (\ref{eqn:biharmonic}) in the half-disk $\Omega$.
 
 
 \subsection{Heat equation}
