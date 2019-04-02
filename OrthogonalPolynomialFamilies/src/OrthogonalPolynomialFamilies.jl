@@ -28,7 +28,7 @@ struct OrthogonalPolynomialSpace{FA,WW,F,D,B,R,N} <: PolynomialSpace{D,R}
     ops::Vector{F}  # Cache the ops we get for free from lanczos
     a::Vector{R} # Diagonal recurrence coefficients
     b::Vector{R} # Off diagonal recurrence coefficients
-    opnorm::Vector{R} # The norm of the OPs (all OPs of a OPSpace have the same norm).
+    opnorm::Vector{R} # The norm of the OPs (all OPs of an OPSpace have the same norm).
                         # NOTE this is the value of the norm squared
     opptseval::Vector{Vector{R}}
     derivopptseval::Vector{Vector{R}}
@@ -477,24 +477,26 @@ function inner2(S::HalfDiskSpace, fpts, gpts, w)
             + [fpts[pt] * gpts[pt] for pt = n+1:2n]) .* w) / 2
 end
 
-function getopnorms(S::HalfDiskSpace, m)
+# TODO only store...
+function getopnorms(S::HalfDiskSpace{<:Any, <:Any, T}, k) where T
     # NOTE these are squared norms
-    m̃ = length(S.opnorms)
-    if m > m̃
-        n = m̃ == 0 ? -1 : -1 + Int(round(sqrt(1 + 2(m̃ - 1))))
-        k = m̃ - Int((n + 1)n / 2)
-        resize!(S.opnorms, m)
+    m = length(S.opnorms)
+    if k + 1 > m
+        resize!(S.opnorms, k+1)
         P = S.family.P(S.b, S.b)
         getopnorm(P)
-        for j = m̃+1:m
-            if k > n
-                n += 1
-                k = 0
-            end
-            H = S.family.H(S.a, S.b + k + 0.5)
-            getopnorm(H)
-            S.opnorms[j] = H.opnorm[1] * P.opnorm[1]
-            k += 1
+        # TODO: This is hardcoded, need to find a better way
+        # Doing H(S.a, S.b + k + 0.5) for large k leads to H.weight
+        # reaching maximum number of coefficients when calculating due to
+        # BigFloats
+        X = Fun(T(0)..1)
+        W1 = X^T(S.a) * (1-X^2)^(T(S.b)+0.5)
+        W = W1 * (1-X^2)^m
+        for j = m+1:k+1
+            # H = S.family.H(S.a, S.b + k + 0.5)
+            # S.opnorms[j] = getopnorm(H) * P.opnorm[1]
+            S.opnorms[j] = sum(W) * P.opnorm[1]
+            W = W * (1-X^2)
         end
     end
     S
@@ -508,27 +510,29 @@ struct HalfDiskTransformPlan{T}
 end
 
 function HalfDiskTransformPlan(S::HalfDiskSpace{<:Any, <:Any, T}, vals) where T
-    n = Int(length(vals) / 2)
-    N = Int(sqrt(n)) - 1
-    m = Int((N+1)*(N+2) / 2)
-    pts, w = pointswithweights(S, n)
+    m2 = Int(length(vals) / 2)
+    N = Int(sqrt(m2)) - 1
+    m1 = Int((N+1)*(N+2) / 2)
+    pts, w = pointswithweights(S, m2)
 
     # We store the norms of the OPs
-    if length(S.opnorms) < m
-        getopnorms(S, m)
-    end
+    getopnorms(S, N)
 
     # Vandermonde matrices transposed, for each set of pts (x, ±y)
-    VTp = Array{Float64}(undef, m, n)
+    VTp = Array{Float64}(undef, m1, m2)
     VTm = copy(VTp)
     getopptseval(S, N, pts)
-    for k = 1:m
-        VTp[k, :] = opevalatpts(S, k, pts)[1:n]
-        VTm[k, :] = opevalatpts(S, k, pts)[n+1:end]
+    normsvec = zeros(m1)
+    j = 1
+    for n = 0:N, k = 0:n
+        VTp[j, :] = opevalatpts(S, j, pts)[1:m2]
+        VTm[j, :] = opevalatpts(S, j, pts)[m2+1:end]
+        normsvec[j] = 1 / S.opnorms[k+1]
+        j += 1
     end
-    W = Diagonal(w)
-    U = Diagonal(1 ./ S.opnorms[1:m])
 
+    W = Diagonal(w)
+    U = Diagonal(normsvec)
     HalfDiskTransformPlan{T}(U, VTp, W, VTm)
 end
 
@@ -568,14 +572,9 @@ function recα(S::HalfDiskSpace{<:Any, <:Any, T}, n, k, j) where T
     end
 end
 
-# TODO: Speed up clenshaw! Maybe call pointswithweights(H) outide of this once,
-# and just adjust the inner products...
 function recβ(S::HalfDiskSpace{<:Any, <:Any, T}, n, k, j) where T
     # We get the norms of the 2D OPs
-    m = Int((n+2)*(n+3) / 2)
-    if length(S.opnorms) < m
-        getopnorms(S, m)
-    end
+    getopnorms(S, k+1)
 
     H1 = (S.family.H)(S.a, S.b + k - 0.5)
     H2 = (S.family.H)(S.a, S.b + k + 0.5)
@@ -595,27 +594,27 @@ function recβ(S::HalfDiskSpace{<:Any, <:Any, T}, n, k, j) where T
     if j == 1
         getopptseval(H1, n-k+1, pts)
         (inner2(H2, opevalatpts(H2, n-k+1, pts), opevalatpts(H1, n-k+1, pts), w)
-            * δ / S.opnorms[getopindex(n-1, k-1)])
+            * δ / S.opnorms[k])
     elseif j == 2
         getopptseval(H3, n-k-1, pts)
         (inner2(H3, opevalatpts(H2, n-k+1, pts), opevalatpts(H3, n-k-1, pts), w)
-            * δ / S.opnorms[getopindex(n-1, k+1)])
+            * δ / S.opnorms[k+2])
     elseif j == 3
         getopptseval(H1, n-k+2, pts)
         (inner2(H2, opevalatpts(H2, n-k+1, pts), opevalatpts(H1, n-k+2, pts), w)
-            * δ / S.opnorms[getopindex(n, k-1)])
+            * δ / S.opnorms[k])
     elseif j == 4
         getopptseval(H3, n-k, pts)
         (inner2(H3, opevalatpts(H2, n-k+1, pts), opevalatpts(H3, n-k, pts), w)
-            * δ / S.opnorms[getopindex(n, k+1)])
+            * δ / S.opnorms[k+2])
     elseif j == 5
         getopptseval(H1, n-k+3, pts)
         (inner2(H2, opevalatpts(H2, n-k+1, pts), opevalatpts(H1, n-k+3, pts), w)
-            * δ / S.opnorms[getopindex(n+1, k-1)])
+            * δ / S.opnorms[k])
     elseif j == 6
         getopptseval(H3, n-k+1, pts)
         (inner2(H3, opevalatpts(H2, n-k+1, pts), opevalatpts(H3, n-k+1, pts), w)
-            * δ / S.opnorms[getopindex(n+1, k+1)])
+            * δ / S.opnorms[k+2])
     else
         error("Invalid entry to function")
     end
@@ -881,7 +880,7 @@ function getpartialoperatorxval(S::HalfDiskSpace{<:Any, <:Any, T},
     val -= k * valh * valp
     val += valh * inner2(Px, ptsp .* derivopevalatpts(P, k+1, ptsp),
                             opevalatpts(Px, j+1, ptsp), wp)
-    val /= Sx.opnorms[getopindex(m, j)]
+    val /= Sx.opnorms[j+1]
     val
 end
 function partialoperatorx(S::HalfDiskSpace{<:Any, <:Any, T}, N) where T
@@ -896,7 +895,7 @@ function partialoperatorx(S::HalfDiskSpace{<:Any, <:Any, T}, N) where T
     H = S.family.H(S.a, S.b+0.5)
     ptsh, wh = pointswithweights(H, 2N+2)
     @show N
-    getopnorms(Sx, getopindex(N-1, N-1))
+    getopnorms(Sx, N-1)
     @show "done"
 
     A = BandedBlockBandedMatrix(
@@ -959,12 +958,11 @@ function partialoperatory(S::HalfDiskSpace{<:Any, <:Any, T}, N) where T
     getopptseval(P, N, pts)
     getderivopptseval(P, N, pts)
     getopptseval(Py, N, pts)
-    getopnorms(Sy, getopindex(N-1, N-1))
+    getopnorms(Sy, N-1)
     for k = 1:N
-        jj = getopindex(N-1, k-1)
         val = (getopnorm(Sy.family.H(S.a, S.b+k+0.5))
                 * inner2(Py, derivopevalatpts(P, k+1, pts), opevalatpts(Py, k, pts), w)
-                / Sy.opnorms[jj])
+                / Sy.opnorms[k])
         for i = k:N
             view(A, Block(i, i+1))[k, k+1] = val
         end
@@ -994,7 +992,7 @@ function getweightedpartialoperatorxval(S::HalfDiskSpace{<:Any, <:Any, T},
     val -= k * valh * valp
     val += valh * inner2(Px, ptsp .* derivopevalatpts(P, k+1, ptsp),
                             (-ptsp.^2 .+ 1) .* opevalatpts(Px, j+1, ptsp), wp)
-    val /= Sx.opnorms[getopindex(m, j)]
+    val /= Sx.opnorms[j+1]
     val
 end
 function weightedpartialoperatorx(S::HalfDiskSpace{<:Any, <:Any, T}, N) where T
@@ -1009,7 +1007,7 @@ function weightedpartialoperatorx(S::HalfDiskSpace{<:Any, <:Any, T}, N) where T
     getopptseval(Px, N+1, ptsp)
     getderivopptseval(P, N, ptsp)
     ptsh, wh = pointswithweights(S.family.H(S.a-1, S.b-0.5), 2N+2)
-    getopnorms(Sx, sum(1:N+3))
+    getopnorms(Sx, N+2)
 
     # Get pt evals for the H OPs
     for k = 0:N
@@ -1041,7 +1039,7 @@ function weightedpartialoperatory(S::HalfDiskSpace{<:Any, <:Any, T}, N) where T
     getopptseval(P, N, ptsp)
     getopptseval(Py, N+1, ptsp)
     getderivopptseval(P, N, ptsp)
-    getopnorms(Sy, sum(1:N+2))
+    getopnorms(Sy, N+1)
 
     n, m = N, N+1
     for k = 0:N
@@ -1051,7 +1049,7 @@ function weightedpartialoperatory(S::HalfDiskSpace{<:Any, <:Any, T}, N) where T
         val += inner2(P, (-ptsp.^2 .+ 1) .* derivopevalatpts(P, k+1, ptsp),
                         opevalatpts(Py, j+1, ptsp), wp)
         val *= getopnorm(Sy.family.H(S.a, S.b+k+0.5))
-        val /= Sy.opnorms[getopindex(m, j)]
+        val /= Sy.opnorms[j+1]
         for i = k:N
             view(W, Block(i+2, i+1))[k+2, k+1] = val
         end
@@ -1070,7 +1068,7 @@ function transformparamsoperator(S::HalfDiskSpace{<:Any, <:Any, T},
         P = S.family.P(S.b, S.b)
         ptsh, wh = pointswithweights(St.family.H(St.a, St.b + 0.5), N+1)
         rho2ptsh = -ptsh.^2 .+ 1
-        getopnorms(St, sum(1:N+1))
+        getopnorms(St, N)
 
         # Get pt evals for H OPs
         for k = 0:N
@@ -1081,7 +1079,7 @@ function transformparamsoperator(S::HalfDiskSpace{<:Any, <:Any, T},
         end
 
         n, k = 0, 0; m = n
-        view(C, Block(m+1, n+1))[k+1, k+1] = sum(wh) * getopnorm(P) / St.opnorms[getopindex(m, k)]
+        view(C, Block(m+1, n+1))[k+1, k+1] = sum(wh) * getopnorm(P) / St.opnorms[k+1]
         for n=1:N, k=0:n
             H = S.family.H(S.a, S.b+k+0.5)
             Ht = St.family.H(St.a, St.b+k+0.5)
@@ -1090,7 +1088,7 @@ function transformparamsoperator(S::HalfDiskSpace{<:Any, <:Any, T},
                 val = inner2(H, opevalatpts(H, n-k+1, ptsh),
                                 rho2ptsh.^k .* opevalatpts(Ht, m-k+1, ptsh), wh)
                 val *= getopnorm(P)
-                view(C, Block(m+1, n+1))[k+1, k+1] = val / St.opnorms[getopindex(m, k)]
+                view(C, Block(m+1, n+1))[k+1, k+1] = val / St.opnorms[k+1]
             end
         end
         C
@@ -1109,7 +1107,7 @@ function transformparamsoperator(S::HalfDiskSpace{<:Any, <:Any, T},
         # Get pt evals for 1D OPs
         getopptseval(P, N, ptsp)
         getopptseval(Pt, N, ptsp)
-        getopnorms(St, sum(1:N+1))
+        getopnorms(St, N)
         for k = 0:N
             H = S.family.H(S.a, S.b+k+0.5)
             Ht = St.family.H(St.a, St.b+k+0.5)
@@ -1124,7 +1122,7 @@ function transformparamsoperator(S::HalfDiskSpace{<:Any, <:Any, T},
                     val = inner2(H, opevalatpts(H, n-k+1, ptsh),
                                     rho2ptsh.^Int(0.5*(k+j)) .* opevalatpts(Ht, m-j+1, ptsh), wh)
                     val *= inner2(P, opevalatpts(P, k+1, ptsp), opevalatpts(Pt, j+1, ptsp), wp)
-                    view(C, Block(m+1, n+1))[j+1, k+1] = val / St.opnorms[getopindex(m, j)]
+                    view(C, Block(m+1, n+1))[j+1, k+1] = val / St.opnorms[j+1]
                 end
             end
         end
@@ -1136,7 +1134,7 @@ function transformparamsoperator(S::HalfDiskSpace{<:Any, <:Any, T},
                                     (1:N+2, 1:N+1), (1,0), (0,0))
         P = S.family.P(S.b, S.b)
         ptsh, wh = pointswithweights(S.family.H(S.a, S.b + 0.5), N+1)
-        getopnorms(St, sum(1:N+2))
+        getopnorms(St, N+1)
 
         # Get pt evals for H OPs
         for k = 0:N
@@ -1153,7 +1151,7 @@ function transformparamsoperator(S::HalfDiskSpace{<:Any, <:Any, T},
                 val = inner2(H, opevalatpts(H, n-k+1, ptsh),
                                 (-ptsh.^2 .+ 1).^k .* opevalatpts(Ht, m-k+1, ptsh), wh)
                 val *= getopnorm(P)
-                view(C, Block(m+1, n+1))[k+1, k+1] = val / St.opnorms[getopindex(m, k)]
+                view(C, Block(m+1, n+1))[k+1, k+1] = val / St.opnorms[k+1]
             end
         end
         C
@@ -1169,7 +1167,7 @@ function transformparamsoperator(S::HalfDiskSpace{<:Any, <:Any, T},
         ptsp, wp = pointswithweights(P, N+2)
         ptsh, wh = pointswithweights(S.family.H(S.a, S.b + 0.5), N+1)
         rho2ptsh = -ptsh.^2 .+ 1
-        getopnorms(St, sum(1:N+4))
+        getopnorms(St, N+3)
 
         # Get pt evals for P and H OPs
         getopptseval(P, N, ptsp)
@@ -1190,7 +1188,7 @@ function transformparamsoperator(S::HalfDiskSpace{<:Any, <:Any, T},
                 val = inner2(H, opevalatpts(H, n-k+1, ptsh),
                                 rho2ptsh.^Int(0.5(k+j)) .* opevalatpts(Ht, m-j+1, ptsh), wh)
                 val *= inner2(P, opevalatpts(P, k+1, ptsp), opevalatpts(Pt, j+1, ptsp), wp)
-                view(C, Block(m+1, n+1))[j+1, k+1] = val / St.opnorms[getopindex(m, j)]
+                view(C, Block(m+1, n+1))[j+1, k+1] = val / St.opnorms[j+1]
             end
         end
         C
@@ -1343,6 +1341,7 @@ function getnk(j)
     k = i - (n+1)n/2
     Int(n), Int(k)
 end
+#===#
 
 # Operator Clenshaw
 function operatorclenshawG(S::HalfDiskSpace{<:Any, <:Any, T}, n, Jx, Jy) where T

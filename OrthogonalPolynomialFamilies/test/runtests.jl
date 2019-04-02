@@ -1,8 +1,8 @@
 using ApproxFun, OrthogonalPolynomialFamilies, FastGaussQuadrature,
-        SingularIntegralEquations, Test
+        SingularIntegralEquations, Test, SparseArrays
 import OrthogonalPolynomialFamilies: golubwelsch, lanczos, halfdiskquadrule,
         gethalfdiskOP, jacobix, jacobiy, differentiatex, differentiatey,
-        resizecoeffs!, laplace, transformparamsoperator, operatorclenshaw, getnk,
+        resizecoeffs!, laplaceoperator, transformparamsoperator, operatorclenshaw, getnk,
         getopindex, weight
 
 
@@ -235,6 +235,7 @@ end
     end
     d2yweight(S::HalfDiskSpace, z) = d2yweight(S, z[1], z[2])
 
+    x, y = 0.34, -0.29; z = [x; y]
     # W11->P11
     D = HalfDiskFamily()
     a, b = 1.0, 1.0; S = D(a, b)
@@ -265,8 +266,3 @@ end
 end
 
 #=====#
-
-a, b = 1.0, 1.0; D = HalfDiskFamily(); S = D(a, b)
-N = 5
-S.family.H(S.a,S.b)
-laplace(D, N)
