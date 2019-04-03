@@ -1061,20 +1061,25 @@ with
 (\alpha, \beta) &:= (0,1) \\
 (\gamma, \delta) &:= (0,1) \\
 \rho(x) &:= 1-\half x \\
-w^{(a,b,c)}_H(x) &:= (x - \alpha)^{a} \: (\beta - x)^b \: \rho(x)^{c} = x^a \: (1-x)^{b} \: (1-\half x)^{c} \\
-w^{(a,b)}_P(x) &:= (x - \gamma)^a \: (\delta-x)^b.
+w^{(a,b,c)}_H(x) &:= (\beta - x)^a \: (x - \alpha)^{b} \: \rho(x)^{c} = (1-x)^{a} \: x^b \: (1-\half x)^{c} \\
+w^{(a,b)}_P(x) &:= (\delta-x)^a \: (x - \gamma)^b = (1-x)^a \: x^b.
 \end{cases}
 \end{align}
-The weight $w^{(b)}_2(x)$ is a still an ultraspherical weight, and the corresponding OPs are the Jacobi polynomials $\{P_n^{(b, b)}\}$. $w^{(a,b,c)}_1(x)$ is the (non-classical) weight for the OPs denoted $\{H_n^{(a, b,c)}\}\). Thus we arrive at the two parameter family of 2D orthogonal polynomials $\{\Pnk\}$ on $\Omega$ given by, for \(0 \le k \le n, \: n = 0,1,2,\dots,\)
+The weight $w^{(a,b)}_P(x)$ is the weight for the shifted Jacobi polynomials on the interval $[0,1]$, and hence the corresponding OPs are the shifted Jacobi polynomials $\{\tilde{P}_n^{(a, b)}\}$. We note that the shifted Jacobi polynomials relate the the normal Jacobi polynomials by the relationship $\tilde{P}_n^{(a,b)}(x) = P_n^{(a,b)}(2x-1)$ for any degree $n = 0,1,2,\dots$ and $x \in [0,1]$. $w^{(a,b,c)}_H(x)$ is the (non-classical) weight for the OPs we dentote $\{H_n^{(a,b,c)}\}\). Thus we arrive at the two parameter family of 2D orthogonal polynomials $\{\Pnk\}$ on $\Omega$ given by, for \(0 \le k \le n, \: n = 0,1,2,\dots,\)
 \begin{align}
-	\Pnk^{(a,b,c)}(x,y) := H_{n-k}^{(c, a, b+k+\half)}(x) \: \rho(x)^k \: P_k^{(b,b)}(\frac{y}{\rho(x)}), \quad (x,y) \in \Omega, 
+	\Pnk^{(a,b,c,d)}(x,y) := H_{n-k}^{(a, b, c+d+2k+1)}(x) \: \rho(x)^k \: \tilde{P}_k^{(d,c)}(\frac{y}{\rho(x)}), \quad (x,y) \in \Omega, 
 \end{align}
 orthogonal with respect to the weight
 \begin{align}
-	W^{(a,b,c)}(x,y) &:= w^{(a,b,c)}_H(x) w^{(c,d)}_P(\frac{y}{\rho(x)}) \nonumber \\
-	&= x^a \: (1-x)^b \: y^c \: (1-\half x - y)^d, \quad (x,y) \in \Omega.
+	W^{(a,b,c,d)}(x,y) &:= w^{(a,b,c+d)}_H(x) \: w^{(d,c)}_P(\frac{y}{\rho(x)}) \nonumber \\
+	&= (1-x)^a \: x^b \: y^c \: (1-\half x - y)^d, \quad (x,y) \in \Omega,
 \end{align}
-
+i.e. that
+\begin{align}
+	\int \int_\Omega \Pnk^{(a,b,c,d)} \: P_{m,j}^{(a,b,c,d)} \: W^{(a,b,c,d)} \: \dx \dy &:= C_{n,k}^{(a,b,c,d)} \: \delta_{n,m}
+ \: \delta_{j,k},
+\end{align}
+for some constant $C_{n,k}^{(a,b,c,d)}$.
 
 
 
