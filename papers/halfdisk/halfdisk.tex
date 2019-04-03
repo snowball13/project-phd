@@ -242,7 +242,7 @@ are orthogonal polynomials with respect to the weight \(W(x,y) := w_1(x) \: w_2(
 See \cite[p55--56]{dunkl2014orthogonal}.
 \end{proof}
 
-We can generalise this for our purposes in the following proposition.
+We can generalise this for our purposes in the following proposition. \bstodoinline{I have added in this proposition to explain how I think this generalises to the main domain shapes we are thinking about, including your triangle case.}
 \begin{proposition}
 Let
 \begin{align*}
@@ -285,7 +285,8 @@ w_1(x) &:= w_H^{(a,b)}(x) := x^a \: (1-x^2)^b \\
 w_2(x) &:= w_P^{(b)}(x) := (1-x^2)^b = (1-x)^b \: (1+x)^b,
 \end{cases}
 \end{align}
-Note here the we have made the adjustment that $w^{(a,b,c)}_H(x) = (\beta - x)^a \: (x - \alpha)^{b} \: \rho(x)^{2c}$ and simply set the first parameter to zero and removed it for the specific half-disk case. This is for ease of writing and computation, by ensuring we reduce the need to incorporate unnecessary parameters and instead yield a two-parameter family of 2D orthogonal polynomials.
+\bstodoinline{Hope the following makes sense. The generalisation I have, and how I originally wrote/coded up the half-disk case use slightly different conventions regarding the parameters - would it be worth reframing the paper to match this generalisation, or is this fine?}
+Note here the we have made the adjustment that $w^{(a,b,c)}_H(x) = (\beta - x)^a \: (x - \alpha)^{b} \: \rho(x)^{2c}$ and simply set the first parameter to zero and removed it for the specific half-disk case. This is for ease of writing and computation, by ensuring we reduce the need to incorporate unnecessary parameters and instead yield a two-parameter family of 2D orthogonal polynomials. 
 
 The weight $w_2(x)$ is an ultraspherical weight, and the corresponding OPs are   the Jacobi polynomials  \(\{P_n^{(b, b)}\}\). The weight $w_1(x)$ is non-classical (it is in fact semi-classical, and is equivalent to a generalized Jacobi weight \cite{magnus1995painleve}) and we introduce the notation \(\{H_n^{(a, b)}\}\) for the orthonormal polynomials. Thus we arrive at  a two parameter family of 2D orthogonal polynomials \(\{\Pnkab\}\) given by, for \(0 \le k \le n, \: n = 0,1,2,\dots,\)
 \begin{align}
@@ -302,7 +303,8 @@ W^{(a,b)}(x,y) = w_H^{(a,b)}(x) \: w_P^{(b)}(\frac{y}{\rho(x)}) = x^a \: (1-x^2-
 
 We can express the three-term recurrences associated to $H_n^{(a,b)}$ and $P_n^{(b,b)}$ as
 \begin{align}
-x H_n^{(a,b)}(x) &= \beta_n^{(a,b)} H_{n+1}^{(a,b)}(x) + \alpha_n^{(a,b)} H_n^{(a,b)}(x) + \beta_{n-1}^{(a,b)} H_{n-1}^{(a,b)}(x) \\
+x H_n^{(a,b)}(x) &= \beta_n^{(a,b)} H_{n+1}^{(a,b)}(x) + \alpha_n^{(a,b)} H_n^{(a,b)}(x) + \beta_{n-1}^{(a,b)} H_{n-1}^{(a,b)}(x) 
+\label{eqn:Hrecurrence} \\
 y P_n^{(b,b)}(y) &= \delta_n^{(b)} P_{n+1}^{(b,b)}(y) + \gamma_n^{(b)} P_n^{(b,b)}(y) + \delta_{n-1}^{(b)} P_{n-1}^{(b,b)}(y),
 \end{align}
 where we note that \(\gamma_n^{(b)} = 0\), for \( n = 0,1,2,\dots\). We can use these to determine the 2D recurences for $P_{n,k}^{(a,b)}(x,y)$:
@@ -364,6 +366,7 @@ Three-term recurrences lead to Jacobi operators that correspond to multiplicatio
 and set $J_x^{(a,b)}, J_y^{(a,b)}$ as the Jacobi matrices corresponding to
 \begin{align}
 J_x^{(a,b)} \: \bigPab(x,y) = x \: \bigPab(x,y), \quad J_y^{(a,b)} \: \bigPab(x,y) = y \: \bigPab(x,y).
+\label{eqn:jacobimatricesdefinition}
 \end{align}
 Then $J_x^{(a,b)}, J_y^{(a,b)}$ have the Banded-Block-Banded structures
 \begin{align}
@@ -417,7 +420,7 @@ Note that the sparsity of the Jacobi matrices (in particular the sparsity of the
 
 \subsection{Building the OPs} 
 
-Combining each system in (71) we can write the block-tridiagonal system
+Combining each system in (\ref{eqn:jacobimatricesdefinition}) we can write the block-tridiagonal system
 \begin{align}
 \renewcommand\arraystretch{1.3}
 \mleft[
@@ -626,7 +629,7 @@ The sparsity of the these operators can be shown using a simple integration by p
 
 \subsection{Constructing $H_n^{(a,b)}(x)$}
 
-To obtain the recurrence coefficients for the $\{H_n^{(a,b)}\}$ OPs in (4), we use a version of the Stieltjes algorithm. Recall that
+To obtain the recurrence coefficients for the $\{H_n^{(a,b)}\}$ OPs in (\ref{eqn:Hrecurrence}), we use a version of the Stieltjes algorithm. Recall that
 \begin{align}
 x H_n^{(a,b)}(x) &= \beta_n^{(a,b)} H_{n+1}^{(a,b)}(x) + \alpha_n^{(a,b)} H_n^{(a,b)}(x) + \beta_{n-1}^{(a,b)} H_{n-1}^{(a,b)}(x), \quad n = 0,1,2,\dots
 \end{align}
@@ -956,6 +959,7 @@ In this section, we limit our discretisation to a single element, that is we let
 We seek $u_h \in V_h$ s.t.
 \begin{align}
 	L(v_h) = a(u_h,v_h) \quad \forall \: v_h \in V_h.
+	\label{eqn:FEMweakform}
 \end{align}
 
 Define $\Lambda^{(a,b)} := \langle \bigP^{(a,b)}, \: {\bigP^{(a,b)}}^T \rangle_{W^{(a,b)}}$ where $W^{(a,b)}$ is the weight with which the OPs in $\bigP^{(a,b)}$ are orthogonal with respect to. Note that due to orthogonality this is a diagonal matrix. We can choose a basis for $V_h$ by using the weighted orthogonal polynomials on $\element$ with parameters $a = b = 1$:
@@ -973,7 +977,7 @@ Define $\Lambda^{(a,b)} := \langle \bigP^{(a,b)}, \: {\bigP^{(a,b)}}^T \rangle_{
 		\Wii(a,y) \: \Pii_{n,n}(x,y)
 	\end{pmatrix} \in \R^{n+1} \quad \forall n = 0,1,2,\dots,p,
 \end{align}
-and rewrite (73) in matrix form:
+and rewrite (\ref{eqn:FEMweakform}) in matrix form:
 \begin{align}
 	a(u_h,v_h) &= \int_\element \nabla u_h \cdot \nabla v_h \: d\mathbf{x} \\
 	&= \int_\element \begin{pmatrix}
@@ -1007,7 +1011,7 @@ where $\mathbf{u}, \mathbf{v}$ are the coefficient vectors of the expansions of 
 \end{align}
 where $\mathbf{f}$ is the coefficient vector for the expansion of the function $f(x,y)$ in the $\bigPii$ OP basis.
 
-Since (73) is equivalent to stating that
+Since (\ref{eqn:FEMweakform}) is equivalent to stating that
 \begin{align}
 	L(\Wii \Pii_{n,k}) = a(u_h,\Wii \Pii_{n,k}) \quad \forall \: n = 0,\dots,p, \: k = 0,\dots,n,
 \end{align}
