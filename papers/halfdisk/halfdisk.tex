@@ -368,7 +368,9 @@ and set $J_x^{(a,b)}, J_y^{(a,b)}$ as the Jacobi matrices corresponding to
 J_x^{(a,b)} \: \bigPab(x,y) = x \: \bigPab(x,y), \quad J_y^{(a,b)} \: \bigPab(x,y) = y \: \bigPab(x,y).
 \label{eqn:jacobimatricesdefinition}
 \end{align}
-Then $J_x^{(a,b)}, J_y^{(a,b)}$ have the Banded-Block-Banded structures
+The matrices $J_x^{(a,b)}, J_y^{(a,b)}$ act on the coefficients vector of a functions expansion in the $\{\Pnkab\}$ basis. For example, let $a, b$ be general parameters and a function $f(x,y)$ defined on $\Omega$ be approximated by its expansion $f(x,y) = \bigPab(x,y)^\top \mathbf{f}$. Then $x \: f(x,y)$ is approximated by $\bigPab(x,y)^\top {J_x^{(a,b)}}^\top \mathbf{f}$. In other words, ${J_x^{(a,b)}}^\top \mathbf{f}$ is the coefficients vector for the expansion of the function $(x,y) \to x \: f(x,y)$ in the  $\{\Pnkab\}$ basis.
+
+$J_x^{(a,b)}, J_y^{(a,b)}$ have the Banded-Block-Banded structures
 \begin{align}
 J_{x/y}^{(a,b)} &= \begin{pmatrix}
 		B^{x/y}_0 & A^{x/y}_0 & & & & \\
@@ -552,7 +554,7 @@ Firstly, we introduce further notation that
 \bigWab(x,y) := \Wab(x,y) \bigPab(x,y).
 \end{align}
 
-Let $a, b$ be general parameters and a function $f(x,y)$ defined on $\Omega$ be approximated by its expansion $f(x,y) = \bigPab(x,y)^\top \mathbf{f}$. Recall that $\Wab(x,y) := w_H^{(a,b)}(x) \: w_P^{(b)}(\frac{y}{\rho(x)})$, where $\rho(x) := (1-x^2)^\half$, $w_H^{(a,b)}(x) := x^a \: (1-x^2)^b$ and $w_P^{(b)}(y) := (1-y^2)^b$ for the half disk case.
+Recall that, for $a, b$ be general parameters, a function $f(x,y)$ defined on $\Omega$ is approximated by its expansion $f(x,y) = \bigPab(x,y)^\top \mathbf{f}$. Recall also that $\Wab(x,y) := w_H^{(a,b)}(x) \: w_P^{(b)}(\frac{y}{\rho(x)})$, where $\rho(x) := (1-x^2)^\half$, $w_H^{(a,b)}(x) := x^a \: (1-x^2)^b$ and $w_P^{(b)}(y) := (1-y^2)^b$ for the half disk case.
 
 There exist sparse operators \(D_x^{(a,b)}, \: D_y^{(a,b)}, \: W_x^{(a,b)}, \: W_y^{(a,b)}\) such that:
 \begin{align}
@@ -788,7 +790,7 @@ We can gain the non-zero entries of the weighted differential operators similarl
 \end{align}
 and also that
 \begin{align}
-	\ip< \Wab \Pnkab, \Wab \Pab_{m,j} >_{W^{(-a, -b)}} = \ip< \Pnkab, \Pab_{m,j} >_\Wab = \delta_{n,m} \: \delta_{k,j}.
+	\ip< \Wab \Pnkab, W^{(\tilde{a},\tilde{b})} P^{(\tilde{a},\tilde{b})}_{m,j} >_{W^{(-\tilde{a},-\tilde{b})}} = \ip< \Pnkab, P^{(\tilde{a},\tilde{b})}_{m,j} >_\Wab.
 \end{align}
 
 Calculating the non-zero entries of the parameter transformation operators is similarly done, i.e. use a substitution in the 2D inner product integral to yield a product of 1D inner product integrals. 
