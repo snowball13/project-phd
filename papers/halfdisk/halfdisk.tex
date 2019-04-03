@@ -180,19 +180,18 @@ In recent years, sparse spectral methods for solving partial differential equati
 \section{Introduction}
 
 This paper develops sparse spectral methods for solving linear partial differential equations on a special class of geometries that includes disk slices and trapeziums.  
-More precisely, let  \(\rho \: : \: (\alpha,\beta) \: \to (0,\infty)\) be such that either:
-
+More precisely, we consider the solution of partial differential equations on the domain
+\begin{align}
+	\Omega := \{(x,y) \in \R^2 \quad | \quad \alpha < x < \beta, \: \gamma \rho(x) < y < \delta \rho(x)\}
+\end{align}
+where we require that either of the following scenarios hold:
 \begin{enumerate}
 \item  \(\rho\) is a degree 1 polynomial, or 
-\item \(\rho\) is the square root of a non-negative degree \(\le\) 2 polynomial, \(-\gamma = \delta > 0\), and \(w_2\) is an even function.
+\item \(\rho\) is the square root of a non-negative degree \(\le\) 2 polynomial, \(-\gamma = \delta > 0\), and the weight function \(w_2\) on the interval $(\gamma, \delta)$ is an even function.
 \end{enumerate}
+We will explain where $w_2$ comes into play in Section \ref{Section:OPs}.
 
-We consider the solution of partial differential equations on the domain
-\begin{align}
-\Omega := \{(x,y) \in \R^2 \quad | \quad \alpha < x < \beta, \: \gamma \rho(x) < y < \delta \rho(x)\}.
-\end{align}
-For simplicity of discussion we focus on the half-disk, where $\rho(x) = \sqrt{1-x^2}$,  $(\alpha,\beta) = (0, 1)$, and  $(\gamma, \delta)  = (-1,1)$, with discussion of extension to other geometries in the appendix. 
-
+For simplicity of discussion we focus in this paper on the half-disk, where $\rho(x) = \sqrt{1-x^2}$,  $(\alpha,\beta) = (0, 1)$, and  $(\gamma, \delta)  = (-1,1)$, with discussion of extension to other geometries in the appendix. 
 
 We show that partial differential equations become sparse linear systems when viewed as acting on expansions involving a family of orthogonal polynomials (OPs) that  generalise Jacobi polynomials, mirroring the ultraspherical spectral method for ordinary differential equations \cite{olver2013fast} and its analogue on the triangle \cite{olver2018recurrence,olver2019triangle}.  On the half-disk the family of weights we consider are of the form
 $$
@@ -204,8 +203,7 @@ P_{n,k}^{(a,b)}(x,y) = C_{n,k} x^{n-k} y^k + (\hbox{lower order terms})
 $$
 where $C_{n,k} \neq 0$ and ``lower order terms'' can  include degree $n$ polynomials with fewer $y$ terms.
 
-
- Sparsity comes from expanding the domain and range of an operator  using different choices of $a$ and $b$. Where the sparsity pattern and entries derived in \cite{olver2018recurrence,olver2019triangle} for equations on the triangle  results from manipulations of Jacobi polynomials, in the present work we use a more general integration-by-parts argument to deduce the sparsity structure, alongside quadrature rules to determine the entries.  Furthermore, we use this framework to derive sparse $p$-finite element methods that are analogous to those of Beuchler and Sch\"oberl on tetrahedra \cite{beuchler2006new}. 
+Sparsity comes from expanding the domain and range of an operator  using different choices of $a$ and $b$. Where the sparsity pattern and entries derived in \cite{olver2018recurrence,olver2019triangle} for equations on the triangle  results from manipulations of Jacobi polynomials, in the present work we use a more general integration-by-parts argument to deduce the sparsity structure, alongside quadrature rules to determine the entries.  Furthermore, we use this framework to derive sparse $p$-finite element methods that are analogous to those of Beuchler and Sch\"oberl on tetrahedra \cite{beuchler2006new}. 
 
 The motivation for this work is solving partial differential equations on sub-domains of the sphere. In particular, OPs on a half-sphere can be represented using two families of OPs on the half-disk, where we would require $2n+1$ 3D OPs for each degree $n$, of which $n+1$ would be the $n+1$ degree $n$ OPs on the half-disk of the first family (polynomials in $x,y$) while the remaining $n$ OPs would be given by $z$ multiplied by the $n$ degree $n-1$ OPs on the half-disk of the second family. Constructing sparse spectral methods for surface PDEs on half-spheres, spherical caps, and spherical triangles is future work, and has applications in weather prediction. Other extensions include a full $hp$-finite element method on sections of a disk, which has applications in fluids. 
 
@@ -226,8 +224,7 @@ In this section we outline the construction and some basic properties of $P_{n,k
 
 \subsection{Explicit construction}
 
-
-By using a similar process to \cite[p55--56]{dunkl2014orthogonal} we can construct 2D orthogonal polynomials on $\Omega$ from 1D orthogonal polynomials on the intervals \([0,1]\) and \([-1,1]\).
+By using a similar process to \cite[p55--56]{dunkl2014orthogonal} we can construct 2D orthogonal polynomials on $\Omega$ from 1D orthogonal polynomials on the intervals \([\alpha,\beta]\) and \([\gamma,\delta]\). We generalise this process to demonstrate a method of constructing multi-parameter families of 2D orthogonal polynomials on disk-slice and trapezium shaped domains $\Omega$ from multi-parameter families of 1D orthogonal polynomials on the intervals \([\alpha,\beta]\) and \([\gamma,\delta]\).
 
 \begin{proposition}
 Let \(w_1 : (\alpha,\beta) \: \to \R\), \(w_2 : (\gamma,\delta) \: \to \R\) be weight functions with \(\alpha,\beta,\gamma,\delta \in \R\), and let \(\rho \: : \: (\alpha,\beta) \: \to (0,\infty)\) be such that either:
@@ -245,6 +242,39 @@ are orthogonal polynomials with respect to the weight \(W(x,y) := w_1(x) \: w_2(
 See \cite[p55--56]{dunkl2014orthogonal}.
 \end{proof}
 
+We can generalise this for our purposes in the following proposition.
+\begin{proposition}
+Let
+\begin{align*}
+	\Omega := \{(x,y) \in \R^2 \quad | \quad \alpha < x < \beta, \: \gamma \rho(x) < y < \delta \rho(x)\}
+\end{align*}
+with $\rho : (\alpha, \beta) \to \R$. Further, let $w^{(a,b,c)}_H(x)$ and $w^{(a,b)}_P(x)$ be two weight functions on the intervals $(\alpha, \beta)$ and $(\gamma, \delta)$ respectively, given by:
+\begin{align}
+\begin{cases}
+w^{(a,b,c)}_H(x) &:= (\beta - x)^a \: (x - \alpha)^{b} \: \rho(x)^{c} \\
+w^{(a,b)}_P(x) &:= (\delta-x)^a \: (x - \gamma)^b
+\end{cases}
+\end{align}
+where the three-parameter family of orthogonal polynomials on $[\alpha,\beta]$ given by $\{H_n^{(a,b,c)}\}$ are orthogonal with respect to $w^{(a,b,c)}_H(x)$, and the two-parameter family of orthogonal polynomials on $[\gamma,\delta]$ given by $\{P_n^{(a,b)}\}$ are orthogonal with respect to $w^{(a,b)}_P(x)$.
+
+Assume that either of the following hold:
+\begin{enumerate}
+\item  \(\rho\) is a degree 1 polynomial, or 
+\item \(\rho\) is the square root of a non-negative degree \(\le\) 2 polynomial, \(-\gamma = \delta > 0\), and \(w^{(a,b)}_P\) is an even function (i.e. $a = b$, and we can hence denote the weight as $w^{(a)}_P(x) = (\delta-x^2)^a$).
+\end{enumerate}
+Then the four-parameter 2D polynomials defined on $\Omega$ given by
+\begin{align}
+	\Pnk^{(a,b,c,d)}(x,y) := H_{n-k}^{(a, b, c+d+2k+1)}(x) \: \rho(x)^k \: P_k^{(d,c)}(\frac{y}{\rho(x)}), \quad (x,y) \in \Omega, 
+\end{align}
+are orthogonal polynomials with respect to the weight 
+\begin{align}
+	W^{(a,b,c,d)}(x,y) := w^{(a,b,c+d)}_H(x) \: w_P^{(d,c)}(\frac{y}{\rho(x)}), \quad (x,y) \in \Omega. 
+\end{align}
+\end{proposition}
+\begin{proof}
+See \cite[p55--56]{dunkl2014orthogonal}.
+\end{proof}
+
 For the half disk, the weight $W^{(a,b)}(x,y) = x^a \: (1-x^2-y^2)^b$ results from setting:
 \begin{align}
 \begin{cases}
@@ -255,8 +285,9 @@ w_1(x) &:= w_H^{(a,b)}(x) := x^a \: (1-x^2)^b \\
 w_2(x) &:= w_P^{(b)}(x) := (1-x^2)^b = (1-x)^b \: (1+x)^b,
 \end{cases}
 \end{align}
+Note here the we have made the adjustment that $w^{(a,b,c)}_H(x) = (\beta - x)^a \: (x - \alpha)^{b} \: \rho(x)^{2c}$ and simply set the first parameter to zero and removed it for the specific half-disk case. This is for ease of writing and computation, by ensuring we reduce the need to incorporate unnecessary parameters and instead yield a two-parameter family of 2D orthogonal polynomials.
 
-The weight $w_2(x)$ is an ultraspherical weight, and the corresponding OPs are   the Jacobi polynomials  \(\{P_n^{(b, b)}\}\). The weight $w_1(x)$ is non-classical (it is in fact semi-classical, and is equivalent to a generalized Jacobi weight \cite{magnus1995painleve}) and we introduce the notation \(\{H_n^{(a, b)}\}\) for the orthonormal polynomials. Thus we arrive at  a two parameter family of  2D orthogonal polynomials \(\{\Pnkab\}\) given by, for \(0 \le k \le n, \: n = 0,1,2,\dots,\)
+The weight $w_2(x)$ is an ultraspherical weight, and the corresponding OPs are   the Jacobi polynomials  \(\{P_n^{(b, b)}\}\). The weight $w_1(x)$ is non-classical (it is in fact semi-classical, and is equivalent to a generalized Jacobi weight \cite{magnus1995painleve}) and we introduce the notation \(\{H_n^{(a, b)}\}\) for the orthonormal polynomials. Thus we arrive at  a two parameter family of 2D orthogonal polynomials \(\{\Pnkab\}\) given by, for \(0 \le k \le n, \: n = 0,1,2,\dots,\)
 \begin{align}
  \Pnk^{(a,b)}(x,y) := H_{n-k}^{(a, b+k+\half)}(x) \: \rho(x)^k \: P_k^{(b,b)}\fpr(\frac{y}{\rho(x)}), \quad (x,y) \in \Omega, 
 \end{align}
@@ -1027,25 +1058,31 @@ The work in this paper on the half disk can be easily transferred to the domain 
 with 
 \begin{align}
 \begin{cases}
--1 \le \alpha < &\beta \le 1 \\
+(\alpha, \beta) &\subset (-1,1) \\
 (\gamma, \delta) &:= (-1,1) \\
-\rho(x) &:= (1-x^2)^{\half} \\
-w^{(a,b,c)}_1(x) &:= (\beta - x)^a \: (x - \alpha)^{b} \: \rho(x)^{2c} = (\beta - x)^a \: (x - \alpha)^{b} \: (1-x^2)^{c} \\
-w^{(b)}_2(x) &:= (1-x^2)^b = (1-x)^b \: (1+x)^b.
+\rho(x) &:= (1-x^2)^{\half}.
 \end{cases}
 \end{align}
-The weight $w^{(b)}_2(x)$ is a still an ultraspherical weight, and the corresponding OPs are the Jacobi polynomials $\{P_n^{(b, b)}\}$. $w^{(a,b,c)}_1(x)$ is the (non-classical) weight for the OPs denoted $\{H_n^{(a, b,c)}\}\). Thus we arrive at the two parameter family of 2D orthogonal polynomials $\{\Pnk\}$ on $\Omega$ given by, for \(0 \le k \le n, \: n = 0,1,2,\dots,\)
+Our 1D weight functions on the intervals $(\alpha, \beta)$ and $(\gamma, \delta)$ respectively are then given by:
 \begin{align}
-	\Pnk^{(a,b,c)}(x,y) := H_{n-k}^{(c, a, b+k+\half)}(x) \: \rho(x)^k \: P_k^{(b,b)}(\frac{y}{\rho(x)}), \quad (x,y) \in \Omega, 
+\begin{cases}
+w^{(a,b,c)}_H(x) &:= (\beta - x)^a \: (x - \alpha)^{b} \: \rho(x)^{c} \\
+w^{(a)}_P(x) &:= (1-x^2)^a.
+\end{cases}
+\end{align}
+
+The weight $w^{(a)}_P(x)$ is a still an ultraspherical weight, and the corresponding OPs are the Jacobi polynomials $\{P_n^{(a, a)}\}$. $w^{(a,b,c)}_H(x)$ is the (non-classical) weight for the OPs denoted $\{H_n^{(a,b,c)}\}\). Thus we arrive at the three-parameter family of 2D orthogonal polynomials $\{\Pnk^{(a,b,c)}\}$ on $\Omega$ given by, for \(0 \le k \le n, \: n = 0,1,2,\dots,\)
+\begin{align}
+	\Pnk^{(a,b,c)}(x,y) := H_{n-k}^{(a, b, 2c+2k+1)}(x) \: \rho(x)^k \: P_k^{(c,c)}(\frac{y}{\rho(x)}), \quad (x,y) \in \Omega, 
 \end{align}
 orthogonal with respect to the weight
 \begin{align}
-	W^{(a,b,c)}(x,y) &:= w^{(c,a,b)}_1(x) w^{(b)}_2(\frac{y}{\rho(x)}) \nonumber \\
-	&= (\beta - x)^c \: (x - \alpha)^{a} \: (\rho(x)^2 -y^2)^b \nonumber \\
-	&= (\beta - x)^c \: (x - \alpha)^{a} \: (1 - x^2 -y^2)^b , \quad (x,y) \in \Omega.
+	W^{(a,b,c)}(x,y) &:= w^{(a,b,2c)}_1(x) w^{(c)}_2(\frac{y}{\rho(x)}) \nonumber \\
+	&= (\beta - x)^a \: (x - \alpha)^{b} \: (\rho(x)^2 -y^2)^c \nonumber \\
+	&= (\beta - x)^a \: (x - \alpha)^{b} \: (1 - x^2 -y^2)^c , \quad (x,y) \in \Omega.
 \end{align}
 
-Note that by setting $c = 0$, $\alpha = 0$ and $\beta = 1$ we obtain the 2D orthogonal polynomials on the half-disk.
+We can note that by setting the parameter $c = 0$, and $\alpha = 0$, $\beta = 1$ we obtain the 2D orthogonal polynomials on the half-disk (note again also that we made the adjustment that $w^{(a,b,c)}_H(x) = (\beta - x)^a \: (x - \alpha)^{b} \: \rho(x)^{2c}$ for the half-disk case, for ease of writing and computation).
 
 
 
@@ -1065,21 +1102,15 @@ w^{(a,b,c)}_H(x) &:= (\beta - x)^a \: (x - \alpha)^{b} \: \rho(x)^{c} = (1-x)^{a
 w^{(a,b)}_P(x) &:= (\delta-x)^a \: (x - \gamma)^b = (1-x)^a \: x^b.
 \end{cases}
 \end{align}
-The weight $w^{(a,b)}_P(x)$ is the weight for the shifted Jacobi polynomials on the interval $[0,1]$, and hence the corresponding OPs are the shifted Jacobi polynomials $\{\tilde{P}_n^{(a, b)}\}$. We note that the shifted Jacobi polynomials relate the the normal Jacobi polynomials by the relationship $\tilde{P}_n^{(a,b)}(x) = P_n^{(a,b)}(2x-1)$ for any degree $n = 0,1,2,\dots$ and $x \in [0,1]$. $w^{(a,b,c)}_H(x)$ is the (non-classical) weight for the OPs we dentote $\{H_n^{(a,b,c)}\}\). Thus we arrive at the two parameter family of 2D orthogonal polynomials $\{\Pnk\}$ on $\Omega$ given by, for \(0 \le k \le n, \: n = 0,1,2,\dots,\)
+The weight $w^{(a,b)}_P(x)$ is the weight for the shifted Jacobi polynomials on the interval $[0,1]$, and hence the corresponding OPs are the shifted Jacobi polynomials $\{\tilde{P}_n^{(a, b)}\}$. We note that the shifted Jacobi polynomials relate the the normal Jacobi polynomials by the relationship $\tilde{P}_n^{(a,b)}(x) = P_n^{(a,b)}(2x-1)$ for any degree $n = 0,1,2,\dots$ and $x \in [0,1]$. $w^{(a,b,c)}_H(x)$ is the (non-classical) weight for the OPs we dentote $\{H_n^{(a,b,c)}\}\). Thus we arrive at the four-parameter family of 2D orthogonal polynomials $\{\Pnk^{(a,b,c,d)}\}$ on $\Omega$ given by, for \(0 \le k \le n, \: n = 0,1,2,\dots,\)
 \begin{align}
 	\Pnk^{(a,b,c,d)}(x,y) := H_{n-k}^{(a, b, c+d+2k+1)}(x) \: \rho(x)^k \: \tilde{P}_k^{(d,c)}(\frac{y}{\rho(x)}), \quad (x,y) \in \Omega, 
 \end{align}
 orthogonal with respect to the weight
 \begin{align}
 	W^{(a,b,c,d)}(x,y) &:= w^{(a,b,c+d)}_H(x) \: w^{(d,c)}_P(\frac{y}{\rho(x)}) \nonumber \\
-	&= (1-x)^a \: x^b \: y^c \: (1-\half x - y)^d, \quad (x,y) \in \Omega,
+	&= (1-x)^a \: x^b \: y^c \: (1-\half x - y)^d, \quad (x,y) \in \Omega.
 \end{align}
-i.e. that
-\begin{align}
-	\int \int_\Omega \Pnk^{(a,b,c,d)} \: P_{m,j}^{(a,b,c,d)} \: W^{(a,b,c,d)} \: \dx \dy &:= C_{n,k}^{(a,b,c,d)} \: \delta_{n,m}
- \: \delta_{j,k},
-\end{align}
-for some constant $C_{n,k}^{(a,b,c,d)}$.
 
 
 
