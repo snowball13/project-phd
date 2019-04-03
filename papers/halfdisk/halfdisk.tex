@@ -1045,7 +1045,39 @@ orthogonal with respect to the weight
 	&= (\beta - x)^c \: (x - \alpha)^{a} \: (1 - x^2 -y^2)^b , \quad (x,y) \in \Omega.
 \end{align}
 
-Note that by setting $c = 0$, $\alpha = 0$ and $\beta = 1$ we obtain the 2D orthogonal polynomials on the half disk.
+Note that by setting $c = 0$, $\alpha = 0$ and $\beta = 1$ we obtain the 2D orthogonal polynomials on the half-disk.
+
+
+
+\section{Trapeziums}
+
+We can further extend this work to trapezium shaped domains. Note that for any trapezium there exists an affine map to the canonical trapezium domain that we consider here, given by
+\begin{align}
+	\Omega := \{(x,y) \in \R^2 \quad | \quad \alpha < x < \beta, \: \gamma \rho(x) < y < \delta \rho(x)\}
+\end{align}
+with 
+\begin{align}
+\begin{cases}
+(\alpha, \beta) &:= (0,1) \\
+(\gamma, \delta) &:= (0,1) \\
+\rho(x) &:= 1-\half x \\
+w^{(a,b,c)}_H(x) &:= (x - \alpha)^{a} \: (\beta - x)^b \: \rho(x)^{c} = x^a \: (1-x)^{b} \: (1-\half x)^{c} \\
+w^{(a,b)}_P(x) &:= (x - \gamma)^a \: (\delta-x)^b.
+\end{cases}
+\end{align}
+The weight $w^{(b)}_2(x)$ is a still an ultraspherical weight, and the corresponding OPs are the Jacobi polynomials $\{P_n^{(b, b)}\}$. $w^{(a,b,c)}_1(x)$ is the (non-classical) weight for the OPs denoted $\{H_n^{(a, b,c)}\}\). Thus we arrive at the two parameter family of 2D orthogonal polynomials $\{\Pnk\}$ on $\Omega$ given by, for \(0 \le k \le n, \: n = 0,1,2,\dots,\)
+\begin{align}
+	\Pnk^{(a,b,c)}(x,y) := H_{n-k}^{(c, a, b+k+\half)}(x) \: \rho(x)^k \: P_k^{(b,b)}(\frac{y}{\rho(x)}), \quad (x,y) \in \Omega, 
+\end{align}
+orthogonal with respect to the weight
+\begin{align}
+	W^{(a,b,c)}(x,y) &:= w^{(a,b,c)}_H(x) w^{(c,d)}_P(\frac{y}{\rho(x)}) \nonumber \\
+	&= x^a \: (1-x)^b \: y^c \: (1-\half x - y)^d, \quad (x,y) \in \Omega.
+\end{align}
+
+
+
+
 
 %
 %\section{Hemisphere}
