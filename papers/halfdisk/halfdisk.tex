@@ -798,23 +798,12 @@ Calculating the non-zero entries of the parameter transformation operators is si
 \subsection{Poisson}
 
 \begin{figure}
-	\begin{subfigure}[t]{0.3\textwidth}
 	\includegraphics[scale=0.3]{solution}
 	\centering
-	\caption{}
+	\caption{The computed solution to $\Delta u = f$ with zero boundary conditions with $f(x,y) = 1 + \text{erf}(5(1 - 10((x - 0.5)^2 + y^2)))$.}
         	\label{fig:solution-poisson}
-	\end{subfigure}
-	\begin{subfigure}[t]{0.4\textwidth}
-        	\includegraphics[scale=0.4]{solutionblocknorms}
-	\centering
-	\caption{}
-        	\label{fig:solutionblocknorms}
-	\end{subfigure}
-	\caption{(a) The computed solution to $\Delta u = f$ with zero boundary conditions with $f(x,y) = 1 + \text{erf}(5(1 - 10((x - 0.5)^2 + y^2)))$. (b) The norms of each block of the computed solution of the Poisson equation with the given right hand side functions.}
 	\centering
 \end{figure}
-
-
 
 Find \(u(x,y)\) given a function \(f(x,y)\) such that:
 \begin{align}
@@ -831,8 +820,14 @@ We can tackle the problem as follows. Fix \(a, b = 1,1\). Denote the coefficient
     \laplacewii \mathbf{u} = \mathbf{f}
 \end{align}
 which can be solved to find $\mathbf{u}$.
-In Figure \ref{fig:solution-poisson} we see the solution to the Poisson equation with zero boundary conditions given in (\ref{eqn:poisson}) in the half-disk $\Omega$. In Figure \ref{fig:solutionblocknorms} we show the norms of each block of calculated coefficients of the approximation for four right-hand sides of the Poisson equation with N = 200. The rate of decay in the coefficients is a proxy for the rate of convergence of the computed solution. \bstodo{Describe what plot tells us}
+In Figure \ref{fig:solution-poisson} we see the solution to the Poisson equation with zero boundary conditions given in (\ref{eqn:poisson}) in the half-disk $\Omega$. In Figure \ref{fig:solutionblocknorms} we show the norms of each block of calculated coefficients of the approximation for four right-hand sides of the Poisson equation with N = 200. The rate of decay in the coefficients is a proxy for the rate of convergence of the computed solution. We see that\bstodo{Describe what plot tells us}
 
+\begin{figure}
+        	\includegraphics[scale=0.5]{solutionblocknorms}
+	\centering
+	\caption{The norms of each block of the computed solution of the Poisson equation with the given right hand side functions.}
+        	\label{fig:solutionblocknorms}
+\end{figure}
 
 \subsection{Inhomogenous variable-coefficient Helmholtz}
 
