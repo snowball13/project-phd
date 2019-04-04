@@ -85,7 +85,7 @@
 \newcommand{\gradpY}{\nabla^\perp Y}
 \newcommand{\gradpYlm}{\nabla^\perp Y^m_l}
 
-\newcommand{\Dlt}{D^T_l}
+\newcommand{\Dlt}{D^\top_l}
 
 \newcommand{\curlyy}{\bm{\mathcal{Y}}}
 \newcommand{\blone}{\beta_{l, 1}}
@@ -123,7 +123,7 @@
 \newcommand{\alphaab}{\alpha^{(a,b)}}
 \newcommand{\betaab}{\beta^{(a,b)}}
 \newcommand{\bigPab}{\bigP^{(a,b)}}
-\newcommand{\Dnt}{D^T_n}
+\newcommand{\Dnt}{D^\top_n}
 \newcommand{\Wii}{W^{(1,1)}}
 \newcommand{\Pii}{P^{(1,1)}}
 \newcommand{\bigPii}{{\mathbb{P}^{(1,1)}}}
@@ -392,7 +392,7 @@ B^x_n &:= \begin{pmatrix}
 		& \ddots & \\
 		& & \alphaab_{n,n,2} \\
 	    \end{pmatrix} \in \R^{(n+1)\times(n+1)} \quad n = 0,1,2,\dots \\
-C^x_n &:= \big( A^x_n \big)^T \in \R^{(n+1)\times n},  \quad n = 1,2,\dots \\ 
+C^x_n &:= \big( A^x_n \big)^\top \in \R^{(n+1)\times n},  \quad n = 1,2,\dots \\ 
 \nonumber \\
 A^y_n &:= \begin{pmatrix}
 		0 & \betaab_{n,0,6} & & & \\
@@ -501,7 +501,7 @@ For \(n\) odd:
 m &= \frac{n+1}{2} + 1,\quad  \eta_0 = \frac{1}{\betaab_{n,n,6}}, \quad \xi = -\frac{\betaab_{n,1,5} \: \eta_{m-2}}{\alphaab_{n+1,0,1}},\qqand \nonumber \\
 \eta_k &= -\frac{\betaab_{n,n-2(k-1),5} \: \eta_{k-1}}{\betaab_{n,n-2k,6}} \quad k = 1,\dots,m-2.
 \end{align}
-It follows that we can apply $D_n^T$ in $O(n)$ complexity, and thereby construct $\bigPab_{n}(x,y)$ in optimal $O(n^2)$ complexity.
+It follows that we can apply $\Dnt$ in $O(n)$ complexity, and thereby construct $\bigPab_{n}(x,y)$ in optimal $O(n^2)$ complexity.
 
 %
 \section{Sparse partial differential operators}\label{Section:PDOs}
@@ -558,29 +558,39 @@ Recall that, for $a, b$ be general parameters, a function $f(x,y)$ defined on $\
 
 There exist sparse operators \(D_x^{(a,b)}, \: D_y^{(a,b)}, \: W_x^{(a,b)}, \: W_y^{(a,b)}\) such that:
 \begin{align}
-\dx[f(x,y)] &= \bigP^{(a+1,b+1)}(x,y)^T \: D_x^{(a,b)} \: \mathbf{f}, \\
-\dy[f(x,y)] &= \bigP^{(a,b+1)}(x,y)^T \: D_y^{(a,b)} \: \mathbf{f}, \\
-\dx[\Wab(x,y) \: f(x,y)] &= \bigW^{(a-1,b-1)}(x,y)^T \: W_x^{(a,b)} \: \mathbf{f}, \\
-\dy[\Wab(x,y) \: f(x,y)] &= \bigW^{(a,b-1)}(x,y)^T \: W_y^{(a,b)} \: \mathbf{f}.
+\dx[f(x,y)] &= \bigP^{(a+1,b+1)}(x,y)^\top \: D_x^{(a,b)} \: \mathbf{f}, \\
+\dy[f(x,y)] &= \bigP^{(a,b+1)}(x,y)^\top \: D_y^{(a,b)} \: \mathbf{f}, \\
+\dx[\Wab(x,y) \: f(x,y)] &= \bigW^{(a-1,b-1)}(x,y)^\top \: W_x^{(a,b)} \: \mathbf{f}, \\
+\dy[\Wab(x,y) \: f(x,y)] &= \bigW^{(a,b-1)}(x,y)^\top \: W_y^{(a,b)} \: \mathbf{f}.
 \end{align}
 The incrementing and decrementing of parameters as seen here is analogous to other well known orthogonal polynomials families' derivatives, for example the Jacobi polynomials, as seen in the DLMF \cite{DLMFDerivatives}.
 
 Further, we note that there exist "parameter transformation" Banded-Block-Banded matrix operators that increment/decrement the parameters, transforming the OPs from one (weighted or non-weighted) parameter space to another. We denote these operators as $T^{(a,b)\to(a+1,b)}$, $T^{(a,b)\to(a,b+1)}$ and $T^{(a,b)\to(a+1,b+1)}$ for conversion between non-weighted spaces, and similarly $T_W^{(a,b)\to(a-1,b)}$, $T_W^{(a,b)\to(a,b-1)}$ and $T_W^{(a,b)\to(a-1,b-1)}$ for conversion between weighted spaces, where:
 \begin{align}
-\bigP^{(a,b)}(x,y) &= \Big(T^{(a,b)\to(a+1,b)} \Big)^T \: \bigP^{(a+1,b)}(x,y) \\
-\bigP^{(a,b)}(x,y) &= \Big(T^{(a,b)\to(a,b+1)} \Big)^T \: \bigP^{(a,b+1)}(x,y) \\
-\bigP^{(a,b)}(x,y) &= \Big(T^{(a,b)\to(a+1,b+1)} \Big)^T \: \bigP^{(a+1,b+1)}(x,y) \\
-\bigW^{(a,b)}(x,y) &= \Big(T_W^{(a,b)\to(a+1,b)} \Big)^T \: \bigW^{(a-1,b)}(x,y) \\
-\bigW^{(a,b)}(x,y) &= \Big(T_W^{(a,b)\to(a,b+1)} \Big)^T \: \bigW^{(a,b-1)}(x,y) \\
-\bigW^{(a,b)}(x,y) &= \Big(T_W^{(a,b)\to(a+1,b+1)} \Big)^T \: \bigW^{(a-1,b-1)}(x,y) \\
+\bigP^{(a,b)}(x,y) &= \Big(T^{(a,b)\to(a+1,b)} \Big)^\top \: \bigP^{(a+1,b)}(x,y) \\
+\bigP^{(a,b)}(x,y) &= \Big(T^{(a,b)\to(a,b+1)} \Big)^\top \: \bigP^{(a,b+1)}(x,y) \\
+\bigP^{(a,b)}(x,y) &= \Big(T^{(a,b)\to(a+1,b+1)} \Big)^\top \: \bigP^{(a+1,b+1)}(x,y) \\
+\bigW^{(a,b)}(x,y) &= \Big(T_W^{(a,b)\to(a+1,b)} \Big)^\top \: \bigW^{(a-1,b)}(x,y) \\
+\bigW^{(a,b)}(x,y) &= \Big(T_W^{(a,b)\to(a,b+1)} \Big)^\top \: \bigW^{(a,b-1)}(x,y) \\
+\bigW^{(a,b)}(x,y) &= \Big(T_W^{(a,b)\to(a+1,b+1)} \Big)^\top \: \bigW^{(a-1,b-1)}(x,y) \\
 \end{align}
 
 \begin{figure}
+	\begin{subfigure}[t]{0.45\textwidth}
+	\includegraphics[scale=0.4]{sparsityoflaplacian-w11}
+	\end{subfigure}
+	\begin{subfigure}[t]{0.45\textwidth}
+	\includegraphics[scale=0.4]{sparsityoflaplacian-w22}
+	\end{subfigure}
+	\begin{subfigure}[t]{0.45\textwidth}
+	\includegraphics[scale=0.4]{sparsityoflaplacian-00}
+	\end{subfigure}
+	\begin{subfigure}[t]{0.45\textwidth}
+	\includegraphics[scale=0.4]{sparsityofhelmholtz}
+	\end{subfigure}
 	\centering
-	\includegraphics[scale=0.4]{sparsityoflaplacian}
-    	\caption{A "spy" plot of the $\laplacewii$ matrix operator for the Laplacian showing its sparsity.}
+    	\caption{"Spy" plots of the different operator matrices for the Laplacian operator $\Delta$, as well as the operator matrix for the Helmholtz equation, showing their sparsity. Top Left: $\laplacewii$. Top Right: $\laplacewtt$. Bottom Left: $\laplaceoo$. Bottom Right: the weighted variable coefficient Helmholtz operator $\laplacewii + k^2 \: T^{(0,0)\to(1,1)} \: V({J_x^{(0,0)}}^\top, {J_y^{(0,0)}}^\top) \: T_W^{(1,1)\to(0,0)}$ for $v(x,y) = xy^2$ and $k = 0.25$.}
         \label{fig:sparsity}
-	\centering
 \end{figure}
 
 We can then obtain the matrix operator for the Laplacian \(\Delta\), that will take us from coefficients for expansion in the weighted space
@@ -698,7 +708,7 @@ W^{(a,b)}(x,y) &= x^a \: (1-x^2-y^2)^b, \quad \text{for } (x,y) \in \Omega, \\
 
 Fix \(a,b \in \R\). Then for any function \(f : \Omega \to \R\) of degree $N$ we can express \(f\) by
 \begin{align*}
-f(x,y) = \sum_{n=0}^N \bigP_n^{(a,b)}(x,y)^T \: \mathbf{f}_n
+f(x,y) = \sum_{n=0}^N \bigP_n^{(a,b)}(x,y)^\top \: \mathbf{f}_n
 \end{align*}
 where
 \begin{align*}
@@ -846,9 +856,9 @@ Find \(u(x,y)\) given functions $v$, $f : \Omega \to \R$ such that:
 \end{align}
 where $k \in \R$, noting the imposition of zero Dirichlet boundary conditions on $u$.
 
-We can tackle the problem as follows. Fix \(a, b = 1,1\). Denote the coefficient vector for expansion of $u$ in the $\bigWii$ OP basis up to degree $N$ by $\mathbf{u}$, and the coefficient vector for expansion of $f$ in the $\bigPii$ OP basis up to degree $N$ by $\mathbf{f}$. Since $f$ is known, we can obtain $\mathbf{f}$ using the quadrature rule above. We can obtain the matrix operator for the variable-coefficient function $v(x,y)$ by using the Clenshaw algorithm with matrix inputs as the Jacobi matrices ${J_x^{(0,0)}}^T, {J_y^{(0,0)}}^T$, yielding an operator matrix of the same dimension as the input Jacobi matries. We can denote the resulting operator acting on coefficients in the $\bigPoo$ space by $V({J_x^{(0,0)}}^T, {J_y^{(0,0)}}^T)$. In matrix-vector notation, our system hence becomes:
+We can tackle the problem as follows. Fix \(a, b = 1,1\). Denote the coefficient vector for expansion of $u$ in the $\bigWii$ OP basis up to degree $N$ by $\mathbf{u}$, and the coefficient vector for expansion of $f$ in the $\bigPii$ OP basis up to degree $N$ by $\mathbf{f}$. Since $f$ is known, we can obtain $\mathbf{f}$ using the quadrature rule above. We can obtain the matrix operator for the variable-coefficient function $v(x,y)$ by using the Clenshaw algorithm with matrix inputs as the Jacobi matrices ${J_x^{(0,0)}}^\top, {J_y^{(0,0)}}^\top$, yielding an operator matrix of the same dimension as the input Jacobi matries. We can denote the resulting operator acting on coefficients in the $\bigPoo$ space by $V({J_x^{(0,0)}}^\top, {J_y^{(0,0)}}^\top)$. In matrix-vector notation, our system hence becomes:
 \begin{align}
-    (\laplacewii + k^2 T^{(0,0)\to(1,1)} \: V({J_x^{(0,0)}}^T, {J_y^{(0,0)}}^T) \: T_W^{(1,1)\to(0,0)}) \mathbf{u} = \mathbf{f}
+    (\laplacewii + k^2 T^{(0,0)\to(1,1)} \: V({J_x^{(0,0)}}^\top, {J_y^{(0,0)}}^\top) \: T_W^{(1,1)\to(0,0)}) \mathbf{u} = \mathbf{f}
 \end{align}
 which can be solved to find $\mathbf{u}$. We can see the sparsity and structure of this matrix system in FIGURE with $v(x,y) = xy^2$ as an example. In FIGURE we see the solution to the inhomogenous variable-coefficient Helmholtz equation with zero boundary conditions given in (\ref{eqn:helmholtz}) in the half-disk $\Omega$, with  $v(x,y) = xy^2$ and $f(x,y) = xy e^x$.
 
@@ -964,7 +974,7 @@ We seek $u_h \in V_h$ s.t.
 	\label{eqn:FEMweakform}
 \end{align}
 
-Define $\Lambda^{(a,b)} := \langle \bigP^{(a,b)}, \: {\bigP^{(a,b)}}^T \rangle_{W^{(a,b)}}$ where $W^{(a,b)}$ is the weight with which the OPs in $\bigP^{(a,b)}$ are orthogonal with respect to. Note that due to orthogonality this is a diagonal matrix. We can choose a basis for $V_h$ by using the weighted orthogonal polynomials on $\element$ with parameters $a = b = 1$:
+Define $\Lambda^{(a,b)} := \langle \bigP^{(a,b)}, \: {\bigP^{(a,b)}}^\top \rangle_{W^{(a,b)}}$ where $W^{(a,b)}$ is the weight with which the OPs in $\bigP^{(a,b)}$ are orthogonal with respect to. Note that due to orthogonality this is a diagonal matrix. We can choose a basis for $V_h$ by using the weighted orthogonal polynomials on $\element$ with parameters $a = b = 1$:
 \begin{align}
 \bigWii(x,y) &:= \begin{pmatrix}
 		\bigWii_0(x,y) \\
@@ -985,31 +995,31 @@ and rewrite (\ref{eqn:FEMweakform}) in matrix form:
 	&= \int_\element \begin{pmatrix}
 					\partial_x v_h \\
 					\partial_y v_h
-				\end{pmatrix}^T 
+				\end{pmatrix}^\top 
 				\begin{pmatrix}
 					\partial_x u_h \\
 					\partial_y u_h
 				\end{pmatrix}
 				\\
 	&= \int_\element \begin{pmatrix}
-					\bigPoo^T \Wii_x \mathbf{v} \\
-					\bigPoo^T T^{(1,0)\to(0,0)} \Wii_y \mathbf{v}
-				\end{pmatrix}^T 
+					\bigPoo^\top \Wii_x \mathbf{v} \\
+					\bigPoo^\top T^{(1,0)\to(0,0)} \Wii_y \mathbf{v}
+				\end{pmatrix}^\top 
 				\begin{pmatrix}
-					\bigPoo^T \Wii_x \mathbf{u} \\
-					\bigPoo^T T^{(1,0)\to(0,0)} \Wii_y \mathbf{u}
+					\bigPoo^\top \Wii_x \mathbf{u} \\
+					\bigPoo^\top T^{(1,0)\to(0,0)} \Wii_y \mathbf{u}
 				\end{pmatrix}
 				\\
-	&= \int_\element \Big( \mathbf{v}^T {\Wii_x}^T \bigPoo \bigPoo^T \Wii_x \mathbf{u} \nonumber \\
-					& \quad \quad \quad + \mathbf{v}^T ({T^{(1,0)\to(0,0)} \Wii_y})^T \bigPoo \bigPoo^T T^{(1,0)\to(0,0)} \Wii_y \mathbf{u}  \Big) \: d\mathbf{x} \\
-	&= \mathbf{v}^T \: \Big( {\Wii_x}^T \Lambda^{(0,0)} \Wii_x + ({T^{(1,0)\to(0,0)} \Wii_y})^T \Lambda^{(0,0)} T^{(1,0)\to(0,0)} \Wii_y \Big) \: \mathbf{u}
+	&= \int_\element \Big( \mathbf{v}^\top {\Wii_x}^\top \bigPoo \bigPoo^\top \Wii_x \mathbf{u} \nonumber \\
+					& \quad \quad \quad + \mathbf{v}^\top ({T^{(1,0)\to(0,0)} \Wii_y})^\top \bigPoo \bigPoo^\top T^{(1,0)\to(0,0)} \Wii_y \mathbf{u}  \Big) \: d\mathbf{x} \\
+	&= \mathbf{v}^\top \: \Big( {\Wii_x}^\top \Lambda^{(0,0)} \Wii_x + ({T^{(1,0)\to(0,0)} \Wii_y})^\top \Lambda^{(0,0)} T^{(1,0)\to(0,0)} \Wii_y \Big) \: \mathbf{u}
 \end{align}
 where $\mathbf{u}, \mathbf{v}$ are the coefficient vectors of the expansions of $u_h, v_h \in V_h$ respectively in the $V_h$ basis ($\bigWii$ OPs), and
 \begin{align}
 	L(v_h) &= \int_\element \: v_h \: f \: d\mathbf{x} \\
-	&= \int_\element \: \mathbf{v}^T \: \bigWii \: \bigPii^T \: \mathbf{f} \: d\mathbf{x} \\
-	&= \mathbf{v}^T \: \langle \bigPii, {\bigPii}^T \rangle_{\Wii} \: d\mathbf{x} \\
-	&= \mathbf{v}^T \Lambda^{(1,1)} \: \mathbf{f},
+	&= \int_\element \: \mathbf{v}^\top \: \bigWii \: \bigPii^\top \: \mathbf{f} \: d\mathbf{x} \\
+	&= \mathbf{v}^\top \: \langle \bigPii, {\bigPii}^\top \rangle_{\Wii} \: d\mathbf{x} \\
+	&= \mathbf{v}^\top \Lambda^{(1,1)} \: \mathbf{f},
 \end{align}
 where $\mathbf{f}$ is the coefficient vector for the expansion of the function $f(x,y)$ in the $\bigPii$ OP basis.
 
@@ -1023,7 +1033,7 @@ A\mathbf{u} = \tilde{\mathbf{f}}.
 \end{align}
 where the (element) stiffness matrix $A$ is defined by 
 \begin{align}
-A = {\Wii_x}^T \Lambda^{(0,0)} \Wii_x + ({T^{(1,0)\to(0,0)} \Wii_y})^T \Lambda^{(0,0)} T^{(1,0)\to(0,0)} \Wii_y, 
+A = {\Wii_x}^\top \Lambda^{(0,0)} \Wii_x + ({T^{(1,0)\to(0,0)} \Wii_y})^\top \Lambda^{(0,0)} T^{(1,0)\to(0,0)} \Wii_y, 
 \end{align}
 and the load vector $\tilde{\mathbf{f}}$ is given by 
 \begin{align}
