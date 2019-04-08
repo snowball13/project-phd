@@ -813,11 +813,27 @@ Calculating the non-zero entries of the parameter transformation operators is si
 \subsection{Poisson}
 
 \begin{figure}
-	\includegraphics[scale=0.3]{solution}
+	\begin{subfigure}[t]{0.3\textwidth}
 	\centering
-	\caption{The computed solution to $\Delta u = f$ with zero boundary conditions with $f(x,y) = 1 + \text{erf}(5(1 - 10((x - 0.5)^2 + y^2)))$.}
-        	\label{fig:solution-poisson}
+	\includegraphics[scale=0.3]{solution-poisson}
+	\caption{}
+	\label{fig:solution-poisson}
+	\end{subfigure}
+	\begin{subfigure}[t]{0.3\textwidth}
 	\centering
+	\includegraphics[scale=0.3]{solution-helmholtz}
+	\caption{}
+	\label{fig:solution-helmholtz}
+	\end{subfigure}
+	\begin{subfigure}[t]{0.3\textwidth}
+	\centering
+	\includegraphics[scale=0.3]{solution-biharmonic}
+	\caption{}
+	\label{fig:solution-biharmonic}
+	\end{subfigure}
+	\centering
+    	\caption{(a): The computed solution to $\Delta u = f$ with zero boundary conditions with $f(x,y) = 1 + \text{erf}(5(1 - 10((x - 0.5)^2 + y^2)))$. (b): The computed solution to $\Delta u + k^2 \: v \: u = f$ with zero boundary conditions with $f(x,y) = xye^x$, $v(x,y) = xy^2$ and $k = 0.25$. (c): The computed solution to $\Delta^2 u = f$ with zero Dirichlet and Neumann boundary conditions with $f(x,y) = 1 + \text{erf}(5(1 - 10((x - 0.5)^2 + y^2)))$.}
+        \label{fig:solution}
 \end{figure}
 
 Find \(u(x,y)\) given a function \(f(x,y)\) such that:
@@ -860,7 +876,7 @@ We can tackle the problem as follows. Fix \(a, b = 1,1\). Denote the coefficient
 \begin{align}
     (\laplacewii + k^2 T^{(0,0)\to(1,1)} \: V({J_x^{(0,0)}}^\top, {J_y^{(0,0)}}^\top) \: T_W^{(1,1)\to(0,0)}) \mathbf{u} = \mathbf{f}
 \end{align}
-which can be solved to find $\mathbf{u}$. We can see the sparsity and structure of this matrix system in FIGURE with $v(x,y) = xy^2$ as an example. In FIGURE we see the solution to the inhomogenous variable-coefficient Helmholtz equation with zero boundary conditions given in (\ref{eqn:helmholtz}) in the half-disk $\Omega$, with  $v(x,y) = xy^2$ and $f(x,y) = xy e^x$.
+which can be solved to find $\mathbf{u}$. We can see the sparsity and structure of this matrix system in Figure \ref{fig:sparsity} with $v(x,y) = xy^2$ as an example. In Figure \ref{fig:solution-helmholtz} we see the solution to the inhomogenous variable-coefficient Helmholtz equation with zero boundary conditions given in (\ref{eqn:helmholtz}) in the half-disk $\Omega$, with  $v(x,y) = xy^2$ and $f(x,y) = xy e^x$.
 
 We can extend this to constant non-zero boundary conditions by simply noting that the problem 
 \begin{align}
@@ -900,7 +916,7 @@ Note that any function expanded in the $\bigW^{(2,2)}$ basis will satisfy both z
 \begin{align}
 	\biharmonic = \laplaceoo \: \laplacewtt.
 \end{align}
-In FIGURE we see the solution to the Biharmonic equation (\ref{eqn:biharmonic}) in the half-disk $\Omega$.
+In Figure \ref{fig:solution-biharmonic} we see the solution to the Biharmonic equation (\ref{eqn:biharmonic}) in the half-disk $\Omega$.
 
 
 \subsection{Heat equation}
