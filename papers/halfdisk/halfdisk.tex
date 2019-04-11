@@ -204,7 +204,7 @@ where $C_{n,k} \neq 0$ and ``lower order terms'' can  include degree $n$ polynom
 
 Sparsity comes from expanding the domain and range of an operator  using different choices of $a$ and $b$. Whereas the sparsity pattern and entries derived in \cite{olver2018recurrence,olver2019triangle} for equations on the triangle  results from manipulations of Jacobi polynomials, in the present work we use a more general integration-by-parts argument to deduce the sparsity structure, alongside quadrature rules to determine the entries.  Furthermore, we use this framework to derive sparse $p$-finite element methods that are analogous to those of Beuchler and Sch\"oberl on tetrahedra \cite{beuchler2006new}, see also work by Li and Shen \cite{li2010optimal}. 
 
-The motivation for this work is solving partial differential equations on sub-domains of the sphere. In particular, OPs on a half-sphere can be represented using two families of OPs on the half-disk \sotodo{Add citation to this}, where we would require $2n+1$ 3D OPs for each degree $n$, of which $n+1$ would be the $n+1$ degree $n$ OPs on the half-disk of the first family (polynomials in $x,y$) while the remaining $n$ OPs would be given by $z$ multiplied by the $n$ degree $n-1$ OPs on the half-disk of the second family. Constructing sparse spectral methods for surface PDEs on half-spheres, spherical caps, and spherical triangles is future work, and has applications in weather prediction. Other extensions include a full $hp$-finite element method on sections of a disk, which has applications in fluids. 
+The motivation for this work is solving partial differential equations on sub-domains of the sphere. In particular, OPs on a half-sphere can be represented using two families of OPs on the half-disk \sotodo{Add citation to this} \bstodo{should we instead take the Xu approach?}, where we would require $2n+1$ 3D OPs for each degree $n$, of which $n+1$ would be the $n+1$ degree $n$ OPs on the half-disk of the first family (polynomials in $x,y$) while the remaining $n$ OPs would be given by $z$ multiplied by the $n$ degree $n-1$ OPs on the half-disk of the second family. Constructing sparse spectral methods for surface PDEs on half-spheres, spherical caps, and spherical triangles is future work, and has applications in weather prediction. Other extensions include a full $hp$-finite element method on sections of a disk, which has applications in fluids. 
 
 Here is an overview of the paper:  
 
@@ -284,11 +284,9 @@ w_1(x) &:= w_H^{(a,b)}(x) := x^a \: (1-x^2)^b \\
 w_2(x) &:= w_P^{(b)}(x) := (1-x^2)^b = (1-x)^b \: (1+x)^b,
 \end{cases}
 \end{align}
-\bstodoinline{Hope the following makes sense. The generalisation I have, and how I originally wrote/coded up the half-disk case use slightly different conventions regarding the parameters - would it be worth reframing the paper to match this generalisation, or is this fine?}
-\sotodoinline{Yes I think its fine} 
 Note here the we have made the adjustment that $w^{(a,b,c)}_H(x) = (\beta - x)^a \: (x - \alpha)^{b} \: \rho(x)^{2c}$ and simply set the first parameter to zero and removed it for the specific half-disk case. This is for ease of writing and computation, by ensuring we reduce the need to incorporate unnecessary parameters and instead yield a two-parameter family of 2D orthogonal polynomials. 
 
-The weight $w_2(x)$ is an ultraspherical weight, and the corresponding OPs are   the Jacobi polynomials  \(\{P_n^{(b, b)}\}\). The weight $w_1(x)$ is non-classical (it is in fact semi-classical, and is equivalent to a generalized Jacobi weight \cite{magnus1995painleve}) and we introduce the notation \(\{H_n^{(a, b)}\}\) for the orthonormal polynomials. Thus we arrive at  a two parameter family of 2D orthogonal polynomials\sotodo{We should probably use a different letter than $P$ to avoid confusion with Jacobi polynomials}
+The weight $w_2(x)$ is an ultraspherical weight, and the corresponding OPs are   the Jacobi polynomials  \(\{P_n^{(b, b)}\}\). The weight $w_1(x)$ is non-classical (it is in fact semi-classical, and is equivalent to a generalized Jacobi weight \cite[\S5]{magnus1995painleve}) and we introduce the notation \(\{H_n^{(a, b)}\}\) for the orthonormal polynomials. Thus we arrive at  a two parameter family of 2D orthogonal polynomials\sotodo{We should probably use a different letter than $P$ to avoid confusion with Jacobi polynomials}
 \ \(\{\Pnkab\}\) given by, for \(0 \le k \le n, \: n = 0,1,2,\dots,\)
 \begin{align}\label{eq:diskpolys}
  \Pnk^{(a,b)}(x,y) := H_{n-k}^{(a, b+k+\half)}(x) \: \rho(x)^k \: P_k^{(b,b)}\fpr(\frac{y}{\rho(x)}), \quad (x,y) \in \Omega, 
@@ -371,7 +369,7 @@ J_x^{(a,b)} \: \bigPab(x,y) = x \: \bigPab(x,y), \quad J_y^{(a,b)} \: \bigPab(x,
 \end{align}
 The matrices $J_x^{(a,b)}, J_y^{(a,b)}$ act on the coefficients vector of a functions expansion in the $\{\Pnkab\}$ basis. For example, let $a, b$ be general parameters and a function $f(x,y)$ defined on $\Omega$ be approximated by its expansion $f(x,y) = \bigPab(x,y)^\top \mathbf{f}$. Then $x \: f(x,y)$ is approximated by $\bigPab(x,y)^\top {J_x^{(a,b)\top}} \mathbf{f}$. In other words, ${J_x^{(a,b)\top}} \mathbf{f}$ is the coefficients vector for the expansion of the function $(x,y) \to x \: f(x,y)$ in the  $\{\Pnkab\}$ basis.
 
-$J_x^{(a,b)}, J_y^{(a,b)}$ have the Banded-Block-Banded\sotodo{Define Banded-Block-sBanded} structures
+$J_x^{(a,b)}, J_y^{(a,b)}$ have Banded-Block-Banded structures. A block-banded matrix is a block $n$-diagonal matrix where $n$ is reasonably small for the size of the full matrix. A banded-block-banded matrix is one where the blocks themselves are banded matrices. $J_x^{(a,b)}, J_y^{(a,b)}$ are given by:
 \begin{align}
 J_{x/y}^{(a,b)} &= \begin{pmatrix}
 		B^{x/y}_0 & A^{x/y}_0 & & & & \\
@@ -441,13 +439,12 @@ Combining each system in (\ref{eqn:jacobimatricesdefinition}) we can write the b
 	P^{(a,b)}_{0,0} \\ 0 \\ 0 \\ \vdots \\ 0 \\
 \end{pmatrix}.
 \end{align}
-where we note \(P^{(a,b)}_{0,0}(x,y) \equiv H_0^{(a,b)} \: P_0^{(b,b)}\), and for each $n = 0,1,2\dots$:\sotodo{Remove $A^z_n$?}
+where we note \(P^{(a,b)}_{0,0}(x,y) \equiv H_0^{(a,b)} \: P_0^{(b,b)}\), and for each $n = 0,1,2\dots$:
 \begin{align}
 A_n &:= \begin{pmatrix}
 		A^x_n \\
-		A^y_n \\
-		A^z_n
-	    \end{pmatrix} \in \R^{2(n+1)\times(n+3)} \quad (n \ne N), \quad
+		A^y_n
+	    \end{pmatrix} \in \R^{2(n+1)\times(n+2)} \quad (n \ne N), \quad
 C_n := \begin{pmatrix}
 		C^x_n \\
 		C^y_n
@@ -462,12 +459,12 @@ G_n(x,y) := \begin{pmatrix}
 	    \end{pmatrix} \in \R^{2(n+1)\times(n+1)}.
 \end{align}
  
-For each $n = 0,1,2\dots$ let $\Dnt$ be any matrix that is a left inverse of $A_n$, i.e. such that $\Dnt A_n = I_{n+3}$\sotodo{n+1?}. Multiplying our system by the preconditioner matrix that is given by the block diagonal matrix of the $\Dnt$'s, we obtain a lower triangular system \cite[p78]{dunkl2014orthogonal}, which can be expanded to obtain the recurrence:
+For each $n = 0,1,2\dots$ let $\Dnt$ be any matrix that is a left inverse of $A_n$, i.e. such that $\Dnt A_n = I_{n+2}$. Multiplying our system by the preconditioner matrix that is given by the block diagonal matrix of the $\Dnt$'s, we obtain a lower triangular system \cite[p78]{dunkl2014orthogonal}, which can be expanded to obtain the recurrence:
 \begin{align}
 \begin{cases}
 \bigPab_{-1}(x,y) := 0 \\
 \bigPab_{0}(x,y) := P^{(a,b)}_{0,0} \\
-\bigPab_{n+1}(x,y) = -\Dnt (B_n-G_n(x,y)) \bigPab_n - \Dnt C_n  \,\bigPab_{n-1}(x,y), \quad n = 1,2,3,\dots.
+\bigPab_{n+1}(x,y) = -\Dnt (B_n-G_n(x,y)) \bigPab_n(x,y) - \Dnt C_n  \,\bigPab_{n-1}(x,y), \quad n = 1,2,3,\dots.
 \end{cases}
 \end{align}
 
@@ -595,44 +592,30 @@ Further, we note that there exist ``parameter transformation" Banded-Block-Bande
 \end{figure}
 
 We can then obtain the matrix operator for the Laplacian \(\Delta\), that will take us from coefficients for expansion in the weighted space
-\[
+$$
 \bigWii(x,y) = \Wii(x,y) \: \bigPii(x,y)
-\]
-to coefficients in the non-weighted space $\bigPii(x,y)$.
-
-Importantly, this operator will have Banded-Block-Banded structure, and hence will be sparse, as seen in Figure \ref{fig:sparsity}. Note that this construction will ensure the imposition of the Dirichlet zero boundary conditions on $\Omega$. The matrix operator for the Laplacian we denote $\laplacewii$ acting on the coefficients vector is then given by
+$$
+to coefficients in the non-weighted space $\bigPii(x,y)$. Note that this construction will ensure the imposition of the Dirichlet zero boundary conditions on $\Omega$. The matrix operator for the Laplacian we denote $\laplacewii$ acting on the coefficients vector is then given by
 \begin{align}
     \laplacewii := D_x^{(0,0)} \: W_x^{(1,1)} + T^{(0,1)\to(1,1)} \: D_y^{(0,0)} \: T_W^{(1,0)\to(0,0)} \: W_y^{(1,1)}.
 \end{align}
+Importantly, this operator will have Banded-Block-Banded structure, and hence will be sparse, as seen in Figure \ref{fig:sparsity}.
 
-Further, we can also obtain the matrix operator for the Laplacian $\Delta$ that will take us from coefficients for expansion in the space
-$
-\bigPoo(x,y)
-$
-to coefficients in the space
-$
-\bigP^{(2,2)}(x,y).
-$
-Importantly, again, this operator will have Banded-Block-Banded structure, and hence will be sparse, as seen in Figure \ref{fig:sparsity}. We denote this matrix operator that acts on the coefficients vector as $\laplaceoo$, and is given by
+We can use the same technique for constructing a sparse Laplacian operator to construct the Biharmonic operator $\Delta^2$, that ensures we use a basis that satisfies both zero Dirichlet and Neumann conditions. On this note, we can also obtain the matrix operator for the Laplacian $\Delta$ that will take us from coefficients for expansion in the space $\bigPoo(x,y)$ to coefficients in the space $\bigP^{(2,2)}(x,y)$. We denote this matrix operator that acts on the coefficients vector as $\laplaceoo$, and is given by
 \begin{align}
     \laplaceoo := D_x^{(1,1)} \: D_x^{(0,0)} + T^{(1,2)\to(2,2)} \: D_y^{(1,1)} \: T^{(0,1)\to(1,1)} \: D_y^{(0,0)}.
 \end{align}
-
-We can use the same technique for constructing a sparse Laplacian operator to construct the Biharmonic operator $\Delta^2$, that ensures we use a basis that satisfies both zero Dirichlet and Neumann conditions. On this note, we can further represent the Laplacian as a map from coefficients in the space 
-$
-\bigW^{(2,2)}
-$
-to coefficients in the space
-$
-\bigPoo.
-$
-Note that a function expanded in the $\bigW^{(2,2)}$ basis will satisfy both zero Dirichlet and Neumann boundary conditions on $\Omega$. We denote this matrix operator as $\laplacewtt$, and is given by
+Further represent the Laplacian as a map from coefficients in the space $\bigW^{(2,2)}$ to coefficients in the space $\bigPoo$. Note that a function expanded in the $\bigW^{(2,2)}$ basis will satisfy both zero Dirichlet and Neumann boundary conditions on $\Omega$. We denote this matrix operator as $\laplacewtt$, and is given by
 \begin{align}
 	\laplacewtt := W_x^{(1,1)} \: W_x^{(2,2)} + T_W^{(1,0)\to(0,0)} \: W_y^{(1,1)} \: T_W^{(2,1)\to(1,1)} \: W_y^{(2,2)}.
 \end{align}
-The sparsity and structure of this matrix can be seen in Figure \ref{fig:sparsity}.
+We can then construct a matrix operator for $\Delta^2$ that will take coefficients in the space $\bigW^{(2,2)}$ to coefficients in the space $\bigP^{(2,2)}$. Note that any function expanded in the $\bigW^{(2,2)}$ basis will satisfy both zero Dirichlet and zero Neumann boundary conditions on $\Omega$. The matrix operator for the Biharmonic operator is then given by
+\begin{align}
+	\biharmonic = \laplaceoo \: \laplacewtt.
+\end{align}
+The sparsity and structure of this biharmonic operator is seen in Figure \ref{fig:sparsity}.
 
-The sparsity of the these operators can be shown using a simple integration by parts argument. \sotodoinline{Add argument}
+The sparsity of the these operators can be shown using a simple integration by parts argument, see Section \ref{subsection:Computation-operatormatrices}.
 
 
 
@@ -644,29 +627,7 @@ To obtain the recurrence coefficients for the $\{H_n^{(a,b)}\}$ OPs in (\ref{eqn
 \begin{align}
 x H_n^{(a,b)}(x) &= \beta_n^{(a,b)} H_{n+1}^{(a,b)}(x) + \alpha_n^{(a,b)} H_n^{(a,b)}(x) + \beta_{n-1}^{(a,b)} H_{n-1}^{(a,b)}(x), \quad n = 0,1,2,\dots
 \end{align}
-where we define $\beta_{-1}^{(a,b)} = 0$ and $H_{-1}^{(a,b)}(x) \equiv 0$. We use a variant of the Stieltjes algorithm where the polynomials are expressed as Chebyshev polynomial expansions and the inner products are calculated via Clenshaw--Curtis quadrature. This has the benefit that it is easier to incorporate high-precision arithmetic, which we use to overcome ill-conditioning present when $b$ is large, as required for large $n$ in \eqref{eq:diskpolys}. The ApproxFun.jl \cite{ApproxFun} package gives a convenient way to manipulate Chebyshev and Jacobi expansions, which we use to calculate the inner products and norms in this algorithm.
-
-\begin{algorithm}
-\sotodo{This is just Stieltjes right? We can probably delete it and reference Gautschi.}Inputs: max degree $N$, weight $w(x)$
-\begin{flalign*}
-	&\text{Define } H_0(x) \equiv \frac{1}{\norm{1}_w} \\
-	&\text{Define } v(x) = x  H_0(x) \\
-	&\text{Set } \alpha_0 = \ip<v, H_0>_w \\
-	&\text{Define } \tilde{v}(x) = v(x) - \alpha_0 H_0(x) \\
-	&\text{Set } \beta_0 = \norm{\tilde{v}}_w \\
-	&\text{Define } H_1(x) = \frac{\tilde{v}(x)}{\beta_0} \\
-	&\text{FOR } n = 1:N \\
-		& \quad \quad \text{Define } v(x) = x H_n - \beta_{n-1} H_{n-1} \\
-		& \quad \quad \text{Set } \alpha_n = \ip<v, H_n>_w \\
-		& \quad \quad \text{Define } \tilde{v}(x) = v(x) - \alpha_n H_n(x) \\
-		& \quad \quad \text{Set } \beta_n = \norm{\tilde{v}}_w \\
-		& \quad \quad \text{Define } H_{n+1}(x) = \frac{\tilde{v}(x)}{\beta_n} \\
-	&\text{END }
-\end{flalign*}
-Outputs: OP set $(H_0, \dots, H_N)$, coefficients $(\alpha_0, \dots, \alpha_N)$ and $(\beta_0, \dots, \beta_N)$
-\end{algorithm}
-
-
+where we define $\beta_{-1}^{(a,b)} = 0$ and $H_{-1}^{(a,b)}(x) \equiv 0$. We use a variant of the Stieltjes procedure \cite{gautschi1982generating} where the polynomials are expressed as Chebyshev polynomial expansions and the inner products are calculated via Clenshaw--Curtis quadrature. This has the benefit that it is easier to incorporate high-precision arithmetic, which we use to overcome ill-conditioning present when $b$ is large, as required for large $n$ in \eqref{eq:diskpolys}. The ApproxFun.jl \cite{ApproxFun} package gives a convenient way to manipulate Chebyshev and Jacobi expansions, which we use to calculate the inner products and norms in this algorithm.
 
 
 \subsection{Quadrature rules}
@@ -701,6 +662,7 @@ W^{(a,b)}(x,y) &= x^a \: (1-x^2-y^2)^b, \quad \text{for } (x,y) \in \Omega, \\
 \end{align}
 \end{proof}
 
+Note here that due to the symmetry in the domain, the integral of an odd function in the second variable (i.e. if $f(x, \dot)$ is odd for fixed $x$) over $\Omega$ is zero. Thus, the quadrature rule is such that we only consider the even part of a function.
 
 
 
@@ -728,10 +690,10 @@ and where
 f_{n,k} := \frac{\langle f, \: \Pnk^{(a,b)} \rangle_{W^{(a,b)}}}{|| \Pnk^{(a,b)} ||_{W^{(a,b)}}}
 \end{align*}
 
-Using the quadrature rule detailed in Section 4.2, we can calculate exactly the coefficients $f_{n,k}$: \sotodo{Add sentence explaining how symmetry is imprtant here}
+Using the quadrature rule detailed in Section 4.2, we can calculate exactly the coefficients $f_{n,k}$: 
 \begin{align}
-\ip< f, \: \Pnk^{(a,b)} >_{W^{(a,b)}} &= \half \: \sum_{j=1}^{N^2} w_j \: \big[ f(x_j, y_j) \: \Pnk^{(a,b)}(x_j, y_j) +f(x_j, -y_j) \: \Pnk^{(a,b)}(x_j, -y_j) \big], \\
-|| \Pnk^{(a,b)} ||_{W^{(a,b)}}^2 &= \half \: \sum_{j=1}^{N^2} w_j \: \big[ \Pnk^{(a,b)}(x_j, y_j)^2 + \Pnk^{(a,b)}(x_j, -y_j)^2 \big].
+	\ip< f, \: \Pnk^{(a,b)} >_{W^{(a,b)}} &= \half \: \sum_{j=1}^{N^2} w_j \: \big[ f(x_j, y_j) \: \Pnk^{(a,b)}(x_j, y_j) +f(x_j, -y_j) \: \Pnk^{(a,b)}(x_j, -y_j) \big], \\
+	|| \Pnk^{(a,b)} ||_{W^{(a,b)}}^2 &= \half \: \sum_{j=1}^{N^2} w_j \: \big[ \Pnk^{(a,b)}(x_j, y_j)^2 + \Pnk^{(a,b)}(x_j, -y_j)^2 \big].
 \end{align}
 
 %\bstodo{This section contains repetition / expansion on the quadrature rule section above - not sure if we should remove it or move it?} We can develop a quadrature rule on the half disk \(\Omega\) in order to evaluate (40) and obtain the coefficient vectors \(\mathbf{f}_n\) as follows.
@@ -764,39 +726,73 @@ Using the quadrature rule detailed in Section 4.2, we can calculate exactly the 
 %for suitably large $N$.
 
 
-\subsection{Calculating non-zero entries of the operator matrices}
+\subsection{Calculating non-zero entries of the operator matrices}\label{subsection:Computation-operatormatrices}
 
-First, note that we can expand $\pddx \Pnkab = \sum_{m=0}^{n} \sum_{j=0}^m c_{m,j} \: P^{(a+1, b+1)}_{m,j}$. The coefficients of the expansion are then the entries of the relevant operator matrix. By a simple integration by parts argument, we have that the only non-zero coefficients of this expansion are when $m = n-1, n-2$, $j = k, k-2$ and $0 \le j \le m$. These are then calculated by taking inner products, i.e. 
+Since $\{P^{(a+1, b+1)}_{m,j}\}$ for $m = 0,\dots,n-1$, $j = 0,\dots,m$ is an orthogonal basis for any degree $n-1$ polynomial, we can expand $\pddx \Pnkab = \sum_{m=0}^{n-1} \sum_{j=0}^m c_{m,j} \: P^{(a+1, b+1)}_{m,j}$. The coefficients of the expansion are then the entries of the relevant operator matrix. We can use an integration by parts argument to show that the only non-zero coefficients of this expansion are when $m = n-1, n-2$, $j = k, k-2$ and $0 \le j \le m$. First, note that
 \begin{align*}
-c_{m,j} = \frac{\ip<\pddx \Pnkab, P^{(a+1, b+1)}_{m,j} >_{W^{(a+1, b+1)}}}{\norm{P^{(a+1, b+1)}_{m,j}}^2_{W^{(a+1, b+1)}}}
+c_{m,j} = \frac{\ip<\pddx \Pnkab, P^{(a+1, b+1)}_{m,j} >_{W^{(a+1, b+1)}}}{\norm{P^{(a+1, b+1)}_{m,j}}^2_{W^{(a+1, b+1)}}}.
 \end{align*}
-where \sotodo{Why giant $\prime$?}
+Second, note that
+\begin{align}
+	\rho'(x) = -x \: \rho(x)^{-2}. \label{eqn:rhoderivative}
+\end{align}
+Now, using a change of variables and (\ref{eqn:rhoderivative}), we have that
 \begin{align}
 	&\ip<\pddx \Pnkab, P^{(a+1, b+1)}_{m,j} >_{W^{(a+1, b+1)}} \nonumber \\ 
-	&= \ip< x \: H_{n-k}^{(a, b+k+\half)} \prime (x), \: \rho(x)^{k+j+2} \: H_{m-j}^{(a, b+1+j+\half)} >_{w_H^{(a, b+\half)}} 
+	&= \ip< x \: H_{n-k}^{(a, b+k+\half) \: \prime} (x), \: \rho(x)^{k+j+2} \: H_{m-j}^{(a, b+1+j+\half)} >_{w_H^{(a, b+\half)}} 
 		\: \ip< P_k^{(b,b)}, \: P_j^{(b+1,b+1)} >_{w_P^{(b+1)}}  \nonumber \\ 
 	& \quad - k \: \ip< x^2 \: H_{n-k}^{(a, b+k+\half)}(x), \: \rho(x)^{k+j} \: H_{m-j}^{(a, b+1+j+\half)} >_{w_H^{(a, b+\half)}} 
 		\: \ip< P_k^{(b,b)}, \: P_j^{(b+1,b+1)} >_{w_P^{(b+1)}}  \nonumber \\ 
 	& \quad + \: \ip< x^2 \: H_{n-k}^{(a, b+k+\half)}(x), \: \rho(x)^{k+j} \: H_{m-j}^{(a, b+1+j+\half)} >_{w_H^{(a, b+\half)}} 
-		\: \ip< y \: P_k^{(b,b)} \prime (y), \: P_j^{(b+1,b+1)} >_{w_P^{(b+1)}}  
+		\: \ip< y \: P_k^{(b,b) \: \prime} (y), \: P_j^{(b+1,b+1)} >_{w_P^{(b+1)}}  
 \end{align}
-We can then use quadrature to calculate the 1D inner products. This is much cheaper than using the 2D quadrature rule.
-
-Further, we can expand $\pddy \Pnkab = \sum_{m=0}^{n} \sum_{j=0}^m c_{m,j} \: P^{(a, b+1)}_{m,j}$. The coefficients of the expansion are then the entries of the relevant operator matrix. By a simple integration by parts argument, we have that the only non-zero coefficient of this expansion is when $m = n-1$, $j = k-1$. This is then calculated by taking inner products, i.e. 
+We can see that, from each term's second factor as written, the above is zero for $j < k-2$. Now, using integration by parts and noting that the weight $w_H^{(a,b)}$ is a polynomial degree $a+2b$ and vanishes at the limits of the integral for positive parameters $a,b$, we have that
 \begin{align*}
-c_{n-1,k-1} = \frac{\ip<\pddx \Pnkab, P^{(a, b+1)}_{n-1,k-1} >_{W^{(a, b+1)}}}{\norm{P^{(a, b+1)}_{n-1,k-1}}^2_{W^{(a, b+1)}}}
+	&\ip< x \: H_{n-k}^{(a, b+k+\half) \: \prime}, \: \rho(x)^{k+j+2} \: H_{m-j}^{(a, b+1+j+\half)} >_{w_H^{(a, b+\half)}}  \\
+	&= \ip<H_{n-k}^{(a, b+k+\half) \: \prime}, \: w_H^{(a+1, b+1+\half(k+j+1))} \: H_{m-j}^{(a, b+1+j+\half)} >_1 \\
+	&= \ip<H_{n-k}^{(a, b+k+\half)}, \: \ddx \Big[w_H^{(a+1, b+1+\half(k+j+1))} \: H_{m-j}^{(a, b+1+j+\half)} \Big] >_1 \\
+	&= \ip<H_{n-k}^{(a, b+k+\half)}, \: \Big[(a+1) \: w_H^{(a, b+1+\half(k+j+1))} -2(b+1+\half(k+j+1)) \: w_H^{(a+2, b+\half(k+j+1))} \Big] \: H_{m-j}^{(a, b+1+j+\half)} >_1 \\
+		&\quad \quad \quad + \ip<H_{n-k}^{(a, b+k+\half)}, \: w_H^{(a+1, b+1+\half(k+j+1))} \: H_{m-j}^{(a, b+1+j+\half) \: \prime}>_1 \\
+	&= \ip<H_{n-k}^{(a, b+k+\half)}, \: \Big[(a+1) \: w_H^{(0,1+\half(j-k))} -2(b+1+\half(k+j+1)) \: w_H^{(2, \half(j-k))} \Big] \: H_{m-j}^{(a, b+1+j+\half)} >_{w_H^{(a, b+k+\half)}} \\
+		&\quad \quad \quad + \ip<H_{n-k}^{(a, b+k+\half)}, \: w_H^{(1, 1+\half(j-k))} \: H_{m-j}^{(a, b+1+j+\half) \: \prime}>_{w_H^{(a, b+k+\half)}}
 \end{align*}
-where \sotodo{Why giant $\prime$?}
+which is zero for $m < n - 2$, and further that
+\begin{align*}
+	&\ip< x^2 \: H_{n-k}^{(a, b+k+\half)}(x), \: \rho(x)^{k+j} \: H_{m-j}^{(a, b+1+j+\half)} >_{w_H^{(a, b+\half)}} \\
+	&= \ip< H_{n-k}^{(a, b+k+\half)}(x), \: w_H^{(2, \half(j-k))} \: H_{m-j}^{(a, b+1+j+\half)} >_{w_H^{(a, b+k+\half)}}
+\end{align*}
+which is also zero for $m < n - 2$.
+%, and since the weight $w_H^{(a+1, b+1)}$ will vanish at $x=0,1$ for non-negative parameters $a,b$, we have that for a polynomial $g(x,y)$ of degree $m$ on $\Omega$: 
+%\begin{align*}
+%	&\ip<\pddx \Pnkab, g >_{W^{(a+1, b+1)}} \\
+%	&= \int_0^1 \int_{-\rho(x)}^{\rho(x)} \pddx f \: g \: W^{(a+1,b+1)} \: \D y \: \D x \\
+%	&= \int_{-1}^1 \Big( \int_0^1 \pddx \Pnkab \: g \: w_H^{(a+1,b+1)} \: \rho(x) \: \D x  \Big)  \: w_P^{(b+1)}(y) \: \D y \\
+%	&= - \int_{-1}^1 \Big( \int_0^1 \Pnkab \: \pddx \big(g \: w_H^{(a+1,b+1)}(x) \: \rho(x)\big) \: \D x  \Big)  \: w_P^{(b+1)}(y) \: \D y \\
+%	&= - \int_{-1}^1 \Big( \int_0^1 \Pnkab \: \pddx \big(g \: \rho(x) \: w_H^{(a+1,b+1)}(x) \: w_P^{(b+1)}(y)\big) \: \D x  \Big) \: \D y \\
+%	&= - \int_0^1 \int_{-\rho(x)}^{\rho(x)} \Pnkab \: \pddx \big(g \: \rho(x) \: W^{(a+1,b+1)} \big) \: \rho(x)^{-1} \: \D y \: \D x \\
+%	&= - \iint_\Omega \Pnkab \: \big[\pddx g \: W^{(a+1,b+1)} + g \: \pddx W^{(a+1,b+1)} + \: g \rho'(x) \rho(x)^{-1} \: W^{(a+1, b+1)} \big] \: \D y \: \D x \\
+%	&= - \ip<\Pnkab,\: \rho'(x) \rho(x)^{-1} \: W^{(1, 1)} \: g + [(a+1)W^{(0, 1)} - 2(b+1)W^{(2, 0)}] \: g + W^{(1, 1)} \: \pddx g>_{W^{(a, b)}} \quad \text{by } (\ref{eqn:weightderivativex}) \\
+%	&= - \ip<\Pnkab,\: W^{(2, 0)} \: g + [(a+1)W^{(0, 1)} - 2(b+1)W^{(2, 0)}] \: g + W^{(1, 1)} \: \pddx g>_{W^{(a, b)}} \quad \text{by } (\ref{eqn:rhoderivative})
+%\end{align*}
+%Now, as the polynomial on the RHS of the inner product is of degree $m+2$ and $\Pnkab$ are orthogonal, we have that the above is zero for $m+2 < n$, i.e $c_{m,j}$ is non-zero for $m = n-1, n-2$ only.
+
+We can then use quadrature to calculate the 1D inner products and find the non-zero $c_{m,j}$ entries to the partial differential operator matrix. This is much cheaper than using the 2D quadrature rule.
+
+For partial differentiation by $y$, we can also expand $\pddy \Pnkab = \sum_{m=0}^{n-1} \sum_{j=0}^m c_{m,j} \: P^{(a, b+1)}_{m,j}$. The coefficients of the expansion are then the entries of the relevant operator matrix. By a similar argument to before, we have that the only non-zero coefficient of this expansion is when $m = n-1$, $j = k-1$. This is then calculated by taking inner products, i.e. 
+\begin{align*}
+c_{n-1,k-1} = \frac{\ip<\pddy \Pnkab, P^{(a, b+1)}_{n-1,k-1} >_{W^{(a, b+1)}}}{\norm{P^{(a, b+1)}_{n-1,k-1}}^2_{W^{(a, b+1)}}}
+\end{align*}
+where
 \begin{align}
-	\ip<\pddx \Pnkab, P^{(a, b+1)}_{n-1,k-1} >_{W^{(a, b+1)}} = \norm{H_0^{(a,b+k+\half)}}^2_{w_H^{(a, b+k+\half)}} 
-		\: \ip< P_k^{(b,b)} \prime, \: P_{k-1}^{(b+1,b+1)} >_{w_P^{(b+1)}}
+	\ip<\pddy \Pnkab, P^{(a, b+1)}_{n-1,k-1} >_{W^{(a, b+1)}} = \norm{H_0^{(a,b+k+\half)}}^2_{w_H^{(a, b+k+\half)}} 
+		\: \ip< P_k^{(b,b) \: \prime}, \: P_{k-1}^{(b+1,b+1)} >_{w_P^{(b+1)}}
 \end{align}
-where we note that $\norm{H_n^{(a,b)}}_{w_H^{(a,b)}} = \norm{H_m^{(a,b)}}_{w_H^{(a,b)}}$ \sotodo{Aren't these $= 1$ since we orthonormalize?} $\forall m, n = 0, 1, 2, \dots$. 
+where we note that $\norm{H_n^{(a,b)}}_{w_H^{(a,b)}} = \norm{H_m^{(a,b)}}_{w_H^{(a,b)}}$ $\forall m, n = 0, 1, 2, \dots$, and thus is in fact given by the integral of the weight function $w_H^{(a,b)}$ over $(0,1)$. 
 
 We can gain the non-zero entries of the weighted differential operators similarly, by noting that
 \begin{align}
-	\pddx \Wab(x,y) &= a W^{(a-1, b)}(x,y) - 2bW^{(a+1, b-1)}(x,y) \\
-	\pddy \Wab(x,y) &= -2b \: y \: W^{(a, b-1)}(x,y)
+	\pddx \Wab(x,y) &= a W^{(a-1, b)}(x,y) - 2bW^{(a+1, b-1)}(x,y) \label{eqn:weightderivativex} \\
+	\pddy \Wab(x,y) &= -2b \: y \: W^{(a, b-1)}(x,y) \label{eqn:weightderivativey}
 \end{align}
 and also that
 \begin{align}
@@ -896,27 +892,15 @@ is equivalent to letting $u = \tilde{u} + c$ and solving
 
 \subsection{Biharmonic equation}
 
-Find \(u(x,y)\) given a function \(f(x,y)\) such that:\sotodo{I assume there should be an $f$ in the right-hand side?}
+Find \(u(x,y)\) given a function \(f(x,y)\) such that:
 \begin{align}
 	\begin{cases}
-    		\Delta^2 u(x,y) = 0 \quad \text{in } \Omega \\
+    		\Delta^2 u(x,y) = f(x,y) \quad \text{in } \Omega \\
 		u(x,y) = 0, \quad \frac{\partial u}{\partial n}(x,y) = 0 \quad \text{on } \partial \Omega
 	\end{cases}.
 	\label{eqn:biharmonic}
 \end{align}
-where $\Delta^2$ is the Biharmonic operator, noting the imposition of zero Dirichlet and Neumann boundary conditions on $u$. We can construct a matrix operator for $\Delta^2$ that will take coefficients in the space
-$
-\bigW^{(2,2)}
-$
-to coefficients in the space
-$
-\bigP^{(2,2)}.
-$
-Note that any function expanded in the $\bigW^{(2,2)}$ basis will satisfy both zero Dirichlet and zero Neumann boundary conditions on $\Omega$. The matrix operator for the Biharmonic operator is then given by \sotodo{Move up to other discussion on constructing Biharmonic}
-\begin{align}
-	\biharmonic = \laplaceoo \: \laplacewtt.
-\end{align}
-In Figure \ref{fig:solution-biharmonic} we see the solution to the Biharmonic equation (\ref{eqn:biharmonic}) in the half-disk $\Omega$.
+where $\Delta^2$ is the Biharmonic operator, noting the imposition of zero Dirichlet and Neumann boundary conditions on $u$. In Figure \ref{fig:solution-biharmonic} we see the solution to the Biharmonic equation (\ref{eqn:biharmonic}) in the half-disk $\Omega$.
 
 
 \subsection{Heat equation}
@@ -1059,26 +1043,6 @@ and the load vector $\tilde{\mathbf{f}}$ is given by
 \end{align}
 
 Note the since we have sparse operator matrices for partial derivatives and basis-transform, we obtain a symmetric sparse (element) stiffness matrix, as well as a sparse operator matrix for calculating the load vector (rhs).
-
-\subsection{Two-element p-FEM on the disk (without BCs)}
-
-\sotodoinline{Delete section?}
-We now consider the case of using two elements to discretise a unit disk domain $\Omega$, that is the each element $\element$ is a half-disk, with common edge defined by the line $x=0$ for $y \in [-1,1]$. We take inspiration from \cite{karniadakis2013spectral, beuchler2006new}. To ensure continuity across the edge interface, we need to expand our basis functions to be used. We require basis functions that correspond to each edge (in this case there is only one edge), that is basis functions with support as the two elements connected by said edge (for more than two elements - and hence more than one edge - we would also stipulate that each edge's corresponding basis functions would vanish on any other edge). We then also require the remaining (interior) basis functions be such that they have support of one element only, and vanish on (each) edge. Using this, our basis functions for $\le N$-degree polynomials can then be written as
-\begin{align}
-	\bigQab_n(x,y) := \begin{pmatrix}
-		P^{(a,b)}_{n,n}(x,y) \\
-		x \: \bigPab_{n-1}(x,y)
-	\end{pmatrix} \in \R^{n+1}, 
-	\quad \quad 
-	\bigQab := \begin{pmatrix}
-		\bigQab_0 \\
-		\bigQab_1 \\
-		\vdots \\
-		\bigQab_N
-	\end{pmatrix}.
-\end{align}
-We note that for each $n = 0,\dots,N$, $P^{(a,b)}_{n,n}(x,y) = \rho(x)^n \: P^{(a,b)}_{n}(\frac{y}{\rho(x)})$ and so at $x=0$ these become just the Jacobi polynomials in $y$, thus span the edge interface. The polynomials that make up the $\bigQab$ basis can also be shown to have similar sparse relations and yield similar sparse operator matrices. We can then proceed to use a similar approach to section A.1 on a reference element.
-
 
 \section{Disk slices}
 
