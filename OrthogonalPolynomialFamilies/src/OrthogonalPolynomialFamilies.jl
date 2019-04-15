@@ -1368,7 +1368,7 @@ end
 #===#
 
 # Operator Clenshaw
-function operatorclenshawG(S::HalfDiskSpace{<:Any, <:Any, T}, n, Jx, Jy) where T
+function operatorclenshawG(S::HalfDiskSpace{<:Any, <:Any, T}, n, Jx, Jy, zeromat) where T
     @show "G", n
     G = Matrix{SparseMatrixCSC{T}}(undef, 2(n+1), n+1)
     for i = 1:n+1
@@ -1377,27 +1377,39 @@ function operatorclenshawG(S::HalfDiskSpace{<:Any, <:Any, T}, n, Jx, Jy) where T
                 G[i,j] = Jx
                 G[i+n+1,j] = Jy
             else
-                G[i,j] = zeros(size(Jx))
-                G[i+n+1,j] = zeros(size(Jy))
+                G[i,j] = zeromat
+                G[i+n+1,j] = zeromat
             end
         end
     end
     G
 end
-function converttooperatorclenshawvector(S::HalfDiskSpace{<:Any, <:Any, T}, v, Jx) where T
-    nn = size(Jx)
+function operatorclenshawvector(S::HalfDiskSpace{<:Any, <:Any, T}, v, id) where T
     s = size(v)[1]
     B = Array{SparseMatrixCSC{T}}(undef, (1, s))
     for i = 1:s
-        B[1,i] = sparse(I, nn) * v[i]
+        B[1,i] = id * v[i]
     end
     B
 end
-function converttooperatorclenshawmatrix(S::HalfDiskSpace{<:Any, <:Any, T}, A, Jx) where T
-    nn = size(Jx)
+function operatorclenshawmatrixDT(S::HalfDiskSpace{<:Any, <:Any, T}, A, id) where T
     B = Array{SparseMatrixCSC{T}}(undef, size(A))
     for ij = 1:length(A)
-        B[ij] = sparse(I, nn) * A[ij]
+        B[ij] = id * A[ij]
+    end
+    B
+end
+function operatorclenshawmatrixBmG(S::HalfDiskSpace{<:Any, <:Any, T}, A, id, Jx, Jy) where T
+    ii, jj = size(A)
+    B = Array{SparseMatrixCSC{T}}(undef, (ii, jj))
+    for i = 1:jj, j = 1:jj
+        if i == j
+            B[i, j] = (id * A[i, j]) - Jx
+            B[i+jj, j] = (id * A[i+jj, j]) - Jy
+        else
+            B[i,j] = id * A[i, j]
+            B[i+jj, j] = id * A[i+jj, j]
+        end
     end
     B
 end
@@ -1406,32 +1418,34 @@ function operatorclenshaw(cfs, S::HalfDiskSpace)
     N = -1 + Int(round(sqrt(1+2(m̃-1))))
     resizedata!(S, N+1)
     m = Int((N+1)*(N+2)/2)
-    Jx = jacobix(S, N)
-    Jy = jacobiy(S, N)
+    Jx = sparse(jacobix(S, N))
+    Jy = sparse(jacobiy(S, N))
     if m̃ < m
         resize!(cfs, m)
         cfs[m̃+1:end] .= 0.0
     end
+    @show "Operator Clenshaw"
     P0 = 1.0
     if N == 0
         return cfs[1] * id * P0
     end
-    @show "here"
+    id = sparse(I, size(Jx))
     if N == 1
-        P0 * (converttooperatorclenshawvector(S, cfs[1], Jx)[1] - (converttooperatorclenshawmatrix(S, S.DT[1], Jx) * (converttooperatorclenshawmatrix(S.B[1], Jx) - operatorclenshawG(S, 0, Jx, Jy)))[1])
+        P0 * (operatorclenshawvector(S, cfs[1], id)[1] - (operatorclenshawmatrixDT(S, S.DT[1], id) * operatorclenshawmatrixBmG(S, S.B[1], id, Jx, Jy))[1])
     end
+    n = N; @show N, n
     inds2 = m-N:m
-    γ2 = converttooperatorclenshawvector(S, view(cfs, inds2), Jx)
+    γ2 = operatorclenshawvector(S, view(cfs, inds2), id)
+    n = N - 1; @show N, n
     inds1 = (m-2N):(m-N-1)
-    γ1 = (converttooperatorclenshawvector(S, view(cfs, inds1), Jx)
-        - γ2 * converttooperatorclenshawmatrix(S, S.DT[N], Jx) * (converttooperatorclenshawmatrix(S, S.B[N], Jx)
-                                                                    - operatorclenshawG(S, N-1, Jx, Jy)))
+    γ1 = (operatorclenshawvector(S, view(cfs, inds1), id)
+        - γ2 * operatorclenshawmatrixDT(S, S.DT[N], id) * operatorclenshawmatrixBmG(S, S.B[N], id, Jx, Jy))
     for n = N-2:-1:0
-        @show n
+        @show N, n
         ind = sum(1:n)
-        γ = (converttooperatorclenshawvector(S, view(cfs, ind+1:ind+n+1), Jx)
-             - γ1 * converttooperatorclenshawmatrix(S, S.DT[n+1], Jx) * (converttooperatorclenshawmatrix(S, S.B[n+1], Jx) - operatorclenshawG(S, n, Jx, Jy))
-             - γ2 * converttooperatorclenshawmatrix(S, S.DT[n+2] * S.C[n+2], Jx))
+        γ = (operatorclenshawvector(S, view(cfs, ind+1:ind+n+1), id)
+             - γ1 * operatorclenshawmatrixDT(S, S.DT[n+1], id) * operatorclenshawmatrixBmG(S, S.B[n+1], id, Jx, Jy)
+             - γ2 * operatorclenshawmatrixDT(S, S.DT[n+2] * S.C[n+2], id))
         γ2 = copy(γ1)
         γ1 = copy(γ)
     end
