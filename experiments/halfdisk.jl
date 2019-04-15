@@ -1,123 +1,240 @@
-using OrthogonalPolynomialFamilies, ApproxFun
+using Revise
+using ApproxFun
 using Test, Profile
 using StaticArrays, LinearAlgebra, BlockArrays, BlockBandedMatrices,
         SparseArrays
 # using Makie
-
+using OrthogonalPolynomialFamilies
 import OrthogonalPolynomialFamilies: points, pointswithweights, getopptseval,
-                    opevalatpts, inner2, laplace, getopindex, getnk, resizecoeffs!,
-                    convertweightedtononoperator, increaseparamsoperator,
-                    transformoperator, laplacesquare, convertweightedtononoperatorsquare
+                    opevalatpts, inner2, getopindex, getnk, resizecoeffs!,
+                    transformparamsoperator, weightedpartialoperatorx,
+                    weightedpartialoperatory, partialoperatorx, partialoperatory,
+                    laplaceoperator, derivopevalatpts, getderivopptseval, getopnorms,
+                    getopnorm, operatorclenshaw, weight, biharmonicoperator
+using SpecialFunctions
 
 #===#
-# Speed up the code! Add storage of the basis evaluated at the points from
-# points(), and use in a new basiseval method (using 3-term recurrence)
 
-a, b = 1.0, 1.0; D = HalfDiskFamily(); S = D(a, b)
-x, y = 0.4, -0.2; z = [x; y]
-N = 10
-laplace(D, N)
+# Set up for experiments
+precision(BigFloat)
+setprecision(800)
+D = HalfDiskFamily()
+a, b = 1.0, 1.0; S = D(a, b)
+x, y = 0.42, -0.2; z = [x; y]
+N = 25 # Sparsity plots
+@time bihar = biharmonicoperator(D(2.0, 2.0), N)
+N = 100 # Solution plots
+@time bihar = biharmonicoperator(D(2.0, 2.0), N)
+@time errfuncfs = Fun((x,y)->(1 + erf(5(1 - 10((x - 0.5)^2 + (y)^2)))), S, N*(N+1)).coefficients
+N = 200 # solutionblocknorms plot
+ff = (x,y)->exp(-1000((x-0.2)^2 + (y-0.2)^2))
+pts = pointswithweights(S, N*(N+1))[1]
+vals = [ff(pt...) for pt in pts]
+HDTP = OrthogonalPolynomialFamilies.HalfDiskTransformPlan(S, vals)
+@time f4cfs = HDTP * vals
+S
 
-N = 30
-S = D(a, b)
-D
-@time W = OrthogonalPolynomialFamilies.weightedpartialoperatorx(S, N)
-@time W = OrthogonalPolynomialFamilies.weightedpartialoperatory(S, N)
-@time A = OrthogonalPolynomialFamilies.partialoperatorx(S, N+2)
-@time A = OrthogonalPolynomialFamilies.partialoperatory(S, N+2)
-S = D(1, 0)
-@time T = transformoperator(S, N+1)
-S = D(0, 1)
-@time T = transformoperator(S, N+1)
-S = D(0, 2)
-@time T = transformoperator(S, N+1)
 
-D = HalfDiskFamily(); N = 15
-@time laplace(D, N)
+
+using JLD
+B = BigFloat
+# save("experiments/saved/laplacian-w11.jld", "Lw11", Δw)
+# save("experiments/saved/biharmonic.jld", "bihar", bihar)
+# save("experiments/saved/halfdiskspace11.jld", "opnorms", S.opnorms, "A", S.A, "B", S.B, "C", S.C, "DT", S.DT)
+# save("experiments/saved/Hfamily-11p5.jld", "Ha", S.family.H(B(1.0),B(1.5)).a, "Hb", S.family.H(B(1.0),B(1.5)).b)
+# save("experiments/saved/Pfamily-11.jld", "Pa", S.family.P(B(1.0),B(1.0)).a, "Pb", S.family.P(B(1.0),B(1.0)).b)
+# save("experiments/saved/errfuncfs.jld", "erfuncfs", errfuncfs)
+# save("experiments/saved/f4cfs.jld", "f4cfs", f4cfs)
+Δw = load("experiments/saved/laplacian-w11.jld", "Lw11")
+bihar = load("experiments/saved/biharmonic.jld", "bihar")
+errfuncfs = load("experiments/saved/errfuncfs.jld", "erfuncfs")
+f4cfs = load("experiments/saved/f4cfs.jld", "f4cfs")
+D = HalfDiskFamily()
+    d = load("experiments/saved/halfdiskspace11.jld")
+    S = D(a, b)
+    resize!(S.A, length(d["A"]))
+    S.A[:] = d["A"][:]
+    resize!(S.B, length(d["B"]))
+    S.B[:] = d["B"][:]
+    resize!(S.C, length(d["C"]))
+    S.C[:] = d["C"][:]
+    resize!(S.DT, length(d["DT"]))
+    S.DT[:] = d["DT"][:]
+    resize!(S.opnorms, length(d["opnorms"]))
+    S.opnorms[:] = d["opnorms"][:]
+    d = load("experiments/saved/Hfamily-11p5.jld")
+    H = D.H(B(1.0),B(1.5)); P = D.P(B(1.0),B(1.0))
+    resize!(H.a, length(d["Ha"]))
+    H.a[:] = d["Ha"][:]
+    resize!(H.b, length(d["Hb"]))
+    H.b[:] = d["Hb"][:]
+    d = load("experiments/saved/Pfamily-11.jld")
+    resize!(P.a, length(d["Pa"]))
+    P.a[:] = d["Pa"][:]
+    resize!(P.b, length(d["Pb"]))
+    P.b[:] = d["Pb"][:]
+    # x * P[n](x) == (b[n] * P[n+1](x) + a[n] * P[n](x) + b[n-1] * P[n-1](x))
+    # => P[n+1](x) == 1/b[n] * (x * P[n](x) - a[n] * P[n](x) - b[n-1] * P[n-1](x))
+    resize!(H.ops, 2)
+    n = length(H.a)
+    w = H.weight
+    x = Fun(identity, domain(w))
+    H.ops[1] = Fun(1/sqrt(sum(w)),space(x)); H.ops[2] = ((x - H.a[1]) * H.ops[1]) / H.b[1]
+    for k = 2:n
+        p = ((x - H.a[k]) * H.ops[2] - H.b[k-1] * H.ops[1]) / H.b[k]
+        H.ops[1] = H.ops[2]
+        H.ops[2] = p
+    end
+    resize!(P.ops, 2)
+    n = length(P.a)
+    w = P.weight
+    x = Fun(identity, domain(w))
+    P.ops[1] = Fun(1/sqrt(sum(w)),space(x)); P.ops[2] = ((x - P.a[1]) * P.ops[1]) / P.b[1]
+    for k = 2:n
+        p = ((x - P.a[k]) * P.ops[2] - P.b[k-1] * P.ops[1]) / P.b[k]
+        P.ops[1] = P.ops[2]
+        P.ops[2] = p
+    end
+    S
+
 
 #====#
+
+
+
 #=
 Sparsity of laplace operator
 =#
 using PyPlot
-a, b = 1.0, 1.0; D = HalfDiskFamily(); S = D(a, b)
-N = 30
-Δ = laplacesquare(D, N)
-DDD = copy(Δ)
+# a, b = 1.0, 1.0; D = HalfDiskFamily(); S = D(a, b)
+# N = 30
+maxm = sum(1:20+1)
 PyPlot.clf()
-PyPlot.spy(Array(sparse(Δ)))
-PyPlot.axis(xmin=0, xmax=500, ymin=500, ymax=0)
-PyPlot.title("Sparsity of Δ operator")
-savefig("experiments/sparsityoflaplacian")
+    PyPlot.spy(Array(sparse(Δw[1:maxm, 1:maxm])))
+    PyPlot.axis(xmin=0, xmax=maxm, ymin=maxm, ymax=0)
+    savefig("experiments/sparsityoflaplacian-w11")
+PyPlot.clf()
+    PyPlot.spy(Array(sparse(bihar[1:maxm, 1:maxm])))
+    PyPlot.axis(xmin=0, xmax=maxm, ymin=maxm, ymax=0)
+    savefig("experiments/sparsityofbiharmonic")
+PyPlot.clf()
+    N = 25
+    k = 200
+    DD = HalfDiskFamily(); v = Fun((x,y)->(1 - (3(x-1)^2 + 5y^2)), DD(0.0, 0.0))
+    V = operatorclenshaw(v, D(0.0, 0.0), N+3)
+    T = transformparamsoperator(D(0.0, 0.0), S, N+3)
+    Tw = transformparamsoperator(S, D(0.0, 0.0), N, weighted=true)
+    A = Δw + (k^2 * T * V * Tw)[1:getopindex(N,N), 1:getopindex(N,N)]
+    PyPlot.spy(Array(sparse(A[1:maxm, 1:maxm])))
+    PyPlot.axis(xmin=0, xmax=maxm, ymin=maxm, ymax=0)
+    savefig("experiments/sparsityofhelmholtz")
 
 #=
-Solution of Δu = f, where f(x,y) = 1 + erf(5(1 - 10((x - 0.5)^2 + (y)^2)))
-                        # f = y*exp(x)*(2-11x-6x^2-x^3-2y^2-x*y^2)
+Examples
 =#
-using SpecialFunctions
-using Makie, FileIO
-evalu(u, z) = isindomain(z, u.space.family) ? u(z) : 0.0
+
+using PyPlot
+evalu(u, z) = isindomain(z, u.space.family) ? u(z) : NaN
 isindomain(x, D::HalfDiskFamily) = 0 ≤ x[1] ≤ 1 && -sqrt(1-x[1]^2) ≤ x[2] ≤ sqrt(1-x[1]^2)
-function getvalidpoint()
-    x, y = rand(1)[1], rand(1)[1]
-    while true
-        if isindomain([x, y])
-            break
-        else
-            x, y = rand(1)[1], rand(1)[1]
-        end
-    end
-    x, y
-end
 
-N = 30
-# Δ = laplacesquare(D, N)
-m = 500
-f = Fun((x,y)->(1 + erf(5(1 - 10((x - 0.5)^2 + (y)^2)))), S, m)
-f.coefficients
-# u = Fun(S, sparse(Δ) \ f.coefficients[1:size(Δ)[1]])
-u = Fun(S, sparse(Δ) \ resizecoeffs!(f, N))
-
+#=
+Poisson
+Solution of Δu = f, where f(x,y) = 1 + erf(5(1 - 10((x - 0.5)^2 + (y)^2)))
+=#
+errfun.coefficients
+N = getnk(ncoefficients(errfun))[1]
+u = Fun(S, sparse(Δw) \ errfun.coefficients)
 # Create arrays of (x,y) points
-n = 100
+n = 500
 x = LinRange(0, 1, n)
 y = LinRange(-1, 1, n)
 sln = zeros(length(x), length(y))
 for i = 1:length(x)
     for j = 1:length(y)
         val = evalu(u, [x[i]; y[j]])
-        sln[i,j] = OrthogonalPolynomialFamilies.weight(S, x[i], y[j]) * val
+        sln[j,i] = OrthogonalPolynomialFamilies.weight(S, x[i], y[j]) * val
     end
+    @show i
 end
-sln
-scene = Scene()
-s = Makie.image(x, y, sln, colormap = :viridis)
-n = 20
-θ = [0;(0.5:n-0.5)/(2n);0.5]
-x = [cospi(θ) for θ in θ]
-y = [sinpi(θ) for θ in θ]
-pts = vec(Point2f0.(x, y))
-Makie.lines!(s, pts, linewidth = 2, color = :black)
-pts = vec(Point2f0.(x, -y))
-Makie.lines!(s, pts, linewidth = 2, color = :black)
-FileIO.save("experiments/solution.png", s)
-
+PyPlot.clf()
+w, h = plt[:figaspect](2.0)
+PyPlot.figure(figsize=(w,h))
+PyPlot.pcolor(x, y, sln)
+savefig("experiments/solution-poisson")
+#=
+Variable coefficient Helmholtz
+Solution of Δu + k²vu = f
+=#
+N = 100
+k = 200
+f = Fun((x,y)->exp(x)*x*y, S, N*(N+1))
+DD = HalfDiskFamily(); v = Fun((x,y)->(1 - (3(x-1)^2 + 5y^2)), DD(0.0, 0.0))
+V = operatorclenshaw(v, D(0.0, 0.0), N+3)
+T = transformparamsoperator(D(0.0, 0.0), S, N+3)
+Tw = transformparamsoperator(S, D(0.0, 0.0), N, weighted=true)
+# save("experiments/saved/helmholtz.jld", "fcfs", f.coefficients, "T", T, "Tw", Tw)
+save("experiments/saved/helmholtz-V.jld", "V", V)
+fcfs = load("experiments/saved/helmholtz.jld", "fcfs")
+T = load("experiments/saved/helmholtz.jld", "T")
+Tw = load("experiments/saved/helmholtz.jld", "Tw")
+V = load("experiments/saved/helmholtz-V.jld", "V")
+A = Δw[1:getopindex(N,N), 1:getopindex(N,N)] + (k^2 * T * V * Tw)[1:getopindex(N,N), 1:getopindex(N,N)]
+u = Fun(S, sparse(A) \ f.coefficients)
+# Create arrays of (x,y) points
+n = 1500
+x = LinRange(0, 1, n)
+y = LinRange(-1, 1, n)
+sln = zeros(length(x), length(y))
+for i = 1:length(x)
+    for j = 1:length(y)
+        val = evalu(u, [x[i]; y[j]])
+        sln[j,i] = OrthogonalPolynomialFamilies.weight(S, x[i], y[j]) * val
+    end
+    @show i
+end
+PyPlot.clf()
+w, h = plt[:figaspect](2.0)
+PyPlot.figure(figsize=(w,h))
+PyPlot.pcolor(x, y, sln)
+PyPlot.savefig("experiments/solution-helmholtz")
+#=
+Biharmonic
+Solution of Δ²u = f, where f(x,y) = 1 + erf(5(1 - 10((x - 0.5)^2 + (y)^2)))
+=#
+N = getnk(ncoefficients(errfun))[1]
+T = transformparamsoperator(S, D(2.0, 2.0), N, weighted=false)
+u = Fun(D(2.0, 2.0), sparse(bihar) \ (T * errfun.coefficients))
+# Create arrays of (x,y) points
+n = 500
+x = LinRange(0, 1, n)
+y = LinRange(-1, 1, n)
+sln = zeros(length(x), length(y))
+for i = 1:length(x)
+    for j = 1:length(y)
+        val = evalu(u, [x[i]; y[j]])
+        sln[j,i] = val
+    end
+    @show i
+end
+PyPlot.clf()
+w, h = plt[:figaspect](2.0)
+PyPlot.figure(figsize=(w,h))
+PyPlot.pcolor(x, y, sln)
+savefig("experiments/solution-biharmonic")
 
 #=
 Plotting the norms of each block of coeffs for solutions of Poisson for
 different RHSs
 =#
-m = 800
-f4 = Fun((x,y)->exp(-1000((x-0.2)^2+(y-0.2)^2)), S, m)
-N = getnk(length(f4.coefficients))[1]
-Δc = Δ[1:getopindex(N, N), 1:getopindex(N, N)] # laplacesquare(D, N)
+N = 200
+S
 f1 = Fun((x,y)->1.0, S)
 f2 = Fun((x,y)->x^2 + y^2 - 1, S)
 f3 = Fun((x,y)->x^2*y^2*(1-x^2-y^2)^2, S)
-u1 = Fun(S, sparse(Δc) \ resizecoeffs!(f1, N))
-u2 = Fun(S, sparse(Δc) \ resizecoeffs!(f2, N))
-u3 = Fun(S, sparse(Δc) \ resizecoeffs!(f3, N))
-u4 = Fun(S, sparse(Δc) \ f4.coefficients)
+u1 = Fun(S, sparse(Δw) \ resizecoeffs!(f1, N))
+u2 = Fun(S, sparse(Δw) \ resizecoeffs!(f2, N))
+u3 = Fun(S, sparse(Δw) \ resizecoeffs!(f3, N))
+u4 = Fun(S, sparse(Δw) \ f4cfs)
 u1coeffs = PseudoBlockArray(u1.coefficients, [i+1 for i=0:N])
 u2coeffs = PseudoBlockArray(u2.coefficients, [i+1 for i=0:N])
 u3coeffs = PseudoBlockArray(u3.coefficients, [i+1 for i=0:N])
@@ -132,19 +249,14 @@ for i = 1:N+1
     u3norms[i] = norm(view(u3coeffs, Block(i)))
     u4norms[i] = norm(view(u4coeffs, Block(i)))
 end
-# scene = Scene()
-# s = lines(f1norms, xaxis=:log)# , color=:blue)
-# lines!(f2norms, color=:red)
-# lines!(f3norms, color=:green)
-# lines!(f4norms, color=:purple)
 using Plots
 Plots.plot(u1norms, label="f(x,y) = 1", xscale=:log10, yscale=:log10, legend=:bottomleft)
 Plots.plot!(u2norms, label="f(x,y) = x^2 + y^2 - 1")
 Plots.plot!(u3norms, label="f(x,y) = x^2 * y^2 * (1-x^2-y^2)^2")
-Plots.plot!(u4norms, label = "f(x,y) = exp(-1000((x-0.2)^2+(y-0.2)^2))")
+Plots.plot!(u4norms, label = "f(x,y) = exp(-1000((x-0.2)^2+(y-0.2)^2)+(y+0.2)^2))")
 Plots.xlabel!("Block")
 Plots.ylabel!("Norm")
-savefig("experiments/solutionblocknorms")
+Plots.savefig("experiments/solutionblocknorms")
 
 
 
@@ -155,15 +267,12 @@ savefig("experiments/solutionblocknorms")
 
 # Model Problem: Δ(u*w)(x,y) = f(x,y) in Ω=halfdisk; u(x,y) ≡ 0 on ∂Ω.
 #   where w(x,y) = x*(1-x^2-y^2) is the weight of the D(1.0,1.0) basis.
-a, b = 1.0, 1.0; D = HalfDiskFamily(); S = D(a, b)
-x, y = 0.4, -0.2; z = [x; y] # Test point
 
 # 1) f(x,y) = -8x => u(x,y) ≡ 1
 N = 1 # degree of f
 c = rand(1)[1]; f = Fun((x,y)->-c*8x, S)
 resizecoeffs!(f, N)
-Δ = laplacesquare(D, N)
-u = Fun(S, sparse(Δ) \ resizecoeffs!(f, N))
+u = Fun(S, sparse(Δw) \ resizecoeffs!(f, N))
 @test u(z) ≈ c # Result u(x,y) where Δ(u*w)(x,y) = f(x,y)
 # plot(x->u(x,y))
 # plot(y->u(x,y))
@@ -172,8 +281,7 @@ u = Fun(S, sparse(Δ) \ resizecoeffs!(f, N))
 U = Fun((x,y)->x+y, S)
 N = 2 # degree of f
 f = Fun((x,y)->(2 - 12x*y - 14x^2 - 2y^2), S)
-Δ = laplacesquare(D, N)
-u = Fun(S, sparse(Δ) \ resizecoeffs!(f, N))
+u = Fun(S, sparse(Δw) \ resizecoeffs!(f, N))
 @test u(z) ≈ U(z)
 u.coefficients
 
@@ -182,78 +290,55 @@ U = Fun((x,y)->y*exp(x), S)
 N = 12 # degree of f
 m = Int((N+1)*(N+2))
 f = Fun((x,y)->y*exp(x)*(2-11x-6x^2-x^3-2y^2-x*y^2), S, m)
-Δ = laplacesquare(D, N)
-u = Fun(S, sparse(Δ) \ f.coefficients[1:size(Δ)[1]])
+u = Fun(S, sparse(Δw) \ f.coefficients[1:size(Δ)[1]])
 @test u(z) ≈ U(z)
 u(z) - U(z)
 
-# 4) f(x,y) = 2zcos(x) - 8xsin(x) - xzsin(x) - 4x^2cos(x) - 12xy => u(x,y) = sin(x) + y
-# (where z = 1-x^2-y^2)
-using PyPlot
-Uc = resizecoeffs!(Fun((x,y)->sin(x) + y, S), 15)
-m = 200
-f = Fun((x,y)->(2*(1-x^2-y^2)*cos(x) - 8*x*sin(x) - x*(1-x^2-y^2)*sin(x) - 4*x^2*cos(x) - 12*x*y),
-        S, m)
-resizecoeffs!(f, 30)
-N = 2
-Δ = laplace(D, N-1)
-u = Fun(S, Δ \ f.coefficients[1:size(Δ)[1]])
-res = abs.(resizecoeffs!(u, 15) - Uc)
-plt = plot(res, yaxis=:log, label="N=$N", xlim=[0,125], ylim=[1e-20,1])
-for N = 4:2:15
-    Δ = laplace(D, N-1)
-    u = Fun(S, Δ \ f.coefficients[1:size(Δ)[1]])
-    res = abs.(resizecoeffs!(u, 15) - Uc)
-    plot!(plt, res, label="N=$N")
-end
-plt
-title("A sinusoidally modulated sinusoid")
-savefig("experiments/example4coeffs")
 
 
 #====#
+
 #=
 Model problem: Helmholtz eqn:
-    Δ(u(x,y)) + k²u(x,y) = -f(x,y)
+    Δ(u(x,y)) + k²u(x,y) = f(x,y) in Ω
+    u(x,y) = c on ∂Ω
 where k is the wavenumber, u is the amplitude at a point (x,y) on the halfdisk,
 and W(x,y) is the P^{(1,1)} weight.
+
+i.e. with constant non-zero BCs
+
+We frame this as u = v + c where v satisfies
+    Δ(v(x,y)) + k²v(x,y) = f(x,y) - k²c
+    v(x,y) = 0 on ∂Ω
 =#
-a, b = 1.0, 1.0; D = HalfDiskFamily(); S = D(a, b)
-k = rand(1)[1]
+k, c = rand(2)
 
-# 1) f(x,y) = 8cx - W(x,y)*c*k^2 => u(x,y) = W(x,y)*c
-c = rand(1)[1]; f = Fun((x,y)->(8c * x - x^(S.a) * (1-x^2-y^2)^(S.b) * c * k^2), S)
-N = 3
-C = convertweightedtononoperatorsquare(S, N)
-T = increaseparamsoperator((S.family)(S.a-1, S.b-1), N)
-Δ = laplacesquare(D, N)
-uc = - T * C * (sparse(Δ + k^2 * T * C) \ resizecoeffs!(f, N))
+# 1) f(x,y) = k²c - 8αx + W(x,y)*α*k^2
+#   => v(x,y) = W(x,y)*α
+#   => u(x,y) = W(x,y)*α + c
+α = rand(1)[1]
+f = Fun((x,y)->(- 8α * x + x^Float64(S.a) * (1-x^2-y^2)^Float64(S.b) * α * k^2), S)
+n = 5
+C = transformparamsoperatorsquare(S, (S.family)(S.a-1, S.b-1), n, weighted=true)
+T = transformparamsoperator((S.family)(S.a-1, S.b-1), S, n)
+vc = T * C * (sparse(Δw[1:getopindex(n,n), 1:getopindex(n,n)] + k^2 * T * C) \ resizecoeffs!(f, n))
+uc = vc + [c; zeros(length(vc)-1)]
 u = Fun(S, uc)
-@test u(z) ≈ OrthogonalPolynomialFamilies.weight(S, z)*c
+@test u(z) ≈ OrthogonalPolynomialFamilies.weight(S, z) * α + c
 
-# 2) f(x,y) = - W(x,y)*k^2(x+y) - (2 - 12xy - 14x^2 - 2y^2) => u(x,y) = W(x,y) * (x + y)
-U = Fun((x,y)->OrthogonalPolynomialFamilies.weight(S, x, y) * (x+y), S)
-N = 5 # degree of f
-f = Fun((x,y)->(-U(x,y)*k^2 - 2 + 12x*y + 14x^2 + 2y^2), S)
-f.coefficients
-C = convertweightedtononoperatorsquare(S, N)
-T = increaseparamsoperator(D(S.a-1, S.b-1), N)
-Δ = laplacesquare(D, N)
-uc = - T * C * (sparse(Δ + k^2 * T * C) \ resizecoeffs!(f, N))
-u = Fun(S, uc)
-@test u(z) ≈ U(z)
-
-# 2b) f(x,y) = - W(x,y)*k^2(x+y) - (2 - 12xy - 14x^2 - 2y^2) => u(x,y) = W(x,y) * (x + y)
-U = Fun((x,y)->(x+y), S) # No need to convert back to non-weighted in this example
-N = 5 # degree of f
-f = Fun((x,y)->(-OrthogonalPolynomialFamilies.weight(S, x, y) * U(x,y)*k^2 - 2 + 12x*y + 14x^2 + 2y^2), S)
-f.coefficients
-C = convertweightedtononoperatorsquare(S, N)
-T = increaseparamsoperator(D(S.a-1, S.b-1), N)
-Δ = laplacesquare(D, N)
-uc = - (sparse(Δ + k^2 * T * C) \ resizecoeffs!(f, N))
+# 2) f(x,y) = k²c + W(x,y)*k²(x+y) + (2 - 12xy - 14x² - 2y²)
+#   => v(x,y) = W(x,y) * (x + y)
+#   => u(x,y) = W(x,y) * (x + y) + c
+U = Fun((x,y)->OrthogonalPolynomialFamilies.weight(S, x, y) * (x+y) + c, S)
+n = 5 # degree of f
+f = Fun((x,y)->(OrthogonalPolynomialFamilies.weight(S, x, y)*(x+y)*k^2 + 2 - 12x*y - 14x^2 - 2y^2), S)
+C = transformparamsoperatorsquare(S, (S.family)(S.a-1, S.b-1), n, weighted=true)
+T = transformparamsoperator((S.family)(S.a-1, S.b-1), S, n)
+vc = T * C * (sparse(Δw[1:getopindex(n,n), 1:getopindex(n,n)] + k^2 * T * C) \ resizecoeffs!(f, n))
+uc = vc + [c; zeros(length(vc)-1)]
 u = Fun(S, uc)
 @test u(z) ≈ U(z)
+
 
 
 
@@ -296,7 +381,66 @@ savefig("experiments/example2timesteppingcovnvergence")
 
 #===#
 
+# NOTE: call getopptseval() before this function
+function recβ2(S::HalfDiskSpace{<:Any, <:Any, T}, pts, w, n, k, j) where T
+    # We get the norms of the 2D OPs
+    m = Int((n+2)*(n+3) / 2)
+    if length(S.opnorms) < m
+        getopnorms(S, m)
+    end
 
+    H1 = (S.family.H)(S.a, S.b + k - 0.5)
+    H2 = (S.family.H)(S.a, S.b + k + 0.5)
+    H3 = (S.family.H)(S.a, S.b + k + 1.5)
+    P = (S.family.P)(S.b, S.b)
+    δ = getopnorm(P) * (isodd(j) ? OrthogonalPolynomialFamilies.recγ(T, P, k+1) : OrthogonalPolynomialFamilies.recβ(T, P, k+1))
+
+    if j == 1
+        val = inner2(H2, opevalatpts(H2, n-k+1, pts),
+                        (-pts.^2 .+ 1).^k .* opevalatpts(H1, n-k+1, pts), w)
+        val * δ / S.opnorms[getopindex(n-1, k-1)]
+    elseif j == 2
+        val = inner2(H2, opevalatpts(H2, n-k+1, pts),
+                        (-pts.^2 .+ 1).^(k+1) .* opevalatpts(H3, n-k-1, pts), w)
+        val * δ / S.opnorms[getopindex(n-1, k+1)]
+    elseif j == 3
+        val = inner2(H2, opevalatpts(H2, n-k+1, pts),
+                        (-pts.^2 .+ 1).^k .* opevalatpts(H1, n-k+2, pts), w)
+        val * δ / S.opnorms[getopindex(n, k-1)]
+    elseif j == 4
+        val = inner2(H2, opevalatpts(H2, n-k+1, pts),
+                        (-pts.^2 .+ 1).^(k+1) .* opevalatpts(H3, n-k, pts), w)
+        val * δ / S.opnorms[getopindex(n, k+1)]
+    elseif j == 5
+        val = inner2(H2, opevalatpts(H2, n-k+1, pts),
+                        (-pts.^2 .+ 1).^k .* opevalatpts(H1, n-k+3, pts), w)
+        val * δ / S.opnorms[getopindex(n+1, k-1)]
+    elseif j == 6
+        val = inner2(H2, opevalatpts(H2, n-k+1, pts),
+                        (-pts.^2 .+ 1).^(k+1) .* opevalatpts(H3, n-k+1, pts), w)
+        val * δ / S.opnorms[getopindex(n+1, k+1)]
+    else
+        error("Invalid entry to function")
+    end
+end
+function resizedata2!(S::HalfDiskSpace, N)
+    # N is the max degree of the OPs
+    N₀ = length(S.B)
+    N ≤ N₀ - 2 && return S
+    pts, w = pointswithweights(S.family.H(S.a, S.b+0.5), N+1)
+    for k = 0:N+1
+        getopptseval(S.family.H(S.a, S.b+k+0.5), N, pts)
+    end
+    resize!(S.A, N + 2)
+    resize!(S.B, N + 2)
+    resize!(S.C, N + 2)
+    resize!(S.DT, N + 2)
+    getBs!(S, N, N₀)
+    getCs!(S, N, N₀)
+    getAs!(S, N, N₀)
+    getDTs!(S, N, N₀)
+    S
+end
 
 
 #===#
