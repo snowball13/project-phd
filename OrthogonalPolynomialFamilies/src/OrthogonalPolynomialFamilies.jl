@@ -36,7 +36,7 @@ end
 
 
 # Finds the OPs and recurrence for weight w, having already found N₀ OPs
-function lanczos!(w, P, β, γ, N₀=0)
+function lanczos!(w, P, β, γ; N₀=0)
 
     # x * P[n](x) == (γ[n] * P[n+1](x) + β[n] * P[n](x) + γ[n-1] * P[n-1](x))
 
@@ -56,11 +56,13 @@ function lanczos!(w, P, β, γ, N₀=0)
     end
 
     for k = N₀+1:N
-        v = x*P[k] - γ[k-1]*P[k-1]
-        β[k] = sum(w*v*P[k])
-        v = v - β[k]*P[k]
-        γ[k] = sqrt(sum(w*v^2))
-        P[k+1] = v/γ[k]
+        @show k
+        v = x*P[2] - γ[k-1]*P[1]
+        β[k] = sum(P[2]*w*v)
+        v = v - β[k]*P[2]
+        γ[k] = sqrt(sum(w*v*v))
+        P[1] = P[2]
+        P[2] = v/γ[k]
     end
 
     P, β, γ
@@ -89,8 +91,8 @@ function resizedata!(S::OrthogonalPolynomialSpace, n)
     n ≤ N₀ && return S
     resize!(S.a, n)
     resize!(S.b, n)
-    resize!(S.ops, n + 1)
-    lanczos!(S.weight, S.ops, S.a, S.b, N₀)
+    resize!(S.ops, 2)
+    lanczos!(S.weight, S.ops, S.a, S.b, N₀=N₀)
     S
 end
 
@@ -513,46 +515,54 @@ function getopnorms(S::HalfDiskSpace{<:Any, <:Any, T}, k) where T
 end
 
 struct HalfDiskTransformPlan{T}
-    U::Diagonal{T,Vector{T}}
-    VTp::Matrix{T}
-    W::Diagonal{T,Vector{T}}
-    VTm::Matrix{T}
+    w::Vector{T}
+    pts::Vector{SArray{Tuple{2},T,1,2}}
+    S::HalfDiskSpace{<:Any, <:Any, T}
 end
 
 function HalfDiskTransformPlan(S::HalfDiskSpace{<:Any, <:Any, T}, vals) where T
-    m2 = Int(length(vals) / 2)
-    N = Int(sqrt(m2)) - 1
-    m1 = Int((N+1)*(N+2) / 2)
-    pts, w = pointswithweights(S, m2)
-
-    # We store the norms of the OPs
-    getopnorms(S, N)
-
-    # Vandermonde matrices transposed, for each set of pts (x, ±y)
-    VTp = Array{Float64}(undef, m1, m2)
-    VTm = copy(VTp)
-    getopptseval(S, N, pts)
-    normsvec = zeros(m1)
-    j = 1
-    for n = 0:N, k = 0:n
-        VTp[j, :] = opevalatpts(S, j, pts)[1:m2]
-        VTm[j, :] = opevalatpts(S, j, pts)[m2+1:end]
-        normsvec[j] = 1 / S.opnorms[k+1]
-        j += 1
-    end
-
-    W = Diagonal(w)
-    U = Diagonal(normsvec)
-    HalfDiskTransformPlan{T}(U, VTp, W, VTm)
+    m = Int(length(vals) / 2)
+    pts, w = pointswithweights(S, m)
+    HalfDiskTransformPlan{T}(w, pts, S)
 end
 
 transform(S::HalfDiskSpace, vals) = plan_transform(S, vals) * vals
 
 # Inputs: OP space, f(pts) for desired f
 # Output: Coeffs of the function f for its expansion in the OPSpace OPs
-function *(P::HalfDiskTransformPlan, vals)
-    n = Int(length(vals) / 2)
-    P.U * (P.VTp * P.W * vals[1:n] + P.VTm * P.W * vals[n+1:end]) / 2
+function *(P::HalfDiskTransformPlan{T}, vals) where T
+    @show "Begin HDTP mult"
+    m2 = Int(length(vals) / 2)
+    N = Int(sqrt(m2)) - 1
+    m1 = Int((N+1)*(N+2) / 2)
+    @show m1, m2
+
+    ret = zeros(m1)
+    # We store the norms of the OPs
+    getopnorms(P.S, N)
+    for i = 1:m2
+        if i % 100 == 0
+            @show i, m2
+        end
+        pt = [P.pts[i]]
+        getopptseval(P.S, N, pt)
+        for j = 1:m1
+            ret[j] += opevalatpts(P.S, j, pt)[1] * P.w[i] * vals[i]
+        end
+        pt = [P.pts[i+m2]]
+        getopptseval(P.S, N, pt)
+        for j = 1:m1
+            ret[j] += opevalatpts(P.S, j, pt)[1] * P.w[i] * vals[i+m2]
+        end
+    end
+    resetopptseval(P.S)
+    j = 1
+    for n = 0:N, k = 0:n
+        ret[j] /= (2 * P.S.opnorms[k+1])
+        j += 1
+    end
+    @show "End HDTP mult"
+    ret
 end
 
 plan_transform(S::HalfDiskSpace, vals) = HalfDiskTransformPlan(S, vals)
@@ -562,10 +572,15 @@ plan_transform(S::HalfDiskSpace, vals) = HalfDiskTransformPlan(S, vals)
 function itransform(S::HalfDiskSpace{<:Any, <:Any, T}, cfs) where T
     m = length(cfs)
     pts = points(S, m)
-    getopptseval(S, getnk(m)[1], pts)
-    V = Array{Float64}(undef, length(pts), m)
-    for k = 1:m
-        V[:, k] = S.opptseval[k]
+    N = getnk(m)[1]
+    npts = length(pts)
+    V = Array{Float64}(undef, npts, m)
+    for i = 1:npts
+        pt = [pts[i]]
+        getopptseval(S, N, pt)
+        for k = 1:m
+            V[i, k] = S.opptseval[k][1]
+        end
     end
     V * cfs
 end # TODO
@@ -717,9 +732,13 @@ function resizedata!(S::HalfDiskSpace, N)
     resize!(S.C, N + 2)
     resize!(S.DT, N + 2)
     getBs!(S, N, N₀)
+    @show "hereB"
     getCs!(S, N, N₀)
+    @show "hereC"
     getAs!(S, N, N₀)
+    @show "hereA"
     getDTs!(S, N, N₀)
+    @show "hereDT"
     S
 end
 
@@ -742,20 +761,22 @@ function jacobix(S, N)
 end
 
 function jacobiy(S, N)
+    # Transposed operator, so acts directly on coeffs vec
     resizedata!(S, N)
     rows = cols = 1:N+1
     l, u = 1, 1
     λ, μ = 1, 1
     J = BandedBlockBandedMatrix(0.0I, (rows, cols), (l, u), (λ, μ))
+    n = 1
     J[1, 1] = S.B[1][2, 1]
-    view(J, Block(1, 2)) .= S.A[1][2, :]'
+    view(J, Block(n, n+1)) .= S.C[n+1][Int(end/2)+1:end, :]'
     for n = 2:N
-        view(J, Block(n, n-1)) .= S.C[n][Int(end/2)+1:end, :]
-        view(J, Block(n, n)) .= S.B[n][Int(end/2)+1:end, :]
-        view(J, Block(n, n+1)) .= S.A[n][Int(end/2)+1:end, :]
+        view(J, Block(n, n-1)) .= S.A[n-1][Int(end/2)+1:end, :]'
+        view(J, Block(n, n)) .= S.B[n][Int(end/2)+1:end, :]'
+        view(J, Block(n, n+1)) .= S.C[n+1][Int(end/2)+1:end, :]'
     end
-    view(J, Block(N+1, N)) .= S.C[N+1][Int(end/2)+1:end, :]
-    view(J, Block(N+1, N+1)) .= S.B[N+1][Int(end/2)+1:end, :]
+    view(J, Block(N+1, N)) .= S.A[N][Int(end/2)+1:end, :]'
+    view(J, Block(N+1, N+1)) .= S.B[N+1][Int(end/2)+1:end, :]'
     J
 end
 
@@ -900,16 +921,11 @@ function partialoperatorx(S::HalfDiskSpace{<:Any, <:Any, T}, N) where T
     Px = Sx.family.P(Sx.b, Sx.b)
     ptsp, wp = pointswithweights(Px, N+2) # TODO
     getopptseval(P, N, ptsp)
-    @show "here1"
     getderivopptseval(P, N, ptsp)
-    @show "here2"
     getopptseval(Px, N, ptsp)
-    @show "here3"
     H = S.family.H(S.a, S.b+0.5)
     ptsh, wh = pointswithweights(H, 2N+2)
-    @show "here4"
     getopnorms(Sx, N-1)
-    @show "done initial bit"
 
     A = BandedBlockBandedMatrix(
         Zeros{T}(sum(1:N),sum(1:(N+1))), (1:N, 1:N+1), (-1,2), (0, 2))
@@ -1353,6 +1369,7 @@ end
 
 # Operator Clenshaw
 function operatorclenshawG(S::HalfDiskSpace{<:Any, <:Any, T}, n, Jx, Jy) where T
+    @show "G", n
     G = Matrix{SparseMatrixCSC{T}}(undef, 2(n+1), n+1)
     for i = 1:n+1
         for j = 1:n+1
@@ -1366,6 +1383,15 @@ function operatorclenshawG(S::HalfDiskSpace{<:Any, <:Any, T}, n, Jx, Jy) where T
         end
     end
     G
+end
+function converttooperatorclenshawvector(S::HalfDiskSpace{<:Any, <:Any, T}, v, Jx) where T
+    nn = size(Jx)
+    s = size(v)[1]
+    B = Array{SparseMatrixCSC{T}}(undef, (1, s))
+    for i = 1:s
+        B[1,i] = sparse(I, nn) * v[i]
+    end
+    B
 end
 function converttooperatorclenshawmatrix(S::HalfDiskSpace{<:Any, <:Any, T}, A, Jx) where T
     nn = size(Jx)
@@ -1381,7 +1407,7 @@ function operatorclenshaw(cfs, S::HalfDiskSpace)
     resizedata!(S, N+1)
     m = Int((N+1)*(N+2)/2)
     Jx = jacobix(S, N)
-    Jy = jacobiy(S, N)' # TODO: Need to transpose in the method!
+    Jy = jacobiy(S, N)
     if m̃ < m
         resize!(cfs, m)
         cfs[m̃+1:end] .= 0.0
@@ -1390,18 +1416,20 @@ function operatorclenshaw(cfs, S::HalfDiskSpace)
     if N == 0
         return cfs[1] * id * P0
     end
+    @show "here"
     if N == 1
-        P0 * (converttooperatorclenshawmatrix(S, cfs[1], Jx)[1] - (converttooperatorclenshawmatrix(S, S.DT[1], Jx) * (converttooperatorclenshawmatrix(S.B[1], Jx) - operatorclenshawG(S, 0, Jx, Jy)))[1])
+        P0 * (converttooperatorclenshawvector(S, cfs[1], Jx)[1] - (converttooperatorclenshawmatrix(S, S.DT[1], Jx) * (converttooperatorclenshawmatrix(S.B[1], Jx) - operatorclenshawG(S, 0, Jx, Jy)))[1])
     end
     inds2 = m-N:m
-    γ2 = converttooperatorclenshawmatrix(S, view(cfs, inds2), Jx)'
+    γ2 = converttooperatorclenshawvector(S, view(cfs, inds2), Jx)
     inds1 = (m-2N):(m-N-1)
-    γ1 = (converttooperatorclenshawmatrix(S, view(cfs, inds1), Jx)'
+    γ1 = (converttooperatorclenshawvector(S, view(cfs, inds1), Jx)
         - γ2 * converttooperatorclenshawmatrix(S, S.DT[N], Jx) * (converttooperatorclenshawmatrix(S, S.B[N], Jx)
-                                                                - operatorclenshawG(S, N-1, Jx, Jy)))
+                                                                    - operatorclenshawG(S, N-1, Jx, Jy)))
     for n = N-2:-1:0
+        @show n
         ind = sum(1:n)
-        γ = (converttooperatorclenshawmatrix(S, view(cfs, ind+1:ind+n+1), Jx)'
+        γ = (converttooperatorclenshawvector(S, view(cfs, ind+1:ind+n+1), Jx)
              - γ1 * converttooperatorclenshawmatrix(S, S.DT[n+1], Jx) * (converttooperatorclenshawmatrix(S, S.B[n+1], Jx) - operatorclenshawG(S, n, Jx, Jy))
              - γ2 * converttooperatorclenshawmatrix(S, S.DT[n+2] * S.C[n+2], Jx))
         γ2 = copy(γ1)
@@ -1415,14 +1443,11 @@ operatorclenshaw(f::Fun, S::HalfDiskSpace, N) = operatorclenshaw(resizecoeffs!(f
 
 # Method to gather and evaluate the ops of space S at the transform pts given
 function getopptseval(S::HalfDiskSpace, N, pts)
-    @show "begin getopptseval()"
     resetopptseval(S)
     jj = [getopindex(n, 0) for n=0:N]
     for j in jj
-        @show jj[end], j
         opevalatpts(S, j, pts)
     end
-    @show "end getopptseval()"
     S.opptseval
 end
 function opevalatpts(S::HalfDiskSpace{<:Any, <:Any, T}, j, pts) where T
