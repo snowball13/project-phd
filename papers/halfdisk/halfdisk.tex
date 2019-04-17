@@ -948,13 +948,15 @@ We can solve this system for the given initial condition $\mathbf{u_0}$ by itera
 
 
 %
-\section{Future work - orthogonal polynomials on half-spheres and spherical triangles}
+\section{Conclusions}
 
 \sotodoinline{Rewrite in a more "paper" like tone}
 
-We will use a similar idea of projecting up from 1D OPs to the interval, to 2D OPs on the disk, to 3D OPs on the sphere. Initially, we will add to the ApproxFun library by adding capability to work with OPs on the half disk (2D) with weights governed by parameters that will be incremented/decremented after an application of an operator (e.g. partial derivative). With this, we can obtain a family of OPs on the half-sphere, with sparse relations, and construct sparse spectral methods for surface PDEs on half-spheres. An extension to this will be to look at a $p$-finite element method on the sphere using two half-sphere elements. We plan to extend this work to construct similar methods on other 3D spherical domains, such as spherical caps and spherical triangles, which will have applications in numerical weather prediction. 
+We have shown that bivariate orthogonal polynomials can lead to sparse discretizations of general linear PDEs on certain domains given by an algebraic curve - notably here the half-disk - with Dirichlet boundary conditions. We can develop $hp-$finite element methods methods to solve PDEs on other polygonal domains by using suitable shaped elements (for example, by using disk-slice elements on the disk, which has applications in fluids). 
 
-Other extensions include a full $hp$-finite element method on sections of a disk which has applications in fluids. 
+A further extension is to develop similar relationships for 3D domains such as the half-sphere surface. With this, we can obtain a family of OPs on the half-sphere, with sparse relations, and construct sparse spectral methods for surface PDEs on half-spheres. 
+
+This work serves as a stepping stone to constructing similar methods on other 3D spherical domains, such as spherical caps and spherical triangles, which will have applications in numerical weather prediction. 
 
 %
 \appendix
