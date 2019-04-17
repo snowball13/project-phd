@@ -56,7 +56,7 @@ function lanczos!(w, P, β, γ; N₀=0)
     end
 
     for k = N₀+1:N
-        @show k
+        @show "lanczos", N, k
         v = x*P[2] - γ[k-1]*P[1]
         β[k] = sum(P[2]*w*v)
         v = v - β[k]*P[2]
@@ -542,7 +542,7 @@ function *(P::HalfDiskTransformPlan{T}, vals) where T
     getopnorms(P.S, N)
     for i = 1:m2
         if i % 100 == 0
-            @show i, m2
+            @show m2, i
         end
         pt = [P.pts[i]]
         getopptseval(P.S, N, pt)
@@ -732,13 +732,13 @@ function resizedata!(S::HalfDiskSpace, N)
     resize!(S.C, N + 2)
     resize!(S.DT, N + 2)
     getBs!(S, N, N₀)
-    @show "hereB"
+    @show "resizedata!", "done getBs!"
     getCs!(S, N, N₀)
-    @show "hereC"
+    @show "resizedata!", "done getCs!"
     getAs!(S, N, N₀)
-    @show "hereA"
+    @show "resizedata!", "done getAs!"
     getDTs!(S, N, N₀)
-    @show "hereDT"
+    @show "resizedata!", "done getDTs!"
     S
 end
 
@@ -932,7 +932,7 @@ function partialoperatorx(S::HalfDiskSpace{<:Any, <:Any, T}, N) where T
 
     # Get pt evals for the H OPs
     for k = 0:N
-        @show k
+        @show "dxoperator", N, k
         H = S.family.H(S.a, S.b+k+0.5)
         getopptseval(H, N-k, ptsh)
         getderivopptseval(H, N-k, ptsh)
@@ -1221,22 +1221,6 @@ function transformparamsoperator(S::HalfDiskSpace{<:Any, <:Any, T},
     end
 end
 
-function laplace(D::HalfDiskFamily, N)
-    A = partialoperatorx(D(0.0,0.0), N+2)
-    @show "A done"
-    B = weightedpartialoperatorx(D(1.0,1.0), N)
-    @show "B done"
-    C = transformparamsoperator(D(0.0,1.0), D(1.0,1.0), N+1)
-    @show "C done"
-    E = partialoperatory(D(0.0,0.0), N+2)
-    @show "E done"
-    F = transformparamsoperator(D(1.0,0.0), D(0.0,0.0), N+1, weighted=true)
-    @show "F done"
-    G = weightedpartialoperatory(D(1.0,1.0), N)
-    @show "G done"
-    A * B + C * E * F * G
-end
-
 function laplaceoperator(S::HalfDiskSpace{<:Any, <:Any, T},
             St::HalfDiskSpace{<:Any, <:Any, T}, N;
             weighted=false, square=true) where T
@@ -1246,17 +1230,17 @@ function laplaceoperator(S::HalfDiskSpace{<:Any, <:Any, T},
     if (weighted == true && Int(S.a) == 1 && Int(S.b) == 1
             && Int(St.a) == 1 && Int(St.b) == 1)
         A = partialoperatorx(D(S.a-1,S.b-1), N+2)
-        @show "A done"
+        @show "laplaceoperator", "1 of 6 done"
         B = weightedpartialoperatorx(D(S.a,S.b), N)
-        @show "B done"
+        @show "laplaceoperator", "2 of 6 done"
         C = transformparamsoperator(D(S.a-1,S.b), D(S.a,S.b), N+1)
-        @show "C done"
+        @show "laplaceoperator", "3 of 6 done"
         E = partialoperatory(D(S.a-1,S.b-1), N+2)
-        @show "E done"
+        @show "laplaceoperator", "4 of 6 done"
         F = transformparamsoperator(D(S.a,S.b-1), D(S.a-1,S.b-1), N+1, weighted=true)
-        @show "F done"
+        @show "laplaceoperator", "5 of 6 done"
         G = weightedpartialoperatory(D(S.a,S.b), N)
-        @show "G done"
+        @show "laplaceoperator", "6 of 6 done"
         L = A * B + C * E * F * G
         if square
             m = sum(1:(N+1))
@@ -1267,17 +1251,17 @@ function laplaceoperator(S::HalfDiskSpace{<:Any, <:Any, T},
     elseif (weighted == true && Int(S.a) == 2 && Int(S.b) == 2
             && Int(St.a) == 0 && Int(St.b) == 0)
         A = weightedpartialoperatorx(D(S.a-1,S.b-1), N+2)
-        @show "A done"
+        @show "laplaceoperator", "1 of 6 done"
         B = weightedpartialoperatorx(D(S.a,S.b), N)
-        @show "B done"
+        @show "laplaceoperator", "2 of 6 done"
         C = transformparamsoperator(D(S.a-1,S.b-2), D(S.a-2,S.b-2), N+3, weighted=true)
-        @show "C done"
+        @show "laplaceoperator", "3 of 6 done"
         E = weightedpartialoperatory(D(S.a-1,S.b-1), N+2)
-        @show "E done"
+        @show "laplaceoperator", "4 of 6 done"
         F = transformparamsoperator(D(S.a,S.b-1), D(S.a-1,S.b-1), N+1, weighted=true)
-        @show "F done"
+        @show "laplaceoperator", "5 of 6 done"
         G = weightedpartialoperatory(D(S.a,S.b), N)
-        @show "G done"
+        @show "laplaceoperator", "6 of 6 done"
         L = A * B + C * E * F * G
         if square
             m = sum(1:(N+1))
@@ -1288,17 +1272,17 @@ function laplaceoperator(S::HalfDiskSpace{<:Any, <:Any, T},
     elseif (weighted == false && Int(S.a) == 0 && Int(S.b) == 0
             && Int(St.a) == 2 && Int(St.b) == 2)
         A = partialoperatorx(D(S.a+1,S.b+1), N+1)
-        @show "A done"
+        @show "laplaceoperator", "1 of 6 done"
         B = partialoperatorx(D(S.a,S.b), N+2)
-        @show "B done"
+        @show "laplaceoperator", "2 of 6 done"
         C = transformparamsoperator(D(S.a+1,S.b+2), D(S.a+2,S.b+2), N)
-        @show "C done"
+        @show "laplaceoperator", "3 of 6 done"
         E = partialoperatory(D(S.a+1,S.b+1), N+1)
-        @show "E done"
+        @show "laplaceoperator", "4 of 6 done"
         F = transformparamsoperator(D(S.a,S.b+1), D(S.a+1,S.b+1), N+1)
-        @show "F done"
+        @show "laplaceoperator", "5 of 6 done"
         G = partialoperatory(D(S.a,S.b), N+2)
-        @show "G done"
+        @show "laplaceoperator", "6 of 6 done"
         L = BandedBlockBandedMatrix(sparse(sparse(A * B) + C * E * F * G), (1:N+1, 1:N+3), (-2,4), (0,4))
         if square
             m = sum(1:(N+1))
@@ -1369,7 +1353,6 @@ end
 
 # Operator Clenshaw
 function operatorclenshawG(S::HalfDiskSpace{<:Any, <:Any, T}, n, Jx, Jy, zeromat) where T
-    @show "G", n
     G = Matrix{SparseMatrixCSC{T}}(undef, 2(n+1), n+1)
     for i = 1:n+1
         for j = 1:n+1
@@ -1433,15 +1416,15 @@ function operatorclenshaw(cfs, S::HalfDiskSpace)
     if N == 1
         P0 * (operatorclenshawvector(S, cfs[1], id)[1] - (operatorclenshawmatrixDT(S, S.DT[1], id) * operatorclenshawmatrixBmG(S, S.B[1], id, Jx, Jy))[1])
     end
-    n = N; @show N, n
+    n = N; @show "Operator Clenshaw", N, n
     inds2 = m-N:m
     γ2 = operatorclenshawvector(S, view(cfs, inds2), id)
-    n = N - 1; @show N, n
+    n = N - 1; @show "Operator Clenshaw", N, n
     inds1 = (m-2N):(m-N-1)
     γ1 = (operatorclenshawvector(S, view(cfs, inds1), id)
         - γ2 * operatorclenshawmatrixDT(S, S.DT[N], id) * operatorclenshawmatrixBmG(S, S.B[N], id, Jx, Jy))
     for n = N-2:-1:0
-        @show N, n
+        @show "Operator Clenshaw", N, n
         ind = sum(1:n)
         γ = (operatorclenshawvector(S, view(cfs, ind+1:ind+n+1), id)
              - γ1 * operatorclenshawmatrixDT(S, S.DT[n+1], id) * operatorclenshawmatrixBmG(S, S.B[n+1], id, Jx, Jy)
