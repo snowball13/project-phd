@@ -213,7 +213,7 @@ where $C_{n,k} \neq 0$ and ``lower order terms'' can  include degree $n$ polynom
 
 Sparsity comes from expanding the domain and range of an operator  using different choices of $a$ and $b$. Whereas the sparsity pattern and entries derived in \cite{olver2018recurrence,olver2019triangle} for equations on the triangle  results from manipulations of Jacobi polynomials, in the present work we use a more general integration-by-parts argument to deduce the sparsity structure, alongside quadrature rules to determine the entries.  Furthermore, we use this framework to derive sparse $p$-finite element methods that are analogous to those of Beuchler and Sch\"oberl on tetrahedra \cite{beuchler2006new}, see also work by Li and Shen \cite{li2010optimal}. 
 
-The motivation for this work is solving partial differential equations on sub-domains of the sphere. In particular, OPs on a half-sphere can be represented using two families of OPs on the half-disk \sotodo{Add citation to this} \bstodo{should we instead take the Xu approach?}, where we would require $2n+1$ 3D OPs for each degree $n$, of which $n+1$ would be the $n+1$ degree $n$ OPs on the half-disk of the first family (polynomials in $x,y$) while the remaining $n$ OPs would be given by $z$ multiplied by the $n$ degree $n-1$ OPs on the half-disk of the second family. Constructing sparse spectral methods for surface PDEs on half-spheres, spherical caps, and spherical triangles is future work, and has applications in weather prediction. Other extensions include a full $hp$-finite element method on sections of a disk, which has applications in fluids. 
+The motivation for this work is solving partial differential equations on sub-domains of the sphere. In particular, OPs on a half-sphere can be represented using two families of OPs on the half-disk \cite[Theorem 3.1]{olver2018orthogonal}, where we would require $2n+1$ 3D OPs for each degree $n$, of which $n+1$ would be the $n+1$ degree $n$ OPs on the half-disk of the first family (polynomials in $x,y$) while the remaining $n$ OPs would be given by $z$ multiplied by the $n$ degree $n-1$ OPs on the half-disk of the second family. Constructing sparse spectral methods for surface PDEs on half-spheres, spherical caps, and spherical triangles is future work, and has applications in weather prediction. Other extensions include a full $hp$-finite element method on sections of a disk, which has applications in fluids. 
 
 Here is an overview of the paper:  
 
@@ -836,7 +836,7 @@ Calculating the non-zero entries of the parameter transformation operators is si
 	\label{fig:solution-biharmonic}
 	\end{subfigure}
 	\centering
-    	\caption{(a): The computed solution to $\Delta u = f$ with zero boundary conditions with $f(x,y) = 1 + \text{erf}(5(1 - 10((x - 0.5)^2 + y^2)))$. (b): The computed solution to $\Delta u + k^2 \: v \: u = f$ with zero boundary conditions with $f(x,y) = xye^x$, $v(x,y) = xy^2$ and $k = 200$. (c): The computed solution to $\Delta^2 u = f$ with zero Dirichlet and Neumann boundary conditions with $f(x,y) = 1 + \text{erf}(5(1 - 10((x - 0.5)^2 + y^2)))$.}
+    	\caption{(a): The computed solution to $\Delta u = f$ with zero boundary conditions with $f(x,y) = 1 + \text{erf}(5(1 - 10((x - 0.5)^2 + y^2)))$. (b): The computed solution to $\Delta u + k^2 \: v \: u = f$ with zero boundary conditions with $f(x,y) = xye^x$, $v(x,y) = 1 - (3(x-1)^2 + 5y^2)$ and $k = 200$. (c): The computed solution to $\Delta^2 u = f$ with zero Dirichlet and Neumann boundary conditions with $f(x,y) = 1 + \text{erf}(5(1 - 10((x - 0.5)^2 + y^2)))$.}
         \label{fig:solution}
 \end{figure}
 
@@ -855,12 +855,12 @@ We can tackle the problem as follows. Fix \(a, b = 1,1\). Denote the coefficient
     \laplacewii \mathbf{u} = \mathbf{f}
 \end{align}
 which can be solved to find $\mathbf{u}$.
-In Figure \ref{fig:solution-poisson} we see the solution to the Poisson equation with zero boundary conditions given in (\ref{eqn:poisson}) in the half-disk $\Omega$. In Figure \ref{fig:solutionblocknorms} we show the norms of each block of calculated coefficients of the approximation for four right-hand sides of the Poisson equation with N = 200, that is, 20,301 unknowns. The rate of decay in the coefficients is a proxy for the rate of convergence of the computed solution. We see that... \bstodoinline{Describe what plot tells us - I dont want to copy and paste your Triangle paper here but not sure what else to write}
+In Figure \ref{fig:solution-poisson} we see the solution to the Poisson equation with zero boundary conditions given in (\ref{eqn:poisson}) in the half-disk $\Omega$. In Figure \ref{fig:solutionblocknorms} we show the norms of each block of calculated coefficients of the approximation for four right-hand sides of the Poisson equation with N = 200, that is, 20,301 unknowns. The rate of decay in the coefficients is a proxy for the rate of convergence of the computed solution. We see that we achieve algebraic convergence for the first three examples, with the final Gaussian bump example achieving spectral convergence. We note that for right hand sides that vanish at the corners of our half disk ($y = \pm 1$) we see faster convergence. \bstodoinline{Improve above}
 
 \begin{figure}
         	\includegraphics[scale=0.5]{solutionblocknorms}
 	\centering
-	\caption{The norms of each block of the computed solution of the Poisson equation with the given right hand side functions. This demonstrates algebraic convergence with the rate dictated by the decay at the corners, with spectral convergence observed when the right-hand side vanishes to all orders.  \bstodoinline{N=200 blocks here. When I have the time to run N=1000 or so I will do}}
+	\caption{The norms of each block of the computed solution of the Poisson equation with the given right hand side functions. This demonstrates algebraic convergence with the rate dictated by the decay at the corners, with spectral convergence observed when the right-hand side vanishes to all orders.  \bstodoinline{N=200 blocks here}}
         	\label{fig:solutionblocknorms}
 \end{figure}
 
@@ -950,7 +950,7 @@ We can solve this system for the given initial condition $\mathbf{u_0}$ by itera
 %
 \section{Conclusions}
 
-\sotodoinline{Rewrite in a more "paper" like tone}
+\bstodoinline{Rewritten}
 
 We have shown that bivariate orthogonal polynomials can lead to sparse discretizations of general linear PDEs on certain domains given by an algebraic curve - notably here the half-disk - with Dirichlet boundary conditions. We can develop $hp-$finite element methods methods to solve PDEs on other polygonal domains by using suitable shaped elements (for example, by using disk-slice elements on the disk, which has applications in fluids). 
 
