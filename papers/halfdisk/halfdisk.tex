@@ -814,10 +814,8 @@ c_{n-1,k-1} = \frac{\ip<\pddy \hdopnkab, \hdop^{(a, b+1)}_{n-1,k-1} >_{W^{(a, b+
 \end{align*}
 where
 \begin{align}
-	\ip<\pddy \hdopnkab, \hdop^{(a, b+1)}_{n-1,k-1} >_{W^{(a, b+1)}} = \norm{\genjac_0^{(a,b+k+\half)}}^2_{\genjacw^{(a, b+k+\half)}} 
-		\: \ip< P_k^{(b,b) \: \prime}, \: P_{k-1}^{(b+1,b+1)} >_{w_P^{(b+1)}}
+	\ip<\pddy \hdopnkab, \hdop^{(a, b+1)}_{n-1,k-1} >_{W^{(a, b+1)}} = \normgenjac^{(a, b+k+\half)} \: \ip< P_k^{(b,b) \: \prime}, \: P_{k-1}^{(b+1,b+1)} >_{w_P^{(b+1)}}.
 \end{align}
-where we note that $\norm{\genjac_n^{(a,b)}}_{\genjacw^{(a,b)}} = \norm{\genjac_m^{(a,b)}}_{\genjacw^{(a,b)}}$ $\forall m, n = 0, 1, 2, \dots$, and thus is in fact given by the integral of the weight function $\genjacw^{(a,b)}$ over $(0,1)$. 
 
 We can gain the non-zero entries of the weighted differential operators similarly, by noting that
 \begin{align}
