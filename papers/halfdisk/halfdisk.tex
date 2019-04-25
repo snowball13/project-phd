@@ -693,19 +693,27 @@ where if $f(\cdot, y)$ for fixed $y$ is an at most degree $N$ polynomial and $f(
 \begin{proof}
 We will use the substitution that
 \begin{align*}
-x &= s, \quad y = (1-s^2)^\half t.
+	x &= s, \quad y = \rho(s) \: t.
 \end{align*}
-First, note that
+First, note that, for $(x,y) \in \Omega$,
 \begin{align*}
-W^{(a,b)}(x,y) &= x^a \: (1-x^2-y^2)^b, \quad \text{for } (x,y) \in \Omega, \\
-		      &= s^a \: (1-s^2)^{b} \: (1-t^2)^b =: V^{(a,b)}(s,t), \quad \text{for } (s,t) \in [0,1] \times [-1,1].
+	W^{(a,b)}(x,y) &= \genjacw^{(a,b)}(x) \: w_P^{(b)}\fpr(\frac{y}{\rho(x)}) \\
+	&= \genjacw^{(a,b)}(s) \: w_P^{(b)}(t) \\
+	&= s^a \: \rho(s)^{2b} \: (1-t^2)^b \\
+	&=: V^{(a,b)}(s,t), \quad \text{for } (s,t) \in [0,1] \times [-1,1].
 \end{align*}
+Let $f : \Omega \to \R$ be such that $y \mapsto f(x,y)$ for fixed $x$ is an even function. Then,
+\begin{align*}
+	\iint_\Omega f(x,y) \: \Wab(x,y) \: \D y \: \D x &= \int_\alpha^\beta \int_\gamma^\delta f\big(s,\rho(s) t\big) \: V^{(a,b)}(s,t) \: \rho(s) \: \D t \: \D s \\
+	&= \int_\alpha^\beta  \genjacw^{(a,b+\half)}(s) \: \Big( \int_\gamma^\delta f\big(s,\rho(s) t\big) \: w_P^{(b)}(t) \: \D t \Big) \: \D s \quad (\dagger) \\
+	&\approx \int_\alpha^\beta  \genjacw^{(a,b+\half)}(s) \: \sum_{k=1}^N \Big( w_k^{(t)} f\big(s,\rho(s) t_k\big) \Big) \: \D s \quad (\star) \\
+	&\approx \sum_{k=1}^N \Bigg( w_k^{(s)} \: \sum_{l=1}^N \Big( w_l^{(t)} f\big(s_k,\rho(s_k) t_l\big) \Big) \Bigg) \quad (\star \star) \\
+	&= \sum_{j=1}^{N^2}  w_j \: f(x_j, y_j),
+\end{align*}
+where we achieve equality at $(\star)$ if $y \mapsto f(x,y)$ for fixed $x$ is a polynomial of degree at most $2N-1$ and we achieve equality at $(\star \star)$ if $x \mapsto f(x,y)$ for fixed $y$ is a polynomial of degree at most $N$. Note also that the inner integral at $(\dagger)$ the inner integral over $t$ would be zero if $y \mapsto f(x,y)$ for fixed $x$ was an odd function, due to the symmetry over the domain (i.e. since $\gamma = -\delta$ in the this case).
 
-\sotodoinline{Rest of proof?}
+\bstodoinline{I cannot remember/work out why it was necessary to split f into odd and even parts?}
 \end{proof}
-
-Note here that due to the symmetry in the domain, the integral of an odd function in the second variable (i.e. if $f(x, \cdot)$ is odd for fixed $x$) over $\Omega$ is zero. Thus, the quadrature rule is such that we only consider the even part of a function.
-
 
 
 \subsection{Obtaining the coefficients for expansion of a function}
@@ -986,8 +994,6 @@ We can solve this system for the given initial condition $\mathbf{u_0}$ by itera
 %
 \section{Conclusions}
 
-\bstodoinline{Rewritten}
-
 We have shown that bivariate orthogonal polynomials can lead to sparse discretizations of general linear PDEs on certain domains given by an algebraic curve - notably here the half-disk - with Dirichlet boundary conditions. We can develop $hp-$finite element methods methods to solve PDEs on other polygonal domains by using suitable shaped elements (for example, by using disk-slice elements on the disk, which has applications in fluids). 
 
 A further extension is to develop similar relationships for 3D domains such as the half-sphere surface. With this, we can obtain a family of OPs on the half-sphere, with sparse relations, and construct sparse spectral methods for surface PDEs on half-spheres. 
@@ -1014,15 +1020,15 @@ This has the weak formulation for any test function $v \in V := H_0^1(\Omega) = 
 In general, we would let $\FEset$ be the set of elements $\element$ that make up our finite element discretisation of the domain, where each $\element$ is a trapezium or disk slice for example. 
 
 
-In this section, we limit our discretisation to a single element, that is we let $\element = \Omega$ for a half disk/disk slice/trapezium domain. We can choose our finite dimensional space\sotodo{Use of $h$ is mis-leading here. Maybe $V_p$?} $V_h = \{v_h \in V \quad | \quad {\rm deg}\,(v_h|_\element) \le p\}$ for some $p \in \N$.
+In this section, we limit our discretisation to a single element, that is we let $\element = \Omega$ for a half disk/disk slice/trapezium domain. We can choose our finite dimensional space $V_p = \{v_p \in V \quad | \quad {\rm deg}\,(v_p|_\element) \le p\}$ for some $p \in \N$.
 
-We seek $u_h \in V_h$ s.t.
+We seek $u_p \in V_p$ s.t.
 \begin{align}
-	L(v_h) = a(u_h,v_h) \quad \forall \: v_h \in V_h.
+	L(v_p) = a(u_p,v_p) \quad \forall \: v_p \in V_p.
 	\label{eqn:FEMweakform}
 \end{align}
 
-Define $\Lambda^{(a,b)} := \langle \bighdop^{(a,b)}, \: {\bighdop^{(a,b)}}^\top \rangle_{W^{(a,b)}}$ where $W^{(a,b)}$ is the weight with which the OPs in $\bighdop^{(a,b)}$ are orthogonal with respect to. Note that due to orthogonality this is a diagonal matrix. We can choose a basis for $V_h$ by using the weighted orthogonal polynomials on $\element$ with parameters $a = b = 1$:
+Define $\Lambda^{(a,b)} := \langle \bighdop^{(a,b)}, \: {\bighdop^{(a,b)}}^\top \rangle_{W^{(a,b)}}$ where $W^{(a,b)}$ is the weight with which the OPs in $\bighdop^{(a,b)}$ are orthogonal with respect to. Note that due to orthogonality this is a diagonal matrix. We can choose a basis for $V_p$ by using the weighted orthogonal polynomials on $\element$ with parameters $a = b = 1$:
 \begin{align*}
 \bigWii(x,y) &:= \begin{pmatrix}
 		\bigWii_0(x,y) \\
@@ -1039,14 +1045,14 @@ Define $\Lambda^{(a,b)} := \langle \bighdop^{(a,b)}, \: {\bighdop^{(a,b)}}^\top 
 \end{align*}
 and rewrite (\ref{eqn:FEMweakform}) in matrix form:
 \begin{align*}
-	a(u_h,v_h) &= \int_\element \nabla u_h \cdot \nabla v_h \: d\mathbf{x} \\
+	a(u_p,v_p) &= \int_\element \nabla u_p \cdot \nabla v_p \: d\mathbf{x} \\
 	&= \int_\element \begin{pmatrix}
-					\partial_x v_h \\
-					\partial_y v_h
+					\partial_x v_p \\
+					\partial_y v_p
 				\end{pmatrix}^\top 
 				\begin{pmatrix}
-					\partial_x u_h \\
-					\partial_y u_h
+					\partial_x u_p \\
+					\partial_y u_p
 				\end{pmatrix}
 				\\
 	&= \int_\element \begin{pmatrix}
@@ -1062,9 +1068,9 @@ and rewrite (\ref{eqn:FEMweakform}) in matrix form:
 					& \quad \quad \quad + \mathbf{v}^\top ({T^{(1,0)\to(0,0)} \Wii_y})^\top \bighdopoo \bighdopoo^\top T^{(1,0)\to(0,0)} \Wii_y \mathbf{u}  \Big) \: d\mathbf{x} \\
 	&= \mathbf{v}^\top \: \Big( {\Wii_x}^\top \Lambda^{(0,0)} \Wii_x + ({T^{(1,0)\to(0,0)} \Wii_y})^\top \Lambda^{(0,0)} T^{(1,0)\to(0,0)} \Wii_y \Big) \: \mathbf{u}
 \end{align*}
-where $\mathbf{u}, \mathbf{v}$ are the coefficient vectors of the expansions of $u_h, v_h \in V_h$ respectively in the $V_h$ basis ($\bigWii$ OPs), and
+where $\mathbf{u}, \mathbf{v}$ are the coefficient vectors of the expansions of $u_p, v_p \in V_p$ respectively in the $V_p$ basis ($\bigWii$ OPs), and
 \begin{align*}
-	L(v_h) &= \int_\element \: v_h \: f \: d\mathbf{x} \\
+	L(v_p) &= \int_\element \: v_p \: f \: d\mathbf{x} \\
 	&= \int_\element \: \mathbf{v}^\top \: \bigWii \: \bighdopii^\top \: \mathbf{f} \: d\mathbf{x} \\
 	&= \mathbf{v}^\top \: \langle \bighdopii, {\bighdopii}^\top \rangle_{\Wii} \: d\mathbf{x} \\
 	&= \mathbf{v}^\top \Lambda^{(1,1)} \: \mathbf{f},
@@ -1073,9 +1079,9 @@ where $\mathbf{f}$ is the coefficient vector for the expansion of the function $
 
 Since (\ref{eqn:FEMweakform}) is equivalent to stating that
 \begin{align*}
-	L(\Wii \hdopii_{n,k}) = a(u_h,\Wii \hdopii_{n,k}) \quad \forall \: n = 0,\dots,p, \: k = 0,\dots,n,
+	L(\Wii \hdopii_{n,k}) = a(u_p,\Wii \hdopii_{n,k}) \quad \forall \: n = 0,\dots,p, \: k = 0,\dots,n,
 \end{align*}
-(i.e. holds for all basis functions of $V_h$) by choosing $v_h$ as each basis function, we can equivalently write the linear system for our finite element problem as:
+(i.e. holds for all basis functions of $V_p$) by choosing $v_p$ as each basis function, we can equivalently write the linear system for our finite element problem as:
 \begin{align*}
 A\mathbf{u} = \tilde{\mathbf{f}}.
 \end{align*}
@@ -1118,12 +1124,12 @@ The weight $w^{(a)}_P(x)$ is a still an ultraspherical weight, and the correspon
 \end{align*}
 orthogonal with respect to the weight
 \begin{align*}
-	W^{(a,b,c)}(x,y) &:= w^{(a,b,2c)}_1(x) w^{(c)}_2\fpr(\frac{y}{\rho(x)}) \nonumber \\
+	W^{(a,b,c)}(x,y) &:= \genjacw^{(a,b,2c)}(x) w^{(c)}_P\fpr(\frac{y}{\rho(x)}) \nonumber \\
 	&= (\beta - x)^a \: (x - \alpha)^{b} \: (\rho(x)^2 -y^2)^c \nonumber \\
 	&= (\beta - x)^a \: (x - \alpha)^{b} \: (1 - x^2 -y^2)^c , \quad (x,y) \in \Omega.
 \end{align*}
 
-We can note that by setting the parameter $c = 0$, and $\alpha = 0$, $\beta = 1$ we obtain the 2D orthogonal polynomials on the half-disk (note again also that we made the adjustment that $\genjacw^{(a,b,c)}(x) = (\beta - x)^a \: (x - \alpha)^{b} \: \rho(x)^{2c}$ for the half-disk case, for ease of writing and computation).
+We note again that by making the adjustment that $\genjacw^{(a,b,c)}(x) = (\beta - x)^a \: (x - \alpha)^{b} \: \rho(x)^{2c}$, and setting the first parameter $a$ to zero and removing it for the family and weight for $\{\genjac_n^{(a,b,c)}\}$, and taking and $\alpha = 0$, $\beta = 1$, we recover the half-disk case.
 
 \sotodoinline{Comment on how the sparse operators generalise to such domains}
 
