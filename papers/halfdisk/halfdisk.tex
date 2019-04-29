@@ -244,7 +244,7 @@ In this section we outline the construction and some basic properties of $\hdopn
 
 By using a similar process to \cite[p55--56]{dunkl2014orthogonal} we can construct 2D orthogonal polynomials on $\Omega$ from 1D orthogonal polynomials on the intervals \([\alpha,\beta]\) and \([\gamma,\delta]\). We generalise this process to demonstrate a method of constructing multi-parameter families of 2D orthogonal polynomials on disk-slice and trapezium shaped domains $\Omega$ from multi-parameter families of 1D orthogonal polynomials on the intervals \([\alpha,\beta]\) and \([\gamma,\delta]\).
 
-\begin{proposition}
+\begin{proposition}\label{prop:construction}
 Let \(w_1 : (\alpha,\beta) \: \to \R\), \(w_2 : (\gamma,\delta) \: \to \R\) be weight functions with \(\alpha,\beta,\gamma,\delta \in \R\), and let \(\rho \: : \: (\alpha,\beta) \: \to (0,\infty)\) be such that either:
 \begin{enumerate}
 \item  \(\rho\) is a degree 1 polynomial, or 
@@ -260,9 +260,8 @@ are orthogonal polynomials with respect to the weight \(W(x,y) := w_1(x) \: w_2(
 See \cite[p55--56]{dunkl2014orthogonal}.
 \end{proof}
 
-We can generalise\sotodo{specialise?} this for our purposes in the following proposition.
-\sotodoinline{Can this be simplified to just the definition?}
-\begin{proposition}
+For disk slices and trapeziums, we can specialise the framework from Proposition \ref{prop:construction} in the following definition.
+\begin{definition}\label{def:construction}
 Let
 \begin{align*}
 	\Omega := \{(x,y) \in \R^2 \quad | \quad \alpha < x < \beta, \: \gamma \rho(x) < y < \delta \rho(x)\}
@@ -281,18 +280,15 @@ Assume that either of the following hold:
 \item  \(\rho\) is a degree 1 polynomial, or 
 \item \(\rho\) is the square root of a non-negative degree \(\le\) 2 polynomial, \(-\gamma = \delta > 0\), and \(w^{(a,b)}_P\) is an even function (i.e. $a = b$, and we can hence denote the weight as $w^{(a)}_P(x) = (\delta-x^2)^a$).
 \end{enumerate}
-Then the four-parameter 2D polynomials defined on $\Omega$ given by
+We define the four-parameter 2D orthogonal polynomials on $\Omega$ by
 \begin{align*}
 	\hdopnk^{(a,b,c,d)}(x,y) := \genjacnmk^{(a, b, c+d+2k+1)}(x) \: \rho(x)^k \: P_k^{(d,c)}(\frac{y}{\rho(x)}), \quad (x,y) \in \Omega, 
 \end{align*}
-are orthogonal polynomials with respect to the weight 
+which are orthogonal with respect to the weight
 \begin{align*}
 	W^{(a,b,c,d)}(x,y) := \genjacw^{(a,b,c+d)}(x) \: w_P^{(d,c)}(\frac{y}{\rho(x)}), \quad (x,y) \in \Omega. 
 \end{align*}
-\end{proposition}
-\begin{proof}
-See \cite[p55--56]{dunkl2014orthogonal}.
-\end{proof}
+\end{definition}
 
 For the half disk, the weight $W^{(a,b)}(x,y) = x^a \: (1-x^2-y^2)^b$ results from setting:
 \begin{align*}
@@ -592,16 +588,81 @@ Denote the weighted OPs by
 
 Recall that, for $a, b$ be general parameters, a function $f(x,y)$ defined on $\Omega$ is approximated by its expansion $f(x,y) = \bighdopab(x,y)^\top \mathbf{f}$. Recall also that $\Wab(x,y) := \genjacw^{(a,b)}(x) \: w_P^{(b)}(\frac{y}{\rho(x)})$, where $\rho(x) := (1-x^2)^\half$, $\genjacw^{(a,b)}(x) := x^a \: (1-x^2)^b$ and $w_P^{(b)}(y) := (1-y^2)^b$ for the half disk case.
 
-There exist sparse \sotodo{Explain why these are sparse} operators \(D_x^{(a,b)}, \: D_y^{(a,b)}, \: W_x^{(a,b)}, \: W_y^{(a,b)}\) such that:
+\begin{definition}\label{def:sparsityofdifferentialoperators}
+Define the operator matrices $D_x^{(a,b)}, \: D_y^{(a,b)}, \: W_x^{(a,b)}, \: W_y^{(a,b)}$ according to:
 \begin{align*}
 {\partial f \over \partial x}&= \bighdop^{(a+1,b+1)}(x,y)^\top \: D_x^{(a,b)} \: \mathbf{f}, \\
 {\partial f \over \partial y} &= \bighdop^{(a,b+1)}(x,y)^\top \: D_y^{(a,b)} \: \mathbf{f}, \\
 {\partial \over \partial x}[\Wab(x,y) \: f(x,y)] &= \bigW^{(a-1,b-1)}(x,y)^\top \: W_x^{(a,b)} \: \mathbf{f}, \\
 {\partial \over \partial y}[\Wab(x,y) \: f(x,y)] &= \bigW^{(a,b-1)}(x,y)^\top \: W_y^{(a,b)} \: \mathbf{f}.
 \end{align*}
+\end{definition}
+
 The incrementing and decrementing of parameters as seen here is analogous to other well known orthogonal polynomials families' derivatives, for example the Jacobi polynomials on the interval, as seen in the DLMF \cite[(18.9.3)]{DLMF}, and on the triangle \cite{olver2018recurrence}.
 
-Further, we note that there exist ``parameter transformation" banded-block-banded matrix operators that increment/decrement the parameters, transforming the OPs from one (weighted or non-weighted) parameter space to another. We denote these operators as $T^{(a,b)\to(a+1,b)}$, $T^{(a,b)\to(a,b+1)}$ and $T^{(a,b)\to(a+1,b+1)}$ for conversion between non-weighted spaces, and similarly $T_W^{(a,b)\to(a-1,b)}$, $T_W^{(a,b)\to(a,b-1)}$ and $T_W^{(a,b)\to(a-1,b-1)}$ for conversion between weighted spaces, where:
+\begin{lemma}\label{lemma:sparsityofdifferentialoperators}
+The operator matrices $D_x^{(a,b)}, \: D_y^{(a,b)}, \: W_x^{(a,b)}, \: W_y^{(a,b)}$ from Definition \ref{def:sparsityofdifferentialoperators} are sparse, with banded-block-banded structure.
+\end{lemma}
+
+\begin{proof}
+We proceed with the case for the operator $D_x^{(a,b)}$ for partial differentiation by $x$. Since $\{\hdop^{(a+1, b+1)}_{m,j}\}$ for $m = 0,\dots,n-1$, $j = 0,\dots,m$ is an orthogonal basis for any degree $n-1$ polynomial, we can expand $\pddx \hdopnkab = \sum_{m=0}^{n-1} \sum_{j=0}^m c_{m,j} \: \hdop^{(a+1, b+1)}_{m,j}$. The coefficients of the expansion are then the entries of the relevant operator matrix. We can use an integration-by-parts argument to show that the only non-zero coefficients of this expansion are when $m = n-1, n-2$, $j = k, k-2$ and $0 \le j \le m$. First, note that
+\begin{align*}
+c_{m,j} = \frac{\ip<\pddx \hdopnkab, \hdop^{(a+1, b+1)}_{m,j} >_{W^{(a+1, b+1)}}}{\norm{\hdop^{(a+1, b+1)}_{m,j}}^2_{W^{(a+1, b+1)}}}.
+\end{align*}
+Second, note that
+\begin{align}
+	\rho'(x) = -x \: \rho(x)^{-2}. \label{eqn:rhoderivative}
+\end{align}
+Now, using a change of variables and (\ref{eqn:rhoderivative}), we have that
+\begin{align*}
+	&\ip<\pddx \hdopnkab, \hdop^{(a+1, b+1)}_{m,j} >_{W^{(a+1, b+1)}} \nonumber \\ 
+	&= \ip< x \: \genjacnmk^{(a, b+k+\half) \: \prime} (x), \: \rho(x)^{k+j+2} \: \genjacmmj^{(a, b+1+j+\half)} >_{\genjacw^{(a, b+\half)}} 
+		\: \ip< P_k^{(b,b)}, \: P_j^{(b+1,b+1)} >_{w_P^{(b+1)}}  \nonumber \\ 
+	& \quad - k \: \ip< x^2 \: \genjacnmk^{(a, b+k+\half)}(x), \: \rho(x)^{k+j} \: \genjacmmj^{(a, b+1+j+\half)} >_{\genjacw^{(a, b+\half)}} 
+		\: \ip< P_k^{(b,b)}, \: P_j^{(b+1,b+1)} >_{w_P^{(b+1)}}  \nonumber \\ 
+	& \quad + \: \ip< x^2 \: \genjacnmk^{(a, b+k+\half)}(x), \: \rho(x)^{k+j} \: \genjacmmj^{(a, b+1+j+\half)} >_{\genjacw^{(a, b+\half)}} 
+		\: \ip< y \: P_k^{(b,b) \: \prime} (y), \: P_j^{(b+1,b+1)} >_{w_P^{(b+1)}}  
+\end{align*}
+We can see that, from each term's second factor as written, the above is zero for $j < k-2$. Now, using integration-by-parts and noting that the weight $\genjacw^{(a,b)}$ is a polynomial degree $a+2b$ and vanishes at the limits of the integral for positive parameters $a,b$, we have that
+\begin{align*}
+	&\ip< x \: \genjacnmk^{(a, b+k+\half) \: \prime}, \: \rho(x)^{k+j+2} \: \genjacmmj^{(a, b+1+j+\half)} >_{\genjacw^{(a, b+\half)}}  \\
+	&= \ip<\genjacnmk^{(a, b+k+\half) \: \prime}, \: \genjacw^{(a+1, b+1+\half(k+j+1))} \: \genjacmmj^{(a, b+1+j+\half)} >_1 \\
+	&= \ip<\genjacnmk^{(a, b+k+\half)}, \: \ddx \Big[\genjacw^{(a+1, b+1+\half(k+j+1))} \: \genjacmmj^{(a, b+1+j+\half)} \Big] >_1 \\
+	&= \ip<\genjacnmk^{(a, b+k+\half)}, \: \Big[(a+1) \: \genjacw^{(a, b+1+\half(k+j+1))} -2(b+1+\half(k+j+1)) \: \genjacw^{(a+2, b+\half(k+j+1))} \Big] \: \genjacmmj^{(a, b+1+j+\half)} >_1 \\
+		&\quad \quad \quad + \ip<\genjacnmk^{(a, b+k+\half)}, \: \genjacw^{(a+1, b+1+\half(k+j+1))} \: \genjacmmj^{(a, b+1+j+\half) \: \prime}>_1 \\
+	&= \ip<\genjacnmk^{(a, b+k+\half)}, \: \Big[(a+1) \: \genjacw^{(0,1+\half(j-k))} -2(b+1+\half(k+j+1)) \: \genjacw^{(2, \half(j-k))} \Big] \: \genjacmmj^{(a, b+1+j+\half)} >_{\genjacw^{(a, b+k+\half)}} \\
+		&\quad \quad \quad + \ip<\genjacnmk^{(a, b+k+\half)}, \: \genjacw^{(1, 1+\half(j-k))} \: \genjacmmj^{(a, b+1+j+\half) \: \prime}>_{\genjacw^{(a, b+k+\half)}}
+\end{align*}
+which is zero for $m < n - 2$, and further that
+\begin{align*}
+	&\ip< x^2 \: \genjacnmk^{(a, b+k+\half)}(x), \: \rho(x)^{k+j} \: \genjacmmj^{(a, b+1+j+\half)} >_{\genjacw^{(a, b+\half)}} \\
+	&= \ip< \genjacnmk^{(a, b+k+\half)}(x), \: \genjacw^{(2, \half(j-k))} \: \genjacmmj^{(a, b+1+j+\half)} >_{\genjacw^{(a, b+k+\half)}}
+\end{align*}
+which is also zero for $m < n - 2$.
+
+\bstodoinline{Finish this proof!!!}
+
+For the operator for partial differentiation by $y$, we can also expand $\pddy \hdopnkab = \sum_{m=0}^{n-1} \sum_{j=0}^m c_{m,j} \: P^{(a, b+1)}_{m,j}$. The coefficients of the expansion are then the entries of the relevant operator matrix. By a similar argument to before, we have that the only non-zero coefficient of this expansion is when $m = n-1$, $j = k-1$. This is then calculated by taking inner products, i.e. 
+\begin{align*}
+c_{n-1,k-1} = \frac{\ip<\pddy \hdopnkab, \hdop^{(a, b+1)}_{n-1,k-1} >_{W^{(a, b+1)}}}{\norm{\hdop^{(a, b+1)}_{n-1,k-1}}^2_{W^{(a, b+1)}}}
+\end{align*}
+where
+\begin{align*}
+	\ip<\pddy \hdopnkab, \hdop^{(a, b+1)}_{n-1,k-1} >_{W^{(a, b+1)}} = \normgenjac^{(a, b+k+\half)} \: \ip< P_k^{(b,b) \: \prime}, \: P_{k-1}^{(b+1,b+1)} >_{w_P^{(b+1)}}.
+\end{align*}
+
+We can gain the non-zero entries of the weighted differential operators similarly, by noting that
+\begin{align}
+	\pddx \Wab(x,y) &= a W^{(a-1, b)}(x,y) - 2bW^{(a+1, b-1)}(x,y) \label{eqn:weightderivativex} \\
+	\pddy \Wab(x,y) &= -2b \: y \: W^{(a, b-1)}(x,y) \label{eqn:weightderivativey}
+\end{align}
+and also that
+\begin{align*}
+	\ip< \Wab \hdopnkab, W^{(\tilde{a},\tilde{b})} \hdopmj^{(\tilde{a},\tilde{b})} >_{W^{(-\tilde{a},-\tilde{b})}} = \ip< \hdopnkab, \hdopmj^{(\tilde{a},\tilde{b})} >_\Wab.
+\end{align*}
+\end{proof}
+
+Further, we note that there exist "parameter transformation" banded-block-banded matrix operators that increment/decrement the parameters, transforming the OPs from one (weighted or non-weighted) parameter space to another. We denote these operators as $T^{(a,b)\to(a+1,b)}$, $T^{(a,b)\to(a,b+1)}$ and $T^{(a,b)\to(a+1,b+1)}$ for conversion between non-weighted spaces, and similarly $T_W^{(a,b)\to(a-1,b)}$, $T_W^{(a,b)\to(a,b-1)}$ and $T_W^{(a,b)\to(a-1,b-1)}$ for conversion between weighted spaces, where:
 \begin{align*}
 \bighdop^{(a,b)}(x,y) &= \Big(T^{(a,b)\to(a+1,b)} \Big)^\top \: \bighdop^{(a+1,b)}(x,y) \\
 \bighdop^{(a,b)}(x,y) &= \Big(T^{(a,b)\to(a,b+1)} \Big)^\top \: \bighdop^{(a,b+1)}(x,y) \\
@@ -687,7 +748,7 @@ Let $f(x,y)$ be a polynomial on $\Omega$. The quadrature rule is then
 $$
 \iint_\Omega f(x,y) \: \Wab(x,y) \: \D A \approx \half \sum_{j=1}^{N^2} w_j \: \big[ f(x_j, y_j) + f(x_j, -y_j) \big],
 $$
-where if $f(\cdot, y)$ for fixed $y$ is an at most degree $N$ polynomial and $f(x, \cdot)$ for fixed $x$  is an at most degree $2N-1$ polynomial, the quadrature rule is exact.
+and the quadrature rule is exact if $x \mapsto f(x,y)$ for fixed $y$ is an at most degree $N$ polynomial and $y \mapsto f(x,y)$ for fixed $x$ is an at most degree $2N-1$ polynomial.
 \end{theorem}
 
 \begin{proof}
@@ -702,7 +763,7 @@ First, note that, for $(x,y) \in \Omega$,
 	&= s^a \: \rho(s)^{2b} \: (1-t^2)^b \\
 	&=: V^{(a,b)}(s,t), \quad \text{for } (s,t) \in [0,1] \times [-1,1].
 \end{align*}
-Let $f : \Omega \to \R$ be such that $y \mapsto f(x,y)$ for fixed $x$ is an even function. Then,
+Let $f : \Omega \to \R$ be such that $y \mapsto f(x,y)$ for fixed $x$ is an even function. Note that if $f$ is a polynomial, then $f(s, \rho(s)t)$ is a polynomial in $s \in [\alpha,\beta]$ for fixed $t$. Hence,
 \begin{align*}
 	\iint_\Omega f(x,y) \: \Wab(x,y) \: \D y \: \D x &= \int_\alpha^\beta \int_\gamma^\delta f\big(s,\rho(s) t\big) \: V^{(a,b)}(s,t) \: \rho(s) \: \D t \: \D s \\
 	&= \int_\alpha^\beta  \genjacw^{(a,b+\half)}(s) \: \Big( \int_\gamma^\delta f\big(s,\rho(s) t\big) \: w_P^{(b)}(t) \: \D t \Big) \: \D s \quad (\dagger) \\
@@ -710,9 +771,9 @@ Let $f : \Omega \to \R$ be such that $y \mapsto f(x,y)$ for fixed $x$ is an even
 	&\approx \sum_{k=1}^N \Bigg( w_k^{(s)} \: \sum_{l=1}^N \Big( w_l^{(t)} f\big(s_k,\rho(s_k) t_l\big) \Big) \Bigg) \quad (\star \star) \\
 	&= \sum_{j=1}^{N^2}  w_j \: f(x_j, y_j),
 \end{align*}
-where we achieve equality at $(\star)$ if $y \mapsto f(x,y)$ for fixed $x$ is a polynomial of degree at most $2N-1$ and we achieve equality at $(\star \star)$ if $x \mapsto f(x,y)$ for fixed $y$ is a polynomial of degree at most $N$. Note also that the inner integral at $(\dagger)$ the inner integral over $t$ would be zero if $y \mapsto f(x,y)$ for fixed $x$ was an odd function, due to the symmetry over the domain (i.e. since $\gamma = -\delta$ in the this case).
+where we achieve equality at $(\star)$ if $y \mapsto f(x,y)$ for fixed $x$ is a polynomial of degree at most $2N-1$ and we achieve equality at $(\star \star)$ if also $x \mapsto f(x,y)$ for fixed $y$ is a polynomial of degree at most $N$. 
 
-\bstodoinline{I cannot remember/work out why it was necessary to split f into odd and even parts?}
+Finally, note that the inner integral at $(\dagger)$ over $t$ would be zero if $y \mapsto f(x,y)$ for fixed $x$ was an odd function, due to the symmetry over the domain (i.e. since $\gamma = -\delta$ in the this case).
 \end{proof}
 
 
@@ -746,108 +807,10 @@ Using the quadrature rule detailed in Section 4.2, we can calculate exactly the 
 	|| \hdopnk^{(a,b)} ||_{W^{(a,b)}}^2 &= \half \: \sum_{j=1}^{N^2} w_j \: \big[ \hdopnk^{(a,b)}(x_j, y_j)^2 + \hdopnk^{(a,b)}(x_j, -y_j)^2 \big].
 \end{align*}
 
-%\bstodo{This section contains repetition / expansion on the quadrature rule section above - not sure if we should remove it or move it?} We can develop a quadrature rule on the half disk \(\Omega\) in order to evaluate (40) and obtain the coefficient vectors \(\mathbf{f}_n\) as follows.
-%
-%Let \(f(x,y)\) be polynomial that is even in \(y\) of degree $d_1$ in $x$ and degree $d_2$ in $y$ (i.e. $f(\cdot, y)$ with $y$ fixed is a degree $d_1$ polynomial, and $f(x, \cdot)$ with $x$ fixed is an even degree $d_2$ polynomial). Then there exists a polynomial \(\tilde{f}(x,y)\) in \(x,y\) such that \(g(s,t) := f(x, y) = f(s, (1-s^2)^\half t) = \tilde{f}(s, (1-s^2) t^2)\) (i.e. that $d_2$ is an even integer). Now, as \(\tilde{f}\) is a polynomial, so must \(g\) be a polynomial of degree $d_1+\frac{d_2}{2}$ in $s$ and degree $d_2$ in $t$. Thus a quadrature rule of the following will be exact for the polynomial $f(x,y)$ (even in \(y\) of degree $\le d_1$ in $x$ and degree $\le d_2$ in $y$):
-%\begin{align*}
-%& \quad \int_0^1 \int_{-\rho(x)}^{\rho(x)} W^{(a,b)}(x,y) \: f(x,y) \: dy \: dx \\
-%&= \int_0^1 \int_{-1}^1 V^{(a,b)}(s,t) \: g(s,t) \: (1-s^2)^\half \: dt \: ds \\
-%&= \int_0^1 s^a \: (1-s^2)^{b+\half} \: \Big( \sum_k^{\half(d_2 + 1)} w_k^{(t)} \: g(s, t_k) \Big) \: ds \\
-%&= \sum_j^{\half(d_1 + \frac{d_2}{2} + 1)} \sum_k^{\half(d_2 + 1)} w_j^{(s)} w_k^{(t)} \: g(s_j, t_k) \\
-%&= \sum_j^{\half(d_1 + \frac{d_2}{2} + 1)} \sum_k^{\half(d_2 + 1)} w_j^{(s)} w_k^{(t)} \: f(x_j, y_{j,k}),
-%\end{align*}
-%where \(x_j := s_j,\) \(y_{j,k} := \rho(s_j) \: t_k\) are the quadrature points.
-%
-%We further note that for any polynomial \(f(x,y)\) that is odd in \(y\),
-%\begin{align*}
-%\int_0^1 \int_{-\rho(x)}^{\rho(x)} W^{(a,b)}(x,y) \: f(x,y) \: dy \: dx = 0.
-%\end{align*}
-%
-%
-%Then our quadrature rule for any polynomial \(f(x,y)\) on \(\Omega\) is:
-%\begin{align*}
-%\int \int_\Omega W^{(a,b)}(x,y) \: f(x,y) \: dy \: dx \approx \half \: \sum_{j=1}^{N^2} w_j \: \big[ f(x_j, y_j) + f(x_j, -y_j) \big],
-%\end{align*}
-%and is exact for any polynomial $f(x,y)$ where the degree in $x$ is $\le N$ and the degree in $y$ is $\le 2N-1$. Note that for a general polynomial where the overall degree is $N$, we still would hence need $N^2$ points and weights to make the rule exact. Thus,
-%\begin{align*}
-%\ip< f, \: \hdopnk^{(a,b)} >_{W^{(a,b)}} &= \half \: \sum_{j=1}^{N^2} w_j \: \big[ \big(f(x_j, y_j) \: \hdopnk^{(a,b)}(x_j, y_j)\big) +\big(f(x_j, -y_j) \: \hdopnk^{(a,b)}(x_j, -y_j)\big) \big], \\
-%|| \hdopnk^{(a,b)} ||_{W^{(a,b)}}^2 &= \half \: \sum_{j=1}^{N^2} w_j \: \big[ \hdopnk^{(a,b)}(x_j, y_j)^2 + \hdopnk^{(a,b)}(x_j, -y_j)^2 \big],
-%\end{align*}
-%for suitably large $N$.
-
 
 \subsection{Calculating non-zero entries of the operator matrices}\label{subsection:Computation-operatormatrices}
 
-\sotodoinline{The first part of this section should be moved up to Section 3, and stated as a "Lemma". }
-
-Since $\{P^{(a+1, b+1)}_{m,j}\}$ for $m = 0,\dots,n-1$, $j = 0,\dots,m$ is an orthogonal basis for any degree $n-1$ polynomial, we can expand $\pddx \hdopnkab = \sum_{m=0}^{n-1} \sum_{j=0}^m c_{m,j} \: P^{(a+1, b+1)}_{m,j}$. The coefficients of the expansion are then the entries of the relevant operator matrix. We can use an integration-by-parts argument to show that the only non-zero coefficients of this expansion are when $m = n-1, n-2$, $j = k, k-2$ and $0 \le j \le m$. First, note that
-\begin{align*}
-c_{m,j} = \frac{\ip<\pddx \hdopnkab, \hdop^{(a+1, b+1)}_{m,j} >_{W^{(a+1, b+1)}}}{\norm{\hdop^{(a+1, b+1)}_{m,j}}^2_{W^{(a+1, b+1)}}}.
-\end{align*}
-Second, note that
-\begin{align}
-	\rho'(x) = -x \: \rho(x)^{-2}. \label{eqn:rhoderivative}
-\end{align}
-Now, using a change of variables and (\ref{eqn:rhoderivative}), we have that
-\begin{align*}
-	&\ip<\pddx \hdopnkab, \hdop^{(a+1, b+1)}_{m,j} >_{W^{(a+1, b+1)}} \nonumber \\ 
-	&= \ip< x \: \genjacnmk^{(a, b+k+\half) \: \prime} (x), \: \rho(x)^{k+j+2} \: \genjacmmj^{(a, b+1+j+\half)} >_{\genjacw^{(a, b+\half)}} 
-		\: \ip< P_k^{(b,b)}, \: P_j^{(b+1,b+1)} >_{w_P^{(b+1)}}  \nonumber \\ 
-	& \quad - k \: \ip< x^2 \: \genjacnmk^{(a, b+k+\half)}(x), \: \rho(x)^{k+j} \: \genjacmmj^{(a, b+1+j+\half)} >_{\genjacw^{(a, b+\half)}} 
-		\: \ip< P_k^{(b,b)}, \: P_j^{(b+1,b+1)} >_{w_P^{(b+1)}}  \nonumber \\ 
-	& \quad + \: \ip< x^2 \: \genjacnmk^{(a, b+k+\half)}(x), \: \rho(x)^{k+j} \: \genjacmmj^{(a, b+1+j+\half)} >_{\genjacw^{(a, b+\half)}} 
-		\: \ip< y \: P_k^{(b,b) \: \prime} (y), \: P_j^{(b+1,b+1)} >_{w_P^{(b+1)}}  
-\end{align*}
-We can see that, from each term's second factor as written, the above is zero for $j < k-2$. Now, using integration-by-parts and noting that the weight $\genjacw^{(a,b)}$ is a polynomial degree $a+2b$ and vanishes at the limits of the integral for positive parameters $a,b$, we have that
-\begin{align*}
-	&\ip< x \: \genjacnmk^{(a, b+k+\half) \: \prime}, \: \rho(x)^{k+j+2} \: \genjacmmj^{(a, b+1+j+\half)} >_{\genjacw^{(a, b+\half)}}  \\
-	&= \ip<\genjacnmk^{(a, b+k+\half) \: \prime}, \: \genjacw^{(a+1, b+1+\half(k+j+1))} \: \genjacmmj^{(a, b+1+j+\half)} >_1 \\
-	&= \ip<\genjacnmk^{(a, b+k+\half)}, \: \ddx \Big[\genjacw^{(a+1, b+1+\half(k+j+1))} \: \genjacmmj^{(a, b+1+j+\half)} \Big] >_1 \\
-	&= \ip<\genjacnmk^{(a, b+k+\half)}, \: \Big[(a+1) \: \genjacw^{(a, b+1+\half(k+j+1))} -2(b+1+\half(k+j+1)) \: \genjacw^{(a+2, b+\half(k+j+1))} \Big] \: \genjacmmj^{(a, b+1+j+\half)} >_1 \\
-		&\quad \quad \quad + \ip<\genjacnmk^{(a, b+k+\half)}, \: \genjacw^{(a+1, b+1+\half(k+j+1))} \: \genjacmmj^{(a, b+1+j+\half) \: \prime}>_1 \\
-	&= \ip<\genjacnmk^{(a, b+k+\half)}, \: \Big[(a+1) \: \genjacw^{(0,1+\half(j-k))} -2(b+1+\half(k+j+1)) \: \genjacw^{(2, \half(j-k))} \Big] \: \genjacmmj^{(a, b+1+j+\half)} >_{\genjacw^{(a, b+k+\half)}} \\
-		&\quad \quad \quad + \ip<\genjacnmk^{(a, b+k+\half)}, \: \genjacw^{(1, 1+\half(j-k))} \: \genjacmmj^{(a, b+1+j+\half) \: \prime}>_{\genjacw^{(a, b+k+\half)}}
-\end{align*}
-which is zero for $m < n - 2$, and further that
-\begin{align*}
-	&\ip< x^2 \: \genjacnmk^{(a, b+k+\half)}(x), \: \rho(x)^{k+j} \: \genjacmmj^{(a, b+1+j+\half)} >_{\genjacw^{(a, b+\half)}} \\
-	&= \ip< \genjacnmk^{(a, b+k+\half)}(x), \: \genjacw^{(2, \half(j-k))} \: \genjacmmj^{(a, b+1+j+\half)} >_{\genjacw^{(a, b+k+\half)}}
-\end{align*}
-which is also zero for $m < n - 2$.
-%, and since the weight $\genjacw^{(a+1, b+1)}$ will vanish at $x=0,1$ for non-negative parameters $a,b$, we have that for a polynomial $g(x,y)$ of degree $m$ on $\Omega$: 
-%\begin{align}
-%	&\ip<\pddx \hdopnkab, g >_{W^{(a+1, b+1)}} \\
-%	&= \int_0^1 \int_{-\rho(x)}^{\rho(x)} \pddx f \: g \: W^{(a+1,b+1)} \: \D y \: \D x \\
-%	&= \int_{-1}^1 \Big( \int_0^1 \pddx \hdopnkab \: g \: \genjacw^{(a+1,b+1)} \: \rho(x) \: \D x  \Big)  \: w_P^{(b+1)}(y) \: \D y \\
-%	&= - \int_{-1}^1 \Big( \int_0^1 \hdopnkab \: \pddx \big(g \: \genjacw^{(a+1,b+1)}(x) \: \rho(x)\big) \: \D x  \Big)  \: w_P^{(b+1)}(y) \: \D y \\
-%	&= - \int_{-1}^1 \Big( \int_0^1 \hdopnkab \: \pddx \big(g \: \rho(x) \: \genjacw^{(a+1,b+1)}(x) \: w_P^{(b+1)}(y)\big) \: \D x  \Big) \: \D y \\
-%	&= - \int_0^1 \int_{-\rho(x)}^{\rho(x)} \hdopnkab \: \pddx \big(g \: \rho(x) \: W^{(a+1,b+1)} \big) \: \rho(x)^{-1} \: \D y \: \D x \\
-%	&= - \iint_\Omega \hdopnkab \: \big[\pddx g \: W^{(a+1,b+1)} + g \: \pddx W^{(a+1,b+1)} + \: g \rho'(x) \rho(x)^{-1} \: W^{(a+1, b+1)} \big] \: \D y \: \D x \\
-%	&= - \ip<\hdopnkab,\: \rho'(x) \rho(x)^{-1} \: W^{(1, 1)} \: g + [(a+1)W^{(0, 1)} - 2(b+1)W^{(2, 0)}] \: g + W^{(1, 1)} \: \pddx g>_{W^{(a, b)}} \quad \text{by } (\ref{eqn:weightderivativex}) \\
-%	&= - \ip<\hdopnkab,\: W^{(2, 0)} \: g + [(a+1)W^{(0, 1)} - 2(b+1)W^{(2, 0)}] \: g + W^{(1, 1)} \: \pddx g>_{W^{(a, b)}} \quad \text{by } (\ref{eqn:rhoderivative})
-%\end{align}
-%Now, as the polynomial on the RHS of the inner product is of degree $m+2$ and $\hdopnkab$ are orthogonal, we have that the above is zero for $m+2 < n$, i.e $c_{m,j}$ is non-zero for $m = n-1, n-2$ only.
-
 We can then use quadrature to calculate the 1D inner products and find the non-zero $c_{m,j}$ entries to the partial differential operator matrix. This is much cheaper than using the 2D quadrature rule.
-
-For partial differentiation by $y$, we can also expand $\pddy \hdopnkab = \sum_{m=0}^{n-1} \sum_{j=0}^m c_{m,j} \: P^{(a, b+1)}_{m,j}$. The coefficients of the expansion are then the entries of the relevant operator matrix. By a similar argument to before, we have that the only non-zero coefficient of this expansion is when $m = n-1$, $j = k-1$. This is then calculated by taking inner products, i.e. 
-\begin{align*}
-c_{n-1,k-1} = \frac{\ip<\pddy \hdopnkab, \hdop^{(a, b+1)}_{n-1,k-1} >_{W^{(a, b+1)}}}{\norm{\hdop^{(a, b+1)}_{n-1,k-1}}^2_{W^{(a, b+1)}}}
-\end{align*}
-where
-\begin{align*}
-	\ip<\pddy \hdopnkab, \hdop^{(a, b+1)}_{n-1,k-1} >_{W^{(a, b+1)}} = \normgenjac^{(a, b+k+\half)} \: \ip< P_k^{(b,b) \: \prime}, \: P_{k-1}^{(b+1,b+1)} >_{w_P^{(b+1)}}.
-\end{align*}
-
-We can gain the non-zero entries of the weighted differential operators similarly, by noting that
-\begin{align}
-	\pddx \Wab(x,y) &= a W^{(a-1, b)}(x,y) - 2bW^{(a+1, b-1)}(x,y) \label{eqn:weightderivativex} \\
-	\pddy \Wab(x,y) &= -2b \: y \: W^{(a, b-1)}(x,y) \label{eqn:weightderivativey}
-\end{align}
-and also that
-\begin{align*}
-	\ip< \Wab \hdopnkab, W^{(\tilde{a},\tilde{b})} \hdopmj^{(\tilde{a},\tilde{b})} >_{W^{(-\tilde{a},-\tilde{b})}} = \ip< \hdopnkab, \hdopmj^{(\tilde{a},\tilde{b})} >_\Wab.
-\end{align*}
 
 Calculating the non-zero entries of the parameter transformation operators is similarly done, i.e. use a substitution in the 2D inner product integral to yield a product of 1D inner product integrals. 
 
@@ -951,43 +914,6 @@ Find \(u(x,y)\) given a function \(f(x,y)\) such that:
 	\label{eqn:biharmonic}
 \end{align}
 where $\Delta^2$ is the Biharmonic operator, noting the imposition of zero Dirichlet and Neumann boundary conditions on $u$. In Figure \ref{fig:solution-biharmonic} we see the solution to the Biharmonic equation (\ref{eqn:biharmonic}) in the half-disk $\Omega$.
-
-
-\subsection{Heat equation}
-
-\sotodoinline{Skip example?}
-Consider
-\begin{align*}
-	\begin{cases}
-		\frac{\partial u}{\partial t}(t,x,y) = \Delta u(t,x,y) \quad \text{in } \Omega \\
-		u(t, x, y) = 0 \quad \text{on } \partial \Omega \\
-		u(0, x, y) = u_0(x,y) := \Wii(x,y) \: f(x,y)
-	\end{cases}
-\end{align*}
-noting the imposition of zero Dirichlet boundary conditions.
-
-For simplicity of exposition, we use a backward Euler time-stepping method to discretise in time, which can be generalised to more sophisticated time-stepping schemes. That is, formulate this for \(t = 0,1,2,\dots\) and step length $h$:
-\begin{align*}
-u_{t+1}(x,y) - u_t (x,y) = h \: \Delta u_{t+1}(x,y) \quad \text{for } (x,y) \in \Omega.
-\end{align*}
-
-We can tackle the problem as follows. Fix \(a, b = 1,1\). Denote the coefficient vector for expansion of $u_0$ in the $\bigWii$ OP basis up to degree $N$ by $\mathbf{u}_0$, and similarly for each $t = 1,2,3,\dots,t_{max}$ we denote $\mathbf{u}_t$ as the coefficient vector of the expansion of $u_t$ in the $\bigWii$ OP basis up to degree $N$. Further, denote the coefficient vector for expansion of $u_0$ in the $\bighdopii$ OP basis up to degree $N$ by $\mathbf{\tilde{u}}_0$, and similarly for each $t = 1,2,3,\dots,t_{max}$ denote $\mathbf{\tilde{u}}_t$ as the coefficient vector of the expansion of $u_t$ in the $\bighdopii$ OP basis up to degree $N$.
-
-We can solve this system for the given initial condition $\mathbf{u_0}$ by iterating for $t = 0,1,2,\dots,t_{max}$:
-\begin{align*}
-	&T^{(0,0)\to(1,1)} \: T_W^{(1,1)\to(0,0)} \: (\mathbf{u}_{t+1} - \mathbf{u}_t) = h \: \laplacewii \mathbf{u}_{t+1} \nonumber \\
-	\iff& (T^{(0,0)\to(1,1)} \:T_W^{(1,1)\to(0,0)} - h \: \laplacewii) \: \mathbf{u}_{t+1} = T^{(0,0)\to(1,1)} \: T_W^{(1,1)\to(0,0)} \: \mathbf{u}_t \nonumber \\
-	\iff& \mathbf{u}_{t+1} = (T^{(0,0)\to(1,1)} \: T_W^{(1,1)\to(0,0)} - h \: \laplacewii)^{-1} T^{(0,0)\to(1,1)} \: T_W^{(1,1)\to(0,0)} \: \mathbf{u}_t \nonumber \\
-	\iff& \mathbf{\tilde{u}}_{t+1} = T^{(0,0)\to(1,1)} \: T_W^{(1,1)\to(0,0)} \: (T^{(0,0)\to(1,1)} \: T_W^{(1,1)\to(0,0)} - h \: \laplacewii)^{-1} \: \mathbf{\tilde{u}}_t.
-\end{align*}
-
-%\begin{figure}
-%	\includegraphics[scale=0.4]{example2timesteppingcovnvergence}
-%\centering
-%\caption{Plot of the current iteration's coefficients for the heat equation example, using degree of approximation $N = 5$ with initial condition of $u_0(x,y) = \Wii(x,y)$ and step size $h=0.01$, plotted for iterations $t=100, 120, \dots, 200$. The solution tends to zero, as seen by the decreasing (absolute value) coefficient values.}
-%\centering
-%\label{fig:heateqn}
-%\end{figure}
 
 
 
@@ -1131,7 +1057,8 @@ orthogonal with respect to the weight
 
 We note again that by making the adjustment that $\genjacw^{(a,b,c)}(x) = (\beta - x)^a \: (x - \alpha)^{b} \: \rho(x)^{2c}$, and setting the first parameter $a$ to zero and removing it for the family and weight for $\{\genjac_n^{(a,b,c)}\}$, and taking and $\alpha = 0$, $\beta = 1$, we recover the half-disk case.
 
-\sotodoinline{Comment on how the sparse operators generalise to such domains}
+The sparsity of operator matrices for partial differentiation by $x, y$ as well as for parameter transformations generalise to such disk-slice domains. For instance, if we inspect the proof of Lemma \ref{lemma:sparsityofdifferentialoperators}, we see that it can easily generalise to the weights and domain $\Omega$ for a disk-slice.
+\bstodoinline{Does this require more?}
 
 
 
