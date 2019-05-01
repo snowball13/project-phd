@@ -53,6 +53,7 @@
 \newcommand{\chat}{\hat{c}^m_l}
 \newcommand{\chatmod}{\hat{c}^{|m|}_l}
 \newcommand{\ddx}{\frac{\mathrm{d}}{\mathrm{d}x}}
+\newcommand{\ddy}{\frac{\mathrm{d}}{\mathrm{d}y}}
 \newcommand{\pddx}{\frac{\partial}{\partial x}}
 \newcommand{\pddy}{\frac{\partial}{\partial y}}
 \newcommand{\pddn}{\frac{\partial}{\partial n}}
@@ -605,7 +606,32 @@ The operator matrices $D_x^{(a,b)}, \: D_y^{(a,b)}, \: W_x^{(a,b)}, \: W_y^{(a,b
 \end{lemma}
 
 \begin{proof}
-We proceed with the case for the operator $D_x^{(a,b)}$ for partial differentiation by $x$. Since $\{\hdop^{(a+1, b+1)}_{m,j}\}$ for $m = 0,\dots,n-1$, $j = 0,\dots,m$ is an orthogonal basis for any degree $n-1$ polynomial, we can expand $\pddx \hdopnkab = \sum_{m=0}^{n-1} \sum_{j=0}^m c_{m,j} \: \hdop^{(a+1, b+1)}_{m,j}$. The coefficients of the expansion are then the entries of the relevant operator matrix. We can use an integration-by-parts argument to show that the only non-zero coefficients of this expansion are when $m = n-1, n-2$, $j = k, k-2$ and $0 \le j \le m$. First, note that
+We proceed with the case for the operator $D_y^{(a,b)}$ for partial differentiation by $y$, we can also expand $\pddy \hdopnkab = \sum_{m=0}^{n-1} \sum_{j=0}^m c_{m,j} \: P^{(a, b+1)}_{m,j}$. The coefficients of the expansion are then the entries of the relevant operator matrix. We can use an integration-by-parts argument to show that the only non-zero coefficient of this expansion is when $m = n-1$, $j = k-1$. First, note that
+\begin{align*}
+	c_{m,j} = \frac{\ip<\pddy \hdopnkab, \hdop^{(a, b+1)}_{m,j} >_{W^{(a, b+1)}}}{\norm{\hdop^{(a, b+1)}_{m,j}}^2_{W^{(a, b+1)}}}.
+\end{align*}
+Then, using the change of variable $\tilde{y} = \frac{y}{\rho(x)}$, we have that
+\begin{align*}
+	\ip<\pddy \hdopnkab, \hdop^{(a, b+1)}_{m,j} >_{W^{(a, b+1)}} &= \ip< \genjacnmk^{(a,b+k+\half)}, \rho(x)^{k+j} \: \genjacmmj^{(a,b+1+j+\half)} >_{\genjacw^{(a,b+1)}} \: \ip< P_k^{(b,b) \: \prime}, \: P_{j}^{(b+1,b+1)} >_{w_P^{(b+1)}} \\
+	&= \ip< \genjacnmk^{(a,b+k+\half)}, \genjacmmj^{(a,b+1+j+\half)} >_{\genjacw^{(a,b+1+\half(k+j))}} \: \ip< P_k^{(b,b) \: \prime}, \: P_{j}^{(b+1,b+1)} >_{w_P^{(b+1)}}.
+\end{align*}
+Now, integrating by parts, noting that the weight $w_P^{(b)}$ is a polynomial degree $2b$ and vanishes at the limits of the integral for positive parameter $b$, we have that
+\begin{align*}
+	\ip< P_k^{(b,b) \: \prime}, \: P_{j}^{(b+1,b+1)} >_{w_P^{(b+1)}} &= \ip< P_k^{(b,b) \: \prime}, \: w_P^{(b+1)} \: P_{j}^{(b+1,b+1)} >_1 \\
+	&= \ip< P_k^{(b,b)}, \: \ddy [w_P^{(b+1)} \: P_{j}^{(b+1,b+1)}] >_1 \\
+	&= \ip< P_k^{(b,b)}, \: P_{j}^{(b+1,b+1) \: \prime} >_{w_P^{(b+1)}} - 2 b \ip< P_k^{(b,b)}, \: y \: P_{j}^{(b+1,b+1)} >_{w_P^{(b)}} \\
+	&= \ip< P_k^{(b,b)}, \: w_P^{(1)} \: P_{j}^{(b+1,b+1) \: \prime} -2b \:y \: P_{j}^{(b+1,b+1)} >_{w_P^{(b)}} 
+\end{align*}
+which is zero for $j < k-1$. Further,
+\begin{align*}
+	\ip<\pddy \hdopnkab, \hdop^{(a, b+1)}_{m,k-1} >_{W^{(a, b+1)}} &= \ip< \genjacnmk^{(a,b+k+\half)}, \genjac_{m+1-k}^{(a,b+k+\half)} >_{\genjacw^{(a,b+k+\half)}} \: \ip< P_k^{(b,b) \: \prime}, \: P_{k-1}^{(b+1,b+1)} >_{w_P^{(b+1)}},
+\end{align*}
+which is zero for $m < n-1$. Finally, we simply have that
+\begin{align*}
+	c_{n-1,k-1} &= \frac{1}{\normjac^{(b)}} \: \ip< P_k^{(b,b) \: \prime}, \: P_{k-1}^{(b+1,b+1)} >_{w_P^{(b+1)}}.
+\end{align*}
+
+We next consider the case for the operator $D_x^{(a,b)}$ for partial differentiation by $x$. Since $\{\hdop^{(a+1, b+1)}_{m,j}\}$ for $m = 0,\dots,n-1$, $j = 0,\dots,m$ is an orthogonal basis for any degree $n-1$ polynomial, we can expand $\pddx \hdopnkab = \sum_{m=0}^{n-1} \sum_{j=0}^m c_{m,j} \: \hdop^{(a+1, b+1)}_{m,j}$. The coefficients of the expansion are then the entries of the relevant operator matrix. As before, we can use an integration-by-parts argument to show that the only non-zero coefficients of this expansion are when $m = n-1, n-2$, $j = k, k-1, k-2$ and $0 \le j \le m$. First, note that
 \begin{align*}
 c_{m,j} = \frac{\ip<\pddx \hdopnkab, \hdop^{(a+1, b+1)}_{m,j} >_{W^{(a+1, b+1)}}}{\norm{\hdop^{(a+1, b+1)}_{m,j}}^2_{W^{(a+1, b+1)}}}.
 \end{align*}
@@ -613,43 +639,32 @@ Second, note that
 \begin{align}
 	\rho'(x) = -x \: \rho(x)^{-2}. \label{eqn:rhoderivative}
 \end{align}
-Now, using a change of variables and (\ref{eqn:rhoderivative}), we have that
+Now, using the change of variable $\tilde{y} = \frac{y}{\rho(x)}$ and (\ref{eqn:rhoderivative}), we have that
 \begin{align*}
 	&\ip<\pddx \hdopnkab, \hdop^{(a+1, b+1)}_{m,j} >_{W^{(a+1, b+1)}} \nonumber \\ 
-	&= \ip< x \: \genjacnmk^{(a, b+k+\half) \: \prime} (x), \: \rho(x)^{k+j+2} \: \genjacmmj^{(a, b+1+j+\half)} >_{\genjacw^{(a, b+\half)}} 
+	&= \ip< x \: \genjacnmk^{(a, b+k+\half) \: \prime} (x), \: \rho(x)^{k+j+2} \: \genjacmmj^{(a+1, b+1+j+\half)} >_{\genjacw^{(a, b+\half)}} 
 		\: \ip< P_k^{(b,b)}, \: P_j^{(b+1,b+1)} >_{w_P^{(b+1)}}  \nonumber \\ 
-	& \quad - k \: \ip< x^2 \: \genjacnmk^{(a, b+k+\half)}(x), \: \rho(x)^{k+j} \: \genjacmmj^{(a, b+1+j+\half)} >_{\genjacw^{(a, b+\half)}} 
+	& \quad - k \: \ip< x^2 \: \genjacnmk^{(a, b+k+\half)}(x), \: \rho(x)^{k+j} \: \genjacmmj^{(a+1, b+1+j+\half)} >_{\genjacw^{(a, b+\half)}} 
 		\: \ip< P_k^{(b,b)}, \: P_j^{(b+1,b+1)} >_{w_P^{(b+1)}}  \nonumber \\ 
-	& \quad + \: \ip< x^2 \: \genjacnmk^{(a, b+k+\half)}(x), \: \rho(x)^{k+j} \: \genjacmmj^{(a, b+1+j+\half)} >_{\genjacw^{(a, b+\half)}} 
+	& \quad + \: \ip< x^2 \: \genjacnmk^{(a, b+k+\half)}(x), \: \rho(x)^{k+j} \: \genjacmmj^{(a+1, b+1+j+\half)} >_{\genjacw^{(a, b+\half)}} 
 		\: \ip< y \: P_k^{(b,b) \: \prime} (y), \: P_j^{(b+1,b+1)} >_{w_P^{(b+1)}}  
 \end{align*}
 We can see that, from each term's second factor as written, the above is zero for $j < k-2$. Now, using integration-by-parts and noting that the weight $\genjacw^{(a,b)}$ is a polynomial degree $a+2b$ and vanishes at the limits of the integral for positive parameters $a,b$, we have that
 \begin{align*}
-	&\ip< x \: \genjacnmk^{(a, b+k+\half) \: \prime}, \: \rho(x)^{k+j+2} \: \genjacmmj^{(a, b+1+j+\half)} >_{\genjacw^{(a, b+\half)}}  \\
-	&= \ip<\genjacnmk^{(a, b+k+\half) \: \prime}, \: \genjacw^{(a+1, b+1+\half(k+j+1))} \: \genjacmmj^{(a, b+1+j+\half)} >_1 \\
-	&= \ip<\genjacnmk^{(a, b+k+\half)}, \: \ddx \Big[\genjacw^{(a+1, b+1+\half(k+j+1))} \: \genjacmmj^{(a, b+1+j+\half)} \Big] >_1 \\
+	&\ip< x \: \genjacnmk^{(a, b+k+\half) \: \prime}, \: \rho(x)^{k+j+2} \: \genjacmmj^{(a+1, b+1+j+\half)} >_{\genjacw^{(a, b+\half)}}  \\
+	&= \ip<\genjacnmk^{(a, b+k+\half) \: \prime}, \: \genjacw^{(a+1, b+1+\half(k+j+1))} \: \genjacmmj^{(a+1, b+1+j+\half)} >_1 \\
+	&= \ip<\genjacnmk^{(a, b+k+\half)}, \: \ddx \Big[\genjacw^{(a+1, b+1+\half(k+j+1))} \: \genjacmmj^{(a+1, b+1+j+\half)} \Big] >_1 \\
 	&= \ip<\genjacnmk^{(a, b+k+\half)}, \: \Big[(a+1) \: \genjacw^{(a, b+1+\half(k+j+1))} -2(b+1+\half(k+j+1)) \: \genjacw^{(a+2, b+\half(k+j+1))} \Big] \: \genjacmmj^{(a, b+1+j+\half)} >_1 \\
-		&\quad \quad \quad + \ip<\genjacnmk^{(a, b+k+\half)}, \: \genjacw^{(a+1, b+1+\half(k+j+1))} \: \genjacmmj^{(a, b+1+j+\half) \: \prime}>_1 \\
+		&\quad \quad \quad + \ip<\genjacnmk^{(a, b+k+\half)}, \: \genjacw^{(a+1, b+1+\half(k+j+1))} \: \genjacmmj^{(a+1, b+1+j+\half) \: \prime}>_1 \\
 	&= \ip<\genjacnmk^{(a, b+k+\half)}, \: \Big[(a+1) \: \genjacw^{(0,1+\half(j-k))} -2(b+1+\half(k+j+1)) \: \genjacw^{(2, \half(j-k))} \Big] \: \genjacmmj^{(a, b+1+j+\half)} >_{\genjacw^{(a, b+k+\half)}} \\
-		&\quad \quad \quad + \ip<\genjacnmk^{(a, b+k+\half)}, \: \genjacw^{(1, 1+\half(j-k))} \: \genjacmmj^{(a, b+1+j+\half) \: \prime}>_{\genjacw^{(a, b+k+\half)}}
+		&\quad \quad \quad + \ip<\genjacnmk^{(a, b+k+\half)}, \: \genjacw^{(1, 1+\half(j-k))} \: \genjacmmj^{(a+1, b+1+j+\half) \: \prime}>_{\genjacw^{(a, b+k+\half)}}
 \end{align*}
 which is zero for $m < n - 2$, and further that
 \begin{align*}
-	&\ip< x^2 \: \genjacnmk^{(a, b+k+\half)}(x), \: \rho(x)^{k+j} \: \genjacmmj^{(a, b+1+j+\half)} >_{\genjacw^{(a, b+\half)}} \\
-	&= \ip< \genjacnmk^{(a, b+k+\half)}(x), \: \genjacw^{(2, \half(j-k))} \: \genjacmmj^{(a, b+1+j+\half)} >_{\genjacw^{(a, b+k+\half)}}
+	&\ip< x^2 \: \genjacnmk^{(a, b+k+\half)}(x), \: \rho(x)^{k+j} \: \genjacmmj^{(a+1, b+1+j+\half)} >_{\genjacw^{(a, b+\half)}} \\
+	&= \ip< \genjacnmk^{(a, b+k+\half)}(x), \: \genjacw^{(2, \half(j-k))} \: \genjacmmj^{(a+1, b+1+j+\half)} >_{\genjacw^{(a, b+k+\half)}}
 \end{align*}
 which is also zero for $m < n - 2$.
-
-\bstodoinline{Finish this proof!!!}
-
-For the operator for partial differentiation by $y$, we can also expand $\pddy \hdopnkab = \sum_{m=0}^{n-1} \sum_{j=0}^m c_{m,j} \: P^{(a, b+1)}_{m,j}$. The coefficients of the expansion are then the entries of the relevant operator matrix. By a similar argument to before, we have that the only non-zero coefficient of this expansion is when $m = n-1$, $j = k-1$. This is then calculated by taking inner products, i.e. 
-\begin{align*}
-c_{n-1,k-1} = \frac{\ip<\pddy \hdopnkab, \hdop^{(a, b+1)}_{n-1,k-1} >_{W^{(a, b+1)}}}{\norm{\hdop^{(a, b+1)}_{n-1,k-1}}^2_{W^{(a, b+1)}}}
-\end{align*}
-where
-\begin{align*}
-	\ip<\pddy \hdopnkab, \hdop^{(a, b+1)}_{n-1,k-1} >_{W^{(a, b+1)}} = \normgenjac^{(a, b+k+\half)} \: \ip< P_k^{(b,b) \: \prime}, \: P_{k-1}^{(b+1,b+1)} >_{w_P^{(b+1)}}.
-\end{align*}
 
 We can gain the non-zero entries of the weighted differential operators similarly, by noting that
 \begin{align}
@@ -660,6 +675,7 @@ and also that
 \begin{align*}
 	\ip< \Wab \hdopnkab, W^{(\tilde{a},\tilde{b})} \hdopmj^{(\tilde{a},\tilde{b})} >_{W^{(-\tilde{a},-\tilde{b})}} = \ip< \hdopnkab, \hdopmj^{(\tilde{a},\tilde{b})} >_\Wab.
 \end{align*}
+
 \end{proof}
 
 Further, we note that there exist "parameter transformation" banded-block-banded matrix operators that increment/decrement the parameters, transforming the OPs from one (weighted or non-weighted) parameter space to another. We denote these operators as $T^{(a,b)\to(a+1,b)}$, $T^{(a,b)\to(a,b+1)}$ and $T^{(a,b)\to(a+1,b+1)}$ for conversion between non-weighted spaces, and similarly $T_W^{(a,b)\to(a-1,b)}$, $T_W^{(a,b)\to(a,b-1)}$ and $T_W^{(a,b)\to(a-1,b-1)}$ for conversion between weighted spaces, where:
