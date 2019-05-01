@@ -1,11 +1,13 @@
 module OrthogonalPolynomialFamilies
 
 using ApproxFun
-    import ApproxFun: evaluate, PolynomialSpace, recα, recβ, recγ, recA, recB, recC, domain,
-                        domainspace, rangespace, bandwidths, prectype, canonicaldomain, tocanonical,
-                        spacescompatible, points, transform, itransform, AbstractProductSpace, tensorizer,
-                        columnspace, checkpoints, plan_transform, clenshaw
-    import Base: in, *
+import ApproxFun: evaluate, domain,
+                    domainspace, rangespace, bandwidths, prectype, canonicaldomain, tocanonical,
+                    spacescompatible, points, transform, itransform, AbstractProductSpace, 
+                    checkpoints, plan_transform, clenshaw
+import ApproxFunOrthogonalPolynomials: PolynomialSpace, recα, recβ, recγ, recA, recB, recC
+import ApproxFunBase: tensorizer, columnspace            
+import Base: in, *
 using StaticArrays
 using FastGaussQuadrature
 using LinearAlgebra
@@ -56,7 +58,7 @@ function lanczos!(w, P, β, γ; N₀=0)
     end
 
     for k = N₀+1:N
-        @show "lanczos", N, k
+        # @show "lanczos", N, k
         v = x*P[2] - γ[k-1]*P[1]
         β[k] = sum(P[2]*w*v)
         v = v - β[k]*P[2]

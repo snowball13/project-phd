@@ -3,7 +3,7 @@ using ApproxFun, OrthogonalPolynomialFamilies, FastGaussQuadrature,
 import OrthogonalPolynomialFamilies: golubwelsch, lanczos, halfdiskquadrule,
         gethalfdiskOP, jacobix, jacobiy, differentiatex, differentiatey,
         resizecoeffs!, laplaceoperator, transformparamsoperator, operatorclenshaw, getnk,
-        getopindex, weight
+        getopindex, weight, resizedata!
 
 
 
@@ -266,3 +266,52 @@ end
 end
 
 #=====#
+
+# using Profile
+# D = HalfDiskFamily()
+# S = H = D.H(BigFloat(1),BigFloat(2.5));
+# @time resizedata!(S,300);
+# @time resizedata!(S,1000);
+# Profile.print()
+
+
+# w = S.weight
+# x = Fun(identity, domain(w))
+# g = cos.(1000x);
+
+# g = Fun(Chebyshev(domain(x)), BigFloat.(randn(1000)))
+# # @time sum(w*g^2)
+# @time sum(g^2)
+
+# g = Fun(Legendre(domain(x)), BigFloat.(randn(1000)))
+
+
+# g = Fun(NormalizedLegendre(domain(x)), BigFloat.(randn(1000)))
+# @time norm(g.coefficients)
+
+# x = Fun(BigFloat(-1)..1)
+# g = cos.(x)
+# @time norm(g)
+# Fun(g, NormalizedLegendre(domain(x)))(0.1)
+# g(0.1)
+# Fun(x -> cos(x), Legendre(domain(x)))(0.1)
+# @time norm(Fun(g, NormalizedLegendre(domain(x))).coefficients)
+
+# x = Fun()
+# g = cos.(x)
+# sqrt(sum(g^2))
+# norm(Fun(g, NormalizedLegendre(domain(x))).coefficients)
+# g^2
+
+
+# norm(Fun(g, Legendre(domain(x))).coefficients)
+
+
+# @time norm(g)
+
+
+
+# , S.ops, S.a, S.b, N₀=N₀)
+
+
+# Profile.print()    
