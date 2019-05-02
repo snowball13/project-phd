@@ -131,8 +131,8 @@ end
     N = Int(ceil(0.5 * (-1 + sqrt(1 + 8m)))) - 1
     Jx = jacobix(S, N+1)
     Jy = jacobiy(S, N+1)
-    @test evaluate(Jx'[1:m, 1:m] * cfs, S, z) ≈ z[1] * f(z...)
-    @test evaluate(Jy'[1:m, 1:m] * cfs, S, z) ≈ z[2] * f(z...)
+    @test evaluate(Jx[1:m, 1:m] * cfs, S, z) ≈ z[1] * f(z...)
+    @test evaluate(Jy[1:m, 1:m] * cfs, S, z) ≈ z[2] * f(z...)
 end
 
 @testset "Evaluate partial derivative of (random) function" begin
@@ -314,4 +314,4 @@ end
 # , S.ops, S.a, S.b, N₀=N₀)
 
 
-# Profile.print()    
+# Profile.print()
