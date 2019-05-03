@@ -316,15 +316,21 @@ The two 1D families of orthogonal polynomials we have denoted $\{\genjac_{n}^{(a
 \begin{align*}
 	\normgenjac^{(a,b)} := \int_0^1 \: \genjacw^{(a,b)}(x) \: \D x, \quad \normjac^{(b)} := \int_{-1}^1 \: w_P^{(b)}(y) \: \D y,
 \end{align*}
-i.e. $\norm{\genjac_{n}^{(a,b)}}_{\genjacw^{(a,b)}}^2 = \normgenjac^{(a,b)}$ $\forall n = 0,1,2,\dots$ and $\norm{P_{n}^{(b,b)}}_{w_P^{(b)}}^2 = \normjac^{(b)}$ $\forall n = 0,1,2,\dots$.
-
-For clarity, we use the notation that 
+i.e. $\norm{\genjac_{n}^{(a,b)}}_{\genjacw^{(a,b)}}^2 = \normgenjac^{(a,b)}$ $\forall n = 0,1,2,\dots$ and $\norm{P_{n}^{(b,b)}}_{w_P^{(b)}}^2 = \normjac^{(b)}$ $\forall n = 0,1,2,\dots$. For clarity, we use the notation that 
 \begin{align*}
 	&\ip<p, q>_{\genjacw^{(a,b)}} := \int_0^1 p(x) \: q(x) \: \genjacw^{(a,b)}(x) \: \D x, \quad
 		\ip<p, q>_{w_P^{(b)}} := \int_{-1}^1 p(y) \: q(y) \: w_P^{(b)}(y)\: \D y, \\
 	&\norm{p}_{\genjacw^{(a,b)}}^2 := \ip<p, p>_{\genjacw^{(a,b)}}, \quad
 		\norm{p}_{w_P^{(b)}}^2 := \ip<p, p>_{w_P^{(b)}}.
 \end{align*}
+Further, we have that the norms of the 2D half-disk OPs for a particular parameter family $(a,b)$ are then given by
+\begin{align}
+	\norm{\hdopnkab}_\Wab^2 &=  \iint_\Omega \: {\genjacnmk^{(a,b+k+\half)}}(x)^2 \: \rho(x)^{2k} \: {P_k^{(b,b)}\fpr(\frac{y}{\rho(x)})^2} \: \Wab(x,y) \: \D y \: \D x \nonumber \\
+	&= \iint_\Omega \: {\genjacnmk^{(a,b+k+\half)}}(x)^2 \: {P_k^{(b,b)}\fpr(\frac{y}{\rho(x)})^2} \: \genjacw^{(a,b+k)}(x) \: w_P^{(b)}\fpr(\frac{y}{\rho(x)}) \: \D y \: \D x \nonumber \\
+	&= \Big( \int_\alpha^\beta \: {\genjacnmk^{(a,b+k+\half)}}(x)^2 \: \genjacw^{(a,b+k+\half)}(x) \: \D x \Big) \: \Big( \int_\gamma^\delta \: {P^{(b,b)}}(t)^2 \: w_P^{(b)}(t) \: \D t \Big) \nonumber \\
+	&= \normgenjac^{(a,b+k+\half)} \: \normjac^{(b)} \label{eqn:normhdop}
+\end{align}
+where we have used the change of variable $t = \frac{y}{\rho(x)}$. Again, for clairty we use the notation that $\ip<p, q>_{\Wab} := \iint_\Omega p(x,y) \: q(x,y) \: \Wab(x,y) \: \D y \: \D x$ and $\norm{p}_{\Wab}^2 := \ip<p, p>_{\Wab}$ .
 
 
 \subsection{Jacobi matrices}
@@ -347,28 +353,24 @@ y \hdopnk^{(a,b)}(x,y) &= \betaab_{n,k,1} \: \hdop_{n-1, k-1}^{(a,b)}(x, y) + \b
 \end{align*}
 for \((x,y) \in \Omega\), where
 \begin{align*}
-\alphaab_{n,k,1} &:= \beta_{n-k-1}^{(a, b+k+\half)}, \qquad \alphaab_{n,k,2} := \alpha_{n-k}^{(a, b+k+\half)} \\
-\betaab_{n,k,1} &:= \frac{\delta_{k-1}^{(b)}}{\normgenjac^{(a, b + k - \half)}} \: \ip<\genjacnmk^{(a, b+k+1/2)}, \genjacnmk^{(a, b+k-1/2)}>_{\genjacw^{(a, b+k+1/2)}} \\
-\betaab_{n,k,2} &:= \frac{\delta_{k}^{(b)}}{\normgenjac^{(a, b + k + \frac{3}{2})}} \: \ip<\genjacnmk^{(a, b+k+1/2)}, \genjac_{n-k-2}^{(a, b+k+{3/2})}>_{\genjacw^{(a, b+k+{3/2})}} \\
-\betaab_{n,k,3} &:= \frac{\delta_{k-1}^{(b)}}{\normgenjac^{(a, b + k - \half)}} \: \ip<\genjacnmk^{(a, b+k+1/2)}, \genjac_{n-k+1}^{(a, b+k-1/2)}>_{\genjacw^{(a, b+k+1/2)}} \\
-\betaab_{n,k,4} &:= \frac{\delta_{k}^{(b)}}{\normgenjac^{(a, b + k + \frac{3}{2})}} \: \ip<\genjacnmk^{(a, b+k+1/2)}, \genjac_{n-k-1}^{(a, b+k+{3/2})}>_{\genjacw^{(a, b+k+{3/2})}} \\
-\betaab_{n,k,5} &:= \frac{\delta_{k-1}^{(b)}}{\normgenjac^{(a, b + k - \half)}} \: \ip<\genjacnmk^{(a, b+k+1/2)}, \genjac_{n-k+2}^{(a, b+k-1/2)}>_{\genjacw^{(a, b+k+1/2)}} \\
-\betaab_{n,k,6} &:= \frac{\delta_{k}^{(b)}}{\normgenjac^{(a, b + k + \frac{3}{2})}} \: \ip<\genjacnmk^{(a, b+k+1/2)}, \genjacnmk^{(a, b+k+{3/2})}>_{\genjacw^{(a, b+k+{3/2})}}. 
+	\alphaab_{n,k,1} &:= \beta_{n-k-1}^{(a, b+k+\half)} \\
+	\alphaab_{n,k,2} &:= \alpha_{n-k}^{(a, b+k+\half)} \\
+	\betaab_{n,k,1} &:= \frac{\delta_{k-1}^{(b)}}{\normgenjac^{(a, b + k - \half)}} \: \ip<\genjacnmk^{(a, b+k+1/2)}, \genjacnmk^{(a, b+k-1/2)}>_{\genjacw^{(a, b+k+1/2)}} \\
+	\betaab_{n,k,2} &:= \frac{\delta_{k}^{(b)}}{\normgenjac^{(a, b + k + \frac{3}{2})}} \: \ip<\genjacnmk^{(a, b+k+1/2)}, \genjac_{n-k-2}^{(a, b+k+{3/2})}>_{\genjacw^{(a, b+k+{3/2})}} \\
+	\betaab_{n,k,3} &:= \frac{\delta_{k-1}^{(b)}}{\normgenjac^{(a, b + k - \half)}} \: \ip<\genjacnmk^{(a, b+k+1/2)}, \genjac_{n-k+1}^{(a, b+k-1/2)}>_{\genjacw^{(a, b+k+1/2)}} \\
+	\betaab_{n,k,4} &:= \frac{\delta_{k}^{(b)}}{\normgenjac^{(a, b + k + \frac{3}{2})}} \: \ip<\genjacnmk^{(a, b+k+1/2)}, \genjac_{n-k-1}^{(a, b+k+{3/2})}>_{\genjacw^{(a, b+k+{3/2})}} \\
+	\betaab_{n,k,5} &:= \frac{\delta_{k-1}^{(b)}}{\normgenjac^{(a, b + k - \half)}} \: \ip<\genjacnmk^{(a, b+k+1/2)}, \genjac_{n-k+2}^{(a, b+k-1/2)}>_{\genjacw^{(a, b+k+1/2)}} \\
+	\betaab_{n,k,6} &:= \frac{\delta_{k}^{(b)}}{\normgenjac^{(a, b + k + \frac{3}{2})}} \: \ip<\genjacnmk^{(a, b+k+1/2)}, \genjacnmk^{(a, b+k+{3/2})}>_{\genjacw^{(a, b+k+{3/2})}}. 
 \end{align*}
 
 \end{lemma}
 
 \begin{proof}
-The 3-term recurrence for multiplication by $x$ follows from equation (\ref{eqn:Hrecurrence}). For the recurrence for multiplication by $y$, first note that, using a change of variable $t = \frac{y}{\rho(x)}$,
+The 3-term recurrence for multiplication by $x$ follows from equation (\ref{eqn:Hrecurrence}). For the recurrence for multiplication by $y$, since $\{\hdopmjab\}$ for $m = 0,\dots,n+1$, $j = 0,\dots,m$ is an orthogonal basis for any degree $n+1$ polynomial, we can expand $y \: \hdopnkab(x,) = \sum_{m=0}^{n+1} \sum_{j=0}^m c_{m,j} \: \hdopmjab(x,y)$. These coefficients are given by
 \begin{align*}
-	\norm{\hdopnkab}_\Wab^2 &=  \iint_\Omega \: {\genjacnmk^{(a,b+k+\half)}}(x)^2 \: \rho(x)^{2k} \: {P_k^{(b,b)}\fpr(\frac{y}{\rho(x)})^2} \: \Wab(x,y) \: \D y \: \D x \nonumber \\
-	&= \iint_\Omega \: {\genjacnmk^{(a,b+k+\half)}}(x)^2 \: {P_k^{(b,b)}\fpr(\frac{y}{\rho(x)})^2} \: \genjacw^{(a,b+k)}(x) \: w_P^{(b)}\fpr(\frac{y}{\rho(x)}) \: \D y \: \D x \nonumber \\
-	&= \Big( \int_\alpha^\beta \: {\genjacnmk^{(a,b+k+\half)}}(x)^2 \: \genjacw^{(a,b+k+\half)}(x) \: \D x \Big) \: \Big( \int_\gamma^\delta \: {P^{(b,b)}}(t)^2 \: w_P^{(b)}(t) \: \D t \Big) \nonumber \\
-	&= \normgenjac^{(a,b+k+\half)} \: \normjac^{(b)}.
+	c_{m,j} = \frac{\ip< y \: \hdopnkab, \hdopmjab >_{\Wab}}{\norm{\hdopmjab}^2_{\Wab}}.
 \end{align*}
-where we use the notation that $\ip<p, q>_{\Wab} := \iint_\Omega p(x,y) \: q(x,y) \: \Wab(x,y) \: \D y \: \D x$ and $\norm{p}_{W^{(a,b)}}^2 := \ip<p, p>_{\Wab}$ .
-
-Finally, note that \(\ip<y \hdopnkab, \hdopmjab>_\Wab = 0\) for \(m < n-1\) (and for \(m > n+2\)). Thus for \(m = n-1, n, n+1,\) \(j = 0,\dots,m:\) using the same change of variable:
+Recall from equation (\ref{eqn:normhdop}) that $\norm{\hdopnkab}_{\Wab}^2 = \normgenjac^{(a,b+k+\half)} \: \normjac^{(b)}$. Then for $m = 0,\dots,n+1$, $j = 0,\dots,m$, using the change of variable $t = \frac{y}{\rho(x)}$:
 \begin{align*}
 	\ip<y \hdopnkab, \hdopmjab>_\Wab &=  \iint_\Omega \hdopnkab(x,y) \: \hdopmjab(x,y) \: y \: \Wab(x,y) \: dy \: dx \\
 	&= \Big( \int^1_0 \genjacnmk^{(a, b+k+\half)}(x) \: \genjacmmj^{(a, b+j+\half)}(x) \: \rho(x)^{k+j+2} \: \genjacw^{(a, b)}(x) \: \D x \Big) \nonumber \\
@@ -382,6 +384,7 @@ Finally, note that \(\ip<y \hdopnkab, \hdopmjab>_\Wab = 0\) for \(m < n-1\) (and
 		0 & \text{otherwise}
       	\end{cases}.
 \end{align*}
+where $\ip<\genjacnmk^{(a, b+k+\half)}, \genjac_{m-k-1}^{(a, b+k+\frac{3}{2})}>_{\genjacw^{(a, b+k+\frac{3}{2})}}$ and $\ip<\genjacnmk^{(a, b+k+\half)}, \genjac_{m-k+1}^{(a, b+k-\half)}>_{\genjacw^{(a, b+k+\half)}}$ are zero for $m < n-1$.
 
 \end{proof}
 
@@ -768,7 +771,7 @@ The sparsity and structure of this biharmonic operator is seen in Figure \ref{fi
 
 To obtain the recurrence coefficients for the $\{\genjac_n^{(a,b)}\}$ OPs in (\ref{eqn:Hrecurrence}), we use a version of the Stieltjes algorithm. Recall that
 \begin{align*}
-x \genjac_n^{(a,b)}(x) &= \beta_n^{(a,b)} \genjac_{n+1}^{(a,b)}(x) + \alpha_n^{(a,b)} \genjac_n^{(a,b)}(x) + \beta_{n-1}^{(a,b)} \genjac_{n-1}^{(a,b)}(x), \quad n = 0,1,2,\dots
+	x \genjac_n^{(a,b)}(x) &= \beta_n^{(a,b)} \genjac_{n+1}^{(a,b)}(x) + \alpha_n^{(a,b)} \genjac_n^{(a,b)}(x) + \beta_{n-1}^{(a,b)} \genjac_{n-1}^{(a,b)}(x), \quad n = 0,1,2,\dots
 \end{align*}
 where we define $\beta_{-1}^{(a,b)} = 0$ and $H_{-1}^{(a,b)}(x) \equiv 0$. We use a variant of the Stieltjes procedure \cite{gautschi1982generating} where the polynomials are expressed as Chebyshev polynomial expansions and the inner products are calculated via Clenshaw--Curtis quadrature. This has the benefit that it is easier to incorporate high-precision arithmetic, which we use to overcome ill-conditioning present when $b$ is large, as required for large $n$ in \eqref{eq:diskpolys}. The ApproxFun.jl \cite{ApproxFun} package gives a convenient way to manipulate Chebyshev and Jacobi expansions, which we use to calculate the inner products and norms in this algorithm.
 
@@ -815,7 +818,7 @@ Let $f : \Omega \to \R$ be such that $y \mapsto f(x,y)$ for fixed $x$ is an even
 \end{align*}
 where we achieve equality at $(\star)$ if $y \mapsto f(x,y)$ for fixed $x$ is a polynomial of degree at most $2N-1$ and we achieve equality at $(\star \star)$ if also $x \mapsto f(x,y)$ for fixed $y$ is a polynomial of degree at most $N$. 
 
-Finally, note that the inner integral at $(\dagger)$ over $t$ would be zero if $y \mapsto f(x,y)$ for fixed $x$ was an odd function, due to the symmetry over the domain (i.e. since $\gamma = -\delta$ in the this case).
+Finally, note that the inner integral at $(\dagger)$ over $t$ would be zero if $y \mapsto f(x,y)$ for fixed $x$ was an odd function, due to the symmetry over the domain (i.e. since $\gamma = -\delta$).
 \end{proof}
 
 
@@ -840,13 +843,12 @@ and where
 		\vdots \\
 		f_{n,n}
 	\end{pmatrix} \in \R^{n+1} \quad \forall n = 0,1,2,\dots,N, \quad
-f_{n,k} := \frac{\langle f, \: \hdopnk^{(a,b)} \rangle_{W^{(a,b)}}}{|| \hdopnk^{(a,b)} ||_{W^{(a,b)}}}
+f_{n,k} := \frac{\langle f, \: \hdopnk^{(a,b)} \rangle_{W^{(a,b)}}}{\norm{\hdopnk^{(a,b)}}_{W^{(a,b)}}}
 \end{align*}
 
-Using the quadrature rule detailed in Section 4.2, we can calculate exactly the coefficients $f_{n,k}$: 
+Recall from (\ref{eqn:normhdop}) that $\norm{\hdopnkab}^2_\Wab = \normgenjac^{(a,b+k+\half)} \: \normjac^{(b)}$. Using the quadrature rule detailed in Section 4.2 for the inner product, we can calculate exactly the coefficients $f_{n,k}$: 
 \begin{align*}
-	\ip< f, \: \hdopnk^{(a,b)} >_{W^{(a,b)}} &= \half \: \sum_{j=1}^{N^2} w_j \: \big[ f(x_j, y_j) \: \hdopnk^{(a,b)}(x_j, y_j) +f(x_j, -y_j) \: \hdopnk^{(a,b)}(x_j, -y_j) \big], \\
-	|| \hdopnk^{(a,b)} ||_{W^{(a,b)}}^2 &= \half \: \sum_{j=1}^{N^2} w_j \: \big[ \hdopnk^{(a,b)}(x_j, y_j)^2 + \hdopnk^{(a,b)}(x_j, -y_j)^2 \big].
+	f_{n,k} &= \frac{1}{2 \: \normgenjac^{(a,b+k+\half)} \: \normjac^{(b)}} \: \sum_{j=1}^{N^2} w_j \: \big[ f(x_j, y_j) \: \hdopnk^{(a,b)}(x_j, y_j) +f(x_j, -y_j) \: \hdopnk^{(a,b)}(x_j, -y_j) \big].
 \end{align*}
 
 
