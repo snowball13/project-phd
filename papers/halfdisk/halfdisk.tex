@@ -1128,57 +1128,6 @@ orthogonal with respect to the weight
 	&= (1-x)^a \: x^b \: y^c \: (1-\half x - y)^d, \quad (x,y) \in \Omega.
 \end{align*}
 
-
-
-
-%
-%\section{Hemisphere}
-%
-%We can use the similar idea of projecting up from the 2D orthogonal polynomials on the half disk to 3D OPs on the hemisphere. Define $\rho(x) := (1-x^2)^\half$ for $x \in [0,1]$ and let the half disk be denoted by $\omega$, that is let
-%\begin{align}
-%	\omega := \{(x,y) \in \R^2 \quad | \quad 1 < x < 0, \: \rho(x) < y < \rho(x)\}.
-%\end{align}
-%Further, define the hemisphere by
-%\begin{align}
-%	\Omega := \{(x,y,z) \in \R^3 \quad | \quad (x,y) \in \omega, \: x^2 + y^2 + z^2 = 1\}.
-%\end{align}
-%We can define the 3D OP family on the hemisphere as the set of polynomials $\bigQab(x,y,z)$ where
-%\begin{align}
-%	\bigQab_n(x,y,z) := \begin{pmatrix}
-%		\bighdopab_n(x,y) \\
-%		z \: \bighdop^{(a,b+1)}_{n-1}(x,y)
-%	\end{pmatrix} \in \R^{2n+1}, 
-%	\quad \quad 
-%	\bigQab := \begin{pmatrix}
-%		\bigQab_0 \\
-%		\bigQab_1 \\
-%		\vdots \\
-%		\bigQab_N
-%	\end{pmatrix}.
-%\end{align}
-%The relations for multiplication by $x, y$ are then trivial. For multiplication by $z$, note that $z^2 = W^{(0,1)}(x,y)$ for $(x,y,z) \in \Omega$ and consider that (as the 2D OPs for any parameters form a 2D basis of $\omega$):
-%\begin{align}
-%	z \: \hdopnkab(x,y) &= \sum_{m,j} c_{n,k,m,j}^{(a,b)\to(a,b+1)} \: z \: P^{(a,b+1)}_{m,j}(x,y), \\
-%	z^2 \: \hdopnkab(x,y) &= \sum_{m,j} d_{n,k,m,j}^{(a,b)\to(a,b-1)} \: z \: P^{(a,b-1)}_{m,j}(x,y).
-%\end{align}
-%A simple calculation shows that the expansions are sparse, that is that most coefficients $c_{n,k,m,j}^{(a,b)\to(a,b+1)}$ and $d_{n,k,m,j}^{(a,b)\to(a,b-1)}$ are $0$, and are also given by
-%\begin{align}
-%	c_{n,k,m,j}^{(a,b)\to(a,b+1)} &= \frac{\ip< \hdopnkab, \: P^{(a,b+1)}_{m,j} >_{W^{(a,b+1)}}}{\norm{P^{(a,b+1)}_{m,j}}^2_{W^{(a,b+1)}}} \\
-%	d_{n,k,m,j}^{(a,b)\to(a,b-1)} &= \frac{\ip< W^{(0,1)} \hdopnkab, \: P^{(a,b-1)}_{m,j} >_{W^{(a,b-1)}}}{\norm{P^{(a,b-1)}_{m,j}}^2_{W^{(a,b-1)}}} \nonumber \\
-%	&= \frac{\ip< \hdopnkab, \: P^{(a,b-1)}_{m,j} >_{W^{(a,b)}}}{\norm{P^{(a,b-1)}_{m,j}}^2_{W^{(a,b-1)}}} \nonumber \\
-%	&= \frac{\norm{\hdopnkab}_\Wab^2}{\norm{P^{(a,b-1)}_{m,j}}^2_{W^{(a,b-1)}}} \: c_{m,j,n,k}^{(a,b-1)\to(a,b)}.
-%\end{align}
-%The coefficients $c_{n,k,m,j}^{(a,b)\to(a,b+1)}$ and $d_{n,k,m,j}^{(a,b)\to(a,b-1)}$ are just the entries to the parameter tranformation operator matrices
-%\begin{align}
-%	\bighdop^{(a,b)}(x,y) &= \Big(T^{(a,b)\to(a,b+1)} \Big)^T \: \bighdop^{(a,b+1)}(x,y) \\
-%	W^{(0,1)}(x,y) \bighdop^{(a,b)}(x,y) &= \Big(T^{(a,b)\to(a,b-1)} \Big)^T \: \bighdop^{(a,b-1)}(x,y)
-%\end{align}
-%respectively.
-
-
-
-\sotodoinline{More Xu references.}
-\sotodoinline{Add missing references to Bib file}
 \bibliography{halfdisk-bib}
 
 
