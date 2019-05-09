@@ -206,15 +206,21 @@ For simplicity of presentation we focus on the half-disk, where $\rho(x) = \sqrt
 
 We show that partial differential equations become sparse linear systems when viewed as acting on expansions involving a family of orthogonal polynomials (OPs) that  generalise Jacobi polynomials, mirroring the ultraspherical spectral method for ordinary differential equations \cite{olver2013fast} and its analogue on the triangle \cite{olver2018recurrence,olver2019triangle}.  On the half-disk the family of weights we consider are of the form
 $$
-W^{(a,b)}(x,y) = x^a (1-x-y)^b, \qfor 0 \leq x \leq 1,\quad -\sqrt{1-x^2} \leq y \leq \sqrt{1-x^2},
+W^{(a,b)}(x,y) = x^a (1-x^2-y^2)^b, \qfor 0 \leq x \leq 1,\quad -\sqrt{1-x^2} \leq y \leq \sqrt{1-x^2},
 $$
-with corresponding OPs denoted $\hdopnkab(x,y)$, where $n$ denotes the polynomial degree, and $0 \le k \le n$. We define these to be orthogonalised lexicographically, that is,
+with corresponding OPs denoted $\hdopnkab(x,y)$, where $n$ denotes the polynomial degree, and $0 \le k \le n$. We define these to be orthogonalised lexicographically, that is, \sotodo{Are these meant to be orthonormal?}
 $$
 \hdopnkab(x,y) = C_{n,k} x^{n-k} y^k + (\hbox{lower order terms})
 $$
 where $C_{n,k} \neq 0$ and ``lower order terms'' can  include degree $n$ polynomials with fewer $y$ terms.
 
 Sparsity comes from expanding the domain and range of an operator  using different choices of $a$ and $b$. Whereas the sparsity pattern and entries derived in \cite{olver2018recurrence,olver2019triangle} for equations on the triangle  results from manipulations of Jacobi polynomials, in the present work we use a more general integration-by-parts argument to deduce the sparsity structure, alongside quadrature rules to determine the entries.  Furthermore, we use this framework to derive sparse $p$-finite element methods that are analogous to those of Beuchler and Sch\"oberl on tetrahedra \cite{beuchler2006new}, see also work by Li and Shen \cite{li2010optimal}. 
+
+\sotodoinline{Mention that this is a computational challenge}
+
+\sotodoinline{Make clear this is more than plugging in the basis into a Petrov--Galerkin method.}
+
+
 
 The motivation for this work is solving partial differential equations on sub-domains of the sphere. In particular, OPs in cartesian coordinates ($x$, $y$, and $z$) on a half-sphere  can be represented using two families of OPs on the half-disk, see \cite[Theorem 3.1]{olver2018orthogonal} for a similar construction of OPs on an arc in 2D.
 %, where we would require $2n+1$ 3D OPs for each degree $n$, of which $n+1$ would be the $n+1$ degree $n$ OPs on the half-disk of the first family (polynomials in $x,y$) while the remaining $n$ OPs would be given by $z$ multiplied by the $n$ degree $n-1$ OPs on the half-disk of the second family. 
@@ -274,7 +280,7 @@ with $\rho : (\alpha, \beta) \to \R$. Further, let $\genjacw^{(a,b,c)}(x)$ and $
 w^{(a,b)}_P(x) &:= (\delta-x)^a \: (x - \gamma)^b
 \end{cases}
 \end{align*}
-where the three-parameter family of orthogonal polynomials on $[\alpha,\beta]$ given by $\{\genjac_n^{(a,b,c)}\}$ are orthogonal with respect to $\genjacw^{(a,b,c)}(x)$, and the two-parameter family of orthogonal polynomials on $[\gamma,\delta]$ given by $\{P_n^{(a,b)}\}$ are orthogonal with respect to $w^{(a,b)}_P(x)$.
+where the three-parameter family of orthogonal polynomials on $[\alpha,\beta]$ given by $\{\genjac_n^{(a,b,c)}\}$ are \sotodo{Make clear whether they are orthonormal or not} orthogonal with respect to $\genjacw^{(a,b,c)}(x)$, and the two-parameter family of orthogonal polynomials on $[\gamma,\delta]$ given by $\{P_n^{(a,b)}\}$ are orthogonal with respect to $w^{(a,b)}_P(x)$.
 
 Assume that either of the following hold:
 \begin{enumerate}
@@ -294,7 +300,7 @@ which are orthogonal with respect to the weight
 For the half disk, the weight $W^{(a,b)}(x,y) = x^a \: (1-x^2-y^2)^b$ results from setting:
 \begin{align*}
 \begin{cases}
-(\alpha,\beta) &:= (0.1) \\
+(\alpha,\beta) &:= (0,1) \\
 (\gamma,\delta) &:= (-1,1) \\
 \rho(x) &:= (1-x^2)^{\half} \\
 w_1(x) &:= \genjacw^{(a,b)}(x) := x^a \: (1-x^2)^b \\
@@ -335,7 +341,7 @@ where we have used the change of variable $t = \frac{y}{\rho(x)}$. Again, for cl
 
 \subsection{Jacobi matrices}
 
-We can express the three-term recurrences associated to $\genjac_n^{(a,b)}$ and $P_n^{(b,b)}$ as
+We can express the three-term recurrences associated to $\genjac_n^{(a,b)}$ and $P_n^{(b,b)}$ as \sotodo{These hold only for orthonormal, which isn't the case for $P_n$}
 \begin{align}
 x \genjac_n^{(a,b)}(x) &= \beta_n^{(a,b)} \genjac_{n+1}^{(a,b)}(x) + \alpha_n^{(a,b)} \genjac_n^{(a,b)}(x) + \beta_{n-1}^{(a,b)} \genjac_{n-1}^{(a,b)}(x) 
 \label{eqn:Hrecurrence} \\
@@ -421,7 +427,7 @@ J_{x/y}^{(a,b)} &= \begin{pmatrix}
 		& & & \ddots & \ddots & \ddots \\
 	\end{pmatrix}
 \end{align*}
-where
+where \sotodo{$C^x_n := \big( A^x_n \big)^\top$ is only true if orthonormal}
 \begin{align*}
 A^x_n &:= \begin{pmatrix}
 		\alphaab_{n+1,0,1} & 0 & \hdots & 0 \\
@@ -769,7 +775,7 @@ The sparsity and structure of this biharmonic operator is seen in Figure \ref{fi
 
 \subsection{Constructing $\genjac_n^{(a,b)}(x)$}
 
-To obtain the recurrence coefficients for the $\{\genjac_n^{(a,b)}\}$ OPs in (\ref{eqn:Hrecurrence}), we use a version of the Stieltjes algorithm. Recall that
+To obtain the recurrence coefficients for the $\{\genjac_n^{(a,b)}\}$ OPs in (\ref{eqn:Hrecurrence}), we use a version of the Stieltjes algorithm. Recall that\sotodo{check this}
 \begin{align*}
 	x \genjac_n^{(a,b)}(x) &= \beta_n^{(a,b)} \genjac_{n+1}^{(a,b)}(x) + \alpha_n^{(a,b)} \genjac_n^{(a,b)}(x) + \beta_{n-1}^{(a,b)} \genjac_{n-1}^{(a,b)}(x), \quad n = 0,1,2,\dots
 \end{align*}
