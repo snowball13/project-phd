@@ -12,35 +12,35 @@ import OrthogonalPolynomialFamilies: points, pointswithweights, getopptseval,
                     laplaceoperator, derivopevalatpts, getderivopptseval, getopnorms,
                     getopnorm, operatorclenshaw, weight, biharmonicoperator
 using SpecialFunctions
+using JLD
+
+#===#
+
+# Investigations on computation time/lanczos
+setprecision(800)
+B = BigFloat; a = 1.0; b = 1.0
+D = HalfDiskFamily(); S = D(a, b)
+N = 100
+@time laplaceoperator(S, S, N, weighted=true) # Compile
+A = laplaceoperator(S, S, N, weighted=true)
+k = 400; H = D.H(S.a, S.b+k+0.5)
+OrthogonalPolynomialFamilies.resizedata!(H, 200)
+
+
+
 
 #===#
 
 # Set up for experiments
-precision(BigFloat)
-setprecision(800)
-D = HalfDiskFamily()
-a, b = 1.0, 1.0; S = D(a, b)
-x, y = 0.42, -0.2; z = [x; y]
-N = 25 # Sparsity plots
-@time bihar = biharmonicoperator(D(2.0, 2.0), N)
-N = 100 # Solution plots
-@time bihar = biharmonicoperator(D(2.0, 2.0), N)
-@time errfuncfs = Fun((x,y)->(1 + erf(5(1 - 10((x - 0.5)^2 + (y)^2)))), S, N*(N+1)).coefficients
-N = 200 # solutionblocknorms plot
-ff = (x,y)->exp(-1000((x-0.2)^2 + (y-0.2)^2))
-pts = pointswithweights(S, N*(N+1))[1]
-vals = [ff(pt...) for pt in pts]
-HDTP = OrthogonalPolynomialFamilies.HalfDiskTransformPlan(S, vals)
-@time f4cfs = HDTP * vals
-S
-
-
-
-using JLD
 B = BigFloat
+precision(B)
+setprecision(800)
+a, b = 1.0, 1.0
+x, y = 0.42, -0.2; z = [x; y]
 # save("experiments/saved/laplacian-w11.jld", "Lw11", Δw)
 # save("experiments/saved/biharmonic.jld", "bihar", bihar)
 # save("experiments/saved/halfdiskspace11.jld", "opnorms", S.opnorms, "A", S.A, "B", S.B, "C", S.C, "DT", S.DT)
+# save("experiments/saved/halfdiskspace22.jld", "opnorms", S.opnorms, "A", Array.(S.A[:]), "B", Array.(S.B[:]), "C", Array.(S.C[2:end]), "DT", Array.(S.DT[:]))
 # save("experiments/saved/Hfamily-11p5.jld", "Ha", S.family.H(B(1.0),B(1.5)).a, "Hb", S.family.H(B(1.0),B(1.5)).b)
 # save("experiments/saved/Pfamily-11.jld", "Pa", S.family.P(B(1.0),B(1.0)).a, "Pb", S.family.P(B(1.0),B(1.0)).b)
 # save("experiments/saved/errfuncfs.jld", "erfuncfs", errfuncfs)
@@ -48,10 +48,23 @@ B = BigFloat
 Δw = load("experiments/saved/laplacian-w11.jld", "Lw11")
 bihar = load("experiments/saved/biharmonic.jld", "bihar")
 errfuncfs = load("experiments/saved/errfuncfs.jld", "erfuncfs")
+errfuncfs22 = load("experiments/saved/errfuncfs-22.jld", "erfuncfs22")
 f4cfs = load("experiments/saved/f4cfs.jld", "f4cfs")
 D = HalfDiskFamily()
+    d = load("experiments/saved/halfdiskspace22.jld")
+    S = D(2.0, 2.0)
+    resize!(S.A, length(d["A"]))
+    S.A[:] = sparse.(d["A"][:])
+    resize!(S.B, length(d["B"]))
+    S.B[:] = sparse.(d["B"][:])
+    resize!(S.C, length(d["C"])+1)
+    S.C[2:end] = sparse.(d["C"][:])
+    resize!(S.DT, length(d["DT"]))
+    S.DT[:] = sparse.(d["DT"][:])
+    resize!(S.opnorms, length(d["opnorms"]))
+    S.opnorms[:] = d["opnorms"][:]
     d = load("experiments/saved/halfdiskspace11.jld")
-    S = D(a, b)
+    S = D(1.0, 1.0)
     resize!(S.A, length(d["A"]))
     S.A[:] = d["A"][:]
     resize!(S.B, length(d["B"]))
@@ -62,7 +75,7 @@ D = HalfDiskFamily()
     S.DT[:] = d["DT"][:]
     resize!(S.opnorms, length(d["opnorms"]))
     S.opnorms[:] = d["opnorms"][:]
-    d = load("experiments/saved/Hfamily-11p5.jld")
+d = load("experiments/saved/Hfamily-11p5.jld")
     H = D.H(B(1.0),B(1.5)); P = D.P(B(1.0),B(1.0))
     resize!(H.a, length(d["Ha"]))
     H.a[:] = d["Ha"][:]
@@ -98,6 +111,91 @@ D = HalfDiskFamily()
     S
 
 
+N = 200
+S
+Δw = laplaceoperator(S, S, N, weighted=true, square=true)
+bihar = biharmonicoperator(D(2.0,2.0), N, square=true)
+# save("experiments/saved/laplacian-w11-array.jld", "Lw11", sparse(Δw))
+# save("experiments/saved/biharmonic-array.jld", "bihar", sparse(bihar))
+Δw = load("experiments/saved/laplacian-w11-array.jld", "Lw11")
+bihar = load("experiments/saved/biharmonic-array.jld", "bihar")
+
+H = D.H
+    jldopen("experiments/saved/Hspaces-dict.jld", "w") do file
+    end
+    paramslist = Vector{NTuple}()
+    n = 1
+    for params in keys(H.spaces)
+        stra = "a" * string(params[1])
+        stra *= "-" * string(params[2])
+        strb = "b" * string(params[1])
+        strb *= "-" * string(params[2])
+        jldopen("experiments/saved/Hspaces-dict.jld", "r+") do file
+            write(file, stra, H(params...).a)
+            write(file, strb, H(params...).b)
+        end
+        resize!(paramslist, n); paramslist[n] = params
+        global n += 1
+    end
+    jldopen("experiments/saved/Hspaces-dict.jld", "r+") do file
+        write(file, "params", paramslist)
+    end
+P = D.P
+    jldopen("experiments/saved/Pspaces-dict.jld", "w") do file
+    end
+    paramslist = Vector{NTuple}()
+    n = 1
+    for params in keys(P.spaces)
+        stra = "a" * string(params[1])
+        stra *= "-" * string(params[2])
+        strb = "b" * string(params[1])
+        strb *= "-" * string(params[2])
+        strparams = string(params[1])
+        strparams *= "-" * string(params[2])
+        jldopen("experiments/saved/Pspaces-dict.jld", "r+") do file
+            write(file, stra, P(params...).a)
+            write(file, strb, P(params...).b)
+        end
+        resize!(paramslist, n); paramslist[n] = params
+        global n += 1
+    end
+    jldopen("experiments/saved/Pspaces-dict.jld", "r+") do file
+        write(file, "params", paramslist)
+    end
+
+# D = HalfDiskFamily()
+#     d = load("experiments/saved/Hspaces-dict.jld")
+#     paramslist = d["params"]
+#     for params in paramslist
+#         stra = "a" * string(params[1])
+#         stra *= "-" * string(params[2])
+#         strb = "b" * string(params[1])
+#         strb *= "-" * string(params[2])
+#         H = DD.H(B(params[1]),B(params[2]))
+#         resize!(H.a, length(d[stra]))
+#         H.a[:] = d[stra][:]
+#         resize!(H.b, length(d[strb]))
+#         H.b[:] = d[strb][:]
+#     end
+#     d = load("experiments/saved/Pspaces-dict.jld")
+#     paramslist = d["params"]
+#     for params in paramslist
+#         stra = "a" * string(params[1])
+#         stra *= "-" * string(params[2])
+#         strb = "b" * string(params[1])
+#         strb *= "-" * string(params[2])
+#         H = D.P(B(params[1]),B(params[2]))
+#         resize!(P.a, length(d[stra]))
+#         P.a[:] = d[stra][:]
+#         resize!(P.b, length(d[strb]))
+#         P.b[:] = d[strb][:]
+#     end
+#     D
+
+
+
+
+
 #====#
 
 
@@ -112,11 +210,11 @@ maxm = sum(1:20+1)
 PyPlot.clf()
     PyPlot.spy(Array(sparse(Δw[1:maxm, 1:maxm])))
     PyPlot.axis(xmin=0, xmax=maxm, ymin=maxm, ymax=0)
-    savefig("experiments/sparsityoflaplacian-w11")
+    savefig("experiments/images/sparsityoflaplacian-w11.pdf")
 PyPlot.clf()
     PyPlot.spy(Array(sparse(bihar[1:maxm, 1:maxm])))
     PyPlot.axis(xmin=0, xmax=maxm, ymin=maxm, ymax=0)
-    savefig("experiments/sparsityofbiharmonic")
+    savefig("experiments/images/sparsityofbiharmonic.pdf")
 PyPlot.clf()
     N = 25
     k = 200
@@ -124,10 +222,10 @@ PyPlot.clf()
     V = operatorclenshaw(v, D(0.0, 0.0), N+3)
     T = transformparamsoperator(D(0.0, 0.0), S, N+3)
     Tw = transformparamsoperator(S, D(0.0, 0.0), N, weighted=true)
-    A = Δw + (k^2 * T * V * Tw)[1:getopindex(N,N), 1:getopindex(N,N)]
+    A = Δw[1:getopindex(N,N), 1:getopindex(N,N)] + (k^2 * T * V * Tw)[1:getopindex(N,N), 1:getopindex(N,N)]
     PyPlot.spy(Array(sparse(A[1:maxm, 1:maxm])))
     PyPlot.axis(xmin=0, xmax=maxm, ymin=maxm, ymax=0)
-    savefig("experiments/sparsityofhelmholtz")
+    savefig("experiments/images/sparsityofhelmholtz.pdf")
 
 #=
 Examples
@@ -141,9 +239,10 @@ isindomain(x, D::HalfDiskFamily) = 0 ≤ x[1] ≤ 1 && -sqrt(1-x[1]^2) ≤ x[2] 
 Poisson
 Solution of Δu = f, where f(x,y) = 1 + erf(5(1 - 10((x - 0.5)^2 + (y)^2)))
 =#
-errfun.coefficients
-N = getnk(ncoefficients(errfun))[1]
-u = Fun(S, sparse(Δw) \ errfun.coefficients)
+errfuncfs
+N = getnk(length(errfuncfs))[1]
+sparse(Δw)
+u = Fun(S, sparse(Δw[1:getopindex(N,N), 1:getopindex(N,N)]) \ errfuncfs)
 # Create arrays of (x,y) points
 n = 500
 x = LinRange(0, 1, n)
@@ -160,26 +259,33 @@ PyPlot.clf()
 w, h = plt[:figaspect](2.0)
 PyPlot.figure(figsize=(w,h))
 PyPlot.pcolor(x, y, sln)
-savefig("experiments/solution-poisson")
+savefig("experiments/images/solution-poisson.pdf")
 #=
 Variable coefficient Helmholtz
 Solution of Δu + k²vu = f
 =#
 N = 100
 k = 200
-f = Fun((x,y)->exp(x)*x*y, S, N*(N+1))
-DD = HalfDiskFamily(); v = Fun((x,y)->(1 - (3(x-1)^2 + 5y^2)), DD(0.0, 0.0))
-V = operatorclenshaw(v, D(0.0, 0.0), N+3)
-T = transformparamsoperator(D(0.0, 0.0), S, N+3)
-Tw = transformparamsoperator(S, D(0.0, 0.0), N, weighted=true)
+# f = Fun((x,y)->exp(x)*x*y, S, N*(N+1))
+# DD = HalfDiskFamily(); v = Fun((x,y)->(1 - (3(x-1)^2 + 5y^2)), DD(0.0, 0.0))
+# V = operatorclenshaw(v, D(0.0, 0.0), N+3)
+# T = transformparamsoperator(D(0.0, 0.0), S, N+3)
+# Tw = transformparamsoperator(S, D(0.0, 0.0), N, weighted=true)
 # save("experiments/saved/helmholtz.jld", "fcfs", f.coefficients, "T", T, "Tw", Tw)
-save("experiments/saved/helmholtz-V.jld", "V", V)
-fcfs = load("experiments/saved/helmholtz.jld", "fcfs")
-T = load("experiments/saved/helmholtz.jld", "T")
-Tw = load("experiments/saved/helmholtz.jld", "Tw")
-V = load("experiments/saved/helmholtz-V.jld", "V")
-A = Δw[1:getopindex(N,N), 1:getopindex(N,N)] + (k^2 * T * V * Tw)[1:getopindex(N,N), 1:getopindex(N,N)]
-u = Fun(S, sparse(A) \ f.coefficients)
+# save("experiments/saved/helmholtz-V.jld", "V", V)
+# fcfs = load("experiments/saved/helmholtz.jld", "fcfs")
+# T = load("experiments/saved/helmholtz.jld", "T")
+# Tw = load("experiments/saved/helmholtz.jld", "Tw")
+# V = load("experiments/saved/helmholtz-V.jld", "V")
+# (k^2 * sparse(T) * V * sparse(Tw))[1:getopindex(N,N), 1:getopindex(N,N)]
+# A = (sparse(Δw[1:getopindex(N,N), 1:getopindex(N,N)])
+#         + (k^2 * sparse(T) * V * sparse(Tw))[1:getopindex(N,N), 1:getopindex(N,N)])
+# save("experiments/saved/helmholtz-operator-N=100.jld", "A", A)
+# A = load("experiments/saved/helmholtz-operator-N=100.jld", "A")
+# u = Fun(S, A \ fcfs)
+# save("experiments/saved/helmholtz-ucfs-N=100.jld", "ucfs", u.coefficients)
+ucfs = load("experiments/saved/helmholtz-ucfs-N=100.jld", "ucfs")
+u = Fun(S, ucfs)
 # Create arrays of (x,y) points
 n = 1500
 x = LinRange(0, 1, n)
@@ -196,14 +302,13 @@ PyPlot.clf()
 w, h = plt[:figaspect](2.0)
 PyPlot.figure(figsize=(w,h))
 PyPlot.pcolor(x, y, sln)
-PyPlot.savefig("experiments/solution-helmholtz")
+PyPlot.savefig("experiments/images/solution-helmholtz.pdf")
 #=
 Biharmonic
 Solution of Δ²u = f, where f(x,y) = 1 + erf(5(1 - 10((x - 0.5)^2 + (y)^2)))
 =#
-N = getnk(ncoefficients(errfun))[1]
-T = transformparamsoperator(S, D(2.0, 2.0), N, weighted=false)
-u = Fun(D(2.0, 2.0), sparse(bihar) \ (T * errfun.coefficients))
+N = getnk(length(errfuncfs22))[1]
+u = Fun(D(2.0, 2.0), sparse(bihar[1:getopindex(N,N), 1:getopindex(N,N)]) \ errfuncfs22)
 # Create arrays of (x,y) points
 n = 500
 x = LinRange(0, 1, n)
@@ -211,7 +316,7 @@ y = LinRange(-1, 1, n)
 sln = zeros(length(x), length(y))
 for i = 1:length(x)
     for j = 1:length(y)
-        val = evalu(u, [x[i]; y[j]])
+        val = OrthogonalPolynomialFamilies.weight(D(2.0, 2.0), x[i], y[j]) * evalu(u, [x[i]; y[j]])
         sln[j,i] = val
     end
     @show i
@@ -220,45 +325,98 @@ PyPlot.clf()
 w, h = plt[:figaspect](2.0)
 PyPlot.figure(figsize=(w,h))
 PyPlot.pcolor(x, y, sln)
-savefig("experiments/solution-biharmonic")
+PyPlot.savefig("experiments/images/solution-biharmonic.pdf")
+
 
 #=
-Plotting the norms of each block of coeffs for solutions of Poisson for
-different RHSs
+Plotting the norms of each block of coeffs for solutions for different RHSs
 =#
-N = 200
-S
-f1 = Fun((x,y)->1.0, S)
-f2 = Fun((x,y)->x^2 + y^2 - 1, S)
-f3 = Fun((x,y)->x^2*y^2*(1-x^2-y^2)^2, S)
-u1 = Fun(S, sparse(Δw) \ resizecoeffs!(f1, N))
-u2 = Fun(S, sparse(Δw) \ resizecoeffs!(f2, N))
-u3 = Fun(S, sparse(Δw) \ resizecoeffs!(f3, N))
-u4 = Fun(S, sparse(Δw) \ f4cfs)
-u1coeffs = PseudoBlockArray(u1.coefficients, [i+1 for i=0:N])
-u2coeffs = PseudoBlockArray(u2.coefficients, [i+1 for i=0:N])
-u3coeffs = PseudoBlockArray(u3.coefficients, [i+1 for i=0:N])
-u4coeffs = PseudoBlockArray(u4.coefficients, [i+1 for i=0:N])
-u1norms = zeros(N+1)
-u2norms = zeros(N+1)
-u3norms = zeros(N+1)
-u4norms = zeros(N+1)
-for i = 1:N+1
-    u1norms[i] = norm(view(u1coeffs, Block(i)))
-    u2norms[i] = norm(view(u2coeffs, Block(i)))
-    u3norms[i] = norm(view(u3coeffs, Block(i)))
-    u4norms[i] = norm(view(u4coeffs, Block(i)))
+function getsolutionblocknorms(N, S, A, f1, f2, f3, f4)
+    u1 = Fun(S, sparse(A) \ f1)
+    u2 = Fun(S, sparse(A) \ f2)
+    u3 = Fun(S, sparse(A) \ f3)
+    u4 = Fun(S, sparse(A) \ f4)
+    u1coeffs = PseudoBlockArray(u1.coefficients, [i+1 for i=0:N])
+    u2coeffs = PseudoBlockArray(u2.coefficients, [i+1 for i=0:N])
+    u3coeffs = PseudoBlockArray(u3.coefficients, [i+1 for i=0:N])
+    u4coeffs = PseudoBlockArray(u4.coefficients, [i+1 for i=0:N])
+    u1norms = zeros(N+1)
+    u2norms = zeros(N+1)
+    u3norms = zeros(N+1)
+    u4norms = zeros(N+1)
+    for i = 1:N+1
+        u1norms[i] = norm(view(u1coeffs, Block(i)))
+        u2norms[i] = norm(view(u2coeffs, Block(i)))
+        u3norms[i] = norm(view(u3coeffs, Block(i)))
+        u4norms[i] = norm(view(u4coeffs, Block(i)))
+    end
+    u1norms, u2norms, u3norms, u4norms
 end
+
+# solutionblocknorms - poisson
+N = nblocks(Δw)[1] - 1
+S = D(1.0, 1.0)
+f1 = Fun((x,y)->1.0, S)
+f2 = Fun((x,y)->y^2 - 1, S)
+f3 = Fun((x,y)->x^2*(1-x^2-y^2)^2, S)
+# f4 = Fun((x,y)->exp(-1000((x-0.5)^2+(y-0.5)^2)), S, 2*getopindex(N,N))
+# f4cfs = f4.coefficients[1:getopindex(N,N)]
+# save("experiments/saved/f4cfs.jld", "f4cfs", f4cfs)
+f4cfs = load("experiments/saved/f4cfs.jld", "f4cfs")
+u1norms, u2norms, u3norms, u4norms = getsolutionblocknorms(N, S, Δw, resizecoeffs!(f1, N),
+                resizecoeffs!(f2, N), resizecoeffs!(f3, N), f4cfs)
 using Plots
-Plots.plot(u1norms, label="f(x,y) = 1", xscale=:log10, yscale=:log10, legend=:bottomleft)
-Plots.plot!(u2norms, label="f(x,y) = x^2 + y^2 - 1")
-Plots.plot!(u3norms, label="f(x,y) = x^2 * y^2 * (1-x^2-y^2)^2")
-Plots.plot!(u4norms, label = "f(x,y) = exp(-1000((x-0.2)^2+(y-0.2)^2)+(y+0.2)^2))")
+Plots.plot(u1norms, line=(3, :solid), label="f(x,y) = 1", xscale=:log10, yscale=:log10, legend=:bottomleft)
+Plots.plot!(u2norms, line=(3, :dash), label="f(x,y) = y^2 - 1")
+Plots.plot!(u3norms, line=(3, :dashdot), label="f(x,y) = x^2 * (1-x^2-y^2)^2")
+Plots.plot!(u4norms, line=(3, :dot), label = "f(x,y) = exp(-1000((x-0.5)^2+(y-0.5)^2))")
 Plots.xlabel!("Block")
 Plots.ylabel!("Norm")
-Plots.savefig("experiments/solutionblocknorms")
+Plots.savefig("experiments/images/solutionblocknorms-poisson.pdf")
 
+# solutionblocknorms - helmholtz
+N = 100
+k = 50
+S = D(1.0, 1.0)
+# DD = HalfDiskFamily(); v = Fun((x,y)->(1 - (3(x-1)^2 + 5y^2)), DD(0.0, 0.0))
+V = load("experiments/saved/helmholtz-V.jld", "V")
+T = transformparamsoperator(D(0.0, 0.0), S, N+3)
+Tw = transformparamsoperator(S, D(0.0, 0.0), N, weighted=true)
+A = sparse(Δw[1:getopindex(N,N), 1:getopindex(N,N)] + (k^2 * sparse(T) * V * sparse(Tw))[1:getopindex(N,N), 1:getopindex(N,N)])
+f1 = Fun((x,y)->1.0, S)
+f2 = Fun((x,y)->y^2 - 1, S)
+f3 = Fun((x,y)->x^2*(1-x^2-y^2)^2, S)
+f4cfs = load("experiments/saved/f4cfs.jld", "f4cfs")
+u1norms, u2norms, u3norms, u4norms = getsolutionblocknorms(N, S, A, resizecoeffs!(f1, N),
+                resizecoeffs!(f2, N), resizecoeffs!(f3, N), f4cfs[1:sum(1:N+1)])
+using Plots
+Plots.plot(u1norms, line=(3, :solid), label="f(x,y) = 1", xscale=:log10, yscale=:log10, legend=:bottomleft)
+Plots.plot!(u2norms, line=(3, :dash), label="f(x,y) = y^2 - 1")
+Plots.plot!(u3norms, line=(3, :dashdot), label="f(x,y) = x^2 * (1-x^2-y^2)^2")
+Plots.plot!(u4norms, line=(3, :dot), label = "f(x,y) = exp(-1000((x-0.5)^2+(y-0.5)^2))")
+Plots.xlabel!("Block")
+Plots.ylabel!("Norm")
+Plots.savefig("experiments/images/solutionblocknorms-helmholtz-k=$k.pdf")
 
+# solutionblocknorms - biharmonic
+N = nblocks(bihar)[1] - 1
+S = D(2.0, 2.0)
+f1 = Fun((x,y)->1.0, S)
+f2 = Fun((x,y)->y^2 - 1, S)
+f3 = Fun((x,y)->x^2*(1-x^2-y^2)^2, S)
+# f4 = Fun((x,y)->exp(-1000((x-0.2)^2+(y-0.2)^2)), S, 10)
+f4cfs11 = load("experiments/saved/f4cfs.jld", "f4cfs")
+f4cfs = transformparamsoperator(D(1.0, 1.0), S, N) * f4cfs11
+u1norms, u2norms, u3norms, u4norms = getsolutionblocknorms(N, S, bihar, resizecoeffs!(f1, N),
+                resizecoeffs!(f2, N), resizecoeffs!(f3, N), f4cfs)
+using Plots
+Plots.plot(u1norms, line=(3, :solid), label="f(x,y) = 1", xscale=:log10, yscale=:log10, legend=:bottomleft)
+Plots.plot!(u2norms, line=(3, :dash), label="f(x,y) = y^2 - 1")
+Plots.plot!(u3norms, line=(3, :dashdot), label="f(x,y) = x^2 * (1-x^2-y^2)^2")
+Plots.plot!(u4norms, line=(3, :dot), label = "f(x,y) = exp(-1000((x-0.5)^2+(y-0.5)^2))")
+Plots.xlabel!("Block")
+Plots.ylabel!("Norm")
+Plots.savefig("experiments/images/solutionblocknorms-biharmonic.pdf")
 
 
 
