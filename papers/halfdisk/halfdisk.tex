@@ -280,7 +280,16 @@ with $\rho : (\alpha, \beta) \to \R$. Further, let $\genjacw^{(a,b,c)}(x)$ and $
 w^{(a,b)}_P(x) &:= (\delta-x)^a \: (x - \gamma)^b
 \end{cases}
 \end{align*}
-where the three-parameter family of orthogonal polynomials on $[\alpha,\beta]$ given by $\{\genjac_n^{(a,b,c)}\}$ are \sotodo{Make clear whether they are orthonormal or not} orthogonal with respect to $\genjacw^{(a,b,c)}(x)$, and the two-parameter family of orthogonal polynomials on $[\gamma,\delta]$ given by $\{P_n^{(a,b)}\}$ are orthogonal with respect to $w^{(a,b)}_P(x)$.
+and define the associated inner products by: \bstodo{Is it best to define these ip s with the normalisation?}
+\begin{align}
+	\ip< p, \: q >_{\genjacw^{(a,b,c)}} &:= \frac{1}{\normgenjac^{(a,b,c)}} \: \int_\alpha^\beta p(x) \: q(x) \: \genjacw^{(a,b,c)}(x) \: \D x, \label{eqn:ipgenjac} \\
+	\ip<p, q>_{w_P^{(a,b)}} &:= \frac{1}{\normjac^{(a,b)}} \:\int_\gamma^\delta p(y) \: q(y) \: w_P^{(a,b)}(y)\: \D y. \label{eqn:ipjac}
+\end{align}
+where
+\begin{align*}
+	\normgenjac^{(a,b,c)} := \int_\alpha^\beta \: \genjacw^{(a,b,c)}(x) \: \D x, \quad \normjac^{(a,b)} := \int_\gamma^\delta \: w_P^{(a,b)}(y) \: \D y.
+\end{align*}
+Further, denote the three-parameter family of orthonormal polynomials on $[\alpha,\beta]$ by $\{\genjac_n^{(a,b,c)}\}$, orthonormal with respect to the inner product defined in (\ref{eqn:ipgenjac}), and the two-parameter family of orthonormal polynomials on $[\gamma,\delta]$ by $\{P_n^{(a,b)}\}$, orthonormal with respect to the inner product defined in (\ref{eqn:ipjac}).
 
 Assume that either of the following hold:
 \begin{enumerate}
@@ -293,8 +302,14 @@ We define the four-parameter 2D orthogonal polynomials on $\Omega$ by
 \end{align*}
 which are orthogonal with respect to the weight
 \begin{align*}
-	W^{(a,b,c,d)}(x,y) := \genjacw^{(a,b,c+d)}(x) \: w_P^{(d,c)}(\frac{y}{\rho(x)}), \quad (x,y) \in \Omega. 
+	W^{(a,b,c,d)}(x,y) := \genjacw^{(a,b,c+d)}(x) \: w_P^{(d,c)}(\frac{y}{\rho(x)}), \quad (x,y) \in \Omega,
 \end{align*}
+that is,
+\begin{align*}
+	\ip< \hdopnk^{(a,b,c,d)}, \: \hdopmj^{(a,b,c,d)} >_{W^{(a,b,c,d)}} &= \normgenjac^{(a,b+c+d+2k+1)} \: \normjac^{(d,c)} \: \delta_{n,m} \: \delta_{k,j},
+\end{align*}
+where
+$\ip< f, \: g >_W^{(a,b,c,d)} := \iint_\Omega \: f(x,y) \: g(x,y) \: W^{(a,b,c,d)}(x,y) \: \D y \: \D x$.
 \end{definition}
 
 For the half disk, the weight $W^{(a,b)}(x,y) = x^a \: (1-x^2-y^2)^b$ results from setting:
@@ -318,17 +333,17 @@ orthogonal on \(\Omega\) with respect to the weight
 W^{(a,b)}(x,y) = \genjacw^{(a,b)}(x) \: w_P^{(b)}(\frac{y}{\rho(x)}) = x^a \: (1-x^2-y^2)^b.
 \end{align*}
 
-The two 1D families of orthogonal polynomials we have denoted $\{\genjac_{n}^{(a,b)}\}$ and $\{P_n^{(b,b)}\}$ are not orthonormal, but have (squared) norms given by the integral of their respective weight functions we denote as
+The two 1D families of orthogonal polynomials we have denoted $\{\genjac_{n}^{(a,b)}\}$ and $\{P_n^{(b,b)}\}$ are orthonormal, with respect to the inner products respectively given by:
+\begin{align*}
+	\ip< p, \: q >_{\genjacw^{(a,b)}} &:= \frac{1}{\normgenjac^{(a,b)}} \: \int_0^1 p(x) \: q(x) \: \genjacw^{(a,b)}(x) \: \D x, \\
+	\ip<p, q>_{w_P^{(b)}} &:= \frac{1}{\normjac^{(b)}} \: \int_{-1}^1 p(y) \: q(y) \: w_P^{(b)}(y)\: \D y,
+\end{align*}
+where 
 \begin{align*}
 	\normgenjac^{(a,b)} := \int_0^1 \: \genjacw^{(a,b)}(x) \: \D x, \quad \normjac^{(b)} := \int_{-1}^1 \: w_P^{(b)}(y) \: \D y,
 \end{align*}
-i.e. $\norm{\genjac_{n}^{(a,b)}}_{\genjacw^{(a,b)}}^2 = \normgenjac^{(a,b)}$ $\forall n = 0,1,2,\dots$ and $\norm{P_{n}^{(b,b)}}_{w_P^{(b)}}^2 = \normjac^{(b)}$ $\forall n = 0,1,2,\dots$. For clarity, we use the notation that 
-\begin{align*}
-	&\ip<p, q>_{\genjacw^{(a,b)}} := \int_0^1 p(x) \: q(x) \: \genjacw^{(a,b)}(x) \: \D x, \quad
-		\ip<p, q>_{w_P^{(b)}} := \int_{-1}^1 p(y) \: q(y) \: w_P^{(b)}(y)\: \D y, \\
-	&\norm{p}_{\genjacw^{(a,b)}}^2 := \ip<p, p>_{\genjacw^{(a,b)}}, \quad
-		\norm{p}_{w_P^{(b)}}^2 := \ip<p, p>_{w_P^{(b)}}.
-\end{align*}
+i.e. $\norm{\genjac_{n}^{(a,b)}}_{\genjacw^{(a,b)}} = 1$ $\forall n = 0,1,2,\dots$ and $\norm{P_{n}^{(b,b)}}_{w_P^{(b)}} = 1$ $\forall n = 0,1,2,\dots$. For clarity, we use the notation that $\norm{p}_{\genjacw^{(a,b)}}^2 := \ip<p, p>_{\genjacw^{(a,b)}}$ and that $\norm{p}_{w_P^{(b)}}^2 := \ip<p, p>_{w_P^{(b)}}$.
+
 Further, we have that the norms of the 2D half-disk OPs for a particular parameter family $(a,b)$ are then given by
 \begin{align}
 	\norm{\hdopnkab}_\Wab^2 &=  \iint_\Omega \: {\genjacnmk^{(a,b+k+\half)}}(x)^2 \: \rho(x)^{2k} \: {P_k^{(b,b)}\fpr(\frac{y}{\rho(x)})^2} \: \Wab(x,y) \: \D y \: \D x \nonumber \\
@@ -612,7 +627,7 @@ Define the operator matrices $D_x^{(a,b)}, \: D_y^{(a,b)}, \: W_x^{(a,b)}, \: W_
 \end{align*}
 \end{definition}
 
-The incrementing and decrementing of parameters as seen here is analogous to other well known orthogonal polynomials families' derivatives, for example the Jacobi polynomials on the interval, as seen in the DLMF \cite[(18.9.3)]{DLMF}, and on the triangle \cite{olver2018recurrence}.
+The incrementing and decrementing of parameters as seen here is analogous to other well known orthogonal polynomial families' derivatives, for example the Jacobi polynomials on the interval, as seen in the DLMF \cite[(18.9.3)]{DLMF}, and on the triangle \cite{olver2018recurrence}.
 
 \begin{lemma}\label{lemma:sparsityofdifferentialoperators}
 The operator matrices $D_x^{(a,b)}, \: D_y^{(a,b)}, \: W_x^{(a,b)}, \: W_y^{(a,b)}$ from Definition \ref{def:differentialoperators} are sparse, with banded-block-banded structure.
@@ -639,7 +654,7 @@ which is zero for $j < k-1$. Further,
 \begin{align*}
 	\ip<\pddy \hdopnkab, \hdop^{(a, b+1)}_{m,k-1} >_{W^{(a, b+1)}} &= \ip< \genjacnmk^{(a,b+k+\half)}, \genjac_{m+1-k}^{(a,b+k+\half)} >_{\genjacw^{(a,b+k+\half)}} \: \ip< P_k^{(b,b) \: \prime}, \: P_{k-1}^{(b+1,b+1)} >_{w_P^{(b+1)}},
 \end{align*}
-which is zero for $m < n-1$. Finally, we simply have that
+which is zero for $m < n-1$. Finally, we simply have that \bstodo{Make sure correct ip definition is being used here}
 \begin{align*}
 	c_{n-1,k-1} &= \frac{1}{\normjac^{(b)}} \: \ip< P_k^{(b,b) \: \prime}, \: P_{k-1}^{(b+1,b+1)} >_{w_P^{(b+1)}}.
 \end{align*}
