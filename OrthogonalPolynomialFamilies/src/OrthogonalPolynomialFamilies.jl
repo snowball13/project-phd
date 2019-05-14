@@ -3,10 +3,10 @@ module OrthogonalPolynomialFamilies
 using ApproxFun
 import ApproxFun: evaluate, domain,
                     domainspace, rangespace, bandwidths, prectype, canonicaldomain, tocanonical,
-                    spacescompatible, points, transform, itransform, AbstractProductSpace, 
+                    spacescompatible, points, transform, itransform, AbstractProductSpace,
                     checkpoints, plan_transform, clenshaw
 import ApproxFunOrthogonalPolynomials: PolynomialSpace, recα, recβ, recγ, recA, recB, recC
-import ApproxFunBase: tensorizer, columnspace            
+import ApproxFunBase: tensorizer, columnspace
 import Base: in, *
 using StaticArrays
 using FastGaussQuadrature
@@ -187,14 +187,20 @@ spacescompatible(A::OrthogonalPolynomialSpace, B::OrthogonalPolynomialSpace) =
 function transform(S::OrthogonalPolynomialSpace, vals::Vector{T}) where T
     n = length(vals)
     pts, w = pointswithweights(S, n)
-    # Vandermonde matrix transposed, including weights and normalisations
-    Ṽ = Array{T}(undef, n, n)
+    getopptseval(S, n-1, pts)
+    cfs = zeros(n)
     for k = 0:n-1
-        pk = Fun(S, [zeros(k); 1])
-        nrm = sum([pk(pts[j])^2 * w[j] for j = 1:n])
-        Ṽ[k+1, :] = pk.(pts) .* w / nrm
+        cfs[k+1] = inner2(S, opevalatpts(S, k+1, pts), vals, w) / getopnorm(S)
     end
-    Ṽ * vals
+    cfs
+    # # Vandermonde matrix transposed, including weights and normalisations
+    # Ṽ = Array{T}(undef, n, n)
+    # for k = 0:n-1
+    #     pk = Fun(S, [zeros(k); 1])
+    #     nrm = sum([pk(pts[j])^2 * w[j] for j = 1:n])
+    #     Ṽ[k+1, :] = pk.(pts) .* w / nrm
+    # end
+    # Ṽ * vals
 end
 
 # Inputs: OP space, coeffs of a function f for its expansion in the OPSpace OPs
@@ -202,13 +208,19 @@ end
 function itransform(S::OrthogonalPolynomialSpace, cfs::Vector{T}) where T
     n = length(cfs)
     pts, w = pointswithweights(S, n)
-    # Vandermonde matrix
-    V = Array{T}(undef, n, n)
-    for k = 0:n-1
-        pk = Fun(S, [zeros(k); 1])
-        V[:, k+1] = pk.(pts)
+    vals = zeros(n)
+    getopptseval(S, n-1, pts)
+    for k = 1:n
+        vals[k] = sum([cfs[j] * opevalatpts(S, j, pts)[k] for j = 1:n])
     end
-    V * cfs
+    vals
+    # # Vandermonde matrix
+    # V = Array{T}(undef, n, n)
+    # for k = 0:n-1
+    #     pk = Fun(S, [zeros(k); 1])
+    #     V[:, k+1] = pk.(pts)
+    # end
+    # V * cfs
 end
 
 inner(S::OrthogonalPolynomialSpace, f::Fun, g::Fun, pts, w) =
