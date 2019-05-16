@@ -552,8 +552,8 @@ function *(P::HalfDiskTransformPlan{T}, vals) where T
     @show m1, m2
 
     ret = zeros(m1)
-    # We store the norms of the OPs
-    getopnorms(P.S, N)
+    resizedata!(P.S, N)
+    getopnorms(P.S, N) # We store the norms of the OPs
     for i = 1:m2
         if i % 100 == 0
             @show m2, i
@@ -1410,34 +1410,38 @@ function operatorclenshawmatrixBmG(S::HalfDiskSpace{<:Any, <:Any, T}, A, id, Jx,
     end
     B
 end
-function operatorclenshaw(cfs, S::HalfDiskSpace)
+function operatorclenshaw(cfs, S::HalfDiskSpace, N)
+    # Outputs the operator NxN-blocked matrix operator corresponding to the
+    # function f given by its coefficients of its expansion in the space S
     m̃ = length(cfs)
-    N = -1 + Int(round(sqrt(1+2(m̃-1))))
-    resizedata!(S, N+1)
-    m = Int((N+1)*(N+2)/2)
-    Jx = sparse(jacobix(S, N))
-    Jy = sparse(jacobiy(S, N))
-    if m̃ < m
+    M = getnk(m̃)[1] # Degree of f
+    m = getopindex(M, M)
+    if m̃ < getopindex(M, M)
+        # Pad cfs to correct size
         resize!(cfs, m)
         cfs[m̃+1:end] .= 0.0
     end
+    resizedata!(S, M)
+    Jx = sparse(jacobix(S, M))
+    Jy = sparse(jacobiy(S, M))
+
     @show "Operator Clenshaw"
     P0 = 1.0
-    if N == 0
+    if M == 0
         return cfs[1] * id * P0
     end
     id = sparse(I, size(Jx))
-    if N == 1
+    if M == 1
         P0 * (operatorclenshawvector(S, cfs[1], id)[1] - (operatorclenshawmatrixDT(S, S.DT[1], id) * operatorclenshawmatrixBmG(S, S.B[1], id, Jx, Jy))[1])
     end
-    n = N; @show "Operator Clenshaw", N, n
-    inds2 = m-N:m
+    n = M; @show "Operator Clenshaw", N, n
+    inds2 = m-M:m
     γ2 = operatorclenshawvector(S, view(cfs, inds2), id)
-    n = N - 1; @show "Operator Clenshaw", N, n
-    inds1 = (m-2N):(m-N-1)
+    n = M - 1; @show "Operator Clenshaw", M, n
+    inds1 = (m-2M):(m-M-1)
     γ1 = (operatorclenshawvector(S, view(cfs, inds1), id)
-        - γ2 * operatorclenshawmatrixDT(S, S.DT[N], id) * operatorclenshawmatrixBmG(S, S.B[N], id, Jx, Jy))
-    for n = N-2:-1:0
+        - γ2 * operatorclenshawmatrixDT(S, S.DT[M], id) * operatorclenshawmatrixBmG(S, S.B[M], id, Jx, Jy))
+    for n = M-2:-1:0
         @show "Operator Clenshaw", N, n
         ind = sum(1:n)
         γ = (operatorclenshawvector(S, view(cfs, ind+1:ind+n+1), id)
@@ -1446,10 +1450,20 @@ function operatorclenshaw(cfs, S::HalfDiskSpace)
         γ2 = copy(γ1)
         γ1 = copy(γ)
     end
-    (γ1 * P0)[1]
+    # Resize the resulting operator to be sum(1:N+1)xsum(1:N+1)
+    if N > M
+        nn = getopindex(N, N)
+        ret = spzeros(nn, nn)
+        view(ret, 1:m, 1:m) .= (γ1 * P0)[1]
+    else
+        ret = (γ1 * P0)[1]
+    end
+    ret
 end
-operatorclenshaw(f::Fun, S::HalfDiskSpace) = operatorclenshaw(f.coefficients, S)
-operatorclenshaw(f::Fun, S::HalfDiskSpace, N) = operatorclenshaw(resizecoeffs!(f, N), S)
+operatorclenshaw(f::Fun, S::HalfDiskSpace) = operatorclenshaw(f.coefficients, S, getnk(ncoefficients(f))[1])
+operatorclenshaw(f::Fun, S::HalfDiskSpace, N) = operatorclenshaw(f.coefficients, S, N)
+operatorclenshaw(f::Fun) = operatorclenshaw(f, f.space)
+operatorclenshaw(f::Fun, N) = operatorclenshaw(f, f.space, N)
 
 
 # Method to gather and evaluate the ops of space S at the transform pts given

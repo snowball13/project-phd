@@ -99,10 +99,10 @@ end
 end # NOTE: Fun(f, S) is a λ function, and not a Fun
 
 @testset "Evaluation for HalfDiskSpace (transform())" begin
-    n = 10; a = 0.5; b = 1.5
+    n = 10; a = 1.0; b = 2.0
     f = (x,y) -> y*x^2 + x
-    F = HalfDiskFamily()
-    S = F(a, b)
+    D = HalfDiskFamily()
+    S = D(a, b)
     pts = points(S, n)
     vals = [f(pt...) for pt in pts]
     cfs = transform(S, vals)
