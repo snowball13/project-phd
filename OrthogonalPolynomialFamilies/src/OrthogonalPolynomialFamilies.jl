@@ -511,18 +511,18 @@ function getopnorms(S::HalfDiskSpace{<:Any, <:Any, T}, k) where T
         resize!(S.opnorms, k+1)
         P = S.family.P(S.b, S.b)
         getopnorm(P)
-        # TODO: This is hardcoded, need to find a better way
-        # Doing H(S.a, S.b + k + 0.5) for large k leads to H.weight
-        # reaching maximum number of coefficients when calculating due to
-        # BigFloats
-        X = Fun(T(0)..1)
-        W1 = X^T(S.a) * (1-X^2)^(T(S.b)+0.5)
-        W = W1 * (1-X^2)^m
+        # # TODO: This is hardcoded, need to find a better way
+        # # Doing H(S.a, S.b + k + 0.5) for large k leads to H.weight
+        # # reaching maximum number of coefficients when calculating due to
+        # # BigFloats
+        # X = Fun(T(0)..1)
+        # W1 = X^T(S.a) * (1-X^2)^(T(S.b)+0.5)
+        # W = W1 * (1-X^2)^m
         for j = m+1:k+1
-            # H = S.family.H(S.a, S.b + k + 0.5)
-            # S.opnorms[j] = getopnorm(H) * P.opnorm[1]
-            S.opnorms[j] = sum(W) * P.opnorm[1]
-            W = W * (1-X^2)
+            H = S.family.H(S.a, S.b + j - 1 + 0.5)
+            S.opnorms[j] = getopnorm(H) * P.opnorm[1]
+            # S.opnorms[j] = sum(W) * P.opnorm[1]
+            # W = W * (1-X^2)
         end
     end
     S
