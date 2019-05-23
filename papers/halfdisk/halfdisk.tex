@@ -32,6 +32,7 @@
 %\bibliographystyle{elsarticle-harv}
 \bibliographystyle{plain}
 
+\newcommand{\bigO}{\mathcal{O}}
 \newcommand{\half}{\frac{1}{2}}
 \newcommand{\R}{\mathbb{R}}
 \newcommand{\C}{\mathbb{C}}
@@ -40,7 +41,7 @@
 \newcommand{\No}{\mathbb{N}_0}
 \newcommand{\Ylm}{Y^m_l}
 \newcommand{\Ylmfull}{Y^m_l(\theta,\varphi)}
-\newcommand{\Plm}{P^m_l}
+\newcommand{\Plm}{\jac^m_l}
 \newcommand{\costheta}{\cos\theta}
 \newcommand{\sintheta}{\sin\theta}
 \newcommand{\cosphi}{\cos\varphi}
@@ -135,12 +136,14 @@
 \newcommand{\bighdopoo}{{\mathbb{\hdop}^{(0,0)}}}
 \newcommand{\hdopoi}{\hdop^{(0,1)}}
 \newcommand{\hdopio}{\hdop^{(1,0)}}
+\newcommand{\jac}{{\tilde P}}
 \newcommand{\genjac}{R}
 \newcommand{\genjacnmk}{\genjac_{n-k}}
 \newcommand{\genjacmmj}{\genjac_{m-j}}
 \newcommand{\genjacw}{w_\genjac}
+\newcommand{\jacw}{w_\jac}
 \newcommand{\normgenjac}{\omega_\genjac}
-\newcommand{\normjac}{\omega_P}
+\newcommand{\normjac}{\omega_\jac}
 
 
 \newcommand{\dx}{\frac{\partial}{\partial x}}
@@ -262,42 +265,42 @@ are orthogonal polynomials with respect to the weight \(W(x,y) := w_1(x) \: w_2(
 \end{proposition}
 
 
-For disk slices and trapeziums, we  specialise  Proposition \ref{prop:construction} in the following definition.
+For disk slices and trapeziums, we specialise Proposition \ref{prop:construction} in the following definition.
 \begin{definition}\label{def:construction}
 Let
 \begin{align*}
 	\Omega := \{(x,y) \in \R^2 \quad | \quad \alpha < x < \beta, \: \gamma \rho(x) < y < \delta \rho(x)\}
 \end{align*}
-with $\rho : (\alpha, \beta) \to \R$. Further, let $\genjacw^{(a,b,c)}(x)$ and $w^{(a,b)}_P(x)$ be two weight functions on the intervals $(\alpha, \beta)$ and $(\gamma, \delta)$ respectively, given by:
+with $\rho : (\alpha, \beta) \to \R$. Further, let $\genjacw^{(a,b,c)}(x)$ and $\jacw^{(a,b)}(x)$ be two weight functions on the intervals $(\alpha, \beta)$ and $(\gamma, \delta)$ respectively, given by:
 \begin{align*}
 \begin{cases}
 \genjacw^{(a,b,c)}(x) &:= (\beta - x)^a \: (x - \alpha)^{b} \: \rho(x)^{c} \\
-w^{(a,b)}_P(x) &:= (\delta-x)^a \: (x - \gamma)^b
+\jacw^{(a,b)}(x) &:= (\delta-x)^a \: (x - \gamma)^b
 \end{cases}
 \end{align*}
 and define the associated inner products by:
 \begin{align}
 	\ip< p, \: q >_{\genjacw^{(a,b,c)}} &:= \frac{1}{\normgenjac^{(a,b,c)}} \: \int_\alpha^\beta p(x) \: q(x) \: \genjacw^{(a,b,c)}(x) \: \D x \label{eqn:ipgenjac} \\
-	\ip<p, q>_{w_P^{(a,b)}} &:= \frac{1}{\normjac^{(a,b)}} \: \int_\gamma^\delta p(y) \: q(y) \: w_P^{(a,b)}(y)\: \D y \label{eqn:ipjac}
+	\ip<p, q>_{\jacw^{(a,b)}} &:= \frac{1}{\normjac^{(a,b)}} \: \int_\gamma^\delta p(y) \: q(y) \: \jacw^{(a,b)}(y)\: \D y \label{eqn:ipjac}
 \end{align}
 where
 \begin{align}
-	\normgenjac^{(a,b,c)} := \int_\alpha^\beta \: \genjacw^{(a,b,c)}(x) \: \D x, \quad \normjac^{(a,b)} := \int_\gamma^\delta \: w_P^{(a,b)}(y) \: \D y. \label{eqn:ipnormalisations}
+	\normgenjac^{(a,b,c)} := \int_\alpha^\beta \: \genjacw^{(a,b,c)}(x) \: \D x, \quad \normjac^{(a,b)} := \int_\gamma^\delta \: \jacw^{(a,b)}(y) \: \D y. \label{eqn:ipnormalisations}
 \end{align}
-Further, denote the three-parameter family of orthonormal polynomials on $[\alpha,\beta]$ by $\{\genjac_n^{(a,b,c)}\}$, orthonormal with respect to the inner product defined in (\ref{eqn:ipgenjac}), and the two-parameter family of orthonormal polynomials on $[\gamma,\delta]$ by $\{P_n^{(a,b)}\}$, orthonormal with respect to the inner product defined in (\ref{eqn:ipjac}).
+Further, denote the three-parameter family of orthonormal polynomials on $[\alpha,\beta]$ by $\{\genjac_n^{(a,b,c)}\}$, orthonormal with respect to the inner product defined in (\ref{eqn:ipgenjac}), and the two-parameter family of orthonormal polynomials on $[\gamma,\delta]$ by $\{\jac_n^{(a,b)}\}$, orthonormal with respect to the inner product defined in (\ref{eqn:ipjac}).
 
 Assume that either of the following hold:
 \begin{enumerate}
 \item  \(\rho\) is a degree 1 polynomial, or 
-\item \(\rho\) is the square root of a non-negative degree \(\le\) 2 polynomial, \(-\gamma = \delta > 0\), and \(w^{(a,b)}_P\) is an even function (i.e. $a = b$, and we can hence denote the weight as $w^{(a)}_P(x) = w^{(a,a)}_P(x) =  (\delta-x^2)^a$).
+\item \(\rho\) is the square root of a non-negative degree \(\le\) 2 polynomial, \(-\gamma = \delta > 0\), and \(\jacw^{(a,b)}\) is an even function (i.e. $a = b$, and we can hence denote the weight as $\jacw^{(a)}(x) = w^{(a,a)}_P(x) =  (\delta-x^2)^a$).
 \end{enumerate}
 We define the four-parameter 2D orthogonal polynomials on $\Omega$ by
 \begin{align*}
-	\hdopnk^{(a,b,c,d)}(x,y) := \genjacnmk^{(a, b, c+d+2k+1)}(x) \: \rho(x)^k \: P_k^{(d,c)}(\frac{y}{\rho(x)}), \quad (x,y) \in \Omega, 
+	\hdopnk^{(a,b,c,d)}(x,y) := \genjacnmk^{(a, b, c+d+2k+1)}(x) \: \rho(x)^k \: \jac_k^{(d,c)}(\frac{y}{\rho(x)}), \quad (x,y) \in \Omega, 
 \end{align*}
 which are orthogonal with respect to the weight
 \begin{align*}
-	W^{(a,b,c,d)}(x,y) := \genjacw^{(a,b,c+d)}(x) \: w_P^{(d,c)}(\frac{y}{\rho(x)}), \quad (x,y) \in \Omega,
+	W^{(a,b,c,d)}(x,y) := \genjacw^{(a,b,c+d)}(x) \: \jacw^{(d,c)}(\frac{y}{\rho(x)}), \quad (x,y) \in \Omega,
 \end{align*}
 that is,
 \begin{align*}
@@ -316,25 +319,25 @@ For the half disk, the weight $W^{(a,b)}(x,y) = x^a \: (1-x^2-y^2)^b$ results fr
 (\gamma,\delta) &:= (-1,1) \\
 \rho(x) &:= (1-x^2)^{\half} \\
 w_1(x) &:= \genjacw^{(a,b)}(x) := x^a \: (1-x^2)^b \\
-w_2(x) &:= w_P^{(b)}(x) := (1-x^2)^b = (1-x)^b \: (1+x)^b,
+w_2(x) &:= \jacw^{(b)}(x) := (1-x^2)^b = (1-x)^b \: (1+x)^b,
 \end{cases}
 \end{align*}
 Note here we have made the adjustment that $\genjacw^{(a,b,c)}(x) = (\beta - x)^a \: (x - \alpha)^{b} \: \rho(x)^{2c}$ and simply set the first parameter to zero and removed it for the specific half-disk case. This is for ease of presentiation, by ensuring we reduce the need to incorporate unnecessary parameters and instead yield a two-parameter family of 2D orthogonal polynomials. 
 
-The weight $w_P(x)$ is an ultraspherical weight, and the corresponding OPs are the normalized Jacobi polynomials  $\{\tilde P_n^{(b, b)}\}$ \sotodo{Change $P_n -> \tilde P_n$ everywhere}. The weight $w_R(x)$ is non-classical (it is in fact semi-classical, and is equivalent to a generalized Jacobi weight \cite[\S5]{magnus1995painleve}) and we introduce the notation $\{\genjac_n^{(a, b)}\}$ for the orthogonal polynomials. The two 1D families of orthogonal polynomials we have denoted $\{\genjac_{n}^{(a,b)}\}$ and $\{P_n^{(b,b)}\}$ are orthonormal, with respect to the inner products respectively given by:
+The weight $\jacw(x)$ is an ultraspherical weight, and the corresponding OPs are the normalized Jacobi polynomials $\jac_n^{(b, b)}\}$. The weight $w_R(x)$ is non-classical (it is in fact semi-classical, and is equivalent to a generalized Jacobi weight \cite[\S5]{magnus1995painleve}) and we introduce the notation $\{\genjac_n^{(a, b)}\}$ for the orthogonal polynomials. The two 1D families of orthogonal polynomials we have denoted $\{\genjac_{n}^{(a,b)}\}$ and $\{\jac_n^{(b,b)}\}$ are orthonormal, with respect to the inner products respectively given by:
 \begin{align*}
 	\ip< p, \: q >_{\genjacw^{(a,b)}} &:= \frac{1}{\normgenjac^{(a,b)}} \: \int_0^1 p(x) \: q(x) \: \genjacw^{(a,b)}(x) \: \D x, \\
-	\ip<p, q>_{w_P^{(b)}} &:= \frac{1}{\normjac^{(b)}} \: \int_{-1}^1 p(y) \: q(y) \: w_P^{(b)}(y)\: \D y,
+	\ip<p, q>_{\jacw^{(b)}} &:= \frac{1}{\normjac^{(b)}} \: \int_{-1}^1 p(y) \: q(y) \: \jacw^{(b)}(y)\: \D y,
 \end{align*}
-i.e. $\norm{\genjac_{n}^{(a,b)}}_{\genjacw^{(a,b)}} = 1$ $\forall n = 0,1,2,\dots$ and $\norm{P_{n}^{(b,b)}}_{w_P^{(b)}} = 1$ $\forall n = 0,1,2,\dots$. For clarity, we use the notation that $\norm{p}_{\genjacw^{(a,b)}}^2 := \ip<p, p>_{\genjacw^{(a,b)}}$ and that $\norm{p}_{w_P^{(b)}}^2 := \ip<p, p>_{w_P^{(b)}}$.
+i.e. $\norm{\genjac_{n}^{(a,b)}}_{\genjacw^{(a,b)}} = 1$ $\forall n = 0,1,2,\dots$ and $\norm{\jac_{n}^{(b,b)}}_{\jacw^{(b)}} = 1$ $\forall n = 0,1,2,\dots$. For clarity, we use the notation that $\norm{p}_{\genjacw^{(a,b)}}^2 := \ip<p, p>_{\genjacw^{(a,b)}}$ and that $\norm{p}_{\jacw^{(b)}}^2 := \ip<p, p>_{\jacw^{(b)}}$.
 
 Thus we arrive at a two parameter family of 2D orthogonal polynomials $\{\hdopnkab\}$ given by, for $0 \le k \le n, \: n = 0,1,2,\dots,$
 \begin{align}\label{eq:diskpolys}
-	\hdopnk^{(a,b)}(x,y) := \genjacnmk^{(a, b+k+\half)}(x) \: \rho(x)^k \: P_k^{(b,b)}\fpr(\frac{y}{\rho(x)}), \quad (x,y) \in \Omega, 
+	\hdopnk^{(a,b)}(x,y) := \genjacnmk^{(a, b+k+\half)}(x) \: \rho(x)^k \: \jac_k^{(b,b)}\fpr(\frac{y}{\rho(x)}), \quad (x,y) \in \Omega, 
 \end{align}
 orthogonal on $\Omega$ with respect to the weight
 \begin{align*}
-	W^{(a,b)}(x,y) = \genjacw^{(a,b)}(x) \: w_P^{(b)}\fpr(\frac{y}{\rho(x)}) =  \frac{x^a \: (1-x^2-y^2)^b}{\normgenjac^{(a,b)} \normjac^{(b)}}.
+	W^{(a,b)}(x,y) = \genjacw^{(a,b)}(x) \: \jacw^{(b)}\fpr(\frac{y}{\rho(x)}) =  \frac{x^a \: (1-x^2-y^2)^b}{\normgenjac^{(a,b)} \normjac^{(b)}}.
 \end{align*}
 That is, they are orthogonal (for given parameters $a,b$) with respect to the inner product given by
 \begin{align*}
@@ -343,9 +346,9 @@ That is, they are orthogonal (for given parameters $a,b$) with respect to the in
 We can see that they are indeed orthogonal using the change of variable $t = \frac{y}{\rho(x)}$:
 \begin{align}
 	\ip< \hdopnkab, \: \hdopmjab >_\Wab &=  \iint_\Omega \: \Big[ \genjacnmk^{(a,b+k+\half)}(x) \: \genjacmmj^{(a,b+j+\half)}(x) \: \rho(x)^{k+j}  \nonumber \\
-		&\quad \quad \quad \quad \quad \quad \cdot \: P_k^{(b,b)}\fpr(\frac{y}{\rho(x)}) \: P_j^{(b,b)}\fpr(\frac{y}{\rho(x)})  \: \Wab(x,y) \Big] \: \D y \: \D x \nonumber \\
+		&\quad \quad \quad \quad \quad \quad \cdot \: \jac_k^{(b,b)}\fpr(\frac{y}{\rho(x)}) \: \jac_j^{(b,b)}\fpr(\frac{y}{\rho(x)})  \: \Wab(x,y) \Big] \: \D y \: \D x \nonumber \\
 	&= \Big( \int_\alpha^\beta \: {\genjacnmk^{(a,b+k+\half)}}(x) \: {\genjacmmj^{(a,b+j+\half)}}(x) \: \genjacw^{(a,b+\half(k+j+1))}(x) \: \D x \Big) \nonumber \\
-	&\quad \quad \quad \quad \quad \quad \cdot \: \Big( \int_\gamma^\delta \: {P_k^{(b,b)}}(t) \:  {P_j^{(b,b)}}(t) \: w_P^{(b)}(t) \: \D t \Big) \nonumber \\
+	&\quad \quad \quad \quad \quad \quad \cdot \: \Big( \int_\gamma^\delta \: {\jac_k^{(b,b)}}(t) \:  {\jac_j^{(b,b)}}(t) \: \jacw^{(b)}(t) \: \D t \Big) \nonumber \\
 	&= \normjac^{(b)} \: \delta_{k,j} \: \int_\alpha^\beta \: {\genjacnmk^{(a,b+k+\half)}}(x) \: {\genjac_{m-k}^{(a,b+k+\half)}}(x) \: \genjacw^{(a,b+k+\half)}(x) \: \D x \nonumber \\ 
 	&= \normgenjac^{(a,b+k+\half)} \: \normjac^{(b)} \: \delta_{n,m} \: \delta_{k,j}. \label{eqn:normhdop}
 \end{align}
@@ -354,10 +357,10 @@ Again, for clarity we will use the notation that for $p : \Omega \to \R$, $\norm
 
 \subsection{Jacobi matrices}
 
-We can express the three-term recurrences associated to $\genjac_n^{(a,b)}$ and $P_n^{(b,b)}$ as 
+We can express the three-term recurrences associated to $\genjac_n^{(a,b)}$ and $\jac_n^{(b,b)}$ as 
 \begin{align}
 	x \genjac_n^{(a,b)}(x) &= \beta_n^{(a,b)} \genjac_{n+1}^{(a,b)}(x) + \alpha_n^{(a,b)} \genjac_n^{(a,b)}(x) + \beta_{n-1}^{(a,b)} \genjac_{n-1}^{(a,b)}(x) \label{eqn:Hrecurrence} \\
-	y P_n^{(b,b)}(y) &= \delta_n^{(b)} P_{n+1}^{(b,b)}(y) + \gamma_n^{(b)} P_n^{(b,b)}(y) + \delta_{n-1}^{(b)} P_{n-1}^{(b,b)}(y),
+	y \jac_n^{(b,b)}(y) &= \delta_n^{(b)} \jac_{n+1}^{(b,b)}(y) + \gamma_n^{(b)} \jac_n^{(b,b)}(y) + \delta_{n-1}^{(b)} \jac_{n-1}^{(b,b)}(y),
 \end{align}
 where we note that \(\gamma_n^{(b)} = 0\), for \( n = 0,1,2,\dots\). We can use these to determine the 2D recurrences for $\hdopnkab(x,y)$. Importantly, we can deduce sparsity in the recurrence relationships:
 
@@ -392,9 +395,9 @@ Recall from equation (\ref{eqn:normhdop}) that $\norm{\hdopmjab}_{\Wab}^2 = \nor
 \begin{align*}
 	\ip<y \hdopnkab, \hdopmjab>_\Wab &=  \iint_\Omega \hdopnkab(x,y) \: \hdopmjab(x,y) \: y \: \Wab(x,y) \: dy \: dx \\
 	&= \Big( \int^1_0 \genjacnmk^{(a, b+k+\half)}(x) \: \genjacmmj^{(a, b+j+\half)}(x) \: \rho(x)^{k+j+2} \: \genjacw^{(a, b)}(x) \: \D x \Big) \nonumber \\
-	& \quad \quad \quad\cdot \: \Big( \int^1_{-1} P_k^{(b,b)}(t) \: P_j^{(b,b)}(t) \: t \: w_P^{(b)}(t) \: \D t \Big) \\
+	& \quad \quad \quad\cdot \: \Big( \int^1_{-1} \jac_k^{(b,b)}(t) \: \jac_j^{(b,b)}(t) \: t \: \jacw^{(b)}(t) \: \D t \Big) \\
 	&= \Big( \int^1_0 \genjacnmk^{(a, b+k+\half)}(x) \: \genjacmmj^{(a, b+j+\half)}(x) \: \genjacw^{(a, b+1+\half(k+j))}(x) \: \D x \Big) \nonumber \\
-	& \quad \quad \quad\cdot \: \Big( \int^1_{-1} P_k^{(b,b)}(t) \: P_j^{(b,b)}(t) \: t \: w_P^{(b)}(t) \: \D t \Big)
+	& \quad \quad \quad\cdot \: \Big( \int^1_{-1} \jac_k^{(b,b)}(t) \: \jac_j^{(b,b)}(t) \: t \: \jacw^{(b)}(t) \: \D t \Big)
 \end{align*}
 \begin{align*}
 	=
@@ -502,7 +505,7 @@ We can combine each system in (\ref{eqn:jacobimatricesdefinition}) into a block-
 	\hdopab_{0,0} \\ 0 \\ 0 \\ \vdots \\ 0 \\
 \end{pmatrix},
 \end{align*}
-where we note $\hdopab_{0,0}(x,y) \equiv \genjac_0^{(a,b)} \: P_0^{(b,b)}$, and for each $n = 0,1,2\dots$,
+where we note $\hdopab_{0,0}(x,y) \equiv \genjac_0^{(a,b)} \: \jac_0^{(b,b)}$, and for each $n = 0,1,2\dots$,
 \begin{align*}
 A_n &:= \begin{pmatrix}
 		A^x_n \\
@@ -526,7 +529,7 @@ For each $n = 0,1,2\dots$ let $\Dnt$ be any matrix that is a left inverse of $A_
 \begin{align*}
 \begin{cases}
 \bighdopab_{-1}(x,y) := 0 \\
-\bighdopab_{0}(x,y) := P^{(a,b)}_{0,0} \\
+\bighdopab_{0}(x,y) := \jac^{(a,b)}_{0,0} \\
 \bighdopab_{n+1}(x,y) = -\Dnt (B_n-G_n(x,y)) \bighdopab_n(x,y) - \Dnt C_n  \,\bighdopab_{n-1}(x,y), \quad n = 0,1,2,\dots.
 \end{cases}
 \end{align*}
@@ -605,7 +608,7 @@ It follows that we can apply $\Dnt$ in $O(n)$ complexity, and thereby calculate 
 \draw[] (-2.7,3.6) node[anchor=south] {$b$};
 \draw[] (2,4.6) node[anchor=south] {basis conversion};
 \end{tikzpicture} 
-\caption{The Laplace operator acting on vectors of $\hdop_{n,k}=\hdop_{n,k}^{(0,0)}$ coefficients has a sparse matrix representation if the range is represented as vectors of $\smash{P^{(2,2)}_{n,k}}$ coefficients. Here, the arrows indicate that the corresponding operation has a sparse matrix representation when the domain is $\smash{\hdopnkab}$ coefficients, where $(a,b)$ is at the tail of the arrow, and the range is $\smash{\hdop_{n,k}^{(\tilde{a},\tilde{b})}}$ coefficients, where $(\tilde{a},\tilde{b})$ is at the head of the arrow. %For example, $\smash{\frac{\partial}{\partial x}}$ has a sparse matrix representation when the domain is represented in $\smash{\hdop_{n,k}^{(0,0,0)}}$ (resp.~$\smash{\hdop_{n,k}^{(1,0,1)}}$) and the range in $\smash{\hdop_{n,k}^{(1,0,1)}}$ (resp.~$\smash{\hdop_{n,k}^{(2,0,2)}}$).
+\caption{The Laplace operator acting on vectors of $\hdop_{n,k}=\hdop_{n,k}^{(0,0)}$ coefficients has a sparse matrix representation if the range is represented as vectors of $\smash{\jac^{(2,2)}_{n,k}}$ coefficients. Here, the arrows indicate that the corresponding operation has a sparse matrix representation when the domain is $\smash{\hdopnkab}$ coefficients, where $(a,b)$ is at the tail of the arrow, and the range is $\smash{\hdop_{n,k}^{(\tilde{a},\tilde{b})}}$ coefficients, where $(\tilde{a},\tilde{b})$ is at the head of the arrow. %For example, $\smash{\frac{\partial}{\partial x}}$ has a sparse matrix representation when the domain is represented in $\smash{\hdop_{n,k}^{(0,0,0)}}$ (resp.~$\smash{\hdop_{n,k}^{(1,0,1)}}$) and the range in $\smash{\hdop_{n,k}^{(1,0,1)}}$ (resp.~$\smash{\hdop_{n,k}^{(2,0,2)}}$).
 }
 \label{fig:Laplace} 
 \end{figure}
@@ -615,7 +618,7 @@ Denote the weighted OPs by
 \bigWab(x,y) := \Wab(x,y) \bighdopab(x,y).
 \end{align*}
 
-Recall that a function $f(x,y)$ defined on $\Omega$ is approximated by its expansion $f(x,y) = \bighdopab(x,y)^\top \mathbf{f}$. Recall also that $\Wab(x,y) := \genjacw^{(a,b)}(x) \: w_P^{(b)}(\frac{y}{\rho(x)})$, where $\rho(x) := (1-x^2)^\half$, $\genjacw^{(a,b)}(x) := x^a \: (1-x^2)^b$ and $w_P^{(b)}(y) := (1-y^2)^b$ for the half disk case.
+Recall that a function $f(x,y)$ defined on $\Omega$ is approximated by its expansion $f(x,y) = \bighdopab(x,y)^\top \mathbf{f}$. Recall also that $\Wab(x,y) := \genjacw^{(a,b)}(x) \: \jacw^{(b)}(\frac{y}{\rho(x)})$, where $\rho(x) := (1-x^2)^\half$, $\genjacw^{(a,b)}(x) := x^a \: (1-x^2)^b$ and $\jacw^{(b)}(y) := (1-y^2)^b$ for the half disk case.
 
 \begin{definition}\label{def:differentialoperators}
 Define the operator matrices $D_x^{(a,b)}, \: D_y^{(a,b)}, \: W_x^{(a,b)}, \: W_y^{(a,b)}$ according to:
@@ -630,33 +633,40 @@ Define the operator matrices $D_x^{(a,b)}, \: D_y^{(a,b)}, \: W_x^{(a,b)}, \: W_
 The incrementing and decrementing of parameters as seen here is analogous to other well known orthogonal polynomial families' derivatives, for example the Jacobi polynomials on the interval, as seen in the DLMF \cite[(18.9.3)]{DLMF}, and on the triangle \cite{olver2018recurrence}.
 
 \begin{theorem}\label{theorem:sparsityofdifferentialoperators}
-The operator matrices $D_x^{(a,b)}, \: D_y^{(a,b)}, \: W_x^{(a,b)}, \: W_y^{(a,b)}$ from Definition \ref{def:differentialoperators} are sparse, with banded-block-banded structure. \sotodoinline{Give block-bandwidths}
+The operator matrices $D_x^{(a,b)}, \: D_y^{(a,b)}, \: W_x^{(a,b)}, \: W_y^{(a,b)}$ from Definition \ref{def:differentialoperators} are sparse, with banded-block-banded structure. More specifically:
+\begin{itemize}
+	\item $D_x^{(a,b)}$ has a block-bandwidth of $(-1,2)$, with the blocks themselves having a bandwidth of $(0, 2)$.
+  	\item $D_y^{(a,b)}$ has a block-bandwidth of $(-1,1)$, with the blocks themselves having a bandwidth of $(-1,1)$.
+	\item $W_x^{(a,b)}$ has a block-bandwidth of $(2,-1)$, with the blocks themselves having a bandwidth of $(2, 0)$.
+  	\item $W_y^{(a,b)}$ has a block-bandwidth of $(1,-1)$, with the blocks themselves having a bandwidth of $(1,-1)$.
+\end{itemize}
 \end{theorem}
 
 \begin{proof}
 First, note that:
 \begin{align}
 	\genjacw^{(a,b) \: \prime}(x) &= a \: \genjacw^{(a-1,b)}(x) - 2b \: \genjacw^{(a+1,b-1)}(x), \label{eqn:derivativeofweightgenjac} \\
-	w_P^{(b) \: \prime}(y) &= - 2b \: y \: w_P^{(b-1)}(y), \label{eqn:derivativeofweightjac}
+	\jacw^{(b) \: \prime}(y) &= - 2b \: y \: \jacw^{(b-1)}(y), \label{eqn:derivativeofweightjac}
 \end{align}
 
-We proceed with the case for the operator $D_y^{(a,b)}$ for partial differentiation by $y$. Since $\{\hdop^{(a, b+1)}_{m,j}\}$ for $m = 0,\dots,n-1$, $j = 0,\dots,m$ is an orthogonal basis for any degree $n-1$ polynomial, we can expand $\pddy \hdopnkab = \sum_{m=0}^{n-1} \sum_{j=0}^m c_{m,j} \: \hdop^{(a, b+1)}_{m,j}$. The coefficients of the expansion are then the entries of the relevant operator matrix. We can use an integration-by-parts argument to show that the only non-zero coefficient of this expansion is when $m = n-1$, $j = k-1$. First, note that\sotodo{Maybe $c_{m,j}^ys$ to avoid confusion}
+We proceed with the case for the operator $D_y^{(a,b)}$ for partial differentiation by $y$. Since $\{\hdop^{(a, b+1)}_{m,j}\}$ for $m = 0,\dots,n-1$, $j = 0,\dots,m$ is an orthogonal basis for any degree $n-1$ polynomial, we can expand $\pddy \hdopnkab = \sum_{m=0}^{n-1} \sum_{j=0}^m c_{m,j} \: \hdop^{(a, b+1)}_{m,j}$. The coefficients of the expansion are then the entries of the relevant operator matrix. We can use an integration-by-parts argument to show that the only non-zero coefficient of this expansion is when $m = n-1$, $j = k-1$. First, note that
 \begin{align*}
-	c_{m,j} = {\ip<\pddy \hdopnkab, \hdop^{(a, b+1)}_{m,j} >_{W^{(a, b+1)}}}{\norm{\hdop^{(a, b+1)}_{m,j}}^{-2}_{W^{(a, b+1)}}}.
+	c_{m,j}^y = {\ip<\pddy \hdopnkab, \hdop^{(a, b+1)}_{m,j} >_{W^{(a, b+1)}}}{\norm{\hdop^{(a, b+1)}_{m,j}}^{-2}_{W^{(a, b+1)}}}.
 \end{align*}
 Then, using the change of variable $t = \frac{y}{\rho(x)}$, we have that
 \begin{align*}
-	\ip<\pddy \hdopnkab, \hdop^{(a, b+1)}_{m,j} >_{W^{(a, b+1)}} &= \normgenjac^{(a, b+1)} \: \ip< \genjacnmk^{(a,b+k+\half)}, \rho(x)^{k+j} \: \genjacmmj^{(a,b+1+j+\half)} >_{\genjacw^{(a,b+1)}} \\
-	&\quad \quad \quad \quad \cdot \: \normjac^{(b+1)} \: \ip< P_k^{(b,b) \: \prime}, \: P_{j}^{(b+1,b+1)} >_{w_P^{(b+1)}} \\
-	&= \normgenjac^{(a, b+1+\half(k+j))} \: \normgenjac^{(a, b+1)} \: \ip< \genjacnmk^{(a,b+k+\half)}, \genjacmmj^{(a,b+1+j+\half)} >_{\genjacw^{(a,b+1+\half(k+j))}} \\
-		&\quad \quad \quad \quad \cdot \: \normjac^{(b+1)} \: \ip< P_k^{(b,b) \: \prime}, \: P_{j}^{(b+1,b+1)} >_{w_P^{(b+1)}}.
+	&\ip<\pddy \hdopnkab, \hdop^{(a, b+1)}_{m,j} >_{W^{(a, b+1)}} \\
+	&\quad \quad = \normgenjac^{(a, b+1)} \: \ip< \genjacnmk^{(a,b+k+\half)}, \rho(x)^{k+j} \: \genjacmmj^{(a,b+1+j+\half)} >_{\genjacw^{(a,b+1)}} \\
+	&\quad \quad \quad \quad \quad \quad \cdot \: \normjac^{(b+1)} \: \ip< \jac_k^{(b,b) \: \prime}, \: \jac_{j}^{(b+1,b+1)} >_{\jacw^{(b+1)}} \\
+	&\quad \quad = \normgenjac^{(a, b+1+\half(k+j))} \: \normgenjac^{(a, b+1)} \: \ip< \genjacnmk^{(a,b+k+\half)}, \genjacmmj^{(a,b+1+j+\half)} >_{\genjacw^{(a,b+1+\half(k+j))}} \\
+		&\quad \quad \quad \quad \quad \quad \cdot \: \normjac^{(b+1)} \: \ip< \jac_k^{(b,b) \: \prime}, \: \jac_{j}^{(b+1,b+1)} >_{\jacw^{(b+1)}}.
 \end{align*}
-Now, using (\ref{eqn:derivativeofweightjac}), integration-by-parts, and noting that the weight $w_P^{(b)}$ is a polynomial degree $2b$ and vanishes at the limits of the integral for positive parameter $b$, we have that
+Now, using (\ref{eqn:derivativeofweightjac}), integration-by-parts, and noting that the weight $\jacw^{(b)}$ is a polynomial degree $2b$ and vanishes at the limits of the integral for positive parameter $b$, we have that
 \begin{align*}
-	\normjac^{(b+1)} \: \ip< P_k^{(b,b) \: \prime}, \: P_{j}^{(b+1,b+1)} >_{w_P^{(b+1)}} &= \int_{-1}^1 \: P_k^{(b,b) \: \prime}(y) \: P_{j}^{(b+1,b+1)}(y) \: w_P^{(b+1)}(y) \: \D y \\
-	&= - \int_{-1}^1 \: P_k^{(b,b)}(y) \: \ddy [w_P^{(b+1)}(y) \: P_{j}^{(b+1,b+1)}(y)] \: \D y \\
-	&= - \int_{-1}^1 \: P_k^{(b,b)} \: [ P_{j}^{(b+1,b+1) \: \prime} \: w_P^{(b+1)} - 2 b \: y \: P_{j}^{(b+1,b+1)} \:w_P^{(b)} ] \: \D y \\
-	&= - \: \normjac^{(b)} \: \ip< P_k^{(b,b)}, \: w_P^{(1)} \: P_{j}^{(b+1,b+1) \: \prime} -2b \:y \: P_{j}^{(b+1,b+1)} >_{w_P^{(b)}}
+	\normjac^{(b+1)} \: \ip< \jac_k^{(b,b) \: \prime}, \: \jac_{j}^{(b+1,b+1)} >_{\jacw^{(b+1)}} &= \int_{-1}^1 \: \jac_k^{(b,b) \: \prime}(y) \: \jac_{j}^{(b+1,b+1)}(y) \: \jacw^{(b+1)}(y) \: \D y \\
+	&= - \int_{-1}^1 \: \jac_k^{(b,b)}(y) \: \ddy [\jacw^{(b+1)}(y) \: \jac_{j}^{(b+1,b+1)}(y)] \: \D y \\
+	&= - \int_{-1}^1 \: \jac_k^{(b,b)} \: [ \jac_{j}^{(b+1,b+1) \: \prime} \: \jacw^{(b+1)} - 2 b \: y \: \jac_{j}^{(b+1,b+1)} \:\jacw^{(b)} ] \: \D y \\
+	&= - \: \normjac^{(b)} \: \ip< \jac_k^{(b,b)}, \: \jacw^{(1)} \: \jac_{j}^{(b+1,b+1) \: \prime} -2b \:y \: \jac_{j}^{(b+1,b+1)} >_{\jacw^{(b)}}
 \end{align*}
 which is zero for $j < k-1$. Further,
 \begin{align*}
@@ -664,26 +674,26 @@ which is zero for $j < k-1$. Further,
 \end{align*}
 showing the only possible non-zero coefficient is when $m=n-1, j=k-1$. Finally, we simply have that 
 \begin{align*}
-	c_{n-1,k-1} &= \normgenjac^{(a, b+1)} \: \ip< P_k^{(b,b) \: \prime}, \: P_{k-1}^{(b+1,b+1)} >_{w_P^{(b+1)}}.
+	c_{n-1,k-1}^y &= \normgenjac^{(a, b+1)} \: \ip< \jac_k^{(b,b) \: \prime}, \: \jac_{k-1}^{(b+1,b+1)} >_{\jacw^{(b+1)}}.
 \end{align*}
 
-We next consider the case for the operator $D_x^{(a,b)}$ for partial differentiation by $x$. Since $\{\hdop^{(a+1, b+1)}_{m,j}\}$ for $m = 0,\dots,n-1$, $j = 0,\dots,m$ is an orthogonal basis for any degree $n-1$ polynomial, we can expand $\pddx \hdopnkab = \sum_{m=0}^{n-1} \sum_{j=0}^m c_{m,j} \: \hdop^{(a+1, b+1)}_{m,j}$. The coefficients of the expansion are then the entries of the relevant operator matrix. As before, we can use an integration-by-parts argument to show that the only non-zero coefficients of this expansion are when $m = n-1, n-2$, $j = k, k-1, k-2$ and $0 \le j \le m$. First, note that\sotodo{Maybe $c_{m,j}^x$ to avoid confusion}
+We next consider the case for the operator $D_x^{(a,b)}$ for partial differentiation by $x$. Since $\{\hdop^{(a+1, b+1)}_{m,j}\}$ for $m = 0,\dots,n-1$, $j = 0,\dots,m$ is an orthogonal basis for any degree $n-1$ polynomial, we can expand $\pddx \hdopnkab = \sum_{m=0}^{n-1} \sum_{j=0}^m c_{m,j} \: \hdop^{(a+1, b+1)}_{m,j}$. The coefficients of the expansion are then the entries of the relevant operator matrix. As before, we can use an integration-by-parts argument to show that the only non-zero coefficients of this expansion are when $m = n-1, n-2$, $j = k, k-1, k-2$ and $0 \le j \le m$. First, note that
 \begin{align*}
-c_{m,j} = {\ip<\pddx \hdopnkab, \hdop^{(a+1, b+1)}_{m,j} >_{W^{(a+1, b+1)}}}{\norm{\hdop^{(a+1, b+1)}_{m,j}}^{-2}_{W^{(a+1, b+1)}}}.
+	c_{m,j}^x = {\ip<\pddx \hdopnkab, \hdop^{(a+1, b+1)}_{m,j} >_{W^{(a+1, b+1)}}}{\norm{\hdop^{(a+1, b+1)}_{m,j}}^{-2}_{W^{(a+1, b+1)}}}.
 \end{align*}
 Second, note that
 \begin{align}
 	\rho'(x) = -x \: \rho(x)^{-2}. \label{eqn:rhoderivative}
 \end{align}
-Now, using the change of variable $t= \frac{y}{\rho(x)}$ and (\ref{eqn:rhoderivative}), we have that\sotodo{Try to avoid overflow}
+Now, using the change of variable $t= \frac{y}{\rho(x)}$ and (\ref{eqn:rhoderivative}), we have that
 \begin{align*}
 	&\ip<\pddx \hdopnkab, \hdop^{(a+1, b+1)}_{m,j} >_{W^{(a+1, b+1)}} \nonumber \\ 
-	&= \normgenjac^{(a, b+\half)} \: \normjac^{(b+1)} \: \Big\{ \ip< x \: \genjacnmk^{(a, b+k+\half) \: \prime} (x), \: \rho(x)^{k+j+2} \: \genjacmmj^{(a+1, b+1+j+\half)} >_{\genjacw^{(a, b+\half)}} 
-		\: \ip< P_k^{(b,b)}, \: P_j^{(b+1,b+1)} >_{w_P^{(b+1)}}  \nonumber \\ 
-	& \quad \quad \quad - k \: \ip< x^2 \: \genjacnmk^{(a, b+k+\half)}(x), \: \rho(x)^{k+j} \: \genjacmmj^{(a+1, b+1+j+\half)} >_{\genjacw^{(a, b+\half)}} 
-		\: \ip< P_k^{(b,b)}, \: P_j^{(b+1,b+1)} >_{w_P^{(b+1)}}  \nonumber \\ 
-	& \quad \quad \quad + \: \ip< x^2 \: \genjacnmk^{(a, b+k+\half)}(x), \: \rho(x)^{k+j} \: \genjacmmj^{(a+1, b+1+j+\half)} >_{\genjacw^{(a, b+\half)}} 
-		\: \ip< y \: P_k^{(b,b) \: \prime} (y), \: P_j^{(b+1,b+1)} >_{w_P^{(b+1)}} \Big\}
+	&= \normgenjac^{(a, b+\half)} \: \normjac^{(b+1)} \: \Big\{ \ip< x \: \genjacnmk^{(a, b+k+\half) \: \prime} (x), \: \rho(x)^{k+j+2} \: \genjacmmj^{(a+1, b+1+j+\half)} >_{\genjacw^{(a, b+\half)}} \\ 
+	&\quad \quad \quad \quad \quad \quad \quad \quad \quad \quad \quad \quad \cdot \: \ip< \jac_k^{(b,b)}, \: \jac_j^{(b+1,b+1)} >_{\jacw^{(b+1)}}  \nonumber \\ 
+	& \quad - k \: \ip< x^2 \: \genjacnmk^{(a, b+k+\half)}(x), \: \rho(x)^{k+j} \: \genjacmmj^{(a+1, b+1+j+\half)} >_{\genjacw^{(a, b+\half)}} 
+		\: \ip< \jac_k^{(b,b)}, \: \jac_j^{(b+1,b+1)} >_{\jacw^{(b+1)}}  \nonumber \\ 
+	& \quad + \: \ip< x^2 \: \genjacnmk^{(a, b+k+\half)}(x), \: \rho(x)^{k+j} \: \genjacmmj^{(a+1, b+1+j+\half)} >_{\genjacw^{(a, b+\half)}} 
+		\: \ip< y \: \jac_k^{(b,b) \: \prime} (y), \: \jac_j^{(b+1,b+1)} >_{\jacw^{(b+1)}} \Big\}
 \end{align*}
 
 We can see that, from each term's second factor as written, the above is zero for $j < k-2$. Now, using (\ref{eqn:derivativeofweightgenjac}), integration-by-parts, and noting that the weight $\genjacw^{(a,b)}$ is a polynomial degree $a+2b$ and vanishes at the limits of the integral for positive parameters $a,b$, we have that
@@ -692,9 +702,11 @@ We can see that, from each term's second factor as written, the above is zero fo
 	&= \int_0^1 \: \genjacnmk^{(a, b+k+\half) \: \prime} \: \genjacmmj^{(a+1, b+1+j+\half)} \: \genjacw^{(a+1, b+1+\half(k+j+1))} \: \D x \\
 	&= - \int_0^1 \: \genjacnmk^{(a, b+k+\half)} \: \ddx \Big[ \genjacmmj^{(a+1, b+1+j+\half)} \: \genjacw^{(a+1, b+1+\half(k+j+1))} \Big] \: \D x \\
 	&= - \int_0^1 \: \genjacnmk^{(a, b+k+\half)} \: \Big\{ \genjacw^{(a+1, b+1+\half(k+j+1))} \: \genjacmmj^{(a+1, b+1+j+\half) \: \prime} \\
-	&\quad \quad \quad \quad + \Big[ (a+1) \: \genjacw^{(a, b+1+\half(k+j+1))} -2(b+1+\half(k+j+1)) \: \genjacw^{(a+2, b+\half(k+j+1))} \Big] \: \genjacmmj^{(a, b+1+j+\half)} \Big\} \: \D x \\
+	&\quad \quad \quad \quad \quad \quad \quad \quad \quad \quad + (a+1) \: \genjacw^{(a, b+1+\half(k+j+1))} \: \genjacmmj^{(a, b+1+j+\half)} \\
+	&\quad \quad \quad \quad \quad \quad \quad \quad \quad \quad -2(b+1+\half(k+j+1)) \: \genjacw^{(a+2, b+\half(k+j+1))} \: \genjacmmj^{(a, b+1+j+\half)} \Big\} \: \D x \\
 	&= - \: \normgenjac^{(a,b+k+\half)} \:  \Big\{ \ip<\genjacnmk^{(a, b+k+\half)}, \: \genjacw^{(1, 1+\half(j-k))} \: \genjacmmj^{(a+1, b+1+j+\half) \: \prime}>_{\genjacw^{(a, b+k+\half)}} \\
-		&\quad \quad \quad + \ip<\genjacnmk^{(a, b+k+\half)}, \: \Big[(a+1) \: \genjacw^{(0,1+\half(j-k))} -2(b+1+\half(k+j+1)) \: \genjacw^{(2, \half(j-k))} \Big] \: \genjacmmj^{(a, b+1+j+\half)} >_{\genjacw^{(a, b+k+\half)}} \Big\}
+		&\quad \quad \quad + \ip<\genjacnmk^{(a, b+k+\half)}, \: (a+1) \: \genjacw^{(0,1+\half(j-k))} \genjacmmj^{(a, b+1+j+\half)} >_{\genjacw^{(a, b+k+\half)}} \\
+		&\quad \quad \quad - \ip<\genjacnmk^{(a, b+k+\half)}, \: 2(b+1+\half(k+j+1)) \: \genjacw^{(2, \half(j-k))} \: \genjacmmj^{(a, b+1+j+\half)} >_{\genjacw^{(a, b+k+\half)}} \Big\}
 \end{align*}
 which is zero for $m < n - 2$, and further that
 \begin{align*}
@@ -730,7 +742,13 @@ Define the operator matrices $T^{(a,b)\to(a+1,b)}$, $T^{(a,b)\to(a,b+1)}$ and $T
 \end{definition}
 
 \begin{lemma}\label{lemma:sparsityofparametertransformationoperators}
-The operator matrices $T^{(a,b)\to(a+1,b)}$, $T^{(a,b)\to(a,b+1)}$, $T^{(a,b)\to(a+1,b+1)}$, $T_W^{(a,b)\to(a-1,b)}$, $T_W^{(a,b)\to(a,b-1)}$ and $T_W^{(a,b)\to(a-1,b-1)}$ from Definition \ref{def:parametertransformationoperators} are sparse, with banded-block-banded structure. \sotodoinline{State block-bandwidths}
+The operator matrices $T^{(a,b)\to(a+1,b)}$, $T^{(a,b)\to(a,b+1)}$, $T^{(a,b)\to(a+1,b+1)}$, $T_W^{(a,b)\to(a-1,b)}$, $T_W^{(a,b)\to(a,b-1)}$ and $T_W^{(a,b)\to(a-1,b-1)}$ from Definition \ref{def:parametertransformationoperators} are sparse, with banded-block-banded structure. More specifically:
+\begin{itemize}
+	\item $T^{(a,b)\to(a+1,b)}$ has a block-bandwidth of $(0,1)$, with the blocks themselves being diagonal.
+  	\item $T^{(a,b)\to(a,b+1)}$, $T^{(a,b)\to(a+1,b+1)}$ have a block-bandwidth of $(0,3)$, with the blocks themselves having a bandwidth of $(0,2)$.
+	\item $T_W^{(a,b)\to(a-1,b)}$ has a block-bandwidth of $(1,0)$, with the blocks themselves being diagonal.
+  	\item $T_W^{(a,b)\to(a,b-1)}$, $T_W^{(a,b)\to(a-1,b-1)}$ have a block-bandwidth of $(3,0)$, with the blocks themselves having a bandwidth of $(2,0)$.
+\end{itemize}
 \end{lemma}
 
 \begin{proof}
@@ -742,33 +760,28 @@ Then, using the change of variable $t = \frac{y}{\rho(x)}$, we have that
 \begin{align*}
 	&\ip< \hdopnkab, \hdop^{(a+\lambda, b+\mu)}_{m,j} >_{W^{(a+\lambda, b+\mu)}} \\
 	&\quad = \normgenjac^{(a+\lambda, b+\mu)} \: \ip< \genjacnmk^{(a,b+k+\half)}, \rho(x)^{k+j+1} \: \genjacmmj^{(a+\lambda,b+\mu+j+\half)} >_{\genjacw^{(a+\lambda,b+\mu)}} \\ 
-	&\quad \quad \quad \cdot \: \normjac^{(b+\mu)} \: \ip< P_k^{(b,b)}, \: P_{j}^{(b+\mu,b+\mu)} >_{w_P^{(b+\mu)}} \\
+	&\quad \quad \quad \cdot \: \normjac^{(b+\mu)} \: \ip< \jac_k^{(b,b)}, \: \jac_{j}^{(b+\mu,b+\mu)} >_{\jacw^{(b+\mu)}} \\
 	&\quad= \normgenjac^{(a, b+k+\half)} \: \ip< \genjacnmk^{(a,b+k+\half)}, \genjacw^{(\lambda, \: \mu+\half(j-k))} \: \genjacmmj^{(a+\lambda,b+\mu+j+\half)} >_{\genjacw^{(a,b+k+\half)}} \\
-	&\quad \quad \quad \cdot \: \normjac^{(b)} \: \ip< P_k^{(b,b)}, \: w_P^{(\mu)} \: P_{j}^{(b+\mu,b+\mu)} >_{w_P^{(b)}}
+	&\quad \quad \quad \cdot \: \normjac^{(b)} \: \ip< \jac_k^{(b,b)}, \: \jacw^{(\mu)} \: \jac_{j}^{(b+\mu,b+\mu)} >_{\jacw^{(b)}}
 \end{align*}
-Since $w_P^{(\mu)}$ is a polynomial degree $2\mu$, we have that the above is then zero for $j < k-2\mu$. Further, since $\genjacw^{(\lambda, \: \mu+\half(j-k))}$ is a polynomial of degree $\lambda + 2\mu + j - k$, we have that the above is zero for $m-j < n-k - (\lambda + 2\mu + j - k) \iff m < n - \lambda - 2\mu$.
+Since $\jacw^{(\mu)}$ is a polynomial degree $2\mu$, we have that the above is then zero for $j < k-2\mu$. Further, since $\genjacw^{(\lambda, \: \mu+\half(j-k))}$ is a polynomial of degree $\lambda + 2\mu + j - k$, we have that the above is zero for $m-j < n-k - (\lambda + 2\mu + j - k) \iff m < n - \lambda - 2\mu$.
 
 The sparsity argument for the weighted parameter transformation operators follows similarly.
 \end{proof}
 
-\begin{figure}
-	\centering
-	\begin{subfigure}[t]{0.32\textwidth}
-	\centering
+\begin{figure}[t]
+	\begin{subfigure}{0.32\textwidth}
 	\includegraphics[scale=0.35]{sparsityoflaplacian-w11}
 	\end{subfigure}
-	\begin{subfigure}[t]{0.32\textwidth}
-	\centering
+	\begin{subfigure}{0.32\textwidth}
 	\includegraphics[scale=0.35]{sparsityofhelmholtz}
 	\end{subfigure}
-	\begin{subfigure}[t]{0.32\textwidth}
-	\centering
+	\begin{subfigure}{0.32\textwidth}
 	\includegraphics[scale=0.35]{sparsityofbiharmonic}
 	\end{subfigure}
-	\centering
     	\caption{"Spy" plots of (differential) operator matrices, showing their sparsity. Left: the Laplace operator $\laplacewii$. Centre: the weighted variable coefficient Helmholtz operator $\laplacewii + k^2 \: T^{(0,0)\to(1,1)} \: V({J_x^{(0,0)}}^\top, {J_y^{(0,0)}}^\top) \: T_W^{(1,1)\to(0,0)}$ for $v(x,y) = 1 - (3(x-1)^2 + 5y^2)$ and $k = 200$. Right: the biharmonic operator $\biharmonic$.}
-	\centering
         \label{fig:sparsity}
+        \centering
 \end{figure}
 
 General linear partial differential operators with polynomial variable coefficients can be constructed by composing the sparse representations for partial derivatives, conversion between bases, and Jacobi operators. As a canonical example, we can obtain the matrix operator for the Laplacian \(\Delta\), that will take us from coefficients for expansion in the weighted space
@@ -833,23 +846,44 @@ We will use the substitution that
 \end{align*}
 First, note that, for $(x,y) \in \Omega$,
 \begin{align*}
-	W^{(a,b)}(x,y) &= \genjacw^{(a,b)}(x) \: w_P^{(b)}\fpr(\frac{y}{\rho(x)}) \\
-	&= \genjacw^{(a,b)}(s) \: w_P^{(b)}(t) \\
+	W^{(a,b)}(x,y) &= \genjacw^{(a,b)}(x) \: \jacw^{(b)}\fpr(\frac{y}{\rho(x)}) \\
+	&= \genjacw^{(a,b)}(s) \: \jacw^{(b)}(t) \\
 	&= s^a \: \rho(s)^{2b} \: (1-t^2)^b \\
 	&=: V^{(a,b)}(s,t), \quad \text{for } (s,t) \in [0,1] \times [-1,1].
 \end{align*}
-\sotodoinline{Explain that even and odd polynomials are treated separately}
-Let $f : \Omega \to \R$ be such that $y \mapsto f(x,y)$ for fixed $x$ is an even function. Note that if $f$ is a polynomial, then $f(s, \rho(s)t)$ is a polynomial in $s \in [\alpha,\beta]$ for fixed $t$. Hence,
-\begin{align*}
-	\iint_\Omega f(x,y) \: \Wab(x,y) \: \D y \: \D x &= \int_\alpha^\beta \int_\gamma^\delta f\big(s,\rho(s) t\big) \: V^{(a,b)}(s,t) \: \rho(s) \: \D t \: \D s \\
-	&= \int_\alpha^\beta  \genjacw^{(a,b+\half)}(s) \: \Big( \int_\gamma^\delta f\big(s,\rho(s) t\big) \: w_P^{(b)}(t) \: \D t \Big) \: \D s \quad (\dagger) \\
-	&\approx \int_\alpha^\beta  \genjacw^{(a,b+\half)}(s) \: \sum_{k=1}^N \Big( w_k^{(t)} f\big(s,\rho(s) t_k\big) \Big) \: \D s \quad (\star) \\
-	&\approx \sum_{k=1}^N \Bigg( w_k^{(s)} \: \sum_{l=1}^N \Big( w_l^{(t)} f\big(s_k,\rho(s_k) t_l\big) \Big) \Bigg) \quad (\star \star) \\
-	&= \sum_{j=1}^{N^2}  w_j \: f(x_j, y_j),
-\end{align*}
-where we achieve equality at $(\star)$ if $y \mapsto f(x,y)$ for fixed $x$ is a polynomial of degree at most $2N-1$ and we achieve equality at $(\star \star)$ if also $x \mapsto f(x,y)$ for fixed $y$ is a polynomial of degree at most $N$. 
 
-Finally, note that the inner integral at $(\dagger)$ over $t$ would be zero if $y \mapsto f(x,y)$ for fixed $x$ was an odd function, due to the symmetry over the domain (i.e. since $\gamma = -\delta$).
+Let $f : \Omega \to \R$. Define the functions $f_e, f_o : \Omega \to \R$ by 
+\begin{align*}
+	f_e(x,y) &:= \half \Big(f(x, y) + f(x, -y)\Big), \quad \forall (x,y) \in \Omega\\
+	f_o(x,y) &:= \half \Big(f(x, y) - f(x, -y)\Big), \quad \forall (x,y) \in \Omega
+\end{align*}
+so that $y \mapsto f_e(x,y)$ for fixed $x$ is an even function, and $y \mapsto f_o(x,y)$ for fixed $x$ is an odd function. Note that if $f$ is a polynomial, then $f_e(s, \rho(s)t)$ is a polynomial in $s \in [\alpha,\beta]$ for fixed $t$. 
+
+Now, we have that
+\begin{align*}
+	\iint_\Omega f_e(x,y) \: \Wab(x,y) \: \D y \: \D x &= \int_\alpha^\beta \int_\gamma^\delta f_e\big(s,\rho(s) t\big) \: V^{(a,b)}(s,t) \: \rho(s) \: \D t \: \D s \\
+	&= \int_\alpha^\beta  \genjacw^{(a,b+\half)}(s) \: \Big( \int_\gamma^\delta f_e\big(s,\rho(s) t\big) \: \jacw^{(b)}(t) \: \D t \Big) \: \D s \\
+	&\approx \int_\alpha^\beta  \genjacw^{(a,b+\half)}(s) \: \sum_{k=1}^N \Big( w_k^{(t)} f_e\big(s,\rho(s) t_k\big) \Big) \: \D s \quad (\star) \\
+	&\approx \sum_{k=1}^N \Bigg( w_k^{(s)} \: \sum_{l=1}^N \Big( w_l^{(t)} f_e\big(s_k,\rho(s_k) t_l\big) \Big) \Bigg) \quad (\star \star) \\
+	&= \sum_{j=1}^{N^2}  w_j \: f_e(x_j, y_j),
+\end{align*}
+where we achieve equality at $(\star)$ if $y \mapsto f_e(x,y)$ for fixed $x$ is a polynomial of degree at most $2N-1$ and we achieve equality at $(\star \star)$ if also $x \mapsto f_e(x,y)$ for fixed $y$ is a polynomial of degree at most $N$. 
+
+Next, note that 
+\begin{align*}
+	\iint_\Omega f_o(x,y) \: \Wab(x,y) \: \D y \: \D x &= \int_\alpha^\beta \int_\gamma^\delta f_o\big(s,\rho(s) t\big) \: V^{(a,b)}(s,t) \: \rho(s) \: \D t \: \D s \\
+	&= \int_\alpha^\beta  \genjacw^{(a,b+\half)}(s) \: \Big( \int_\gamma^\delta f_o\big(s,\rho(s) t\big) \: \jacw^{(b)}(t) \: \D t \Big) \: \D s \quad (\dagger) \\
+	&= 0
+\end{align*}
+since the inner integral at $(\dagger)$ over $t$ is zero, due to the symmetry over the domain (i.e. since $\gamma = -\delta$).
+
+Hence,
+\begin{align*}
+	\iint_\Omega f(x,y) \: \Wab(x,y) \: \D y \: \D x &= \iint_\Omega \Big(f_e(x,y) + f_o(x,y)\Big) \: \Wab(x,y) \: \D y \: \D x \\
+	&= \iint_\Omega f_e(x,y) \: \Wab(x,y) \: \D y \: \D x \\
+	&\approx \sum_{j=1}^{N^2}  w_j \: f_e(x_j, y_j) \quad (\star),
+\end{align*}
+where we achieve equality at $(\star)$ if $y \mapsto f(x,y)$ for fixed $x$ is a polynomial of degree at most $2N-1$ and also if $x \mapsto f(x,y)$ for fixed $y$ is a polynomial of degree at most $N$.
 \end{proof}
 
 
@@ -885,9 +919,7 @@ Recall from (\ref{eqn:normhdop}) that $\norm{\hdopnkab}^2_\Wab = \normgenjac^{(a
 
 \subsection{Calculating non-zero entries of the operator matrices}\label{subsection:Computation-operatormatrices}
 
-The proofs of Theorem \ref{theorem:sparsityofdifferentialoperators} and Lemma \ref{lemma:sparsityofparametertransformationoperators} provide a way to calculate the non-zero entries of the operator matrices given in Definition \ref{def:differentialoperators} and Definition \ref{def:parametertransformationoperators}. We can simply use quadrature to calculate the 1D inner products. This proves much cheaper computationally than using the 2D quadrature rule to calculate the 2D inner products.
-
-\sotodoinline{Give complexity}
+The proofs of Theorem \ref{theorem:sparsityofdifferentialoperators} and Lemma \ref{lemma:sparsityofparametertransformationoperators} provide a way to calculate the non-zero entries of the operator matrices given in Definition \ref{def:differentialoperators} and Definition \ref{def:parametertransformationoperators}. We can simply use quadrature to calculate the 1D inner products -- this has a complexity of $\bigO(N^3)$. This proves much cheaper computationally than using the 2D quadrature rule to calculate the 2D inner products, which has a complexity of $\bigO(N^4)$. 
 
 
 %
@@ -897,51 +929,54 @@ The proofs of Theorem \ref{theorem:sparsityofdifferentialoperators} and Lemma \r
 \subsection{Poisson}
 
 % FIGURES
-\begin{figure}
-	\begin{subfigure}[t]{0.3\textwidth}
-	\centering
+\begin{figure}[t]
+	\begin{subfigure}{0.3\textwidth}
 	\includegraphics[scale=0.3]{solution-poisson}
-	\caption{}
-	\label{fig:solution-poisson}
+	\centering
+	%\label{fig:solution-poisson}
 	\end{subfigure}
-	\begin{subfigure}[t]{0.3\textwidth}
+	\begin{subfigure}{0.5\textwidth}
+	\centering
+	\includegraphics[scale=0.5]{solutionblocknorms-poisson}
+        	%\label{fig:solutionblocknorms-poisson}
+	\end{subfigure}
+	\caption{Left: The computed solution to $\Delta u = f$ with zero boundary conditions with $f(x,y) = 1 + \text{erf}(5(1 - 10((x - 0.5)^2 + y^2)))$. Right: The norms of each block of the computed solution of the Poisson equation with the given right hand side functions. This demonstrates algebraic convergence with the rate dictated by the decay at the corners, with spectral convergence observed when the right-hand side vanishes to all orders.}
+	\centering
+	\label{fig:poisson}
+\end{figure}
+
+\begin{figure}[t]
+	\begin{subfigure}{0.3\textwidth}
 	\centering
 	\includegraphics[scale=0.3]{solution-helmholtz-k=100}
-	\caption{}
-	\label{fig:solution-helmholtz}
+	%\label{fig:solution-helmholtz}
 	\end{subfigure}
-	\begin{subfigure}[t]{0.3\textwidth}
+	\begin{subfigure}{0.5\textwidth}
+	\includegraphics[scale=0.5]{solutionblocknorms-helmholtz-k=20}
+	\centering
+        	%\label{fig:solutionblocknorms-helmholtz}
+	\end{subfigure}
+	\caption{Left: The computed solution to $\Delta u + k^2 \: v \: u = f$ with zero boundary conditions with $f(x,y) = xye^x$, $v(x,y) = 1 - (3(x-1)^2 + 5y^2)$ and $k = 100$. Right: The norms of each block of the computed solution of the Helmholtz equation with the given right hand side functions, with $k=20$ and $v(x,y) = 1 - (3(x-1)^2 + 5y^2)$.}
+	\centering
+	\label{fig:helmholtz}
+\end{figure}
+
+\begin{figure}[t]
+	\begin{subfigure}{0.3\textwidth}
 	\centering
 	\includegraphics[scale=0.3]{solution-biharmonic}
-	\caption{}
-	\label{fig:solution-biharmonic}
+	%\label{fig:solution-biharmonic}
 	\end{subfigure}
+	\begin{subfigure}{0.5\textwidth}
+	\includegraphics[scale=0.5]{solutionblocknorms-biharmonic}
 	\centering
-    	\caption{(a): The computed solution to $\Delta u = f$ with zero boundary conditions with $f(x,y) = 1 + \text{erf}(5(1 - 10((x - 0.5)^2 + y^2)))$. (b): The computed solution to $\Delta u + k^2 \: v \: u = f$ with zero boundary conditions with $f(x,y) = xye^x$, $v(x,y) = 1 - (3(x-1)^2 + 5y^2)$ and $k = 100$. (c): The computed solution to $\Delta^2 u = f$ with zero Dirichlet and Neumann boundary conditions with $f(x,y) = 1 + \text{erf}(5(1 - 10((x - 0.5)^2 + y^2)))$. \sotodoinline{Combine this figure with subsequent ones}}
-        \label{fig:solution}
-\end{figure}
-
-\begin{figure}[t]
-        	\includegraphics[scale=0.4]{solutionblocknorms-poisson}
+        	%\label{fig:solutionblocknorms-biharmonic}
+	\end{subfigure}
+	\caption{Left: The computed solution to $\Delta^2 u = f$ with zero Dirichlet and Neumann boundary conditions with $f(x,y) = 1 + \text{erf}(5(1 - 10((x - 0.5)^2 + y^2)))$. Right: The norms of each block of the computed solution of the biharmonic equation with the given right hand side functions.}
 	\centering
-	\caption{The norms of each block of the computed solution of the Poisson equation with the given right hand side functions. This demonstrates algebraic convergence with the rate dictated by the decay at the corners, with spectral convergence observed when the right-hand side vanishes to all orders.}
-        	\label{fig:solutionblocknorms-poisson}
+	\label{fig:biharmonic}
 \end{figure}
-
-\begin{figure}[t]
-        	\includegraphics[scale=0.4]{solutionblocknorms-helmholtz-k=20}
-	\centering
-	\caption{The norms of each block of the computed solution of the helmholtz equation with the given right hand side functions, with $k=20$ and $v(x,y) = 1 - (3(x-1)^2 + 5y^2)$.}
-        	\label{fig:solutionblocknorms-helmoltz}
-\end{figure}
-
-\begin{figure}[t]
-        	\includegraphics[scale=0.4]{solutionblocknorms-biharmonic}
-	\centering
-	\caption{The norms of each block of the computed solution of the biharmonic equation with the given right hand side functions.}
-        	\label{fig:solutionblocknorms-biharmonic}
-\end{figure}
-
+% END FIGURES
 
 Find \(u(x,y)\) given a function \(f(x,y)\) such that:
 \begin{align}
@@ -958,7 +993,7 @@ We can tackle the problem as follows. Denote the coefficient vector for expansio
     \laplacewii \mathbf{u} = \mathbf{f}
 \end{align*}
 which can be solved to find $\mathbf{u}$.
-In Figure \ref{fig:solution-poisson} we see the solution to the Poisson equation with zero boundary conditions given in (\ref{eqn:poisson}) in the half-disk $\Omega$. In Figure \ref{fig:solutionblocknorms-poisson} we show the norms of each block of calculated coefficients of the approximation for four right-hand sides of the Poisson equation with N = 200, that is, 20,301 unknowns. The rate of decay in the coefficients is a proxy for the rate of convergence of the computed solution. We see that we achieve algebraic convergence for the first three examples, noting that for right hand sides that vanish at the corners of our half disk ($x=0, \: y = \pm 1$) we see faster convergence. For the final Gaussian bump example, we see that we achieve spectral convergence.
+In Figure \ref{fig:poisson} we see the solution to the Poisson equation with zero boundary conditions given in (\ref{eqn:poisson}) in the half-disk $\Omega$. In Figure \ref{fig:poisson} we also show the norms of each block of calculated coefficients of the approximation for four right-hand sides of the Poisson equation with N = 200, that is, 20,301 unknowns. The rate of decay in the coefficients is a proxy for the rate of convergence of the computed solution. We see that we achieve algebraic convergence for the first three examples, noting that for right hand sides that vanish at the corners of our half disk ($x=0, \: y = \pm 1$) we see faster convergence. For the final Gaussian bump example, we see that we achieve spectral convergence.
 
 \subsection{Inhomogenous variable-coefficient Helmholtz}
 
@@ -976,7 +1011,7 @@ We can tackle the problem as follows. Denote the coefficient vector for expansio
 \begin{align*}
     (\laplacewii + k^2 T^{(0,0)\to(1,1)} \: V({J_x^{(0,0)}}^\top, {J_y^{(0,0)}}^\top) \: T_W^{(1,1)\to(0,0)}) \mathbf{u} = \mathbf{f}
 \end{align*}
-which can be solved to find $\mathbf{u}$. We can see the sparsity and structure of this matrix system in Figure \ref{fig:sparsity} with $v(x,y) = xy^2$ as an example. In Figure \ref{fig:solution-helmholtz} we see the solution to the inhomogenous variable-coefficient Helmholtz equation with zero boundary conditions given in (\ref{eqn:helmholtz}) in the half-disk $\Omega$, with $k=100$, $v(x,y) = (1 - (3(x-1)^2 + 5y^2))$ and $f(x,y) = xy e^x$. In Figure \ref{fig:solutionblocknorms-helmoltz} we show the norms of each block of calculated coefficients of the approximation for four right-hand sides of the inhomogenous variable-coefficient Helmholtz equation with $k=20$ and $v(x,y) = (1 - (3(x-1)^2 + 5y^2))$ using N = 200, that is, 20,301 unknowns. The rate of decay in the coefficients is a proxy for the rate of convergence of the computed solution. We see that we achieve algebraic convergence for the first three examples, noting that for right hand sides that vanish at the corners of our half disk ($x=0, \: y = \pm 1$) we see faster convergence. For the final Gaussian bump example, we see that we achieve spectral convergence.
+which can be solved to find $\mathbf{u}$. We can see the sparsity and structure of this matrix system in Figure \ref{fig:sparsity} with $v(x,y) = xy^2$ as an example. In Figure \ref{fig:helmholtz} we see the solution to the inhomogenous variable-coefficient Helmholtz equation with zero boundary conditions given in (\ref{eqn:helmholtz}) in the half-disk $\Omega$, with $k=100$, $v(x,y) = (1 - (3(x-1)^2 + 5y^2))$ and $f(x,y) = xy e^x$. In Figure \ref{fig:helmholtz} we also show the norms of each block of calculated coefficients of the approximation for four right-hand sides of the inhomogenous variable-coefficient Helmholtz equation with $k=20$ and $v(x,y) = (1 - (3(x-1)^2 + 5y^2))$ using N = 200, that is, 20,301 unknowns. The rate of decay in the coefficients is a proxy for the rate of convergence of the computed solution. We see that we achieve algebraic convergence for the first three examples, noting that for right hand sides that vanish at the corners of our half disk ($x=0, \: y = \pm 1$) we see faster convergence. For the final Gaussian bump example, we see that we achieve spectral convergence.
 
 We can extend this to constant non-zero boundary conditions by simply noting that the problem 
 \begin{align*}
@@ -1004,7 +1039,7 @@ Find \(u(x,y)\) given a function \(f(x,y)\) such that:
 	\end{cases}.
 	\label{eqn:biharmonic}
 \end{align}
-where $\Delta^2$ is the Biharmonic operator, noting the imposition of zero Dirichlet and Neumann boundary conditions on $u$. In Figure \ref{fig:solution-biharmonic} we see the solution to the Biharmonic equation (\ref{eqn:biharmonic}) in the half-disk $\Omega$. In Figure \ref{fig:solutionblocknorms-biharmonic} we show the norms of each block of calculated coefficients of the approximation for four right-hand sides of the biharmonic equation with N = 200, that is, 20,301 unknowns.  We see that we achieve algebraic convergence for the first three examples, noting that for right hand sides that vanish at the corners of our half disk ($x=0, \: y = \pm 1$) we see faster convergence. For the final Gaussian bump example, we see that we achieve spectral convergence.
+where $\Delta^2$ is the Biharmonic operator, noting the imposition of zero Dirichlet and Neumann boundary conditions on $u$. In Figure \ref{fig:biharmonic} we see the solution to the Biharmonic equation (\ref{eqn:biharmonic}) in the half-disk $\Omega$. In Figure \ref{fig:biharmonic} we also show the norms of each block of calculated coefficients of the approximation for four right-hand sides of the biharmonic equation with N = 200, that is, 20,301 unknowns.  We see that we achieve algebraic convergence for the first three examples, noting that for right hand sides that vanish at the corners of our half disk ($x=0, \: y = \pm 1$) we see faster convergence. For the final Gaussian bump example, we see that we achieve spectral convergence.
 
 
 %
@@ -1118,7 +1153,7 @@ The work in this paper on the half disk can be easily transferred to the domain 
 \begin{align*}
 	\Omega := \{(x,y) \in \R^2 \quad | \quad \alpha < x < \beta, \: \gamma \rho(x) < y < \delta \rho(x)\}
 \end{align*}
-with\sotodo{Why $\subset$?} 
+with\sotodoinline{Why $\subset$?} \bstodoinline{I mean to say that $-1 \le \alpha < \beta \le 1$, otherwise this is the half disk case/full disk}
 \begin{align*}
 \begin{cases}
 (\alpha, \beta) &\subset (-1,1) \\
@@ -1130,13 +1165,13 @@ Our 1D weight functions on the intervals $(\alpha, \beta)$ and $(\gamma, \delta)
 \begin{align*}
 \begin{cases}
 \genjacw^{(a,b,c)}(x) &:= (\beta - x)^a \: (x - \alpha)^{b} \: \rho(x)^{c} \\
-w^{(a)}_P(x) &:= (1-x^2)^a.
+\jacw^{(a)}(x) &:= (1-x^2)^a.
 \end{cases}
 \end{align*}
 
-The weight $w^{(a)}_P(x)$ is a still an ultraspherical weight, and the corresponding OPs are the Jacobi polynomials $\{P_n^{(a, a)}\}$. $\genjacw^{(a,b,c)}(x)$ is the (non-classical) weight for the OPs denoted $\{\genjac_n^{(a,b,c)}\}\). Thus we arrive at the three-parameter family of 2D orthogonal polynomials $\{\hdopnk^{(a,b,c)}\}$ on $\Omega$ given by, for \(0 \le k \le n, \: n = 0,1,2,\dots,\)
+The weight $\jacw^{(a)}(x)$ is a still an ultraspherical weight, and the corresponding OPs are the Jacobi polynomials $\{\jac_n^{(a, a)}\}$. $\genjacw^{(a,b,c)}(x)$ is the (non-classical) weight for the OPs denoted $\{\genjac_n^{(a,b,c)}\}\). Thus we arrive at the three-parameter family of 2D orthogonal polynomials $\{\hdopnk^{(a,b,c)}\}$ on $\Omega$ given by, for \(0 \le k \le n, \: n = 0,1,2,\dots,\)
 \begin{align*}
-	\hdopnk^{(a,b,c)}(x,y) := \genjacnmk^{(a, b, 2c+2k+1)}(x) \: \rho(x)^k \: P_k^{(c,c)}\fpr(\frac{y}{\rho(x)}), \quad (x,y) \in \Omega, 
+	\hdopnk^{(a,b,c)}(x,y) := \genjacnmk^{(a, b, 2c+2k+1)}(x) \: \rho(x)^k \: \jac_k^{(c,c)}\fpr(\frac{y}{\rho(x)}), \quad (x,y) \in \Omega, 
 \end{align*}
 orthogonal with respect to the weight
 \begin{align*}
@@ -1163,10 +1198,10 @@ with
 (\gamma, \delta) &:= (0,1) \\
 \rho(x) &:= 1-\half x \\
 \genjacw^{(a,b,c)}(x) &:= (\beta - x)^a \: (x - \alpha)^{b} \: \rho(x)^{c} = (1-x)^{a} \: x^b \: (1-\half x)^{c} \\
-w^{(a,b)}_P(x) &:= (\delta-x)^a \: (x - \gamma)^b = (1-x)^a \: x^b.
+\jacw^{(a,b)}(x) &:= (\delta-x)^a \: (x - \gamma)^b = (1-x)^a \: x^b.
 \end{cases}
 \end{align*}
-The weight $w^{(a,b)}_P(x)$ is the weight for the shifted Jacobi polynomials on the interval $[0,1]$, and hence the corresponding OPs are the shifted Jacobi polynomials $\{\tilde{P}_n^{(a, b)}\}$. We note that the shifted Jacobi polynomials relate to the normal Jacobi polynomials by the relationship $\tilde{P}_n^{(a,b)}(x) = P_n^{(a,b)}(2x-1)$ for any degree $n = 0,1,2,\dots$ and $x \in [0,1]$. $\genjacw^{(a,b,c)}(x)$ is the (non-classical) weight for the OPs we dentote $\{\genjac_n^{(a,b,c)}\}\). Thus we arrive at the four-parameter family of 2D orthogonal polynomials $\{\hdopnk^{(a,b,c,d)}\}$ on $\Omega$ given by, for \(0 \le k \le n, \: n = 0,1,2,\dots,\)
+The weight $\jacw^{(a,b)}(x)$ is the weight for the shifted Jacobi polynomials on the interval $[0,1]$, and hence the corresponding OPs are the shifted Jacobi polynomials $\{\tilde{P}_n^{(a, b)}\}$. We note that the shifted Jacobi polynomials relate to the normal Jacobi polynomials by the relationship $\tilde{P}_n^{(a,b)}(x) = \jac_n^{(a,b)}(2x-1)$ for any degree $n = 0,1,2,\dots$ and $x \in [0,1]$. $\genjacw^{(a,b,c)}(x)$ is the (non-classical) weight for the OPs we dentote $\{\genjac_n^{(a,b,c)}\}\). Thus we arrive at the four-parameter family of 2D orthogonal polynomials $\{\hdopnk^{(a,b,c,d)}\}$ on $\Omega$ given by, for \(0 \le k \le n, \: n = 0,1,2,\dots,\)
 \begin{align*}
 	\hdopnk^{(a,b,c,d)}(x,y) := \genjacnmk^{(a, b, c+d+2k+1)}(x) \: \rho(x)^k \: \tilde{P}_k^{(d,c)}(\frac{y}{\rho(x)}), \quad (x,y) \in \Omega, 
 \end{align*}
