@@ -666,10 +666,9 @@ We proceed with the case for the operator $D_y^{(a,b)}$ for partial differentiat
 \end{align*}
 Then, using the change of variable $t = \frac{y}{\rho(x)}$, we have that
 \begin{align*}
-	&\ip<\pddy \hdopnkab, \hdop^{(a, b+1)}_{m,j} >_{W^{(a, b+1)}} \\
-	&\quad \quad = \normgenjac^{(a, b+1)} \: \ip< \genjacnmk^{(a,b+k+\half)}, \rho(x)^{k+j} \: \genjacmmj^{(a,b+1+j+\half)} >_{\genjacw^{(a,b+1)}} \\
+	\ip<\pddy \hdopnkab, \hdop^{(a, b+1)}_{m,j} >_{W^{(a, b+1)}} &= \normgenjac^{(a, b+1)} \: \ip< \genjacnmk^{(a,b+k+\half)}, \rho(x)^{k+j} \: \genjacmmj^{(a,b+1+j+\half)} >_{\genjacw^{(a,b+1)}} \\
 	&\quad \quad \quad \quad \quad \quad \cdot \: \normjac^{(b+1)} \: \ip< \jac_k^{(b,b) \: \prime}, \: \jac_{j}^{(b+1,b+1)} >_{\jacw^{(b+1)}} \\
-	&\quad \quad = \normgenjac^{(a, b+1+\half(k+j))} \: \normgenjac^{(a, b+1)} \: \ip< \genjacnmk^{(a,b+k+\half)}, \genjacmmj^{(a,b+1+j+\half)} >_{\genjacw^{(a,b+1+\half(k+j))}} \\
+	&= \normgenjac^{(a, b+1+\half(k+j))} \: \ip< \genjacnmk^{(a,b+k+\half)}, \genjacmmj^{(a,b+1+j+\half)} >_{\genjacw^{(a,b+1+\half(k+j))}} \\
 		&\quad \quad \quad \quad \quad \quad \cdot \: \normjac^{(b+1)} \: \ip< \jac_k^{(b,b) \: \prime}, \: \jac_{j}^{(b+1,b+1)} >_{\jacw^{(b+1)}}.
 \end{align*}
 Now, using (\ref{eqn:derivativeofweightjac}), integration-by-parts, and noting that the weight $\jacw^{(b)}$ is a polynomial degree $2b$ and vanishes at the limits of the integral for positive parameter $b$, we have that
@@ -685,7 +684,7 @@ which is zero for $j < k-1$. Further,
 \end{align*}
 showing the only possible non-zero coefficient is when $m=n-1, j=k-1$. Finally, we simply have that 
 \begin{align*}
-	c_{n-1,k-1}^y &= \normgenjac^{(a, b+1)} \: \ip< \jac_k^{(b,b) \: \prime}, \: \jac_{k-1}^{(b+1,b+1)} >_{\jacw^{(b+1)}}.
+	c_{n-1,k-1}^y &= \ip< \jac_k^{(b,b) \: \prime}, \: \jac_{k-1}^{(b+1,b+1)} >_{\jacw^{(b+1)}}.
 \end{align*}
 
 We next consider the case for the operator $D_x^{(a,b)}$ for partial differentiation by $x$. Since $\{\hdop^{(a+1, b+1)}_{m,j}\}$ for $m = 0,\dots,n-1$, $j = 0,\dots,m$ is an orthogonal basis for any degree $n-1$ polynomial, we can expand $\pddx \hdopnkab = \sum_{m=0}^{n-1} \sum_{j=0}^m c_{m,j} \: \hdop^{(a+1, b+1)}_{m,j}$. The coefficients of the expansion are then the entries of the relevant operator matrix. As before, we can use an integration-by-parts argument to show that the only non-zero coefficients of this expansion are when $m = n-1, n-2$, $j = k, k-1, k-2$ and $0 \le j \le m$. First, note that
@@ -694,7 +693,7 @@ We next consider the case for the operator $D_x^{(a,b)}$ for partial differentia
 \end{align*}
 Second, note that
 \begin{align}
-	\rho'(x) = -x \: \rho(x)^{-2}. \label{eqn:rhoderivative}
+	\rho'(x) = -x \: \rho(x)^{-1}. \label{eqn:rhoderivative}
 \end{align}
 Now, using the change of variable $t= \frac{y}{\rho(x)}$ and (\ref{eqn:rhoderivative}), we have that
 \begin{align*}
@@ -1117,16 +1116,16 @@ and rewrite (\ref{eqn:FEMweakform}) in matrix form:
 				\\
 	&= \int_\element \begin{pmatrix}
 					\bighdopoo^\top \Wii_x \mathbf{v} \\
-					\bighdopoo^\top T^{(1,0)\to(0,0)} \Wii_y \mathbf{v}
+					\bighdopoo^\top T_W^{(1,0)\to(0,0)} \Wii_y \mathbf{v}
 				\end{pmatrix}^\top 
 				\begin{pmatrix}
 					\bighdopoo^\top \Wii_x \mathbf{u} \\
-					\bighdopoo^\top T^{(1,0)\to(0,0)} \Wii_y \mathbf{u}
+					\bighdopoo^\top T_W^{(1,0)\to(0,0)} \Wii_y \mathbf{u}
 				\end{pmatrix}
 				\\
 	&= \int_\element \Big( \mathbf{v}^\top {\Wii_x}^\top \bighdopoo \bighdopoo^\top \Wii_x \mathbf{u} \nonumber \\
-					& \quad \quad \quad + \mathbf{v}^\top ({T^{(1,0)\to(0,0)} \Wii_y})^\top \bighdopoo \bighdopoo^\top T^{(1,0)\to(0,0)} \Wii_y \mathbf{u}  \Big) \: d\mathbf{x} \\
-	&= \mathbf{v}^\top \: \Big( {\Wii_x}^\top \Lambda^{(0,0)} \Wii_x + ({T^{(1,0)\to(0,0)} \Wii_y})^\top \Lambda^{(0,0)} T^{(1,0)\to(0,0)} \Wii_y \Big) \: \mathbf{u}
+					& \quad \quad \quad + \mathbf{v}^\top ({T_W^{(1,0)\to(0,0)} \Wii_y})^\top \bighdopoo \bighdopoo^\top T_W^{(1,0)\to(0,0)} \Wii_y \mathbf{u}  \Big) \: d\mathbf{x} \\
+	&= \mathbf{v}^\top \: \Big( {\Wii_x}^\top \Lambda^{(0,0)} \Wii_x + ({T_W^{(1,0)\to(0,0)} \Wii_y})^\top \Lambda^{(0,0)} T_W^{(1,0)\to(0,0)} \Wii_y \Big) \: \mathbf{u}
 \end{align*}
 where $\mathbf{u}, \mathbf{v}$ are the coefficient vectors of the expansions of $u_p, v_p \in V_p$ respectively in the $V_p$ basis ($\bigWii$ OPs), and
 \begin{align*}
@@ -1147,7 +1146,7 @@ A\mathbf{u} = \tilde{\mathbf{f}}.
 \end{align*}
 where the (element) stiffness matrix $A$ is defined by 
 \begin{align*}
-A = {\Wii_x}^\top \Lambda^{(0,0)} \Wii_x + ({T^{(1,0)\to(0,0)} \Wii_y})^\top \Lambda^{(0,0)} T^{(1,0)\to(0,0)} \Wii_y, 
+A = {\Wii_x}^\top \Lambda^{(0,0)} \Wii_x + ({T_W^{(1,0)\to(0,0)} \Wii_y})^\top \Lambda^{(0,0)} T_W^{(1,0)\to(0,0)} \Wii_y, 
 \end{align*}
 and the load vector $\tilde{\mathbf{f}}$ is given by 
 \begin{align*}
