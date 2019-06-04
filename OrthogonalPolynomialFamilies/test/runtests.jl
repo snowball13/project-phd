@@ -1,6 +1,6 @@
 using ApproxFun, OrthogonalPolynomialFamilies, FastGaussQuadrature,
         SingularIntegralEquations, Test, SparseArrays
-import OrthogonalPolynomialFamilies: golubwelsch, lanczos, halfdiskquadrule,
+import OrthogonalPolynomialFamilies: golubwelsch, halfdiskquadrule,
         gethalfdiskOP, jacobix, jacobiy, differentiatex, differentiatey,
         resizecoeffs!, laplaceoperator, transformparamsoperator, operatorclenshaw, getnk,
         getopindex, weight, resizedata!
@@ -266,52 +266,78 @@ end
 end
 
 #=====#
+# DiskSlice
 
-# using Profile
-# D = HalfDiskFamily()
-# S = H = D.H(BigFloat(1),BigFloat(2.5));
-# @time resizedata!(S,300);
-# @time resizedata!(S,1000);
-# Profile.print()
+@testset "Evaluation for DiskSliceSpace (transform())" begin
+    n = 10; a = 1.0; b = 2.0; c = 1.0
+    f = (x,y) -> y*x^2 + x
+    α, β = 0.4, 0.8
+    D = DiskSliceFamily(α, β)
+    S = D(a, b, c)
+    pts = points(S, n)
+    vals = [f(pt...) for pt in pts]
+    cfs = transform(S, vals)
+    x, y = 0.5673, -0.2786; z = [x; y]
+    @test (x^2 + y^2 < 1 && D.α ≤ z[1] ≤ D.β && D.γ*D.ρ(z[1]) ≤ z[2] ≤ D.δ*D.ρ(z[1]))
+    F = Fun(S, cfs)
+    @test F(z) ≈ f(z...)
+    @test itransform(S, cfs) ≈ vals
+    F = Fun(f, S, 10)
+    @test F(z) ≈ f(z...)
+    F = Fun(f, S)
+    @test F(z) ≈ f(z...)
+end
 
+@testset "Jacobi matrices" begin
+    n = 10; a, b, c = 1.0, 1.0, 2.0
+    α, β = 0.2, 0.9
+    D = DiskSliceFamily(α, β)
+    S = D(a, b, c)
+    x, y = α + 0.1673, -0.2786; z = [x; y]
+    @test (x^2 + y^2 < 1 && D.α ≤ z[1] ≤ D.β && D.γ*D.ρ(z[1]) ≤ z[2] ≤ D.δ*D.ρ(z[1]))
+    f = (x,y)->x*y + x
+    pts = points(S, n)
+    vals = [f(pt...) for pt in pts]
+    cfs = transform(S, vals)
+    m = length(cfs)
+    N = Int(ceil(0.5 * (-1 + sqrt(1 + 8m)))) - 1
+    Jx = jacobix(S, N+1)
+    Jy = jacobiy(S, N+1)
+    @test evaluate(Jx[1:m, 1:m] * cfs, S, z) ≈ z[1] * f(z...)
+    @test evaluate(Jy[1:m, 1:m] * cfs, S, z) ≈ z[2] * f(z...)
+end
 
-# w = S.weight
-# x = Fun(identity, domain(w))
-# g = cos.(1000x);
+@testset "Operator Clenshaw" begin
+    n = 10; a, b, c = 1.0, 1.0, 2.0
+    α, β = 0.2, 0.9
+    D = DiskSliceFamily(α, β)
+    S = D(a, b, c)
+    x, y = α + 0.1673, -0.2786; z = [x; y]
+    @test (x^2 + y^2 < 1 && D.α ≤ z[1] ≤ D.β && D.γ*D.ρ(z[1]) ≤ z[2] ≤ D.δ*D.ρ(z[1]))
+    N = 14
+    oper = Fun((x,y)->cos(x)*y^2, S, 200)
+    A = operatorclenshaw(oper, S)
+    f = Fun((x,y)->x*y, S)
+    resizecoeffs!(f, N)
+    foper = Fun(S, A*f.coefficients)
+    @test foper(z) ≈ f(z) * oper(z)
+end
 
-# g = Fun(Chebyshev(domain(x)), BigFloat.(randn(1000)))
-# # @time sum(w*g^2)
-# @time sum(g^2)
-
-# g = Fun(Legendre(domain(x)), BigFloat.(randn(1000)))
-
-
-# g = Fun(NormalizedLegendre(domain(x)), BigFloat.(randn(1000)))
-# @time norm(g.coefficients)
-
-# x = Fun(BigFloat(-1)..1)
-# g = cos.(x)
-# @time norm(g)
-# Fun(g, NormalizedLegendre(domain(x)))(0.1)
-# g(0.1)
-# Fun(x -> cos(x), Legendre(domain(x)))(0.1)
-# @time norm(Fun(g, NormalizedLegendre(domain(x))).coefficients)
-
-# x = Fun()
-# g = cos.(x)
-# sqrt(sum(g^2))
-# norm(Fun(g, NormalizedLegendre(domain(x))).coefficients)
-# g^2
-
-
-# norm(Fun(g, Legendre(domain(x))).coefficients)
-
-
-# @time norm(g)
-
-
-
-# , S.ops, S.a, S.b, N₀=N₀)
-
-
-# Profile.print()
+@testset "Evaluate partial derivative of (random and known) function" begin
+    a, b, c = 1.0, 1.0, 2.0
+    α, β = 0.2, 0.9
+    D = DiskSliceFamily(α, β)
+    S = D(a, b, c)
+    x, y = α + 0.1673, -0.2786; z = [x; y]
+    @test (x^2 + y^2 < 1 && D.α ≤ z[1] ≤ D.β && D.γ*D.ρ(z[1]) ≤ z[2] ≤ D.δ*D.ρ(z[1]))
+    N = 4
+    f = Fun(S, randn(sum(1:N+1)))
+    # NOTE: This test for DX operator nay not be good enough to ensure it is "correct"
+    # Its fails for atol=100h
+    h = 1e-5; @test (f(x+h,y)-f(x,y))/h ≈ differentiatex(f, f.space)(x,y) atol=1000h
+    h = 1e-5; @test (f(x,y+h)-f(x,y))/h ≈ differentiatey(f, f.space)(x,y) atol=100h
+    f = Fun((x,y)->y*sin(x), S)
+    h = 1e-5; @test y*cos(x) ≈ differentiatex(f, f.space)(x,y) atol=100h
+    f = Fun((x,y)->x*sin(y), S)
+    h = 1e-5; @test x*cos(y) ≈ differentiatey(f, f.space)(x,y) atol=100h
+end

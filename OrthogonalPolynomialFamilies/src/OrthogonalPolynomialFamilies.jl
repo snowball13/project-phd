@@ -36,7 +36,6 @@ struct OrthogonalPolynomialSpace{FA,WW,F,D,B,R,N} <: PolynomialSpace{D,R}
     derivopptseval::Vector{Vector{R}}
 end
 
-
 # Finds the OPs and recurrence for weight w, having already found N₀ OPs
 function lanczos!(w, P, β, γ; N₀=0)
 
@@ -756,7 +755,7 @@ function resizedata!(S::HalfDiskSpace, N)
     S
 end
 
-function jacobix(S, N)
+function jacobix(S::HalfDiskSpace, N)
     resizedata!(S, N)
     rows = cols = 1:N+1
     l, u = 1, 1
@@ -774,7 +773,7 @@ function jacobix(S, N)
     J
 end
 
-function jacobiy(S, N)
+function jacobiy(S::HalfDiskSpace, N)
     # Transposed operator, so acts directly on coeffs vec
     resizedata!(S, N)
     rows = cols = 1:N+1
@@ -794,7 +793,7 @@ function jacobiy(S, N)
     J
 end
 
-function clenshawG(n, z)
+function clenshawG(::HalfDiskSpace, n, z)
     sp = sparse(I, n+1, n+1)
     [z[1] * sp; z[2] * sp]
 end
@@ -815,11 +814,11 @@ function clenshaw(cfs::AbstractVector, S::HalfDiskSpace, z)
     inds2 = m-N:m
     inds1 = (m-2N):(m-N-1)
     γ2 = view(cfs, inds2)'
-    γ1 = view(cfs, inds1)' - γ2 * S.DT[N] * (S.B[N] - clenshawG(N-1, z))
+    γ1 = view(cfs, inds1)' - γ2 * S.DT[N] * (S.B[N] - clenshawG(S, N-1, z))
     for n = N-2:-1:0
         ind = sum(1:n)
         γ = (view(cfs, ind+1:ind+n+1)'
-             - γ1 * S.DT[n+1] * (S.B[n+1] - clenshawG(n, z))
+             - γ1 * S.DT[n+1] * (S.B[n+1] - clenshawG(S, n, z))
              - γ2 * S.DT[n+2] * S.C[n+2])
         γ2 = copy(γ1)
         γ1 = copy(γ)
@@ -1501,7 +1500,7 @@ function opevalatpts(S::HalfDiskSpace{<:Any, <:Any, T}, j, pts) where T
         nm1 = getopindex(n-1, 0)
         for r = 1:length(pts)
             P1 = [opevalatpts(S, nm1+i, pts)[r] for i = 0:n-1]
-            P = - S.DT[n] * (S.B[n] - clenshawG(n-1, pts[r])) * P1
+            P = - S.DT[n] * (S.B[n] - clenshawG(S, n-1, pts[r])) * P1
             for k = 0:n
                 S.opptseval[jj+k][r] = P[k+1]
             end
@@ -1512,7 +1511,7 @@ function opevalatpts(S::HalfDiskSpace{<:Any, <:Any, T}, j, pts) where T
         for r = 1:length(pts)
             P1 = [opevalatpts(S, nm1+i, pts)[r] for i = 0:n-1]
             P2 = [opevalatpts(S, nm2+i, pts)[r] for i = 0:n-2]
-            P = (- S.DT[n] * (S.B[n] - clenshawG(n-1, pts[r])) * P1
+            P = (- S.DT[n] * (S.B[n] - clenshawG(S, n-1, pts[r])) * P1
                  - S.DT[n] * S.C[n] * P2)
             for k = 0:n
                 S.opptseval[jj+k][r] = P[k+1]
@@ -1576,7 +1575,7 @@ function xderivopevalatpts(S::HalfDiskSpace{<:Any, <:Any, T}, j, pts) where T
             dxP1 = [xderivopevalatpts(S, nm1+i, pts)[r] for i = 0:n-1]
             dxP2 = [xderivopevalatpts(S, nm2+i, pts)[r] for i = 0:n-2]
             P1 = [opevalatpts(S, nm1+i, pts)[r] for i = 0:n-1]
-            dxP = (- S.DT[n] * (S.B[n] - clenshawG(n-1, pts[r])) * dxP1
+            dxP = (- S.DT[n] * (S.B[n] - clenshawG(S, n-1, pts[r])) * dxP1
                    - S.DT[n] * S.C[n] * dxP2
                    + S.DT[n] * clenshawGtildex(n-1, pts[r]) * P1)
             for k = 0:n
@@ -1637,7 +1636,7 @@ function yderivopevalatpts(S::HalfDiskSpace{<:Any, <:Any, T}, j, pts) where T
             dyP1 = [yderivopevalatpts(S, nm1+i, pts)[r] for i = 0:n-1]
             dyP2 = [yderivopevalatpts(S, nm2+i, pts)[r] for i = 0:n-2]
             P1 = [opevalatpts(S, nm1+i, pts)[r] for i = 0:n-1]
-            dyP = (- S.DT[n] * (S.B[n] - clenshawG(n-1, pts[r])) * dyP1
+            dyP = (- S.DT[n] * (S.B[n] - clenshawG(S, n-1, pts[r])) * dyP1
                    - S.DT[n] * S.C[n] * dyP2
                    + S.DT[n] * clenshawGtildey(n-1, pts[r]) * P1)
             for k = 0:n
@@ -1655,6 +1654,6 @@ weightderivativey(S::HalfDiskSpace, x, y) =
     - 2S.b * x^S.a * y * (1 - x^2 - y^2)^(S.b-1)
 weightderivativey(S::HalfDiskSpace, z) = weightderivativey(S, z[1], z[2])
 
-
+include("DiskSliceFamilies.jl")
 
 end # module
