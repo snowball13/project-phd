@@ -15,6 +15,8 @@
 \usepackage{mleftright}
 \usepackage{todonotes}
 
+%\bibliographystyle{apalike}
+
 \graphicspath{ {images/} }
 
 \newcommand{\sotodo}{\todo[color=green]}
@@ -215,14 +217,14 @@ The corresponding OPs denoted $\hdopnkab(x,y)$, where $n$ denotes the polynomial
 $$
 \hdopnkab(x,y) = C_{n,k} x^{n-k} y^k + (\hbox{lower order terms})
 $$
-where $C_{n,k} \neq 0$ and ``lower order terms'' can  include degree $n$ polynomials with fewer $y$ terms. The precise normalization arises from their definition in terms of one-dimensional OPs in Definition~\ref{def:construction}. 
+where $C_{n,k} \neq 0$ and ``lower order terms'' can  include degree $n$ polynomials with fewer $y$ terms. The precise normalization arises from their definition in terms of one-dimensional OPs in Definition~\ref{def:OPconstruction}. 
 
-Sparsity comes from expanding the domain and range of an operator  using different choices of $a$ and $b$. Whereas the sparsity pattern and entries derived in \cite{olver2018recurrence,olver2019triangle} for equations on the triangle  results from manipulations of Jacobi polynomials, in the present work we use a more general integration-by-parts argument to deduce the sparsity structure, alongside quadrature rules to determine the entries.  In particular, by exploiting the connection with one-dimensional orthogonal polynomials we are able to construct discretizations of general partial differential operators of size $p(p-1)/2 \times p(p-1)/2$ in $O(p^3)$ operations, where $p$ is the total polynomial degree. This compares favourably to $O(p^6)$ operations if one proceeds na\"ively. Furthermore, we use this framework to derive sparse $p$-finite element methods that are analogous to those of Beuchler and Sch\"oberl on tetrahedra \cite{beuchler2006new}, see also work by Li and Shen \cite{li2010optimal}.  
+Sparsity comes from expanding the domain and range of an operator  using different choices of $a$ and $b$. Whereas the sparsity pattern and entries derived in \cite{olver2018recurrence,olver2019triangle} for equations on the triangle  and \cite{vasil2016tensor} for equations on the disk results from manipulations of Jacobi polynomials, in the present work we use a more general integration-by-parts argument to deduce the sparsity structure, alongside quadrature rules to determine the entries.  In particular, by exploiting the connection with one-dimensional orthogonal polynomials we are able to construct discretizations of general partial differential operators of size $p(p-1)/2 \times p(p-1)/2$ in $O(p^3)$ operations, where $p$ is the total polynomial degree. This compares favourably to $O(p^6)$ operations if one proceeds na\"ively. Furthermore, we use this framework to derive sparse $p$-finite element methods that are analogous to those of Beuchler and Sch\"oberl on tetrahedra \cite{beuchler2006new}, see also work by Li and Shen \cite{li2010optimal}.  
 
 
 %An alternative approach is to use \sotodoinline{Compare with "Discontinuous Galerkin scheme for the spherical shallow water equations with applications to tsunami modeling and prediction"}
 
-The motivation for this work is solving partial differential equations on sub-domains of the sphere. In particular, OPs in cartesian coordinates ($x$, $y$, and $z$) on a half-sphere  can be represented using two families of OPs on the half-disk, see \cite[Theorem 3.1]{olver2018orthogonal} for a similar construction of OPs on an arc in 2D, and it is clear from the construction in this paper that discretizations of spherical gradients and Laplacian's are sparse on half-spheres and other suitable sub-components of the sphere. The resulting sparsity in high-polynomial degree discretisations presents an attractive alternative to methods based on bijective mappings (e.g., \cite{DGShallowWater,FEMShallowWater}).
+The motivation for this work is solving partial differential equations on sub-domains of the sphere. In particular, OPs in cartesian coordinates ($x$, $y$, and $z$) on a half-sphere  can be represented using two families of OPs on the half-disk, see \cite[Theorem 3.1]{olver2018orthogonal} for a similar construction of OPs on an arc in 2D, and it is clear from the construction in this paper that discretizations of spherical gradients and Laplacian's are sparse on half-spheres and other suitable sub-components of the sphere. The resulting sparsity in high-polynomial degree discretisations presents an attractive alternative to methods based on bijective mappings (e.g., \cite{DGShallowWater,FEMShallowWater,boyd2005sphere}).
 %
 %, where we would require $2n+1$ 3D OPs for each degree $n$, of which $n+1$ would be the $n+1$ degree $n$ OPs on the half-disk of the first family (polynomials in $x,y$) while the remaining $n$ OPs would be given by $z$ multiplied by the $n$ degree $n-1$ OPs on the half-disk of the second family. 
 Constructing sparse spectral methods for surface PDEs on half-spheres, spherical caps, and spherical triangles is future work, and has applications in weather prediction \cite{staniforth2012horizontal}. Other extensions include a full $hp$-finite element method on sections of a disk, which has applications in turbulent pipe flow.
@@ -266,7 +268,7 @@ are orthogonal polynomials with respect to the weight \(W(x,y) := w_1(x) \: w_2(
 \end{proposition}
 
 
-For disk slices and trapeziums, we specialise Proposition \ref{prop:construction} in the following definition. First we introduce notation for two families of univariate OPs
+For disk slices and trapeziums, we specialise Proposition \ref{prop:construction} in the following definition. First we introduce notation for two families of univariate OPs.
 \begin{definition}\label{def:OPconstruction}
 Let $\genjacw^{(a,b,c)}(x)$ and $\jacw^{(a,b)}(x)$ be two weight functions on the intervals $(\alpha, \beta)$ and $(\gamma, \delta)$ respectively, given by:
 \begin{align*}
@@ -363,9 +365,9 @@ We can see that they are indeed orthogonal using the change of variable $t = \fr
 We can express the three-term recurrences associated to $\genjac_n^{(a,b)}$ and $\jac_n^{(b,b)}$ as 
 \begin{align}
 	x \genjac_n^{(a,b)}(x) &= \beta_n^{(a,b)} \genjac_{n+1}^{(a,b)}(x) + \alpha_n^{(a,b)} \genjac_n^{(a,b)}(x) + \beta_{n-1}^{(a,b)} \genjac_{n-1}^{(a,b)}(x) \label{eqn:Hrecurrence} \\
-	y \jac_n^{(b,b)}(y) &= \delta_n^{(b)} \jac_{n+1}^{(b,b)}(y) + \gamma_n^{(b)} \jac_n^{(b,b)}(y) + \delta_{n-1}^{(b)} \jac_{n-1}^{(b,b)}(y),
+	y \jac_n^{(b,b)}(y) &= \delta_n^{(b)} \jac_{n+1}^{(b,b)}(y) + \delta_{n-1}^{(b)} \jac_{n-1}^{(b,b)}(y).
 \end{align}
-where we note that \(\gamma_n^{(b)} = 0\), for \( n = 0,1,2,\dots\). We can use these to determine the 2D recurrences for $\hdopnkab(x,y)$. Importantly, we can deduce sparsity in the recurrence relationships:
+ We can use these to determine the 2D recurrences for $\hdopnkab(x,y)$. Importantly, we can deduce sparsity in the recurrence relationships:
 
 \begin{lemma}
 $\hdopnk^{(a,b)}(x,y)$ satisfy the following 3-term recurrences:
@@ -435,14 +437,10 @@ and set $J_x^{(a,b)}, J_y^{(a,b)}$ as the Jacobi matrices corresponding to
 J_x^{(a,b)} \: \bighdopab(x,y) = x \: \bighdopab(x,y), \quad J_y^{(a,b)} \: \bighdopab(x,y) = y \: \bighdopab(x,y).
 \label{eqn:jacobimatricesdefinition}
 \end{align}
-The matrices $J_x^{(a,b)}, J_y^{(a,b)}$ act on the coefficients vector of a function's expansion in the $\{\hdopnkab\}$ basis. For example, let $a, b$ be general parameters and a function $f(x,y)$ defined on $\Omega$ be approximated by its expansion $f(x,y) = \bighdopab(x,y)^\top \mathbf{f}$. Then $x \: f(x,y)$ is approximated by $\bighdopab(x,y)^\top {J_x^{(a,b)\top}} \mathbf{f}$. In other words, ${J_x^{(a,b)\top}} \mathbf{f}$ is the coefficients vector for the expansion of the function $(x,y) \mapsto x \: f(x,y)$ in the  $\{\hdopnkab\}$ basis.
-
-
-
-$J_x^{(a,b)}, J_y^{(a,b)}$ are banded-block-banded matrices:
+The matrices $J_x^{(a,b)}, J_y^{(a,b)}$ act on the coefficients vector of a function's expansion in the $\{\hdopnkab\}$ basis. For example, let $a, b$ be general parameters and a function $f(x,y)$ defined on $\Omega$ be approximated by its expansion $f(x,y) = \bighdopab(x,y)^\top \mathbf{f}$. Then $x \: f(x,y)$ is approximated by $\bighdopab(x,y)^\top {J_x^{(a,b)\top}} \mathbf{f}$. In other words, ${J_x^{(a,b)\top}} \mathbf{f}$ is the coefficients vector for the expansion of the function $(x,y) \mapsto x \: f(x,y)$ in the  $\{\hdopnkab\}$ basis. Further, note that $J_x^{(a,b)}, J_y^{(a,b)}$ are banded-block-banded matrices:
 
 \begin{definition}
-A block matrix $A$ with blocks $A_{i,j}$ has block-bandwidths $(L,U)$ if $A_{i,j} = 0$ for $- L \leq j-i \leq U$, and sub-block-bandwidths $(\lambda, \mu)$ if all blocks $A_{i,j}$ are banded with bandwidths $(\lambda,\mu)$. A matrix where the block-bandwidths and sub-blockbandwidths are small compared to the dimensions is referred to as a banded-block-banded matrix. 
+A block matrix $A$ with blocks $A_{i,j}$ has block-bandwidths $(L,U)$ if $A_{i,j} = 0$ for $- L \leq j-i \leq U$, and sub-block-bandwidths $(\lambda, \mu)$ if all blocks $A_{i,j}$ are banded with bandwidths $(\lambda,\mu)$. A matrix where the block-bandwidths and sub-block-bandwidths are small compared to the dimensions is referred to as a banded-block-banded matrix. 
 \end{definition}
 
 For example, $J_x^{(a,b)}, J_y^{(a,b)}$ are block-tridiagonal (block-bandwidths $(1,1)$):
@@ -660,7 +658,7 @@ First, note that:
 	\jacw^{(b) \: \prime}(y) &= - 2b \: y \: \jacw^{(b-1)}(y), \label{eqn:derivativeofweightjac}
 \end{align}
 
-We proceed with the case for the operator $D_y^{(a,b)}$ for partial differentiation by $y$. Since $\{\hdop^{(a, b+1)}_{m,j}\}$ for $m = 0,\dots,n-1$, $j = 0,\dots,m$ is an orthogonal basis for any degree $n-1$ polynomial, we can expand $\pddy \hdopnkab = \sum_{m=0}^{n-1} \sum_{j=0}^m c_{m,j} \: \hdop^{(a, b+1)}_{m,j}$. The coefficients of the expansion are then the entries of the relevant operator matrix. We can use an integration-by-parts argument to show that the only non-zero coefficient of this expansion is when $m = n-1$, $j = k-1$. First, note that
+We proceed with the case for the operator $D_y^{(a,b)}$ for partial differentiation by $y$. Since $\{\hdop^{(a, b+1)}_{m,j}\}$ for $m = 0,\dots,n-1$, $j = 0,\dots,m$ is an orthogonal basis for any degree $n-1$ polynomial, we can expand $\pddy \hdopnkab = \sum_{m=0}^{n-1} \sum_{j=0}^m c_{m,j}^y \: \hdop^{(a, b+1)}_{m,j}$. The coefficients of the expansion are then the entries of the relevant operator matrix. We can use an integration-by-parts argument to show that the only non-zero coefficient of this expansion is when $m = n-1$, $j = k-1$. First, note that
 \begin{align*}
 	c_{m,j}^y = {\ip<\pddy \hdopnkab, \hdop^{(a, b+1)}_{m,j} >_{W^{(a, b+1)}}}{\norm{\hdop^{(a, b+1)}_{m,j}}^{-2}_{W^{(a, b+1)}}}.
 \end{align*}
@@ -671,7 +669,7 @@ Then, using the change of variable $t = \frac{y}{\rho(x)}$, we have that
 	&= \normgenjac^{(a, b+1+\half(k+j))} \: \ip< \genjacnmk^{(a,b+k+\half)}, \genjacmmj^{(a,b+1+j+\half)} >_{\genjacw^{(a,b+1+\half(k+j))}} \\
 		&\quad \quad \quad \quad \quad \quad \cdot \: \normjac^{(b+1)} \: \ip< \jac_k^{(b,b) \: \prime}, \: \jac_{j}^{(b+1,b+1)} >_{\jacw^{(b+1)}}.
 \end{align*}
-Now, using (\ref{eqn:derivativeofweightjac}), integration-by-parts, and noting that the weight $\jacw^{(b)}$ is a polynomial degree $2b$ and vanishes at the limits of the integral for positive parameter $b$, we have that
+Now, using (\ref{eqn:derivativeofweightjac}), integration-by-parts, and noting that the weight $\jacw^{(b)}$ is a polynomial of degree $2b$ and vanishes at the limits of the integral for positive parameter $b$, we have that
 \begin{align*}
 	\normjac^{(b+1)} \: \ip< \jac_k^{(b,b) \: \prime}, \: \jac_{j}^{(b+1,b+1)} >_{\jacw^{(b+1)}} &= \int_{-1}^1 \: \jac_k^{(b,b) \: \prime}(y) \: \jac_{j}^{(b+1,b+1)}(y) \: \jacw^{(b+1)}(y) \: \D y \\
 	&= - \int_{-1}^1 \: \jac_k^{(b,b)}(y) \: \ddy [\jacw^{(b+1)}(y) \: \jac_{j}^{(b+1,b+1)}(y)] \: \D y \\
@@ -680,14 +678,14 @@ Now, using (\ref{eqn:derivativeofweightjac}), integration-by-parts, and noting t
 \end{align*}
 which is zero for $j < k-1$. Further,
 \begin{align*}
-	\ip< \genjacnmk^{(a,b+k+\half)}, \genjac_{m+1-k}^{(a,b+k+\half)} >_{\genjacw^{(a,b+k+\half)}} = \delta_{n,m+1}
+	\ip< \genjacnmk^{(a,b+k+\half)}, \genjac_{m+1-k}^{(a,b+k+\half)} >_{\genjacw^{(a,b+k+\half)}} = \delta_{n,m+1},
 \end{align*}
-showing the only possible non-zero coefficient is when $m=n-1, j=k-1$. Finally, we simply have that 
+showing that the only possible non-zero coefficient is when $m=n-1, j=k-1$. Finally,
 \begin{align*}
 	c_{n-1,k-1}^y &= \ip< \jac_k^{(b,b) \: \prime}, \: \jac_{k-1}^{(b+1,b+1)} >_{\jacw^{(b+1)}}.
 \end{align*}
 
-We next consider the case for the operator $D_x^{(a,b)}$ for partial differentiation by $x$. Since $\{\hdop^{(a+1, b+1)}_{m,j}\}$ for $m = 0,\dots,n-1$, $j = 0,\dots,m$ is an orthogonal basis for any degree $n-1$ polynomial, we can expand $\pddx \hdopnkab = \sum_{m=0}^{n-1} \sum_{j=0}^m c_{m,j} \: \hdop^{(a+1, b+1)}_{m,j}$. The coefficients of the expansion are then the entries of the relevant operator matrix. As before, we can use an integration-by-parts argument to show that the only non-zero coefficients of this expansion are when $m = n-1, n-2$, $j = k, k-1, k-2$ and $0 \le j \le m$. First, note that
+We next consider the case for the operator $D_x^{(a,b)}$ for partial differentiation by $x$. Since $\{\hdop^{(a+1, b+1)}_{m,j}\}$ for $m = 0,\dots,n-1$, $j = 0,\dots,m$ is an orthogonal basis for any degree $n-1$ polynomial, we can expand $\pddx \hdopnkab = \sum_{m=0}^{n-1} \sum_{j=0}^m c_{m,j}^x \: \hdop^{(a+1, b+1)}_{m,j}$. The coefficients of the expansion are then the entries of the relevant operator matrix. As before, we can use an integration-by-parts argument to show that the only non-zero coefficients of this expansion are when $m = n-1, n-2$, $j = k, k-1, k-2$ and $0 \le j \le m$. First, note that
 \begin{align*}
 	c_{m,j}^x = {\ip<\pddx \hdopnkab, \hdop^{(a+1, b+1)}_{m,j} >_{W^{(a+1, b+1)}}}{\norm{\hdop^{(a+1, b+1)}_{m,j}}^{-2}_{W^{(a+1, b+1)}}}.
 \end{align*}
@@ -706,7 +704,7 @@ Now, using the change of variable $t= \frac{y}{\rho(x)}$ and (\ref{eqn:rhoderiva
 		\: \ip< y \: \jac_k^{(b,b) \: \prime} (y), \: \jac_j^{(b+1,b+1)} >_{\jacw^{(b+1)}} \Big\}
 \end{align*}
 
-We can see that, from each term's second factor as written, the above is zero for $j < k-2$. Now, using (\ref{eqn:derivativeofweightgenjac}), integration-by-parts, and noting that the weight $\genjacw^{(a,b)}$ is a polynomial degree $a+2b$ and vanishes at the limits of the integral for positive parameters $a,b$, we have that
+We can see  from each term's second factor that the above is zero for $j < k-2$. Now, using (\ref{eqn:derivativeofweightgenjac}), integration-by-parts, and noting that the weight $\genjacw^{(a,b)}$ is a polynomial degree $a+2b$ and vanishes at the limits of the integral for positive parameters $a,b$, we have that
 \begin{align*}
 	&\normgenjac^{(a, b+\half)} \: \ip< x \: \genjacnmk^{(a, b+k+\half) \: \prime}, \: \rho(x)^{k+j+2} \: \genjacmmj^{(a+1, b+1+j+\half)} >_{\genjacw^{(a, b+\half)}}  \\
 	&= \int_0^1 \: \genjacnmk^{(a, b+k+\half) \: \prime} \: \genjacmmj^{(a+1, b+1+j+\half)} \: \genjacw^{(a+1, b+1+\half(k+j+1))} \: \D x \\
@@ -752,12 +750,12 @@ Define the operator matrices $T^{(a,b)\to(a+1,b)}$, $T^{(a,b)\to(a,b+1)}$ and $T
 \end{definition}
 
 \begin{lemma}\label{lemma:sparsityofparametertransformationoperators}
-The operator matrices $T^{(a,b)\to(a+1,b)}$, $T^{(a,b)\to(a,b+1)}$, $T^{(a,b)\to(a+1,b+1)}$, $T_W^{(a,b)\to(a-1,b)}$, $T_W^{(a,b)\to(a,b-1)}$ and $T_W^{(a,b)\to(a-1,b-1)}$ from Definition \ref{def:parametertransformationoperators} are sparse, with banded-block-banded structure. More specifically:
+The operator matrices in Definition \ref{def:parametertransformationoperators} are sparse, with banded-block-banded structure. More specifically:
 \begin{itemize}
-	\item $T^{(a,b)\to(a+1,b)}$ has a block-bandwidth of $(0,1)$, with the blocks themselves being diagonal.
-  	\item $T^{(a,b)\to(a,b+1)}$, $T^{(a,b)\to(a+1,b+1)}$ have a block-bandwidth of $(0,3)$, with the blocks themselves having a bandwidth of $(0,2)$.
-	\item $T_W^{(a,b)\to(a-1,b)}$ has a block-bandwidth of $(1,0)$, with the blocks themselves being diagonal.
-  	\item $T_W^{(a,b)\to(a,b-1)}$, $T_W^{(a,b)\to(a-1,b-1)}$ have a block-bandwidth of $(3,0)$, with the blocks themselves having a bandwidth of $(2,0)$.
+	\item $T^{(a,b)\to(a+1,b)}$ has block-bandwidth $(0,1)$, with diagonal blocks.
+  	\item $T^{(a,b)\to(a,b+1)}$, $T^{(a,b)\to(a+1,b+1)}$ have block-bandwidth $(0,3)$ and sub-block-bandwidth $(0,2)$.
+	\item $T_W^{(a,b)\to(a-1,b)}$ has block-bandwidth  $(1,0)$ with diagonal blocks.
+  	\item $T_W^{(a,b)\to(a,b-1)}$, $T_W^{(a,b)\to(a-1,b-1)}$ have block-bandwidth $(3,0)$ and sub-block-bandwidth $(2,0)$.
 \end{itemize}
 \end{lemma}
 
@@ -821,6 +819,8 @@ The sparsity and structure of this biharmonic operator is seen in Figure \ref{fi
 
 
 \section{Computational aspects}\label{Section:Computation}
+
+In this section we discuss how to take advantage of the proposed basis and sparsity structure in partial differential operators in practical computational applications. 
 
 \subsection{Constructing $\genjac_n^{(a,b)}(x)$}
 
@@ -933,8 +933,9 @@ The proofs of Theorem \ref{theorem:sparsityofdifferentialoperators} and Lemma \r
 
 
 %
-\section{Examples on the half-disk with zero BCs}\label{Section:Examples}
+\section{Examples on the half-disk with zero Dirichlet conditions}\label{Section:Examples}
 
+We now demonstrate how the sparse linear systems constructed as above can be used to efficiently solve PDEs with zero Dirichlet conditions. We consider Poisson, inhomogeneous variable coefficient Helmholtz equation and the Biharmonic equation, demonstrating the versatility of the approach. 
 
 \subsection{Poisson}
 
@@ -988,7 +989,7 @@ The proofs of Theorem \ref{theorem:sparsityofdifferentialoperators} and Lemma \r
 \end{figure}
 % END FIGURES
 
-Find \(u(x,y)\) given a function \(f(x,y)\) such that:
+The Poisson equation is the classic problem of finding \(u(x,y)\) given a function \(f(x,y)\) such that:
 \begin{align}
 	\begin{cases}
     		\Delta u(x,y) = f(x,y) \quad \text{in } \Omega \\
@@ -1003,9 +1004,9 @@ We can tackle the problem as follows. Denote the coefficient vector for expansio
     \laplacewii \mathbf{u} = \mathbf{f}
 \end{align*}
 which can be solved to find $\mathbf{u}$.
-In Figure \ref{fig:poisson} we see the solution to the Poisson equation with zero boundary conditions given in (\ref{eqn:poisson}) in the half-disk $\Omega$. In Figure \ref{fig:poisson} we also show the norms of each block of calculated coefficients of the approximation for four right-hand sides of the Poisson equation with N = 200, that is, 20,301 unknowns. The rate of decay in the coefficients is a proxy for the rate of convergence of the computed solution. We see that we achieve algebraic convergence for the first three examples, noting that for right hand sides that vanish at the corners of our half-disk ($x=0, \: y = \pm 1$) we see faster convergence. For the final Gaussian bump example, we see that we achieve spectral convergence.
+In Figure \ref{fig:poisson} we see the solution to the Poisson equation with zero boundary conditions given in (\ref{eqn:poisson}) in the half-disk $\Omega$. In Figure \ref{fig:poisson} we also show the norms of each block of calculated coefficients of the approximation for four right-hand sides of the Poisson equation with N = 200, that is, 20,301 unknowns. The rate of decay in the coefficients is a proxy for the rate of convergence of the computed solution. We see that we achieve algebraic convergence for the first three examples, noting that for right hand-sides that vanish at the corners of our half-disk ($x=0, \: y = \pm 1$) we observe faster convergence. For the final Gaussian bump example, we see that we achieve spectral convergence.
 
-\subsection{Inhomogenous variable-coefficient Helmholtz}
+\subsection{Inhomogeneous variable-coefficient Helmholtz}
 
 Find \(u(x,y)\) given functions $v$, $f : \Omega \to \R$ such that:
 \begin{align}
@@ -1021,7 +1022,7 @@ We can tackle the problem as follows. Denote the coefficient vector for expansio
 \begin{align*}
     (\laplacewii + k^2 T^{(0,0)\to(1,1)} \: V({J_x^{(0,0)}}^\top, {J_y^{(0,0)}}^\top) \: T_W^{(1,1)\to(0,0)}) \mathbf{u} = \mathbf{f}
 \end{align*}
-which can be solved to find $\mathbf{u}$. We can see the sparsity and structure of this matrix system in Figure \ref{fig:sparsity} with $v(x,y) = xy^2$ as an example. In Figure \ref{fig:helmholtz} we see the solution to the inhomogenous variable-coefficient Helmholtz equation with zero boundary conditions given in (\ref{eqn:helmholtz}) in the half-disk $\Omega$, with $k=100$, $v(x,y) = (1 - (3(x-1)^2 + 5y^2))$ and $f(x,y) = xy e^x$. In Figure \ref{fig:helmholtz} we also show the norms of each block of calculated coefficients of the approximation for four right-hand sides of the inhomogenous variable-coefficient Helmholtz equation with $k=20$ and $v(x,y) = (1 - (3(x-1)^2 + 5y^2))$ using N = 200, that is, 20,301 unknowns. The rate of decay in the coefficients is a proxy for the rate of convergence of the computed solution. We see that we achieve algebraic convergence for the first three examples, noting that for right hand sides that vanish at the corners of our half-disk ($x=0, \: y = \pm 1$) we see faster convergence. For the final Gaussian bump example, we see that we achieve spectral convergence.
+which can be solved to find $\mathbf{u}$. We can see the sparsity and structure of this matrix system in Figure \ref{fig:sparsity} with $v(x,y) = xy^2$ as an example. In Figure \ref{fig:helmholtz} we see the solution to the inhomogeneous variable-coefficient Helmholtz equation with zero boundary conditions given in (\ref{eqn:helmholtz}) in the half-disk $\Omega$, with $k=100$, $v(x,y) = (1 - (3(x-1)^2 + 5y^2))$ and $f(x,y) = xy e^x$. In Figure \ref{fig:helmholtz} we also show the norms of each block of calculated coefficients of the approximation for four right-hand sides of the inhomogeneous variable-coefficient Helmholtz equation with $k=20$ and $v(x,y) = (1 - (3(x-1)^2 + 5y^2))$ using N = 200, that is, 20,301 unknowns. The rate of decay in the coefficients is a proxy for the rate of convergence of the computed solution. We see that we achieve algebraic convergence for the first three examples, noting that for right hand sides that vanish at the corners of our half-disk ($x=0, \: y = \pm 1$) we see faster convergence. For the final Gaussian bump example, we see that we achieve spectral convergence.
 
 We can extend this to constant non-zero boundary conditions by simply noting that the problem 
 \begin{align*}
@@ -1034,7 +1035,7 @@ is equivalent to letting $u = \tilde{u} + c$ and solving
 \begin{align*}
 	\begin{cases}
     		\Delta \tilde{u}(x,y) + k^2 \: v(x,y) \; \tilde{u}(x,y) = f(x,y) - c \: k^2 \: v(x,y) \; =: g(x,y)  \quad \text{in } \Omega \\
-		\tilde{u}(x,y) = 0 \quad \text{on } \partial \Omega
+		\tilde{u}(x,y) = 0 \quad \text{on } \partial \Omega.
 	\end{cases}.
 \end{align*}
 
@@ -1055,7 +1056,7 @@ where $\Delta^2$ is the Biharmonic operator, noting the imposition of zero Diric
 %
 \section{Conclusions}
 
-We have shown that bivariate orthogonal polynomials can lead to sparse discretizations of general linear PDEs on specific domains given by an algebraic curve---notably here the half-disk---with Dirichlet boundary conditions. This forms a building block in developing an $hp-$finite element method to solve PDEs on other polygonal domains by using suitable shaped elements, for example, by dividing the disk into disk slice elements. 
+We have shown that bivariate orthogonal polynomials can lead to sparse discretizations of general linear PDEs on specific domains whose boundary is specified by an algebraic curve---notably here the half-disk---with Dirichlet boundary conditions. This forms a building block in developing an $hp-$finite element method to solve PDEs on other polygonal domains by using suitable shaped elements, for example, by dividing the disk into disk slice elements. 
 %A further extension is to develop similar relationships for 3D domains such as the half-sphere surface. With this, we can obtain a family of OPs on the half-sphere, with sparse relations, and construct sparse spectral methods for surface PDEs on half-spheres. 
 This work serves as a stepping stone to constructing similar methods on other 3D spherical domains, such as spherical caps and spherical triangles.
 
@@ -1218,6 +1219,7 @@ orthogonal with respect to the weight
 	W^{(a,b,c,d)}(x,y) &:= \genjacw^{(a,b,c+d)}(x) \: w^{(d,c)}_P(\frac{y}{\rho(x)}) \nonumber \\
 	&= (1-x)^a \: x^b \: y^c \: (1-\half x - y)^d, \quad (x,y) \in \Omega.
 \end{align*}
+
 
 \bibliography{halfdisk-bib}
 
