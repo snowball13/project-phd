@@ -744,6 +744,7 @@ function resizedata!(S::HalfDiskSpace, N)
     resize!(S.B, N + 2)
     resize!(S.C, N + 2)
     resize!(S.DT, N + 2)
+    @show "resizedata!"
     getBs!(S, N, N₀)
     @show "resizedata!", "done getBs!"
     getCs!(S, N, N₀)
@@ -762,6 +763,9 @@ function jacobix(S::HalfDiskSpace, N)
     λ, μ = 0, 0
     J = BandedBlockBandedMatrix(0.0I, (rows, cols), (l, u), (λ, μ))
     J[1, 1] = S.B[1][1, 1]
+    if N == 0
+        return J
+    end
     view(J, Block(1, 2)) .= S.A[1][1, :]'
     for n = 2:N
         view(J, Block(n, n-1)) .= S.C[n][1:Int(end/2), :]
@@ -780,6 +784,9 @@ function jacobiy(S::HalfDiskSpace, N)
     l, u = 1, 1
     λ, μ = 1, 1
     J = BandedBlockBandedMatrix(0.0I, (rows, cols), (l, u), (λ, μ))
+    if N == 0
+        return J
+    end
     n = 1
     J[1, 1] = S.B[1][2, 1]
     view(J, Block(n, n+1)) .= S.C[n+1][Int(end/2)+1:end, :]'
@@ -1414,47 +1421,45 @@ function operatorclenshaw(cfs, S::HalfDiskSpace, N)
     # function f given by its coefficients of its expansion in the space S
     m̃ = length(cfs)
     M = getnk(m̃)[1] # Degree of f
+
+    # Pad cfs to correct size
     m = getopindex(M, M)
-    if m̃ < getopindex(M, M)
-        # Pad cfs to correct size
+    if N < M
+        error("Size requested has lower degree than function for the operator")
+    end
+    if m̃ < m
         resize!(cfs, m)
         cfs[m̃+1:end] .= 0.0
     end
+
     resizedata!(S, M)
-    Jx = sparse(jacobix(S, M))
-    Jy = sparse(jacobiy(S, M))
+    Jx = sparse(jacobix(S, N))
+    Jy = sparse(jacobiy(S, N))
+    id = sparse(I, size(Jx))
 
     @show "Operator Clenshaw"
     P0 = 1.0
     if M == 0
-        return cfs[1] * id * P0
-    end
-    id = sparse(I, size(Jx))
-    if M == 1
-        P0 * (operatorclenshawvector(S, cfs[1], id)[1] - (operatorclenshawmatrixDT(S, S.DT[1], id) * operatorclenshawmatrixBmG(S, S.B[1], id, Jx, Jy))[1])
-    end
-    n = M; @show "Operator Clenshaw", N, n
-    inds2 = m-M:m
-    γ2 = operatorclenshawvector(S, view(cfs, inds2), id)
-    n = M - 1; @show "Operator Clenshaw", M, n
-    inds1 = (m-2M):(m-M-1)
-    γ1 = (operatorclenshawvector(S, view(cfs, inds1), id)
-        - γ2 * operatorclenshawmatrixDT(S, S.DT[M], id) * operatorclenshawmatrixBmG(S, S.B[M], id, Jx, Jy))
-    for n = M-2:-1:0
-        @show "Operator Clenshaw", N, n
-        ind = sum(1:n)
-        γ = (operatorclenshawvector(S, view(cfs, ind+1:ind+n+1), id)
-             - γ1 * operatorclenshawmatrixDT(S, S.DT[n+1], id) * operatorclenshawmatrixBmG(S, S.B[n+1], id, Jx, Jy)
-             - γ2 * operatorclenshawmatrixDT(S, S.DT[n+2] * S.C[n+2], id))
-        γ2 = copy(γ1)
-        γ1 = copy(γ)
-    end
-    # Resize the resulting operator to be sum(1:N+1)xsum(1:N+1)
-    if N > M
-        nn = getopindex(N, N)
-        ret = spzeros(nn, nn)
-        view(ret, 1:m, 1:m) .= (γ1 * P0)[1]
+        ret = cfs[1] * id * P0
+    elseif M == 1
+        ret = P0 * (operatorclenshawvector(S, cfs[1], id)[1] - (operatorclenshawmatrixDT(S, S.DT[1], id) * operatorclenshawmatrixBmG(S, S.B[1], id, Jx, Jy))[1])
     else
+        n = M; @show "Operator Clenshaw", N, M, n
+        ind = sum(1:n)
+        γ2 = operatorclenshawvector(S, view(cfs, ind+1:ind+n+1), id)
+        n = M - 1; @show "Operator Clenshaw", M, n
+        ind = sum(1:n)
+        γ1 = (operatorclenshawvector(S, view(cfs, ind+1:ind+n+1), id)
+            - γ2 * operatorclenshawmatrixDT(S, S.DT[n+1], id) * operatorclenshawmatrixBmG(S, S.B[n+1], id, Jx, Jy))
+        for n = M-2:-1:0
+            @show "Operator Clenshaw", M, n
+            ind = sum(1:n)
+            γ = (operatorclenshawvector(S, view(cfs, ind+1:ind+n+1), id)
+                 - γ1 * operatorclenshawmatrixDT(S, S.DT[n+1], id) * operatorclenshawmatrixBmG(S, S.B[n+1], id, Jx, Jy)
+                 - γ2 * operatorclenshawmatrixDT(S, S.DT[n+2] * S.C[n+2], id))
+            γ2 = copy(γ1)
+            γ1 = copy(γ)
+        end
         ret = (γ1 * P0)[1]
     end
     ret

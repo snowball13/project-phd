@@ -149,10 +149,22 @@ end
     a, b = 1.0, 1.0; D = HalfDiskFamily(); S = D(a, b)
     x, y = 0.4, -0.2; z = [x; y] # Test point
     N = 14
-    oper = Fun((x,y)->cos(x)*y^2, S, 200)
-    A = operatorclenshaw(oper, S)
+    oper = Fun((x,y)->cos(x)*y^2, D(a-1, b-1), 200)
     f = Fun((x,y)->x*y, S)
     resizecoeffs!(f, N)
+    A = operatorclenshaw(oper, D(a-1, b-1), N+3)
+    T = transformparamsoperator(D(a-1, b-1), S, N+3)
+    Tw = transformparamsoperator(S, D(a-1, b-1), N, weighted=true)
+    foper = Fun(S, T*A*Tw*f.coefficients)
+    @test foper(z) ≈ OrthogonalPolynomialFamilies.weight(S, z) * f(z) * oper(z)
+
+    a, b = 1.0, 1.0; D = HalfDiskFamily(); S = D(a, b)
+    x, y = 0.4, -0.2; z = [x; y] # Test point
+    N = 14
+    oper = Fun((x,y)->cos(x)*y^2, S, 200)
+    f = Fun((x,y)->x*y, S)
+    resizecoeffs!(f, N)
+    A = operatorclenshaw(oper, S, N)
     foper = Fun(S, A*f.coefficients)
     @test foper(z) ≈ f(z) * oper(z)
 end
