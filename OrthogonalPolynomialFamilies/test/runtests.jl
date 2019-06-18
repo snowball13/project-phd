@@ -243,7 +243,7 @@ end
     d2xweight(S::HalfDiskSpace, z) = d2xweight(S, z[1], z[2])
     function d2yweight(S::HalfDiskSpace{<:Any, <:Any, T}, x, y) where T
         D = S.family
-        - 2 * T(S.b) * (weight(D(S.a,S.b-1), x, y) - 2 * T(S.b) * (T(S.b) - 1) * y^2 * weight(D(S.a,S.b-2), x, y))
+        - 2 * T(S.b) * (weight(D(S.a,S.b-1), x, y) + 4 * T(S.b) * (T(S.b) - 1) * y^2 * weight(D(S.a,S.b-2), x, y))
     end
     d2yweight(S::HalfDiskSpace, z) = d2yweight(S, z[1], z[2])
 
@@ -298,6 +298,24 @@ end
     @test F(z) ≈ f(z...)
     F = Fun(f, S)
     @test F(z) ≈ f(z...)
+
+    n = 10; a = 1.0; b = 2.0; c = 1.0
+    f = (x,y) -> y*x^2 + x
+    α, β = 0.4, 0.8
+    D = DiskSliceFamily(α)
+    S = D(b, c)
+    pts = points(S, n)
+    vals = [f(pt...) for pt in pts]
+    cfs = transform(S, vals)
+    x, y = 0.5673, -0.2786; z = [x; y]
+    @test (x^2 + y^2 < 1 && D.α ≤ z[1] ≤ D.β && D.γ*D.ρ(z[1]) ≤ z[2] ≤ D.δ*D.ρ(z[1]))
+    F = Fun(S, cfs)
+    @test F(z) ≈ f(z...)
+    @test itransform(S, cfs) ≈ vals
+    F = Fun(f, S, 10)
+    @test F(z) ≈ f(z...)
+    F = Fun(f, S)
+    @test F(z) ≈ f(z...)
 end
 
 @testset "Jacobi matrices" begin
@@ -305,6 +323,23 @@ end
     α, β = 0.2, 0.9
     D = DiskSliceFamily(α, β)
     S = D(a, b, c)
+    x, y = α + 0.1673, -0.2786; z = [x; y]
+    @test (x^2 + y^2 < 1 && D.α ≤ z[1] ≤ D.β && D.γ*D.ρ(z[1]) ≤ z[2] ≤ D.δ*D.ρ(z[1]))
+    f = (x,y)->x*y + x
+    pts = points(S, n)
+    vals = [f(pt...) for pt in pts]
+    cfs = transform(S, vals)
+    m = length(cfs)
+    N = Int(ceil(0.5 * (-1 + sqrt(1 + 8m)))) - 1
+    Jx = jacobix(S, N+1)
+    Jy = jacobiy(S, N+1)
+    @test evaluate(Jx[1:m, 1:m] * cfs, S, z) ≈ z[1] * f(z...)
+    @test evaluate(Jy[1:m, 1:m] * cfs, S, z) ≈ z[2] * f(z...)
+
+    n = 10; a, b, c = 1.0, 1.0, 2.0
+    α, β = 0.2, 0.9
+    D = DiskSliceFamily(α)
+    S = D(b, c)
     x, y = α + 0.1673, -0.2786; z = [x; y]
     @test (x^2 + y^2 < 1 && D.α ≤ z[1] ≤ D.β && D.γ*D.ρ(z[1]) ≤ z[2] ≤ D.δ*D.ρ(z[1]))
     f = (x,y)->x*y + x
@@ -333,6 +368,20 @@ end
     resizecoeffs!(f, N)
     foper = Fun(S, A*f.coefficients)
     @test foper(z) ≈ f(z) * oper(z)
+
+    n = 10; a, b, c = 1.0, 1.0, 2.0
+    α, β = 0.2, 0.9
+    D = DiskSliceFamily(α)
+    S = D(b, c)
+    x, y = α + 0.1673, -0.2786; z = [x; y]
+    @test (x^2 + y^2 < 1 && D.α ≤ z[1] ≤ D.β && D.γ*D.ρ(z[1]) ≤ z[2] ≤ D.δ*D.ρ(z[1]))
+    N = 14
+    oper = Fun((x,y)->cos(x)*y^2, S, 200)
+    A = operatorclenshaw(oper, S)
+    f = Fun((x,y)->x*y, S)
+    resizecoeffs!(f, N)
+    foper = Fun(S, A*f.coefficients)
+    @test foper(z) ≈ f(z) * oper(z)
 end
 
 @testset "Evaluate partial derivative of (random and known) function" begin
@@ -352,4 +401,197 @@ end
     h = 1e-5; @test y*cos(x) ≈ differentiatex(f, f.space)(x,y) atol=100h
     f = Fun((x,y)->x*sin(y), S)
     h = 1e-5; @test x*cos(y) ≈ differentiatey(f, f.space)(x,y) atol=100h
+
+    a, b, c = 1.0, 1.0, 2.0
+    α, β = 0.2, 0.9
+    D = DiskSliceFamily(α)
+    S = D(b, c)
+    x, y = α + 0.1673, -0.2786; z = [x; y]
+    @test (x^2 + y^2 < 1 && D.α ≤ z[1] ≤ D.β && D.γ*D.ρ(z[1]) ≤ z[2] ≤ D.δ*D.ρ(z[1]))
+    N = 4
+    f = Fun(S, randn(sum(1:N+1)))
+    # NOTE: This test for DX operator nay not be good enough to ensure it is "correct"
+    # Its fails for atol=100h
+    h = 1e-5; @test (f(x+h,y)-f(x,y))/h ≈ differentiatex(f, f.space)(x,y) atol=1000h
+    h = 1e-5; @test (f(x,y+h)-f(x,y))/h ≈ differentiatey(f, f.space)(x,y) atol=100h
+    f = Fun((x,y)->y*sin(x), S)
+    h = 1e-5; @test y*cos(x) ≈ differentiatex(f, f.space)(x,y) atol=100h
+    f = Fun((x,y)->x*sin(y), S)
+    h = 1e-5; @test x*cos(y) ≈ differentiatey(f, f.space)(x,y) atol=100h
+end
+
+@testset "Increment/decrement parameters operators" begin
+    tol = 1e-13
+    x, y = 0.4, -0.2; z = [x; y] # Test point
+
+    paramslist = [(1,1,0), (1,1,1), (0,0,1)]
+    for params in paramslist
+        α, β = 0.2, 0.8; D = DiskSliceFamily(α, β)
+        a, b, c = 1.0, 1.0, 1.0; S = D(a, b, c)
+        St = (S.family)(S.params.+params)
+        maxop = 150
+        N = getnk(maxop)[1] + 1
+        C = transformparamsoperator(S, St, N)
+        for j = 1:maxop
+            p = Fun(S, [zeros(j-1); 1])
+            resizecoeffs!(p, N)
+            q = Fun(St, C * p.coefficients)
+            res = abs(q(z) - p(z))
+            res > tol && @show getnk(j), j, res
+            @test res < tol
+        end
+    end
+    for params in paramslist
+        α, β = 0.2, 0.8; D = DiskSliceFamily(α, β)
+        a, b, c = 1.0, 1.0, 1.0; S = D(a, b, c)
+        St = (S.family)(S.params.-params)
+        maxop = 150
+        N = getnk(maxop)[1] + 1
+        C = transformparamsoperator(S, St, N, weighted=true)
+        for j = 1:maxop
+            p = Fun(S, [zeros(j-1); 1])
+            q = Fun(St, C * pad(p.coefficients, size(C)[2]))
+            res = abs(weight(St, z) * q(z) - weight(S, z) * p(z))
+            res > tol && @show getnk(j), j, res
+            @test res < tol
+        end
+    end
+    paramslist = [(1,0), (1,1), (0,1)]
+    for params in paramslist
+        α, β = 0.2, 0.8; D = DiskSliceFamily(α)
+        a, b, c = 1.0, 1.0, 1.0; S = D(b, c)
+        St = (S.family)(S.params.+params)
+        maxop = 150
+        N = getnk(maxop)[1] + 1
+        C = transformparamsoperator(S, St, N)
+        for j = 1:maxop
+            p = Fun(S, [zeros(j-1); 1])
+            resizecoeffs!(p, N)
+            q = Fun(St, C * p.coefficients)
+            res = abs(q(z) - p(z))
+            res > tol && @show getnk(j), j, res
+            @test res < tol
+        end
+    end
+    for params in paramslist
+        α, β = 0.2, 0.8; D = DiskSliceFamily(α)
+        a, b, c = 1.0, 1.0, 1.0; S = D(b, c)
+        St = (S.family)(S.params.-params)
+        maxop = 150
+        N = getnk(maxop)[1] + 1
+        C = transformparamsoperator(S, St, N, weighted=true)
+        for j = 1:maxop
+            p = Fun(S, [zeros(j-1); 1])
+            q = Fun(St, C * pad(p.coefficients, size(C)[2]))
+            res = abs(weight(St, z) * q(z) - weight(S, z) * p(z))
+            res > tol && @show getnk(j), j, res
+            @test res < tol
+        end
+    end
+end
+
+@testset "laplaceoperator" begin
+    rhoval(x) = sqrt(1-x^2)
+    dxrhoval(x) = -x/sqrt(1-x^2)
+    d2xrhoval(x) = - (1-x^2)^(-0.5) - x^2 * (1-x^2)^(-1.5)
+    function dxweight(S::DiskSliceSpace{<:Any, <:Any, T, <:Any}, x, y) where T
+        D = S.family
+        if D.nparams == 2
+            a, b = S.params
+            ret = a * weight(D(a-1, b), x, y)
+            ret += 2 * rhoval(x) * dxrhoval(x) * b * weight(D(a, b-1), x, y)
+            T(ret)
+        else
+            a, b, c = S.params
+            ret = -a * weight(D(a-1, b, c), x, y)
+            ret += b * weight(D(a, b-1, c), x, y)
+            ret += 2 * rhoval(x) * dxrhoval(x) * c * weight(D(a, b, c-1), x, y)
+            T(ret)
+        end
+    end
+    dxweight(S::DiskSliceSpace, z) = dxweight(S, z[1], z[2])
+    function dyweight(S::DiskSliceSpace{<:Any, <:Any, T, <:Any}, x, y) where T
+        ret = - 2 * S.params[end] * y * weight(differentiateweightedspacey(S), x, y)
+        T(ret)
+    end
+    dyweight(S::DiskSliceSpace, z) = dyweight(S, z[1], z[2])
+    function d2xweight(S::DiskSliceSpace{<:Any, <:Any, T, <:Any}, x, y) where T
+        D = S.family
+        if D.nparams == 2
+            a, b = S.params
+            ret1 = a * ((a - 1) * weight(D(a-2, b), x, y)
+                                    + 2 * rhoval(x) * dxrhoval(x) * b * weight(D(a-1, b-1), x, y))
+            ret2 = (2 * rhoval(x) * dxrhoval(x) * b * (a * weight(D(a-1, b-1), x, y)
+                                        + 2 * rhoval(x) * dxrhoval(x) * (b-1) * weight(D(a, b-2), x, y))
+                        + 2 * b * (rhoval(x) * d2xrhoval(x) + dxrhoval(x)^2) * weight(D(a, b-1), x, y))
+            T(ret1 + ret2)
+        else
+            a, b, c = S.params
+            ret1 = a * ((a-1)*weight(D(a-2,b,c),x,y) - b*weight(D(a-1,b-1,c),x,y) - 2*c*rhoval(x)*dxrhoval(x)*weight(D(a-1,b,c-1),x,y))
+            ret2 = b * (-a*weight(D(a-1,b-1,c),x,y) + (b-1)*weight(D(a,b-2,c),x,y) + 2*c*rhoval(x)*dxrhoval(x)*weight(D(a,b-1,c-1),x,y))
+            ret3 = 2*c*rhoval(x)*dxrhoval(x) * (-a*weight(D(a-1,b,c-1),x,y) + b*weight(D(a,b-1,c-1),x,y)
+                                                        + 2*(c-1)*rhoval(x)*dxrhoval(x)*weight(D(a,b,c-2),x,y))
+            ret4 = 2*c*(dxrhoval(x)^2 + rhoval(x)*d2xrhoval(x))*weight(D(a,b,c-1),x,y)
+            T(ret1+ret2+ret3+ret4)
+        end
+    end
+    d2xweight(S::DiskSliceSpace, z) = d2xweight(S, z[1], z[2])
+    function d2yweight(S::DiskSliceSpace{<:Any, <:Any, T, <:Any}, x, y) where T
+        D = S.family
+        ret = - 2 * S.params[end] * weight(differentiateweightedspacey(S), x, y)
+        ret += 4 * S.params[end] * (S.params[end] - 1) * y^2 * weight(differentiateweightedspacey(differentiateweightedspacey(S)), x, y)
+        T(ret)
+    end
+    d2yweight(S::DiskSliceSpace, z) = d2yweight(S, z[1], z[2])
+
+    a, b, c = 1.0, 1.0, 1.0
+    α, β = 0.2, 0.9
+    x, y = 0.34, -0.29; z = [x; y]
+    N = 15
+    # W111->P111
+    D = DiskSliceFamily(0.0); S = D(b, c)
+    L = laplaceoperator(S, S, N, weighted=true)
+    for n = 1:10
+        @show n
+        u = Fun((x,y)->y*x^(n-1)+y^n, S)
+        f = Fun((x,y)->(u(x,y)*d2xweight(S,x,y) + 2*y*(n-1)*x^(n-2)*dxweight(S,x,y) + y*(n-2)*(n-1)*x^(n-3)*weight(S,x,y)
+                        + u(x,y)*d2yweight(S,x,y) + 2*(n*y^(n-1) + x^(n-1))*dyweight(S,x,y) + n*(n-1)*y^(n-2)*weight(S,x,y)), S)
+        resizecoeffs!(f, N)
+        cfs = sparse(L) \ f.coefficients
+        @test Fun(S, cfs)(z) ≈ u(z)
+    end
+    D = DiskSliceFamily(α, β); S = D(a, b, c)
+    L = laplaceoperator(S, S, N, weighted=true)
+    for n = 1:10
+        @show n
+        u = Fun((x,y)->y*x^(n-1)+y^n, S, 200)
+        f = Fun((x,y)->(u(x,y)*d2xweight(S,x,y) + 2*y*(n-1)*x^(n-2)*dxweight(S,x,y) + y*(n-2)*(n-1)*x^(n-3)*weight(S,x,y)
+                        + u(x,y)*d2yweight(S,x,y) + 2*(n*y^(n-1) + x^(n-1))*dyweight(S,x,y) + n*(n-1)*y^(n-2)*weight(S,x,y)), S, 200)
+        resizecoeffs!(f, N)
+        cfs = sparse(L) \ f.coefficients
+        @test Fun(S, cfs)(z) ≈ u(z)
+    end
+    # W222->P000
+    # TODO
+    # P000->P222
+    D = DiskSliceFamily(0.0); S = D(a-1, b-1)
+    L = laplaceoperator(S, D(a+1, b+1), N, weighted=false)
+    n = 1; u = Fun((x,y)->2y, S); resizecoeffs!(u, N); @test abs(Fun(D(a+1, b+1), L * u.coefficients)(z)) < 1e-12
+    for n = 2:10
+        @show n
+        u = Fun((x,y)->y*x^(n-1)+y^n, S)
+        resizecoeffs!(u, N)
+        cfs = L * u.coefficients
+        @test Fun(D(a+1, b+1), cfs)(z) ≈ y*(n-2)*(n-1)*x^(n-3) + n*(n-1)*y^(n-2)
+    end
+    D = DiskSliceFamily(α, β); S = D(a-1, b-1, c-1)
+    L = laplaceoperator(S, D(a+1, b+1, c+1), N, weighted=false)
+    n = 1; u = Fun((x,y)->2y, S); resizecoeffs!(u, N); @test abs(Fun(D(a+1, b+1, c+1), L * u.coefficients)(z)) < 1e-12
+    for n = 2:10
+        @show n
+        u = Fun((x,y)->y*x^(n-1)+y^n, S, 200)
+        resizecoeffs!(u, N)
+        cfs = L * u.coefficients
+        @test Fun(D(a+1, b+1, c+1), cfs)(z) ≈ y*(n-2)*(n-1)*x^(n-3) + n*(n-1)*y^(n-2)
+    end
 end

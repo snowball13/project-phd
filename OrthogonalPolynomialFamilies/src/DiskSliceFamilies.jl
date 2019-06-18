@@ -118,7 +118,7 @@ getPspace(S::DiskSliceSpace) = (S.family.P)(S.params[end], S.params[end])
 #===#
 # Weight eval functions
 weight(S::DiskSliceSpace{<:Any,<:Any,T,<:Any}, x, y) where T =
-    T(getRspace(S).weight(x) * getPspace(S).weight(y/ρ(x)))
+    T(getRspace(S).weight(x) * getPspace(S).weight(y/S.family.ρ(x)))
 weight(S::DiskSliceSpace, z) = weight(S, z[1], z[2])
 
 
@@ -583,47 +583,45 @@ function operatorclenshaw(cfs, S::DiskSliceSpace, N)
     # function f given by its coefficients of its expansion in the space S
     m̃ = length(cfs)
     M = getnk(m̃)[1] # Degree of f
+
+    # Pad cfs to correct size
     m = getopindex(M, M)
-    if m̃ < getopindex(M, M)
-        # Pad cfs to correct size
+    if N < M
+        error("Size requested has lower degree than function for the operator")
+    end
+    if m̃ < m
         resize!(cfs, m)
         cfs[m̃+1:end] .= 0.0
     end
+
     resizedata!(S, M)
-    Jx = sparse(jacobix(S, M))
-    Jy = sparse(jacobiy(S, M))
+    Jx = sparse(jacobix(S, N))
+    Jy = sparse(jacobiy(S, N))
+    id = sparse(I, size(Jx))
 
     @show "Operator Clenshaw"
     P0 = 1.0
     if M == 0
-        return cfs[1] * id * P0
-    end
-    id = sparse(I, size(Jx))
-    if M == 1
-        P0 * (operatorclenshawvector(S, cfs[1], id)[1] - (operatorclenshawmatrixDT(S, S.DT[1], id) * operatorclenshawmatrixBmG(S, S.B[1], id, Jx, Jy))[1])
-    end
-    n = M; @show "Operator Clenshaw", N, n
-    inds2 = m-M:m
-    γ2 = operatorclenshawvector(S, view(cfs, inds2), id)
-    n = M - 1; @show "Operator Clenshaw", M, n
-    inds1 = (m-2M):(m-M-1)
-    γ1 = (operatorclenshawvector(S, view(cfs, inds1), id)
-        - γ2 * operatorclenshawmatrixDT(S, S.DT[M], id) * operatorclenshawmatrixBmG(S, S.B[M], id, Jx, Jy))
-    for n = M-2:-1:0
-        @show "Operator Clenshaw", N, n
-        ind = sum(1:n)
-        γ = (operatorclenshawvector(S, view(cfs, ind+1:ind+n+1), id)
-             - γ1 * operatorclenshawmatrixDT(S, S.DT[n+1], id) * operatorclenshawmatrixBmG(S, S.B[n+1], id, Jx, Jy)
-             - γ2 * operatorclenshawmatrixDT(S, S.DT[n+2] * S.C[n+2], id))
-        γ2 = copy(γ1)
-        γ1 = copy(γ)
-    end
-    # Resize the resulting operator to be sum(1:N+1)xsum(1:N+1)
-    if N > M
-        nn = getopindex(N, N)
-        ret = spzeros(nn, nn)
-        view(ret, 1:m, 1:m) .= (γ1 * P0)[1]
+        ret = cfs[1] * id * P0
+    elseif M == 1
+        ret = P0 * (operatorclenshawvector(S, cfs[1], id)[1] - (operatorclenshawmatrixDT(S, S.DT[1], id) * operatorclenshawmatrixBmG(S, S.B[1], id, Jx, Jy))[1])
     else
+        n = M; @show "Operator Clenshaw", N, M, n
+        ind = sum(1:n)
+        γ2 = operatorclenshawvector(S, view(cfs, ind+1:ind+n+1), id)
+        n = M - 1; @show "Operator Clenshaw", M, n
+        ind = sum(1:n)
+        γ1 = (operatorclenshawvector(S, view(cfs, ind+1:ind+n+1), id)
+            - γ2 * operatorclenshawmatrixDT(S, S.DT[n+1], id) * operatorclenshawmatrixBmG(S, S.B[n+1], id, Jx, Jy))
+        for n = M-2:-1:0
+            @show "Operator Clenshaw", M, n
+            ind = sum(1:n)
+            γ = (operatorclenshawvector(S, view(cfs, ind+1:ind+n+1), id)
+                 - γ1 * operatorclenshawmatrixDT(S, S.DT[n+1], id) * operatorclenshawmatrixBmG(S, S.B[n+1], id, Jx, Jy)
+                 - γ2 * operatorclenshawmatrixDT(S, S.DT[n+2] * S.C[n+2], id))
+            γ2 = copy(γ1)
+            γ1 = copy(γ)
+        end
         ret = (γ1 * P0)[1]
     end
     ret
@@ -760,14 +758,20 @@ function yderivopevalatpts(S::DiskSliceSpace{<:Any, <:Any, T, <:Any}, j, pts) wh
 end
 
 #====#
-# Operator matrices
+# Differential operator matrices
 
 differentiatespacex(S::DiskSliceSpace) = (S.family)(S.params .+ 1)
-differentiatespacey(S::DiskSliceSpace) =
-    (S.family)(S.params[1], S.params[2], S.params[3]+1)
+function differentiatespacey(S::DiskSliceSpace)
+    len = length(S.params)
+    p = ntuple(i -> i == len ? 1 : 0, len)
+    (S.family)(S.params .+ p)
+end
 differentiateweightedspacex(S::DiskSliceSpace) = (S.family)(S.params .- 1)
-differentiateweightedspacey(S::DiskSliceSpace) =
-    (S.family)(S.params[1], S.params[2], S.params[3]-1)
+function differentiateweightedspacey(S::DiskSliceSpace)
+    len = length(S.params)
+    p = ntuple(i -> i == len ? 1 : 0, len)
+    (S.family)(S.params .- p)
+end
 
 differentiatex(f::Fun, S::DiskSliceSpace) =
     Fun(differentiatespacex(S), differentiatex(S, f.coefficients))
@@ -799,16 +803,17 @@ end
 function getpartialoperatorxval(S::DiskSliceSpace{<:Any, <:Any, T, <:Any},
                                     ptsp, wp, ptsr, rhoptsr, dxrhoptsr, wr, n, k, m, j) where T
     # We should have already called getopptseval etc
+    # ptsr, wr = pointswithweights(getRspace(Sx, -1), 2N+4)
     Sx = differentiatespacex(S)
     P = getPspace(S)
     Px = getPspace(Sx)
     R = getRspace(S, k)
     Rx = getRspace(Sx, j)
     valp = inner2(Px, opevalatpts(P, k+1, ptsp), opevalatpts(Px, j+1, ptsp), wp)
-    valr = inner2(R, opevalatpts(R, n-k+1, ptsr),
-                    rhoptsr.^(k+j) .* dxrhoptsr .* opevalatpts(Rx, m-j+1, ptsr), wr)
-    val = valp * inner2(R, derivopevalatpts(R, n-k+1, ptsr),
-                        rhoptsr.^(k+j+1) .* opevalatpts(Rx, m-j+1, ptsr), wr)
+    valr = inner2(Rx, opevalatpts(R, n-k+1, ptsr),
+                    rhoptsr.^(k+j+1) .* dxrhoptsr .* opevalatpts(Rx, m-j+1, ptsr), wr)
+    val = valp * inner2(Rx, derivopevalatpts(R, n-k+1, ptsr),
+                        rhoptsr.^(k+j+2) .* opevalatpts(Rx, m-j+1, ptsr), wr)
     val += k * valr * valp
     val -= valr * inner2(Px, derivopevalatpts(P, k+1, ptsp),
                             ptsp .* opevalatpts(Px, j+1, ptsp), wp)
@@ -824,16 +829,16 @@ function partialoperatorx(S::DiskSliceSpace{<:Any, <:Any, T, <:Any}, N) where T
     getopptseval(P, N, ptsp)
     getderivopptseval(P, N, ptsp)
     getopptseval(Px, N, ptsp)
-    R = getRspace(Sx)
-    ptsr, wr = pointswithweights(R, 2N+2)
+    ptsr, wr = pointswithweights(getRspace(Sx, -1), 2N+4)
     getopnorms(Sx, N-1)
 
     # ρ.(ptsr) and dρ/dx.(ptsr)
     rhoptsr = T.(S.family.ρ.(ptsr))
     dxrhoptsr = T.(differentiate(S.family.ρ).(ptsr))
 
+    band = S.family.nparams
     A = BandedBlockBandedMatrix(
-        Zeros{T}(sum(1:N),sum(1:(N+1))), (1:N, 1:N+1), (-1,3), (0, 2))
+        Zeros{T}(sum(1:N), sum(1:(N+1))), (1:N, 1:N+1), (-1, band), (0, 2))
 
     # Get pt evals for the R OPs
     for k = 0:N
@@ -850,9 +855,9 @@ function partialoperatorx(S::DiskSliceSpace{<:Any, <:Any, T, <:Any}, N) where T
     val = getpartialoperatorxval(S, ptsp, wp, ptsr, rhoptsr, dxrhoptsr, wr, n, k, m, j)
     view(A, Block(m+1, n+1))[1, 1] = val
     for n = 2:N, k = 0:n
-        for m = max(0,n-3):(n-1)
-            for j = k-2:2:k
-                if j > m || j < 0
+        for m = max(0,n-band):(n-1)
+            for j = (k-2):2:min(k,m)
+                if j < 0
                     continue
                 end
                 val = getpartialoperatorxval(S, ptsp, wp, ptsr, rhoptsr,
@@ -886,35 +891,51 @@ function partialoperatory(S::DiskSliceSpace{<:Any, <:Any, T, <:Any}, N) where T
     A
 end
 function getweightedpartialoperatorxval(S::DiskSliceSpace{<:Any, <:Any, T, <:Any},
-                                    ptsp, wp, ptsh, wh, n, k, m, j) where T
-    # NOTE: ρ(x) is explicitly assumed to be sqrt(1-x^2), as calling ρ(x) is too
-    # expensive
+                ptsp, wp1, wp, ptsr, rhoptsr, dxrhoptsr, wr010, wr100, wr, n, k, m, j) where T
     # We should have already called getopptseval etc
+    # ptsr, wr = pointswithweights(getRspace(Sx, 0), 2N+4)
     Sx = differentiateweightedspacex(S)
-    P = S.family.P(S.b, S.b)
-    Px = Sx.family.P(Sx.b, Sx.b)
-    R = S.family.R(S.a, S.b+k+0.5)
-    Rx = S.family.R(Sx.a, Sx.b+j+0.5)
-    valp = inner2(Px, (-ptsp.^2 .+ 1) .* opevalatpts(P, k+1, ptsp),
-                    opevalatpts(Px, j+1, ptsp), wp)
-    valh = inner2(R, (ptsh.^2) .* opevalatpts(R, n-k+1, ptsh),
-                    (-ptsh.^2 .+ 1).^(0.5k + 0.5j) .* opevalatpts(Rx, m-j+1, ptsh), wh)
-    val = S.a * valp * inner2(R, (-ptsh.^2 .+ 1).^(0.5k + 0.5j + 1) .* opevalatpts(R, n-k+1, ptsh),
-                                opevalatpts(Rx, m-j+1, ptsh), wh)
-    val += - 2S.b * valh * inner2(Px, opevalatpts(P, k+1, ptsp),
-                                    opevalatpts(Px, j+1, ptsp), wp)
-    val += valp * inner2(R, ptsh .* derivopevalatpts(R, n-k+1, ptsh),
-                            (-ptsh.^2 .+ 1).^(0.5k + 0.5j + 1) .* opevalatpts(Rx, m-j+1, ptsh), wh)
-    val -= k * valh * valp
-    val += valh * inner2(Px, ptsp .* derivopevalatpts(P, k+1, ptsp),
-                            (-ptsp.^2 .+ 1) .* opevalatpts(Px, j+1, ptsp), wp)
-    val /= Sx.opnorms[j+1]
-    val
+    P = getPspace(S)
+    Px = getPspace(Sx)
+    R = getRspace(S, k)
+    Rx = getRspace(Sx, j)
+
+    valp = inner2(Px, wp1 .* opevalatpts(P, k+1, ptsp), opevalatpts(Px, j+1, ptsp), wp)
+    valr = inner2(Rx, opevalatpts(R, n-k+1, ptsr) .* wr100 .* wr010,
+                    rhoptsr.^(k+j+1) .* dxrhoptsr .* opevalatpts(Rx, m-j+1, ptsr), wr)
+
+    if S.family.nparams == 3
+        A1 = - (inner2(Rx, opevalatpts(R, n-k+1, ptsr),
+                        wr010 .* rhoptsr.^(k+j+2) .* opevalatpts(Rx, m-j+1, ptsr), wr)
+                * S.params[1] * valp)
+    else
+        A1 = 0.0
+    end
+    B1 = (inner2(Rx, opevalatpts(R, n-k+1, ptsr),
+                    wr100 .* rhoptsr.^(k+j+2) .* opevalatpts(Rx, m-j+1, ptsr), wr)
+            * S.params[end-1] * valp)
+    # C1 = valr * 2*S.params[end] * valp
+    # D1 = - (valr * 2*S.params[end]
+    #         * inner2(Px, opevalatpts(P, k+1, ptsp), ptsp .* opevalatpts(Px, j+1, ptsp), wp))
+    C1 = (2 * S.params[end]
+            * valr
+            * inner2(Px, opevalatpts(P, k+1, ptsp), opevalatpts(Px, j+1, ptsp), wp))
+    D1 = 0.0
+    A2 = (inner2(Rx, derivopevalatpts(R, n-k+1, ptsr) .* wr100 .* wr010,
+                rhoptsr.^(k+j+2) .* opevalatpts(Rx, m-j+1, ptsr), wr)
+            * valp)
+    B2 = valr * k * valp
+    C2 = - valr * inner2(Px, ptsp .* derivopevalatpts(P, k+1, ptsp),
+                            wp1 .* opevalatpts(Px, j+1, ptsp), wp)
+
+    val = A1 + B1 + C1 + D1 + A2 + B2 + C2
+    val / Sx.opnorms[j+1]
 end
 function weightedpartialoperatorx(S::DiskSliceSpace{<:Any, <:Any, T, <:Any}, N) where T
     # Takes weighted space ∂/∂x(W^{a,b,c}) -> W^{a-1,b-1,c-1}
+    band = S.family.nparams
     W = BandedBlockBandedMatrix(
-        Zeros{T}(sum(1:(N+3)),sum(1:(N+1))), (1:N+3, 1:N+1), (2,-1), (2,0))
+        Zeros{T}(sum(1:(N+1+band)),sum(1:(N+1))), (1:N+1+band, 1:N+1), (band, -1), (2, 0))
     Sx = differentiateweightedspacex(S)
     P = getPspace(S)
     Px = getPspace(Sx)
@@ -922,23 +943,33 @@ function weightedpartialoperatorx(S::DiskSliceSpace{<:Any, <:Any, T, <:Any}, N) 
     getopptseval(P, N, ptsp)
     getopptseval(Px, N+1, ptsp)
     getderivopptseval(P, N, ptsp)
-    ptsh, wh = pointswithweights(getRspace(Sx), 2N+2)
+    # ptsr, wr = pointswithweights(getRspace(Sx), 2N+4) # TODO
+    ptsr, wr = pointswithweights(getRspace(Sx, 0), 2N+4)
     getopnorms(Sx, N+2)
+
+    # ρ.(ptsr) and dρ/dx.(ptsr)
+    rhoptsr = T.(S.family.ρ.(ptsr))
+    dxrhoptsr = T.(differentiate(S.family.ρ).(ptsr))
+    # w_P^{(1)}.(pts)
+    wp1 = (-ptsp.^2 .+ 1) # TODO - dont hardcode!
+    # w_R^{(1,0,0)}, w_R^{(0,1,0)}
+    wr100 = S.family.nparams == 3 ? (-ptsr .+ S.family.β) : ones(length(ptsr))
+    wr010 = (ptsr .- S.family.α)
 
     # Get pt evals for the R OPs
     for k = 0:N
         R = getRspace(S, k)
-        getopptseval(R, N-k, ptsh)
-        getderivopptseval(R, N-k, ptsh)
+        getopptseval(R, N-k, ptsr)
+        getderivopptseval(R, N-k, ptsr)
         for j = k:2:k+2
             Rx = getRspace(Sx, j)
-            getopptseval(Rx, N-k+1, ptsh)
+            getopptseval(Rx, N-k+1, ptsr)
         end
     end
     for n = 0:N, k = 0:n
-        for m = n+1:n+2, j = k:2:min(m,k+2)
-            val = getweightedpartialoperatorxval(S, ptsp, wp, ptsh,
-                                                    wh, n, k, m, j)
+        for m = n+1:n+S.family.nparams, j = k:2:min(m,k+2)
+            val = getweightedpartialoperatorxval(S, ptsp, wp1, wp, ptsr,
+                            rhoptsr, dxrhoptsr, wr010, wr100, wr, n, k, m, j)
             view(W, Block(m+1, n+1))[j+1, k+1] = val
         end
     end
@@ -956,13 +987,14 @@ function weightedpartialoperatory(S::DiskSliceSpace{<:Any, <:Any, T, <:Any}, N) 
     getopptseval(Py, N+1, ptsp)
     getderivopptseval(P, N, ptsp)
     getopnorms(Sy, N+1)
-    wp1 = T.(getPspace(S.family(0.0,0.0,1.0)).weight.(ptsp)) # (-ptsp.^2 .+ 1)
+    params = S.params .* 0 .+ ntuple(i -> i == S.family.nparams ? 1 : 0, S.family.nparams)
+    wp1 = T.(getPspace(S.family(params)).weight.(ptsp)) # (-ptsp.^2 .+ 1)
     n, m = N, N+1
     for k = 0:N
         j = k + 1
         val = (getopnorm(getRspace(S, k))
                 * inner2(P, (wp1 .* derivopevalatpts(P, k+1, ptsp)
-                                -2*S.params[3]*ptsp .* opevalatpts(P, k+1, ptsp)),
+                                -2*S.params[end]*ptsp .* opevalatpts(P, k+1, ptsp)),
                         opevalatpts(Py, j+1, ptsp), wp)
                 / Sy.opnorms[j+1])
         for i = k:N
@@ -970,6 +1002,261 @@ function weightedpartialoperatory(S::DiskSliceSpace{<:Any, <:Any, T, <:Any}, N) 
         end
     end
     W
+end
+
+#====#
+# Parameter tranformation operators
+
+function transformparamsoperator(S::DiskSliceSpace{<:Any, <:Any, T, <:Any},
+            St::DiskSliceSpace{<:Any, <:Any, T, <:Any}, N; weighted=false) where T
+    # Cases we can handle:
+    if weighted == false
+        λmult = S.family.nparams - 1
+        λ = Int(St.params[1] - S.params[1])
+        μ = Int(St.params[end] - S.params[end])
+        band = 2μ + λmult*λ
+
+        # Case 1: Takes the space H^{a,b,c} -> H^{a+1,b+1,c}
+        if λ == 1 && μ == 0
+            # Outputs the relevant sum(1:N+1) × sum(1:N+1) matrix operator
+            C = BandedBlockBandedMatrix(Zeros{T}(sum(1:(N+1)),sum(1:(N+1))),
+                                        (1:N+1, 1:N+1), (0,band), (0,0))
+            P = getPspace(S)
+            ptsr, wr = pointswithweights(getRspace(St, 0), N+1)
+            rhoptsr = S.family.ρ.(ptsr)
+            getopnorms(St, N)
+
+            # Get pt evals for H OPs
+            for k = 0:N
+                R = getRspace(S, k)
+                Rt = getRspace(St, k)
+                getopptseval(R, N-k, ptsr)
+                getopptseval(Rt, N-k, ptsr)
+            end
+
+            n, k = 0, 0; m = n
+            view(C, Block(m+1, n+1))[k+1, k+1] = sum(wr) * getopnorm(P) / St.opnorms[k+1]
+            for n=1:N, k=0:n
+                R = getRspace(S, k)
+                Rt = getRspace(St, k)
+                for m = n-band:n
+                    if k ≤ m
+                        val = inner2(R, opevalatpts(R, n-k+1, ptsr),
+                                        rhoptsr.^(2k) .* opevalatpts(Rt, m-k+1, ptsr), wr)
+                        val *= getopnorm(P)
+                        view(C, Block(m+1, n+1))[k+1, k+1] = val / St.opnorms[k+1]
+                    end
+                end
+            end
+            C
+        # Case 2: Takes the space H^{a,b,c} -> H^{a,b,c+1}
+        # and Case 3: Takes the space H^{a,b,c} -> H^{a+1,b+1,c+1}
+        elseif (λ == 0 && μ == 1) || (λ == 1 && μ == 1)
+            # Outputs the relevant sum(1:N+1) × sum(1:N+1) matrix operator
+            C = BandedBlockBandedMatrix(Zeros{T}(sum(1:(N+1)),sum(1:(N+1))),
+                                        (1:N+1, 1:N+1), (0,band), (0,2))
+            P = getPspace(S)
+            Pt = getPspace(St)
+            ptsp, wp = pointswithweights(Pt, N+2)
+            ptsr, wr = pointswithweights(getRspace(St, 0), N+1)
+            rhoptsr = S.family.ρ.(ptsr)
+            # Get pt evals for 1D OPs
+            getopptseval(P, N, ptsp)
+            getopptseval(Pt, N, ptsp)
+            getopnorms(St, N)
+            for k = 0:N
+                R = getRspace(S, k)
+                Rt = getRspace(St, k)
+                getopptseval(R, N-k, ptsr)
+                getopptseval(Rt, N-k, ptsr)
+            end
+            for n=0:N, k=0:n
+                R = getRspace(S, k)
+                for m = n-band:n, j = k-2:2:k
+                    if m ≥ 0 && 0 ≤ j ≤ m
+                        Rt = getRspace(St, j)
+                        val = inner2(R, opevalatpts(R, n-k+1, ptsr),
+                                        rhoptsr.^(k+j) .* opevalatpts(Rt, m-j+1, ptsr), wr)
+                        val *= inner2(P, opevalatpts(P, k+1, ptsp), opevalatpts(Pt, j+1, ptsp), wp)
+                        view(C, Block(m+1, n+1))[j+1, k+1] = val / St.opnorms[j+1]
+                    end
+                end
+            end
+            C
+        else
+            error("Invalid DiskSliceSpace")
+        end
+    elseif weighted == true
+        λmult = S.family.nparams - 1
+        λ = Int(S.params[1] - St.params[1])
+        μ = Int(S.params[end] - St.params[end])
+        band = 2μ + λmult*λ
+
+        # Case 4: Takes the space W^{a,b,c} -> W^{a-1,b-1,c}
+        if λ == 1 && μ == 0
+            # Outputs the relevant sum(1:N+1+band) × sum(1:N+1) matrix operator
+            C = BandedBlockBandedMatrix(Zeros{T}(sum(1:(N+1+band)),sum(1:(N+1))),
+                                        (1:N+1+band, 1:N+1), (band,0), (0,0))
+            P = getPspace(S)
+            ptsr, wr = pointswithweights(getRspace(S, 0), N+1)
+            getopnorms(St, N+1)
+            rhoptsr = S.family.ρ.(ptsr)
+
+            # Get pt evals for R OPs
+            for k = 0:N
+                R = getRspace(S, k)
+                Rt = getRspace(St, k)
+                getopptseval(R, N-k, ptsr)
+                getopptseval(Rt, N-k+1, ptsr)
+            end
+
+            for n=0:N, k=0:n
+                R = getRspace(S, k)
+                Rt = getRspace(St, k)
+                for m = n:n+band
+                    val = inner2(R, opevalatpts(R, n-k+1, ptsr),
+                                    rhoptsr.^(2k) .* opevalatpts(Rt, m-k+1, ptsr), wr)
+                    val *= getopnorm(P)
+                    view(C, Block(m+1, n+1))[k+1, k+1] = val / St.opnorms[k+1]
+                end
+            end
+            C
+        # Case 5: Takes the space W^{a,b,c} -> W^{a,b,c-1}
+        # and Case 6: Takes the space W^{a,b,c} -> W^{a-1,b-1,c-1}
+        elseif (λ == 0 && μ == 1) || (λ == 1 && μ == 1)
+            # Outputs the relevant sum(1:N+1+band) × sum(1:N+1) matrix operator
+            C = BandedBlockBandedMatrix(Zeros{T}(sum(1:(N+1+band)),sum(1:(N+1))),
+                                        (1:N+1+band, 1:N+1), (band,0), (2,0))
+            P = getPspace(S)
+            Pt = getPspace(St)
+            ptsp, wp = pointswithweights(P, N+2)
+            ptsr, wr = pointswithweights(getRspace(S, 0), N+2)
+            rhoptsr = S.family.ρ.(ptsr)
+            getopnorms(St, N+band)
+
+            # Get pt evals for P and H OPs
+            getopptseval(P, N, ptsp)
+            getopptseval(Pt, N+band, ptsp)
+            for k = 0:N
+                R = getRspace(S, k)
+                getopptseval(R, N-k, ptsr)
+            end
+            for j = 0:N+band
+                Rt = getRspace(St, j)
+                getopptseval(Rt, N+band-j, ptsr)
+            end
+
+            for n=0:N, k=0:n
+                R = getRspace(S, k)
+                for m = n:n+band, j = k:2:min(k+2, m)
+                    Rt = getRspace(St, j)
+                    val = inner2(R, opevalatpts(R, n-k+1, ptsr),
+                                    rhoptsr.^(k+j) .* opevalatpts(Rt, m-j+1, ptsr), wr)
+                    val *= inner2(P, opevalatpts(P, k+1, ptsp), opevalatpts(Pt, j+1, ptsp), wp)
+                    view(C, Block(m+1, n+1))[j+1, k+1] = val / St.opnorms[j+1]
+                end
+            end
+            C
+        else
+            error("Invalid DiskSliceSpace")
+        end
+    end
+end
+
+#====#
+# Laplacian and biharmonic operator matrices
+
+function laplaceoperator(S::DiskSliceSpace{<:Any, <:Any, T, <:Any},
+            St::DiskSliceSpace{<:Any, <:Any, T, <:Any}, N;
+            weighted=false, square=true) where T
+    # Outputs the sum(1:N+1) × sum(1:N+1) matrix operator if square=true
+    D = S.family
+    if (weighted == true && S.params == ntuple(x->1, D.nparams)
+            && St.params == ntuple(x->1, D.nparams))
+
+        A = partialoperatorx(differentiateweightedspacex(S), N+D.nparams)
+        @show "laplaceoperator", "1 of 6 done"
+        B = weightedpartialoperatorx(S, N)
+        @show "laplaceoperator", "2 of 6 done"
+        C = transformparamsoperator(differentiatespacey(D(S.params .- 1)), S, N+D.nparams-1)
+        @show "laplaceoperator", "3 of 6 done"
+        E = partialoperatory(D(S.params .- 1), N+D.nparams)
+        @show "laplaceoperator", "4 of 6 done"
+        F = transformparamsoperator(differentiateweightedspacey(S), D(S.params .- 1), N+1, weighted=true)
+        @show "laplaceoperator", "5 of 6 done"
+        G = weightedpartialoperatory(S, N)
+        @show "laplaceoperator", "6 of 6 done"
+        L = A * B + C * E * F * G
+        if square
+            m = sum(1:(N+1))
+            Δ = BandedBlockBandedMatrix(L[1:m, 1:m], (1:N+1, 1:N+1), (L.l,L.u), (L.λ,L.μ))
+        else
+            L
+        end
+    elseif (weighted == true && S.params == ntuple(x->2, D.nparams)
+            && St.params == ntuple(x->0, D.nparams))
+        A = weightedpartialoperatorx(differentiateweightedspacex(S), N+2)
+        @show "laplaceoperator", "1 of 6 done"
+        B = weightedpartialoperatorx(S, N)
+        @show "laplaceoperator", "2 of 6 done"
+        C = transformparamsoperator(differentiateweightedspacey(D(S.params .- 1)), D(S.params .- 2), N+3, weighted=true)
+        @show "laplaceoperator", "3 of 6 done"
+        E = weightedpartialoperatory(D(S.params .- 1), N+2)
+        @show "laplaceoperator", "4 of 6 done"
+        F = transformparamsoperator(differentiateweightedspacey(S), D(S.params .- 1), N+1, weighted=true)
+        @show "laplaceoperator", "5 of 6 done"
+        G = weightedpartialoperatory(S, N)
+        @show "laplaceoperator", "6 of 6 done"
+        L = A * B + C * E * F * G
+        if square
+            m = sum(1:(N+1))
+            Δ = BandedBlockBandedMatrix(L[1:m, 1:m], (1:N+1, 1:N+1), (4,-2), (4,0))
+        else
+            L
+        end
+    elseif (weighted == false && S.params == ntuple(x->0, D.nparams)
+            && St.params == ntuple(x->2, D.nparams))
+        A = partialoperatorx(differentiatespacex(S), N+1)
+        @show "laplaceoperator", "1 of 6 done"
+        B = partialoperatorx(S, N+2)
+        @show "laplaceoperator", "2 of 6 done"
+        C = transformparamsoperator(differentiatespacey(D(S.params .+ 1)), D(S.params .+ 2), N)
+        @show "laplaceoperator", "3 of 6 done"
+        E = partialoperatory(D(S.params .+ 1), N+1)
+        @show "laplaceoperator", "4 of 6 done"
+        F = transformparamsoperator(differentiatespacey(S), D(S.params .+ 1), N+1)
+        @show "laplaceoperator", "5 of 6 done"
+        G = partialoperatory(S, N+2)
+        @show "laplaceoperator", "6 of 6 done"
+        AA = A * B
+        BB = C * E * F * G
+        L = BandedBlockBandedMatrix(sparse(AA) + sparse(BB), (1:N+1, 1:N+3),
+                                    (max(AA.l,BB.l),max(AA.u,BB.u)), (max(AA.λ,BB.λ),max(AA.μ,BB.μ)))
+        if square
+            m = sum(1:(N+1))
+            Δ = BandedBlockBandedMatrix(L[1:m, 1:m], (1:N+1, 1:N+1), (L.l,L.u), (L.λ,L.μ))
+        else
+            L
+        end
+    else
+        error("Invalid DiskSliceSpace for Laplacian operator")
+    end
+end
+
+function biharmonicoperator(S::DiskSliceSpace{<:Any, <:Any, T, <:Any}, N; square=true) where T
+    D = S.family
+    if S.params == ntuple(x->2, D.nparams)
+        B = (laplaceoperator(D(S.a-2, S.b-2), S, N+2; square=false)
+                * laplaceoperator(S, D(S.a-2, S.b-2), N; weighted=true, square=false))
+        if square
+            m = sum(1:(N+1))
+            Δ2 = BandedBlockBandedMatrix(B[1:m, 1:m], (1:N+1, 1:N+1), (2,2), (4,4))
+        else
+            B
+        end
+    else
+        error("Invalid HalfDiskSpace for Laplacian operator")
+    end
 end
 
 # end # module
