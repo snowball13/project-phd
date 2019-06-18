@@ -1195,13 +1195,13 @@ function laplaceoperator(S::DiskSliceSpace{<:Any, <:Any, T, <:Any},
         end
     elseif (weighted == true && S.params == ntuple(x->2, D.nparams)
             && St.params == ntuple(x->0, D.nparams))
-        A = weightedpartialoperatorx(differentiateweightedspacex(S), N+2)
+        A = weightedpartialoperatorx(differentiateweightedspacex(S), N+D.nparams)
         @show "laplaceoperator", "1 of 6 done"
         B = weightedpartialoperatorx(S, N)
         @show "laplaceoperator", "2 of 6 done"
-        C = transformparamsoperator(differentiateweightedspacey(D(S.params .- 1)), D(S.params .- 2), N+3, weighted=true)
+        C = transformparamsoperator(differentiateweightedspacey(D(S.params .- 1)), D(S.params .- 2), N+D.nparams+1, weighted=true)
         @show "laplaceoperator", "3 of 6 done"
-        E = weightedpartialoperatory(D(S.params .- 1), N+2)
+        E = weightedpartialoperatory(D(S.params .- 1), N+D.nparams)
         @show "laplaceoperator", "4 of 6 done"
         F = transformparamsoperator(differentiateweightedspacey(S), D(S.params .- 1), N+1, weighted=true)
         @show "laplaceoperator", "5 of 6 done"
@@ -1210,7 +1210,7 @@ function laplaceoperator(S::DiskSliceSpace{<:Any, <:Any, T, <:Any},
         L = A * B + C * E * F * G
         if square
             m = sum(1:(N+1))
-            Δ = BandedBlockBandedMatrix(L[1:m, 1:m], (1:N+1, 1:N+1), (4,-2), (4,0))
+            Δ = BandedBlockBandedMatrix(L[1:m, 1:m], (1:N+1, 1:N+1), (L.l, L.u), (L.λ, L.μ))
         else
             L
         end
@@ -1246,13 +1246,14 @@ end
 function biharmonicoperator(S::DiskSliceSpace{<:Any, <:Any, T, <:Any}, N; square=true) where T
     D = S.family
     if S.params == ntuple(x->2, D.nparams)
-        B = (laplaceoperator(D(S.a-2, S.b-2), S, N+2; square=false)
-                * laplaceoperator(S, D(S.a-2, S.b-2), N; weighted=true, square=false))
+        A = laplaceoperator(D(S.params .- 2), S, N+2(D.nparams-1); square=false)
+        B = laplaceoperator(S, D(S.params .- 2), N; weighted=true, square=false)
+        C = A * B
         if square
             m = sum(1:(N+1))
-            Δ2 = BandedBlockBandedMatrix(B[1:m, 1:m], (1:N+1, 1:N+1), (2,2), (4,4))
+            Δ2 = BandedBlockBandedMatrix(C[1:m, 1:m], (1:N+1, 1:N+1), (C.l, C.u), (C.λ, C.μ))
         else
-            B
+            C
         end
     else
         error("Invalid HalfDiskSpace for Laplacian operator")
