@@ -1659,6 +1659,9 @@ weightderivativey(S::HalfDiskSpace, x, y) =
     - 2S.b * x^S.a * y * (1 - x^2 - y^2)^(S.b-1)
 weightderivativey(S::HalfDiskSpace, z) = weightderivativey(S, z[1], z[2])
 
+# Include other OP Families
 include("DiskSliceFamilies.jl")
+include("TrapeziumFamilies.jl")
+include("SphericalCaps.jl")
 
 end # module

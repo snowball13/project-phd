@@ -95,7 +95,7 @@ end
 DiskSliceFamily(α::T, β::T, γ::T, δ::T) where T = DiskSliceFamily(BigFloat, T, α, β, γ, δ)
 DiskSliceFamily(α::T, β::T) where T = DiskSliceFamily(BigFloat, T, α, β, -1.0, 1.0)
 DiskSliceFamily(α::T) where T = DiskSliceFamily(BigFloat, T, α, 1.0, -1.0, 1.0)
-DiskSliceFamily() = DiskSliceFamily(BigFloat, Float64, 0, 1.0, -1.0, 1.0)
+DiskSliceFamily() = DiskSliceFamily(BigFloat, Float64, 0.0, 1.0, -1.0, 1.0)
 
 #===#
 # Retrieve spaces methods
@@ -452,9 +452,13 @@ function resizedata!(S::DiskSliceSpace, N)
     resize!(S.C, N + 2)
     resize!(S.DT, N + 2)
     getBs!(S, N, N₀)
+    @show "done Bs"
     getCs!(S, N, N₀)
+    @show "done Cs"
     getAs!(S, N, N₀)
+    @show "done As"
     getDTs!(S, N, N₀)
+    @show "done DTs"
     S
 end
 
@@ -820,7 +824,8 @@ function getpartialoperatorxval(S::DiskSliceSpace{<:Any, <:Any, T, <:Any},
     val /= Sx.opnorms[j+1]
     val
 end
-function partialoperatorx(S::DiskSliceSpace{<:Any, <:Any, T, <:Any}, N) where T
+function partialoperatorx(S::DiskSliceSpace{<:Any, <:Any, T, <:Any}, N;
+                            transposed=false) where T
     # Takes the space P^{a,b,c} -> P^{a+1,b+1,c+1}
     Sx = differentiatespacex(S)
     P = getPspace(S)
@@ -837,8 +842,13 @@ function partialoperatorx(S::DiskSliceSpace{<:Any, <:Any, T, <:Any}, N) where T
     dxrhoptsr = T.(differentiate(S.family.ρ).(ptsr))
 
     band = S.family.nparams
-    A = BandedBlockBandedMatrix(
-        Zeros{T}(sum(1:N), sum(1:(N+1))), (1:N, 1:N+1), (-1, band), (0, 2))
+    if transposed
+        A = BandedBlockBandedMatrix(
+            Zeros{T}(sum(1:(N+1)), sum(1:N)), (1:N+1, 1:N), (band, -1), (2, 0))
+    else
+        A = BandedBlockBandedMatrix(
+            Zeros{T}(sum(1:N), sum(1:(N+1))), (1:N, 1:N+1), (-1, band), (0, 2))
+    end
 
     # Get pt evals for the R OPs
     for k = 0:N
@@ -862,16 +872,26 @@ function partialoperatorx(S::DiskSliceSpace{<:Any, <:Any, T, <:Any}, N) where T
                 end
                 val = getpartialoperatorxval(S, ptsp, wp, ptsr, rhoptsr,
                                                 dxrhoptsr, wr, n, k, m, j)
-                view(A, Block(m+1, n+1))[j+1, k+1] = val
+                if transposed
+                    view(A, Block(n+1, m+1))[k+1, j+1] = val
+                else
+                    view(A, Block(m+1, n+1))[j+1, k+1] = val
+                end
             end
         end
     end
     A
 end
-function partialoperatory(S::DiskSliceSpace{<:Any, <:Any, T, <:Any}, N) where T
+function partialoperatory(S::DiskSliceSpace{<:Any, <:Any, T, <:Any}, N;
+                            transposed=false) where T
     # Takes the space H^{a,b,c} -> H^{a,b,c+1}
-    A = BandedBlockBandedMatrix(
-        Zeros{T}(sum(1:N),sum(1:(N+1))), (1:N, 1:N+1), (-1,1), (-1,1))
+    if transposed
+        A = BandedBlockBandedMatrix(
+            Zeros{T}(sum(1:(N+1)),sum(1:N)), (1:N+1, 1:N), (1,-1), (1,-1))
+    else
+        A = BandedBlockBandedMatrix(
+            Zeros{T}(sum(1:N),sum(1:(N+1))), (1:N, 1:N+1), (-1,1), (-1,1))
+    end
     Sy = differentiatespacey(S)
     P = getPspace(S)
     Py = getPspace(Sy)
@@ -885,7 +905,11 @@ function partialoperatory(S::DiskSliceSpace{<:Any, <:Any, T, <:Any}, N) where T
                 * inner2(Py, derivopevalatpts(P, k+1, pts), opevalatpts(Py, k, pts), w)
                 / Sy.opnorms[k])
         for i = k:N
-            view(A, Block(i, i+1))[k, k+1] = val
+            if transposed
+                view(A, Block(i+1, i))[k+1, k] = val
+            else
+                view(A, Block(i, i+1))[k, k+1] = val
+            end
         end
     end
     A
@@ -931,11 +955,17 @@ function getweightedpartialoperatorxval(S::DiskSliceSpace{<:Any, <:Any, T, <:Any
     val = A1 + B1 + C1 + D1 + A2 + B2 + C2
     val / Sx.opnorms[j+1]
 end
-function weightedpartialoperatorx(S::DiskSliceSpace{<:Any, <:Any, T, <:Any}, N) where T
+function weightedpartialoperatorx(S::DiskSliceSpace{<:Any, <:Any, T, <:Any}, N;
+                                    transposed=false) where T
     # Takes weighted space ∂/∂x(W^{a,b,c}) -> W^{a-1,b-1,c-1}
     band = S.family.nparams
-    W = BandedBlockBandedMatrix(
-        Zeros{T}(sum(1:(N+1+band)),sum(1:(N+1))), (1:N+1+band, 1:N+1), (band, -1), (2, 0))
+    if transposed
+        W = BandedBlockBandedMatrix(
+            Zeros{T}(sum(1:(N+1)),sum(1:(N+1+band))), (1:N+1, 1:N+1+band), (-1, band), (0, 2))
+    else
+        W = BandedBlockBandedMatrix(
+            Zeros{T}(sum(1:(N+1+band)),sum(1:(N+1))), (1:N+1+band, 1:N+1), (band, -1), (2, 0))
+    end
     Sx = differentiateweightedspacex(S)
     P = getPspace(S)
     Px = getPspace(Sx)
@@ -970,15 +1000,25 @@ function weightedpartialoperatorx(S::DiskSliceSpace{<:Any, <:Any, T, <:Any}, N) 
         for m = n+1:n+S.family.nparams, j = k:2:min(m,k+2)
             val = getweightedpartialoperatorxval(S, ptsp, wp1, wp, ptsr,
                             rhoptsr, dxrhoptsr, wr010, wr100, wr, n, k, m, j)
-            view(W, Block(m+1, n+1))[j+1, k+1] = val
+            if transposed
+                view(W, Block(n+1, m+1))[k+1, j+1] = val
+            else
+                view(W, Block(m+1, n+1))[j+1, k+1] = val
+            end
         end
     end
     W
 end
-function weightedpartialoperatory(S::DiskSliceSpace{<:Any, <:Any, T, <:Any}, N) where T
+function weightedpartialoperatory(S::DiskSliceSpace{<:Any, <:Any, T, <:Any}, N;
+                                    transposed=false) where T
     # Takes weighted space ∂/∂y(W^{a,b,c}) -> W^{a,b,c-1}
-    W = BandedBlockBandedMatrix(
-        Zeros{T}(sum(1:(N+2)),sum(1:(N+1))), (1:N+2, 1:N+1), (1,-1), (1,-1))
+    if transposed
+        W = BandedBlockBandedMatrix(
+            Zeros{T}(sum(1:(N+1)),sum(1:(N+2))), (1:N+1, 1:N+2), (-1,1), (-1,1))
+    else
+        W = BandedBlockBandedMatrix(
+            Zeros{T}(sum(1:(N+2)),sum(1:(N+1))), (1:N+2, 1:N+1), (1,-1), (1,-1))
+    end
     Sy = differentiateweightedspacey(S)
     P = getPspace(S)
     Py = getPspace(Sy)
@@ -998,7 +1038,11 @@ function weightedpartialoperatory(S::DiskSliceSpace{<:Any, <:Any, T, <:Any}, N) 
                         opevalatpts(Py, j+1, ptsp), wp)
                 / Sy.opnorms[j+1])
         for i = k:N
-            view(W, Block(i+2, i+1))[k+2, k+1] = val
+            if transposed
+                view(W, Block(i+1, i+2))[k+1, k+2] = val
+            else
+                view(W, Block(i+2, i+1))[k+2, k+1] = val
+            end
         end
     end
     W
@@ -1008,7 +1052,8 @@ end
 # Parameter tranformation operators
 
 function transformparamsoperator(S::DiskSliceSpace{<:Any, <:Any, T, <:Any},
-            St::DiskSliceSpace{<:Any, <:Any, T, <:Any}, N; weighted=false) where T
+            St::DiskSliceSpace{<:Any, <:Any, T, <:Any}, N;
+            weighted=false, transposed=false) where T
     # Cases we can handle:
     if weighted == false
         λmult = S.family.nparams - 1
@@ -1019,8 +1064,13 @@ function transformparamsoperator(S::DiskSliceSpace{<:Any, <:Any, T, <:Any},
         # Case 1: Takes the space H^{a,b,c} -> H^{a+1,b+1,c}
         if λ == 1 && μ == 0
             # Outputs the relevant sum(1:N+1) × sum(1:N+1) matrix operator
-            C = BandedBlockBandedMatrix(Zeros{T}(sum(1:(N+1)),sum(1:(N+1))),
-                                        (1:N+1, 1:N+1), (0,band), (0,0))
+            if transposed
+                C = BandedBlockBandedMatrix(Zeros{T}(sum(1:(N+1)),sum(1:(N+1))),
+                                            (1:N+1, 1:N+1), (band,0), (0,0))
+            else
+                C = BandedBlockBandedMatrix(Zeros{T}(sum(1:(N+1)),sum(1:(N+1))),
+                                            (1:N+1, 1:N+1), (0,band), (0,0))
+            end
             P = getPspace(S)
             ptsr, wr = pointswithweights(getRspace(St, 0), N+1)
             rhoptsr = S.family.ρ.(ptsr)
@@ -1044,7 +1094,11 @@ function transformparamsoperator(S::DiskSliceSpace{<:Any, <:Any, T, <:Any},
                         val = inner2(R, opevalatpts(R, n-k+1, ptsr),
                                         rhoptsr.^(2k) .* opevalatpts(Rt, m-k+1, ptsr), wr)
                         val *= getopnorm(P)
-                        view(C, Block(m+1, n+1))[k+1, k+1] = val / St.opnorms[k+1]
+                        if transposed
+                            view(C, Block(n+1, m+1))[k+1, k+1] = val / St.opnorms[k+1]
+                        else
+                            view(C, Block(m+1, n+1))[k+1, k+1] = val / St.opnorms[k+1]
+                        end
                     end
                 end
             end
@@ -1053,8 +1107,13 @@ function transformparamsoperator(S::DiskSliceSpace{<:Any, <:Any, T, <:Any},
         # and Case 3: Takes the space H^{a,b,c} -> H^{a+1,b+1,c+1}
         elseif (λ == 0 && μ == 1) || (λ == 1 && μ == 1)
             # Outputs the relevant sum(1:N+1) × sum(1:N+1) matrix operator
-            C = BandedBlockBandedMatrix(Zeros{T}(sum(1:(N+1)),sum(1:(N+1))),
-                                        (1:N+1, 1:N+1), (0,band), (0,2))
+            if transposed
+                C = BandedBlockBandedMatrix(Zeros{T}(sum(1:(N+1)),sum(1:(N+1))),
+                                            (1:N+1, 1:N+1), (band,0), (2,0))
+            else
+                C = BandedBlockBandedMatrix(Zeros{T}(sum(1:(N+1)),sum(1:(N+1))),
+                                            (1:N+1, 1:N+1), (0,band), (0,2))
+            end
             P = getPspace(S)
             Pt = getPspace(St)
             ptsp, wp = pointswithweights(Pt, N+2)
@@ -1078,7 +1137,11 @@ function transformparamsoperator(S::DiskSliceSpace{<:Any, <:Any, T, <:Any},
                         val = inner2(R, opevalatpts(R, n-k+1, ptsr),
                                         rhoptsr.^(k+j) .* opevalatpts(Rt, m-j+1, ptsr), wr)
                         val *= inner2(P, opevalatpts(P, k+1, ptsp), opevalatpts(Pt, j+1, ptsp), wp)
-                        view(C, Block(m+1, n+1))[j+1, k+1] = val / St.opnorms[j+1]
+                        if transposed
+                            view(C, Block(n+1, m+1))[k+1, j+1] = val / St.opnorms[j+1]
+                        else
+                            view(C, Block(m+1, n+1))[j+1, k+1] = val / St.opnorms[j+1]
+                        end
                     end
                 end
             end
@@ -1095,8 +1158,13 @@ function transformparamsoperator(S::DiskSliceSpace{<:Any, <:Any, T, <:Any},
         # Case 4: Takes the space W^{a,b,c} -> W^{a-1,b-1,c}
         if λ == 1 && μ == 0
             # Outputs the relevant sum(1:N+1+band) × sum(1:N+1) matrix operator
-            C = BandedBlockBandedMatrix(Zeros{T}(sum(1:(N+1+band)),sum(1:(N+1))),
-                                        (1:N+1+band, 1:N+1), (band,0), (0,0))
+            if transposed
+                C = BandedBlockBandedMatrix(Zeros{T}(sum(1:(N+1)),sum(1:(N+1+band))),
+                                            (1:N+1, 1:N+1+band), (0,band), (0,0))
+            else
+                C = BandedBlockBandedMatrix(Zeros{T}(sum(1:(N+1+band)),sum(1:(N+1))),
+                                            (1:N+1+band, 1:N+1), (band,0), (0,0))
+            end
             P = getPspace(S)
             ptsr, wr = pointswithweights(getRspace(S, 0), N+1)
             getopnorms(St, N+1)
@@ -1117,7 +1185,11 @@ function transformparamsoperator(S::DiskSliceSpace{<:Any, <:Any, T, <:Any},
                     val = inner2(R, opevalatpts(R, n-k+1, ptsr),
                                     rhoptsr.^(2k) .* opevalatpts(Rt, m-k+1, ptsr), wr)
                     val *= getopnorm(P)
-                    view(C, Block(m+1, n+1))[k+1, k+1] = val / St.opnorms[k+1]
+                    if transposed
+                        view(C, Block(n+1, m+1))[k+1, k+1] = val / St.opnorms[k+1]
+                    else
+                        view(C, Block(m+1, n+1))[k+1, k+1] = val / St.opnorms[k+1]
+                    end
                 end
             end
             C
@@ -1125,8 +1197,13 @@ function transformparamsoperator(S::DiskSliceSpace{<:Any, <:Any, T, <:Any},
         # and Case 6: Takes the space W^{a,b,c} -> W^{a-1,b-1,c-1}
         elseif (λ == 0 && μ == 1) || (λ == 1 && μ == 1)
             # Outputs the relevant sum(1:N+1+band) × sum(1:N+1) matrix operator
-            C = BandedBlockBandedMatrix(Zeros{T}(sum(1:(N+1+band)),sum(1:(N+1))),
-                                        (1:N+1+band, 1:N+1), (band,0), (2,0))
+            if transposed
+                C = BandedBlockBandedMatrix(Zeros{T}(sum(1:(N+1)),sum(1:(N+1+band))),
+                                            (1:N+1, 1:N+1+band), (0,band), (0,2))
+            else
+                C = BandedBlockBandedMatrix(Zeros{T}(sum(1:(N+1+band)),sum(1:(N+1))),
+                                            (1:N+1+band, 1:N+1), (band,0), (2,0))
+            end
             P = getPspace(S)
             Pt = getPspace(St)
             ptsp, wp = pointswithweights(P, N+2)
@@ -1153,7 +1230,11 @@ function transformparamsoperator(S::DiskSliceSpace{<:Any, <:Any, T, <:Any},
                     val = inner2(R, opevalatpts(R, n-k+1, ptsr),
                                     rhoptsr.^(k+j) .* opevalatpts(Rt, m-j+1, ptsr), wr)
                     val *= inner2(P, opevalatpts(P, k+1, ptsp), opevalatpts(Pt, j+1, ptsp), wp)
-                    view(C, Block(m+1, n+1))[j+1, k+1] = val / St.opnorms[j+1]
+                    if transposed
+                        view(C, Block(n+1, m+1))[k+1, j+1] = val / St.opnorms[j+1]
+                    else
+                        view(C, Block(m+1, n+1))[j+1, k+1] = val / St.opnorms[j+1]
+                    end
                 end
             end
             C
