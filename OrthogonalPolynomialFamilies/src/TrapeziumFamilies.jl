@@ -70,10 +70,10 @@ function TrapeziumFamily(::Type{B},::Type{T}, α::T, β::T, γ::T, δ::T, ξ::T)
     R = OrthogonalPolynomialFamily(T, β-X, X-α, ρ)
     P = OrthogonalPolynomialFamily(T, δ-Y, Y-γ)
     spaces = Dict{NTuple{nparams,B}, TrapeziumSpace}()
-    TrapeziumFamily{B,T,nparams,typeof(R),typeof(P),typeof(ρ),Int}(spaces, α, β, γ, δ, R, P, ρ, nparams)
+    TrapeziumFamily{B,T,nparams,typeof(R),typeof(P),typeof(ρ),Int}(spaces, α, β, γ, δ, R, P, ρ, ξ, nparams)
 end
 # Useful quick constructors
-TrapeziumFamily(ξ::T) where T = TrapeziumFamily(BigFloat, T, 0.0, 1.0, 0.0, 1.0, ξ)
+TrapeziumFamily(slope::T) where T = TrapeziumFamily(BigFloat, T, 0.0, 1.0, 0.0, 1.0, slope)
 TrapeziumFamily() = TrapeziumFamily(0.5)
 
 #===#
@@ -314,7 +314,9 @@ function recβ(S::TrapeziumSpace{<:Any, <:Any, T, <:Any}, n, k, j) where T
         pts, w = pointswithweights(R3, n-k+2)
         getopptseval(R2, n-k+1, pts)
         getopptseval(R3, m-1-k+1, pts)
-        rinner = inner2(R3, opevalatpts(R2, n-k+1, pts), opevalatpts(R1, m-1-k+1, pts), w)
+        @show n, k, m, j
+        @show n-k+1, m-1-k+1
+        rinner = inner2(R3, opevalatpts(R2, n-k+1, pts), opevalatpts(R3, m-1-k+1, pts), w)
         ret = rinner * δ / S.opnorms[k+2]
     end
     ret
@@ -331,7 +333,7 @@ function getAs!(S::TrapeziumSpace, N, N₀)
         vy1 = [recβ(S, n, k, 7) for k = 1:n]
         vy2 = [recβ(S, n, k, 8) for k = 0:n]
         vy3 = [recβ(S, n, k, 9) for k = 0:n-1]
-        S.A[n+1] = [Diagonal(v1) zeros(n+1);
+        S.A[n+1] = [Diagonal(vx) zeros(n+1);
                     Tridiagonal(vy1, vy2, vy3) [zeros(n); recβ(S, n, n, 9)]]
     end
 end
@@ -340,6 +342,7 @@ function getDTs!(S::TrapeziumSpace, N, N₀)
     # Assume getAs!() has already been called
     m = N₀
     if m == 0
+        n = 0
         η1 = 1 / recβ(S, n, 0, 9)
         S.DT[1] = [(1 / recα(S, n+1, 0, 1)) 0;
                    (- η1 * recβ(S, n, 0, 8) / recα(S, n+1, 0, 1)) η1]
@@ -348,15 +351,15 @@ function getDTs!(S::TrapeziumSpace, N, N₀)
     for n = N+1:-1:m
         vα = [1 / recα(S, n+1, k, 1) for k = 0:n]
         vβ = zeros(1, 2n + 2)
-        vβ[1, end] = 1 / recβ(S, n, n, 9)
-        vβ[1, end - 1] = - vβ[end] * recβ(S, n, n, 8) / recβ(S, n, n-1, 9)
-        for j = 0:n-1
-            ind = 2n - j
-            vβ[1, ind] = - (vβ[1, ind + 2] * recβ(S, n, n-j, 7)
-                         + vβ[1, ind + 1] * recβ(S, n, n-j-1, 8)) / recβ(S, n, n-j-1, 8)
+        vβ[1, end] = 1 / recβ(S, n, n, 9) # j = 0
+        vβ[1, end - 1] = - vβ[end] * recβ(S, n, n, 8) / recβ(S, n, n-1, 9) # j = 1
+        for j = 2:n
+            ind = 2n + 1 - j
+            vβ[1, ind] = - (vβ[1, ind + 2] * recβ(S, n, n+2-j, 7)
+                            + vβ[1, ind + 1] * recβ(S, n, n+1-j, 8)) / recβ(S, n, n-j, 9)
         end
-        vβ[1, 1] = - (vβ[1, n + 4] * recβ(S, n, 1, 7)
-                   + vβ[1, n + 3] * recβ(S, n, 0, 8)) / recα(S, n+1, 0, 1)
+        vβ[1, 1] = - (vβ[1, n + 3] * recβ(S, n, 1, 7)
+                        + vβ[1, n + 2] * recβ(S, n, 0, 8)) / recα(S, n+1, 0, 1)
         S.DT[n+1] = sparse([Diagonal(vα) zeros(n+1, n+1); vβ])
         # S.DT[n+1] = sparse(pinv(Array(S.A[n+1])))
     end
@@ -372,7 +375,7 @@ function getBs!(S::TrapeziumSpace, N, N₀)
         vy1 = [recβ(S, n, k, 4) for k = 1:n]
         vy2 = [recβ(S, n, k, 5) for k = 0:n]
         vy3 = [recβ(S, n, k, 6) for k = 0:n-1]
-        S.B[n+1] = sparse([Diagonal(v1); Tridiagonal(vy1, vy2, vy3)])
+        S.B[n+1] = sparse([Diagonal(vx); Tridiagonal(vy1, vy2, vy3)])
     end
 end
 function getCs!(S::TrapeziumSpace, N, N₀)
@@ -387,11 +390,11 @@ function getCs!(S::TrapeziumSpace, N, N₀)
         m += 1
     end
     for n = N+1:-1:m
-       vx = [recα(S, n, k, 1) for k = 0:n-1]
-       vy1 = [recβ(S, n, k, 1) for k = 1:n]
-       vy2 = [recβ(S, n, k, 2) for k = 0:n]
-       vy3 = [recβ(S, n, k, 3) for k = 0:n-1]
-       S.C[n+1] = sparse([Diagonal(v1);
+        vx = [recα(S, n, k, 1) for k = 0:n-1]
+        vy1 = [recβ(S, n, k, 1) for k = 1:n-1]
+        vy2 = [recβ(S, n, k, 2) for k = 0:n-1]
+        vy3 = [recβ(S, n, k, 3) for k = 0:n-2]
+        S.C[n+1] = sparse([Diagonal(vx);
                           zeros(1, n);
                           Tridiagonal(vy1, vy2, vy3);
                           [zeros(1, n-1) recβ(S, n, n, 1)]])
@@ -1066,7 +1069,7 @@ function laplaceoperator(S::TrapeziumSpace{<:Any, <:Any, T, <:Any},
         @show "laplaceoperator", "1 of 8 done"
         B = partialoperatorx(differentiateweightedspacex(S), N+4)
         @show "laplaceoperator", "2 of 8 done"
-        C = transformparamsoperator(D(S.params - (1,1,0,1)), D(S.params .- 1)),
+        C = transformparamsoperator(D(S.params - (1,1,0,1)), D(S.params .- 1),
                                     N+3, weighted=true)
         @show "laplaceoperator", "3 of 8 done"
         E = weightedpartialoperatorx(S, N)
