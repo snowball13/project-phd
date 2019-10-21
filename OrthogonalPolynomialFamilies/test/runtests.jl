@@ -156,7 +156,7 @@ end
     T = transformparamsoperator(D(a-1, b-1), S, N+3)
     Tw = transformparamsoperator(S, D(a-1, b-1), N, weighted=true)
     foper = Fun(S, T*A*Tw*f.coefficients)
-    @test foper(z) ≈ OrthogonalPolynomialFamilies.weight(S, z) * f(z) * oper(z)
+    @test foper(z) ≈ weight(S, z) * f(z) * oper(z)
 
     a, b = 1.0, 1.0; D = HalfDiskFamily(); S = D(a, b)
     x, y = 0.4, -0.2; z = [x; y] # Test point
@@ -593,5 +593,202 @@ end
         resizecoeffs!(u, N)
         cfs = L * u.coefficients
         @test Fun(D(a+1, b+1, c+1), cfs)(z) ≈ y*(n-2)*(n-1)*x^(n-3) + n*(n-1)*y^(n-2)
+    end
+end
+
+
+# Trapezium Family/Space testing
+
+@testset "Evaluation for TrapeziumSpace (transform())" begin
+    T = TrapeziumFamily()
+    a, b, c, d = 2.0, 1.0, 4.0, 1.0
+    S = T(a, b, c, d)
+    n = 10
+    f = (x,y) -> y*x^2 + x
+    pts = points(S, n)
+    vals = [f(pt...) for pt in pts]
+    cfs = transform(S, vals)
+    x, y = 0.2, 0.7
+    z = [x; y]
+    @test T.α ≤ z[1] ≤ T.β && T.γ*T.ρ(z[1]) ≤ z[2] ≤ T.δ*T.ρ(z[1])
+    F = Fun(S, cfs)
+    F(z)
+    f(z...)
+    @test F(z) ≈ f(z...)
+    @test itransform(S, cfs) ≈ vals
+    F = Fun(f, S, 10)
+    @test F(z) ≈ f(z...)
+    F = Fun(f, S)
+    @test F(z) ≈ f(z...)
+end
+
+@testset "Jacobi matrices" begin
+    n = 10; a, b, c, d = 2.0, 1.0, 4.0, 1.0
+    D = TrapeziumFamily(0.3)
+    S = D(a, b, c, d)
+    x, y = 0.1673, 0.2786; z = [x; y]
+    @test (x^2 + y^2 < 1 && D.α ≤ z[1] ≤ D.β && D.γ*D.ρ(z[1]) ≤ z[2] ≤ D.δ*D.ρ(z[1]))
+    f = Fun((x,y)->x*y + x, S)
+    N = getnk(length(cfs))[1]; resizecoeffs!(f, N+1)
+    Jx = jacobix(S, N+1)
+    Jy = jacobiy(S, N+1)
+    @test evaluate(Jx * f.coefficients, S, z) ≈ z[1] * f(z)
+    @test evaluate(Jy * f.coefficients, S, z) ≈ z[2] * f(z)
+
+    a, b, c, d = 2.0, 1.0, 4.0, 1.0
+    D = TrapeziumFamily(0.6)
+    S = D(a, b, c, d)
+    x, y = 0.1673, 0.2786; z = [x; y]
+    @test (x^2 + y^2 < 1 && D.α ≤ z[1] ≤ D.β && D.γ*D.ρ(z[1]) ≤ z[2] ≤ D.δ*D.ρ(z[1]))
+    N = 30
+    Jx = jacobix(S, N+1)
+    Jy = jacobiy(S, N+1)
+    for n = 0:N, k = 0:n
+        m = getopindex(n, k)
+        p = Fun(S, [zeros(m-1); 1]); resizecoeffs!(p, n+1)
+        len = length(p.coefficients)
+        @test evaluate(Jx[1:len, 1:len] * p.coefficients, S, z) ≈ z[1] * p(z)
+        @test evaluate(Jy[1:len, 1:len] * p.coefficients, S, z) ≈ z[2] * p(z)
+    end
+end
+
+@testset "Operator Clenshaw" begin
+    a, b, c, d = 2.0, 1.0, 4.0, 1.0
+    D = TrapeziumFamily(0.6)
+    S = D(a, b, c, d)
+    x, y = 0.1673, 0.2786; z = [x; y]
+    @test (x^2 + y^2 < 1 && D.α ≤ z[1] ≤ D.β && D.γ*D.ρ(z[1]) ≤ z[2] ≤ D.δ*D.ρ(z[1]))
+    N = 14
+    oper = Fun((x,y)->cos(x)*y^2, S, 200)
+    A = operatorclenshaw(oper, S)
+    f = Fun((x,y)->x*y, S); resizecoeffs!(f, N)
+    foper = Fun(S, A*f.coefficients)
+    @test foper(z) ≈ f(z) * oper(z)
+end
+
+@testset "Increment/decrement parameters operators" begin
+    tol = 1e-13
+
+    paramslist = [(1,0,0,0), (1,1,0,0), (1,1,1,0), (1,1,1,1),
+                  (0,1,0,0), (0,1,1,0), (0,1,1,1), (1,0,1,0),
+                  (0,0,1,0), (0,0,1,1), (1,0,1,1), (0,1,0,1),
+                  (0,0,0,1), (1,0,0,1), (1,1,0,1)]
+    maxcount = length(paramslist)
+    for count = 1:maxcount
+        params = paramslist[count]
+        @show count, maxcount, params
+        a, b, c, d = 2.0, 1.0, 4.0, 3.0
+        D = TrapeziumFamily(0.6)
+        S = D(a, b, c, d)
+        x, y = 0.1673, 0.2786; z = [x; y]
+        @test (x^2 + y^2 < 1 && D.α ≤ z[1] ≤ D.β && D.γ*D.ρ(z[1]) ≤ z[2] ≤ D.δ*D.ρ(z[1]))
+        St = (S.family)(S.params.+params)
+        maxop = 150
+        N = getnk(maxop)[1] + 1
+        C = transformparamsoperator(S, St, N)
+        for j = 1:maxop
+            p = Fun(S, [zeros(j-1); 1])
+            resizecoeffs!(p, N)
+            q = Fun(St, C * p.coefficients)
+            res = abs(q(z) - p(z))
+            res > tol && @show getnk(j), j, res
+            @test res < tol
+        end
+    end
+    for count = 1:maxcount
+        params = paramslist[count]
+        @show count, maxcount, params
+        a, b, c, d = 2.0, 1.0, 4.0, 3.0
+        D = TrapeziumFamily(0.6)
+        S = D(a, b, c, d)
+        x, y = 0.1673, 0.2786; z = [x; y]
+        @test (x^2 + y^2 < 1 && D.α ≤ z[1] ≤ D.β && D.γ*D.ρ(z[1]) ≤ z[2] ≤ D.δ*D.ρ(z[1]))
+        St = (S.family)(S.params.-params)
+        maxop = 150
+        N = getnk(maxop)[1] + 1
+        C = transformparamsoperator(S, St, N, weighted=true)
+        for j = 1:maxop
+            p = Fun(S, [zeros(j-1); 1])
+            q = Fun(St, C * pad(p.coefficients, size(C)[2]))
+            res = abs(weight(St, z) * q(z) - weight(S, z) * p(z))
+            res > tol && @show getnk(j), j, res
+            @test res < tol
+        end
+    end
+end
+
+@testset "Evaluate partial derivative of (random and known) function" begin
+    a, b, c, d = 2.0, 1.0, 4.0, 1.0
+    D = TrapeziumFamily(0.6)
+    S = D(a, b, c, d)
+    x, y = 0.1673, 0.2786; z = [x; y]
+    @test (x^2 + y^2 < 1 && D.α ≤ z[1] ≤ D.β && D.γ*D.ρ(z[1]) ≤ z[2] ≤ D.δ*D.ρ(z[1]))
+    N, N1 = 10, 5
+    f = Fun(S, [randn(sum(1:N1)); 0.01*randn(sum(N1+1:N+1))])
+    # NOTE: This test for DX/DY operators nay not be good enough to ensure
+    # it is "correct"
+    h = 1e-6; @test (f(x+h,y)-f(x,y))/h ≈ differentiatex(f, f.space)(x,y) atol=100h
+    h = 1e-6; @test (f(x,y+h)-f(x,y))/h ≈ differentiatey(f, f.space)(x,y) atol=100h
+    f = Fun((x,y)->y*sin(x), S)
+    h = 1e-5; @test y*cos(x) ≈ differentiatex(f, f.space)(x,y) atol=100h
+    f = Fun((x,y)->x*sin(y), S)
+    h = 1e-5; @test x*cos(y) ≈ differentiatey(f, f.space)(x,y) atol=100h
+end
+
+@testset "laplaceoperator" begin
+    # NOTE: The derivative weight functions only valid for S.params == (1,1,1,1)
+    rhoval(D::TrapeziumFamily, x) = 1 - D.slope * x
+    dxrhoval(D::TrapeziumFamily, x) = - D.slope
+    d2xrhoval(D::TrapeziumFamily, x) = 0.0
+    function dxweight(S::TrapeziumSpace{<:Any, <:Any, T, <:Any}, x, y) where T
+        D = S.family
+        a, b, c, d = S.params
+        ret = (b * weight(D(a, b-1, c, d), x, y)
+                - a * weight(D(a-1, b, c, d), x, y)
+                + d * D.δ * dxrhoval(D, x) * weight(D(a, b, c, d-1), x, y))
+        T(ret)
+    end
+    dxweight(S::TrapeziumSpace, z) = dxweight(S, z[1], z[2])
+    function dyweight(S::TrapeziumSpace{<:Any, <:Any, T, <:Any}, x, y) where T
+        D = S.family
+        a, b, c, d = S.params
+        ret = c * weight(D(a, b, c-1, d), x, y) - d * weight(D(a, b, c, d-1), x, y)
+        T(ret)
+    end
+    dyweight(S::TrapeziumSpace, z) = dyweight(S, z[1], z[2])
+    function d2xweight(S::TrapeziumSpace{<:Any, <:Any, T, <:Any}, x, y) where T
+        D = S.family
+        a, b, c, d = S.params
+        ret = (- 2 * a * b * weight(D(a-1, b-1, c, d), x, y)
+               + 2 * d * D.δ * dxrhoval(D, x) * (b * weight(D(a, b-1, c, d-1), x, y)
+                                                 - a * weight(D(a-1, b, c, d-1), x, y)))
+
+        T(ret)
+    end
+    d2xweight(S::TrapeziumSpace, z) = d2xweight(S, z[1], z[2])
+    function d2yweight(S::TrapeziumSpace{<:Any, <:Any, T, <:Any}, x, y) where T
+        D = S.family
+        a, b, c, d = S.params
+        ret = - 2 * c * d * weight(D(a, b, c-1, d-1), x, y)
+        T(ret)
+    end
+    d2yweight(S::TrapeziumSpace, z) = d2yweight(S, z[1], z[2])
+
+    a, b, c, d = 1.0, 1.0, 1.0, 1.0
+    D = TrapeziumFamily(0.6)
+    S = D(a, b, c, d)
+    x, y = 0.1673, 0.2786; z = [x; y]
+    @test (D.α ≤ z[1] ≤ D.β && D.γ*D.ρ(z[1]) ≤ z[2] ≤ D.δ*D.ρ(z[1]))
+    N = 15
+    # W111->P111
+    L = laplaceoperator(S, S, N, weighted=true)
+    for n = 1:10
+        @show n
+        u = Fun((x,y)->y*x^(n-1)+y^n, S)
+        f = Fun((x,y)->(u(x,y)*d2xweight(S,x,y) + 2*y*(n-1)*x^(n-2)*dxweight(S,x,y) + y*(n-2)*(n-1)*x^(n-3)*weight(S,x,y)
+                        + u(x,y)*d2yweight(S,x,y) + 2*(n*y^(n-1) + x^(n-1))*dyweight(S,x,y) + n*(n-1)*y^(n-2)*weight(S,x,y)), S)
+        resizecoeffs!(f, N)
+        cfs = sparse(L) \ f.coefficients
+        @test Fun(S, cfs)(z) ≈ u(z)
     end
 end

@@ -84,12 +84,12 @@ end
 function getRspace(S::TrapeziumSpace)
     (S.family.R)(S.params[1], S.params[2], S.params[3] + S.params[4])
 end
-getPspace(S::TrapeziumSpace) = (S.family.P)(S.params[end-1], S.params[end])
+getPspace(S::TrapeziumSpace) = (S.family.P)(S.params[end], S.params[end-1])
 
 #===#
 # Weight eval functions
 weight(S::TrapeziumSpace{<:Any,<:Any,T,<:Any}, x, y) where T =
-    T(getRspace(S).weight(x) * getPspace(S).weight(y/S.family.ρ(x)))
+    T(getRspace(S).weight(x) * getPspace(S).weight(y / S.family.ρ(x)))
 weight(S::TrapeziumSpace, z) = weight(S, z[1], z[2])
 
 
@@ -119,7 +119,7 @@ function pointswithweights(S::TrapeziumSpace{<:Any, <:Any, T, <:Any}, n) where T
 end
 points(S::TrapeziumSpace, n) = pointswithweights(S, n)[1]
 
-inner(S::TrapeziumSpace, fpts, gpts, w) = sum(fpts .* gpts .* w) / 2
+inner(S::TrapeziumSpace, fpts, gpts, w) = sum(fpts .* gpts .* w)
 
 function getopnorms(S::TrapeziumSpace{<:Any, <:Any, T, <:Any}, k) where T
     # NOTE these are squared norms
@@ -287,45 +287,59 @@ function recβ(S::TrapeziumSpace{<:Any, <:Any, T, <:Any}, n, k, j) where T
     P = getPspace(S)
     getopnorm(P)
 
-    if (j - 1) % 3 == 0
-        m = n - 1 + Int((j - 1) / 3)
+    npoints = n - k + 2
+    if j == 1 || j == 4 || j == 7
+        pts, w = pointswithweights(R2, npoints)
         δ = recγ(T, P, k+1) * P.opnorm[1]
-        pts, w = pointswithweights(R2, n-k+2)
-        getopptseval(R2, n-k+1, pts)
-        getopptseval(R1, m+1-k+1, pts)
-        rinner = inner2(R2, opevalatpts(R2, n-k+1, pts), opevalatpts(R1, m+1-k+1, pts), w)
-        ret = rinner * δ / S.opnorms[k]
-    elseif (j - 2) % 3 == 0
-        # We can calculate this explicitly, due to the linear nature of ρ for
-        # the Trapezium case
+    elseif j == 2 || j == 5 || j == 8
         m = n - 1 + Int((j - 2) / 3)
-        γ = recα(T, P, k+1)
         if m == n + 1
-            rinner = - S.family.slope * recβ(T, R2, n+1)
+            rinner = - S.family.slope * recβ(T, R2, n-k+1)
         elseif m == n
-            rinner = 1 - S.family.slope * recα(T, R2, n+1)
+            rinner = 1 - S.family.slope * recα(T, R2, n-k+1)
         else # m == n-1
-            rinner = - S.family.slope * recγ(T, R2, n+1)
+            rinner = - S.family.slope * recγ(T, R2, n-k+1)
         end
-        ret = rinner * γ
-    else
-        m = n - 1 + Int((j - 3) / 3)
+        return rinner * recα(T, P, k+1)
+    else # j == 3 || j == 6 || j == 9
+        pts, w = pointswithweights(R3, npoints)
         δ = recβ(T, P, k+1) * P.opnorm[1]
-        pts, w = pointswithweights(R3, n-k+2)
-        getopptseval(R2, n-k+1, pts)
-        getopptseval(R3, m-1-k+1, pts)
-        @show n, k, m, j
-        @show n-k+1, m-1-k+1
-        rinner = inner2(R3, opevalatpts(R2, n-k+1, pts), opevalatpts(R3, m-1-k+1, pts), w)
-        ret = rinner * δ / S.opnorms[k+2]
     end
-    ret
+    getopptseval(R2, n-k+1, pts)
+
+    if j == 1
+        getopptseval(R1, n-k+1, pts)
+        (inner2(R2, opevalatpts(R2, n-k+1, pts), opevalatpts(R1, n-k+1, pts), w)
+            * δ / S.opnorms[k])
+    elseif j == 3
+        getopptseval(R3, n-k-1, pts)
+        (inner2(R3, opevalatpts(R2, n-k+1, pts), opevalatpts(R3, n-k-1, pts), w)
+            * δ / S.opnorms[k+2])
+    elseif j == 4
+        getopptseval(R1, n-k+2, pts)
+        (inner2(R2, opevalatpts(R2, n-k+1, pts), opevalatpts(R1, n-k+2, pts), w)
+            * δ / S.opnorms[k])
+    elseif j == 6
+        getopptseval(R3, n-k, pts)
+        (inner2(R3, opevalatpts(R2, n-k+1, pts), opevalatpts(R3, n-k, pts), w)
+            * δ / S.opnorms[k+2])
+    elseif j == 7
+        getopptseval(R1, n-k+3, pts)
+        (inner2(R2, opevalatpts(R2, n-k+1, pts), opevalatpts(R1, n-k+3, pts), w)
+            * δ / S.opnorms[k])
+    elseif j == 9
+        getopptseval(R3, n-k+1, pts)
+        (inner2(R3, opevalatpts(R2, n-k+1, pts), opevalatpts(R3, n-k+1, pts), w)
+            * δ / S.opnorms[k+2])
+    else
+        error("Invalid entry to function")
+    end
 end
 
 function getAs!(S::TrapeziumSpace, N, N₀)
     m = N₀
     if m == 0
-        S.A[1] = [recα(S, 1, 0, 1) 0; recβ(S, 0, 0, 9) recβ(S, 0, 0, 9)]
+        S.A[1] = [recα(S, 1, 0, 1) 0; recβ(S, 0, 0, 8) recβ(S, 0, 0, 9)]
         m += 1
     end
     for n = N+1:-1:m
@@ -343,25 +357,25 @@ function getDTs!(S::TrapeziumSpace, N, N₀)
     m = N₀
     if m == 0
         n = 0
-        η1 = 1 / recβ(S, n, 0, 9)
-        S.DT[1] = [(1 / recα(S, n+1, 0, 1)) 0;
-                   (- η1 * recβ(S, n, 0, 8) / recα(S, n+1, 0, 1)) η1]
+        a = 1 / recα(S, n+1, 0, 1)
+        b = 1 / recβ(S, n, 0, 9)
+        S.DT[1] = [a 0;
+                   (- a * b * recβ(S, n, 0, 8)) b]
         m += 1
     end
     for n = N+1:-1:m
         vα = [1 / recα(S, n+1, k, 1) for k = 0:n]
-        vβ = zeros(1, 2n + 2)
-        vβ[1, end] = 1 / recβ(S, n, n, 9) # j = 0
-        vβ[1, end - 1] = - vβ[end] * recβ(S, n, n, 8) / recβ(S, n, n-1, 9) # j = 1
-        for j = 2:n
-            ind = 2n + 1 - j
-            vβ[1, ind] = - (vβ[1, ind + 2] * recβ(S, n, n+2-j, 7)
-                            + vβ[1, ind + 1] * recβ(S, n, n+1-j, 8)) / recβ(S, n, n-j, 9)
+        η = zeros(1, n + 1)
+        η[1, end] = 1 / recβ(S, n, n, 9)
+        η[1, end - 1] = - η[end] * recβ(S, n, n, 8) / recβ(S, n, n-1, 9)
+        for j = n-1:-1:1
+            η[j] = - (η[1, j + 2] * recβ(S, n, j + 1, 7)
+                        + η[1, j + 1] * recβ(S, n, j, 8)) / recβ(S, n, j - 1, 9)
         end
-        vβ[1, 1] = - (vβ[1, n + 3] * recβ(S, n, 1, 7)
-                        + vβ[1, n + 2] * recβ(S, n, 0, 8)) / recα(S, n+1, 0, 1)
-        S.DT[n+1] = sparse([Diagonal(vα) zeros(n+1, n+1); vβ])
-        # S.DT[n+1] = sparse(pinv(Array(S.A[n+1])))
+        η0 = - (η[1, 2] * recβ(S, n, 1, 7)
+                + η[1, 1] * recβ(S, n, 0, 8)) / recα(S, n+1, 0, 1)
+        S.DT[n+1] = sparse([Diagonal(vα) zeros(n+1, n+1);
+                            η0 zeros(1, n) η])
     end
 end
 function getBs!(S::TrapeziumSpace, N, N₀)
@@ -467,7 +481,7 @@ function clenshawG(::TrapeziumSpace, n, z)
     [z[1] * sp; z[2] * sp]
 end
 function clenshaw(cfs::AbstractVector, S::TrapeziumSpace, z)
-    # TODO: Implement clenshaw for the half disk
+    # TODO
     m̃ = length(cfs)
     N = -1 + Int(round(sqrt(1+2(m̃-1))))
     resizedata!(S, N+1)
@@ -837,7 +851,7 @@ function partialoperatory(S::TrapeziumSpace{<:Any, <:Any, T, <:Any}, N) where T
     getopptseval(Py, N, pts)
     for k = 1:N
         val = inner2(Py, derivopevalatpts(P, k+1, pts), opevalatpts(Py, k, pts), w)
-        val /= getopnorm(P)
+        val /= getopnorm(Py)
         for i = k:N
             view(A, Block(i, i+1))[k, k+1] = val
         end
@@ -867,6 +881,7 @@ function getweightedpartialoperatorxval(S::TrapeziumSpace{<:Any, <:Any, T, <:Any
             * inner2(Rx, opevalatpts(R, n-k+1, ptsr) .* wr100 .* rhoptsr.^(k+j+2),
                         opevalatpts(Rx, m-j+1, ptsr), wr))
     A += (S.params[end]
+            * S.family.δ
             * valr
             * inner2(Px, opevalatpts(P, k+1, ptsp), opevalatpts(Px, j+1, ptsp), wp))
     B = valp * inner2(Rx, derivopevalatpts(R, n-k+1, ptsr) .* wr100 .* wr010,
@@ -891,26 +906,25 @@ function weightedpartialoperatorx(S::TrapeziumSpace{<:Any, <:Any, T, <:Any}, N) 
     getopptseval(P, N, ptsp)
     getopptseval(Px, N+1, ptsp)
     getderivopptseval(P, N, ptsp)
-    # ptsr, wr = pointswithweights(getRspace(Sx), 2N+4) # TODO
-    ptsr, wr = pointswithweights(getRspace(Sx, 0), 2N+4)
+    ptsr, wr = pointswithweights(getRspace(Sx), 2N+4)
     getopnorms(Sx, N+2)
 
     # ρ.(ptsr) and dρ/dx.(ptsr)
     rhoptsr = T.(S.family.ρ.(ptsr))
     dxrhoptsr = T.(differentiate(S.family.ρ).(ptsr))
     zeroparams = S.params .* 0
-    # w_P^{(1)}.(pts)
-    wp10 = T.(getPspace(S.family(zeroparams + (0,0,1,0))).weight.(ptsp))
+    # w_P^{(1,0)}.(pts)
+    wp10 = T.(getPspace(S.family(zeroparams .+ (0,0,0,1))).weight.(ptsp))
     # w_R^{(1,0,0)}, w_R^{(0,1,0)}
-    wr100 = T.(getRspace(S.family(zeroparams + (1,0,0,0))).weight.(ptsr))
-    wr010 = T.(getRspace(S.family(zeroparams + (0,1,0,0))).weight.(ptsr))
+    wr100 = T.(getRspace(S.family(zeroparams .+ (1,0,0,0))).weight.(ptsr))
+    wr010 = T.(getRspace(S.family(zeroparams .+ (0,1,0,0))).weight.(ptsr))
 
     # Get pt evals for the R OPs
     for k = 0:N
         R = getRspace(S, k)
         getopptseval(R, N-k, ptsr)
         getderivopptseval(R, N-k, ptsr)
-        for j = k:2:k+2
+        for j = k:k+2
             Rx = getRspace(Sx, j)
             getopptseval(Rx, N-k+1, ptsr)
         end
@@ -937,13 +951,13 @@ function weightedpartialoperatory(S::TrapeziumSpace{<:Any, <:Any, T, <:Any}, N) 
     getderivopptseval(P, N, ptsp)
     getopnorms(Sy, N+1)
     zeroparams = S.params .* 0
-    wp10 = T.(getPspace(S.family(zeroparams + (0,0,1,0))).weight.(ptsp))
-    wp01 = T.(getPspace(S.family(zeroparams + (0,0,0,1))).weight.(ptsp))
-    wp11 = T.(getPspace(S.family(zeroparams + (0,0,1,1))).weight.(ptsp))
+    wp10 = T.(getPspace(S.family(zeroparams .+ (0,0,0,1))).weight.(ptsp))
+    wp01 = T.(getPspace(S.family(zeroparams .+ (0,0,1,0))).weight.(ptsp))
+    wp11 = T.(getPspace(S.family(zeroparams .+ (0,0,1,1))).weight.(ptsp))
     n, m = N, N+1
     for k = 0:N
         j = k + 1
-        val = inner(P, (wp11 .* derivopevalatpts(P, k+1, ptsp)
+        val = inner2(P, (wp11 .* derivopevalatpts(P, k+1, ptsp)
                             + (S.params[end-1] * wp10 - S.params[end] * wp01)
                                 .* opevalatpts(P, k+1, ptsp)),
                        opevalatpts(Py, j+1, ptsp), wp)
@@ -961,6 +975,8 @@ end
 function transformparamsoperator(S::TrapeziumSpace{<:Any, <:Any, T, <:Any},
             St::TrapeziumSpace{<:Any, <:Any, T, <:Any}, N; weighted=false) where T
     # Cases we can handle:
+    #   H{a,b,c,d}->any param increased by 1
+    #   W{a,b,c,d}->any param decreased by 1
     if weighted == false
 
         ã, b̃, c̃, d̃ = Int.(St.params .- S.params)
@@ -981,7 +997,7 @@ function transformparamsoperator(S::TrapeziumSpace{<:Any, <:Any, T, <:Any},
             getopptseval(P, N, ptsp)
             getopptseval(Pt, N, ptsp)
         end
-        ptsr, wr = pointswithweights(getRspace(St, 0), N+1)
+        ptsr, wr = pointswithweights(getRspace(St, 0), N+2)
         # Get pt evals for R OPs
         for k = 0:N
             R = getRspace(S, k)
@@ -989,7 +1005,7 @@ function transformparamsoperator(S::TrapeziumSpace{<:Any, <:Any, T, <:Any},
             getopptseval(R, N-k, ptsr)
             getopptseval(Rt, N-k, ptsr)
         end
-        rhoptsr = S.family.ρ.(ptsr)
+        rhoptsr = T.(S.family.ρ.(ptsr))
         getopnorms(St, N)
 
         for n = 0:N, k = 0:n
@@ -1002,7 +1018,9 @@ function transformparamsoperator(S::TrapeziumSpace{<:Any, <:Any, T, <:Any},
                                     opevalatpts(Pt, j+1, ptsp), wp)
                 end
                 # The R inner product
-                valr = inner2(Rt, opevalatpts(R, n-k+1, ptsr) * rhoptsr.^(k+j),
+                R = getRspace(S, k)
+                Rt = getRspace(St, j)
+                valr = inner2(Rt, opevalatpts(R, n-k+1, ptsr) .* rhoptsr.^(k+j),
                                 opevalatpts(Rt, m-j+1, ptsr), wr)
                 view(C, Block(m+1, n+1))[j+1, k+1] = valp * valr / St.opnorms[j+1]
             end
@@ -1026,7 +1044,7 @@ function transformparamsoperator(S::TrapeziumSpace{<:Any, <:Any, T, <:Any},
             getopptseval(P, N, ptsp)
             getopptseval(Pt, N, ptsp)
         end
-        ptsr, wr = pointswithweights(getRspace(S, 0), N+1)
+        ptsr, wr = pointswithweights(getRspace(S, 0), N+2)
         # Get pt evals for R OPs
         for k = 0:N
             R = getRspace(S, k)
@@ -1034,8 +1052,12 @@ function transformparamsoperator(S::TrapeziumSpace{<:Any, <:Any, T, <:Any},
             getopptseval(R, N-k, ptsr)
             getopptseval(Rt, N-k, ptsr)
         end
-        rhoptsr = S.family.ρ.(ptsr)
-        getopnorms(St, N)
+        for j = N+1:N+bandk
+            Rt = getRspace(St, j)
+            getopptseval(Rt, N-j, ptsr)
+        end
+        rhoptsr = T.(S.family.ρ.(ptsr))
+        getopnorms(St, N+bandk)
 
         for n = 0:N, k = 0:n
             for m = n:(n + bandn), j = k:min(k + bandk, m)
@@ -1047,12 +1069,15 @@ function transformparamsoperator(S::TrapeziumSpace{<:Any, <:Any, T, <:Any},
                                     opevalatpts(Pt, j+1, ptsp), wp)
                 end
                 # The R inner product
-                valr = inner2(Rt, opevalatpts(R, n-k+1, ptsr) * rhoptsr.^(k+j),
+                R = getRspace(S, k)
+                Rt = getRspace(St, j)
+                valr = inner2(Rt, opevalatpts(R, n-k+1, ptsr) .* rhoptsr.^(k+j),
                                 opevalatpts(Rt, m-j+1, ptsr), wr)
                 view(C, Block(m+1, n+1))[j+1, k+1] = valp * valr / St.opnorms[j+1]
             end
         end
     end
+    C
 end
 
 #====#
@@ -1065,21 +1090,21 @@ function laplaceoperator(S::TrapeziumSpace{<:Any, <:Any, T, <:Any},
     D = S.family
     if (weighted == true && S.params == ntuple(x->1, D.nparams)
             && St.params == ntuple(x->1, D.nparams))
-        A = transformparamsoperator(D(S.params - (0,0,1,0)), S, N+4)
+        A = transformparamsoperator(differentiatespacex(D(S.params .- 1)), S, N+2)
         @show "laplaceoperator", "1 of 8 done"
-        B = partialoperatorx(differentiateweightedspacex(S), N+4)
+        B = partialoperatorx(D(S.params .- 1), N+3)
         @show "laplaceoperator", "2 of 8 done"
-        C = transformparamsoperator(D(S.params - (1,1,0,1)), D(S.params .- 1),
-                                    N+3, weighted=true)
+        C = transformparamsoperator(differentiateweightedspacex(S), D(S.params .- 1),
+                                    N+2, weighted=true)
         @show "laplaceoperator", "3 of 8 done"
         E = weightedpartialoperatorx(S, N)
         @show "laplaceoperator", "4 of 8 done"
-        F = transformparamsoperator(differentiatespacey(D(S.params .- 1)), S, N+4)
+        F = transformparamsoperator(differentiatespacey(D(S.params .- 1)), S, N+2)
         @show "laplaceoperator", "5 of 8 done"
-        G = partialoperatory(D(S.params .- 1), N+4)
+        G = partialoperatory(D(S.params .- 1), N+3)
         @show "laplaceoperator", "6 of 8 done"
         H = transformparamsoperator(differentiateweightedspacey(S), D(S.params .- 1),
-                                    N+2, weighted=true)
+                                    N+1, weighted=true)
         @show "laplaceoperator", "7 of 8 done"
         K = weightedpartialoperatory(S, N)
         @show "laplaceoperator", "8 of 8 done"
