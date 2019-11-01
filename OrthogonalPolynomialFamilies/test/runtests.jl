@@ -2,8 +2,9 @@ using ApproxFun, OrthogonalPolynomialFamilies, FastGaussQuadrature,
         SingularIntegralEquations, Test, SparseArrays
 import OrthogonalPolynomialFamilies: golubwelsch, halfdiskquadrule,
         gethalfdiskOP, jacobix, jacobiy, differentiatex, differentiatey,
-        resizecoeffs!, laplaceoperator, transformparamsoperator, operatorclenshaw, getnk,
-        getopindex, weight, resizedata!
+        resizecoeffs!, laplaceoperator, transformparamsoperator,
+        operatorclenshaw, getnk, getopindex, weight, resizedata!,
+        differentiateweightedspacex, differentiateweightedspacey
 
 
 
@@ -560,6 +561,7 @@ end
         cfs = sparse(L) \ f.coefficients
         @test Fun(S, cfs)(z) ≈ u(z)
     end
+    a, b, c = 1.0, 1.0, 1.0
     D = DiskSliceFamily(α, β); S = D(a, b, c)
     L = laplaceoperator(S, S, N, weighted=true)
     for n = 1:10
@@ -574,6 +576,7 @@ end
     # W222->P000
     # TODO
     # P000->P222
+    a, b, c = 1.0, 1.0, 1.0
     D = DiskSliceFamily(0.0); S = D(a-1, b-1)
     L = laplaceoperator(S, D(a+1, b+1), N, weighted=false)
     n = 1; u = Fun((x,y)->2y, S); resizecoeffs!(u, N); @test abs(Fun(D(a+1, b+1), L * u.coefficients)(z)) < 1e-12
@@ -584,6 +587,7 @@ end
         cfs = L * u.coefficients
         @test Fun(D(a+1, b+1), cfs)(z) ≈ y*(n-2)*(n-1)*x^(n-3) + n*(n-1)*y^(n-2)
     end
+    a, b, c = 1.0, 1.0, 1.0
     D = DiskSliceFamily(α, β); S = D(a-1, b-1, c-1)
     L = laplaceoperator(S, D(a+1, b+1, c+1), N, weighted=false)
     n = 1; u = Fun((x,y)->2y, S); resizecoeffs!(u, N); @test abs(Fun(D(a+1, b+1, c+1), L * u.coefficients)(z)) < 1e-12
@@ -629,7 +633,7 @@ end
     x, y = 0.1673, 0.2786; z = [x; y]
     @test (x^2 + y^2 < 1 && D.α ≤ z[1] ≤ D.β && D.γ*D.ρ(z[1]) ≤ z[2] ≤ D.δ*D.ρ(z[1]))
     f = Fun((x,y)->x*y + x, S)
-    N = getnk(length(cfs))[1]; resizecoeffs!(f, N+1)
+    N = getnk(length(f.coefficients))[1]; resizecoeffs!(f, N+1)
     Jx = jacobix(S, N+1)
     Jy = jacobiy(S, N+1)
     @test evaluate(Jx * f.coefficients, S, z) ≈ z[1] * f(z)

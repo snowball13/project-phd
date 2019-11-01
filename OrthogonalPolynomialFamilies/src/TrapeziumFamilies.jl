@@ -101,17 +101,19 @@ function pointswithweights(S::TrapeziumSpace{<:Any, <:Any, T, <:Any}, n) where T
     # Return the weights and nodes to use for the integral of a function,
     # i.e. for the trapezium Ω:
     #   int_Ω W^{a,b}(x,y) f(x,y) dydx ≈ Σ_j wⱼ*f(xⱼ,yⱼ)
-    N = Int(ceil(sqrt(n))) # ≈ n
-    @show "begin pointswithweights()", n, N
-    t, wt = pointswithweights(getPspace(S), N)
-    s, ws = pointswithweights(getRspace(S, 0), N)
-    pts = Vector{SArray{Tuple{2},T,1,2}}(undef, N^2)
-    w = zeros(N^2) # weights
+    N = 2 * Int(ceil(sqrt(n))) - 1 # degree we approximate up to with M quadrature pts
+    M1 = M2 = Int((N + 1) / 2)
+    M = M1 * M2 # ≈ n
+    @show "begin pointswithweights()", n, N, M
+    t, wt = pointswithweights(getPspace(S), M2)
+    s, ws = pointswithweights(getRspace(S, 0), M1)
+    pts = Vector{SArray{Tuple{2},T,1,2}}(undef, M)
+    w = zeros(M) # weights
     ρs = S.family.ρ.(s)
-    for i = 1:N
-        for k = 1:N
-            pts[i + (k - 1)N] = s[k], t[i] * ρs[k]
-            w[i + (k - 1)N] = ws[k] * wt[i]
+    for i = 1:M2
+        for k = 1:M1
+            pts[i + (k - 1)M1] = s[k], t[i] * ρs[k]
+            w[i + (k - 1)M1] = ws[k] * wt[i]
         end
     end
     @show "end pointswithweights()"

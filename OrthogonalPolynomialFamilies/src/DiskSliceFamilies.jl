@@ -80,12 +80,13 @@ function DiskSliceFamily(::Type{B},::Type{T}, α::T, β::T, γ::T, δ::T) where 
     nparams = 3 # Default
     X = Fun(identity, B(α)..β)
     Y = Fun(identity, B(γ)..δ)
-    ρ = sqrt(1 - X^2) # TODO: Change to anon function
+    ρ = sqrt(1 - X^2)
+    ρ2 = 1 - X^2 # NOTE we use ρ^2 here to help computationally
     if isinteger(β) && Int(β) == 1 # 2-param family
         nparams -= 1
-        R = OrthogonalPolynomialFamily(T, X-α, ρ)
+        R = OrthogonalPolynomialFamily(T, X-α, ρ2)
     else
-        R = OrthogonalPolynomialFamily(T, β-X, X-α, ρ)
+        R = OrthogonalPolynomialFamily(T, β-X, X-α, ρ2)
     end
     P = OrthogonalPolynomialFamily(T, δ-Y, Y-γ)
     spaces = Dict{NTuple{nparams,B}, DiskSliceSpace}()
@@ -101,16 +102,16 @@ DiskSliceFamily() = DiskSliceFamily(BigFloat, Float64, 0.0, 1.0, -1.0, 1.0)
 # Retrieve spaces methods
 function getRspace(S::DiskSliceSpace, k::Int)
     if S.family.nparams == 3
-        (S.family.R)(S.params[1], S.params[2], 2S.params[3] + 2k + 1)
+        (S.family.R)(S.params[1], S.params[2], (2S.params[3] + 2k + 1) / 2)
     else
-        (S.family.R)(S.params[1], 2S.params[2] + 2k + 1)
+        (S.family.R)(S.params[1], (2S.params[2] + 2k + 1)/2)
     end
 end
 function getRspace(S::DiskSliceSpace)
     if S.family.nparams == 3
-        (S.family.R)(S.params[1], S.params[2], 2S.params[3])
+        (S.family.R)(S.params[1], S.params[2], S.params[3])
     else
-        (S.family.R)(S.params[1], 2S.params[2])
+        (S.family.R)(S.params[1], S.params[2])
     end
 end
 getPspace(S::DiskSliceSpace) = (S.family.P)(S.params[end], S.params[end])
@@ -132,18 +133,20 @@ function pointswithweights(S::DiskSliceSpace{<:Any, <:Any, T, <:Any}, n) where T
     #   int_Ω W^{a,b}(x,y) f(x,y) dydx ≈ Σ_j weⱼ*fe(xⱼ,yⱼ)
     # NOTE: the odd part of the quad rule will equal 0 for polynomials,
     #       so can be ignored.
-    N = Int(ceil(sqrt(n))) # ≈ n
-    @show "begin pointswithweights()", n, N
-    t, wt = pointswithweights(getPspace(S), N)
-    s, ws = pointswithweights(getRspace(S, 0), N)
-    pts = Vector{SArray{Tuple{2},T,1,2}}(undef, 2(N^2)) # stores both (x,y) and (x,-y)
-    w = zeros(N^2) # weights
-    for i = 1:N
-        for k = 1:N
+    N = 2 * Int(ceil(sqrt(n))) - 1 # degree we approximate up to with M quadrature pts
+    M1 = M2 = Int((N + 1) / 2)
+    M = M1 * M2 # ≈ n
+    @show "begin pointswithweights()", n, N, M
+    t, wt = pointswithweights(getPspace(S), M2)
+    s, ws = pointswithweights(getRspace(S, 0), M1)
+    pts = Vector{SArray{Tuple{2},T,1,2}}(undef, 2M) # stores both (x,y) and (x,-y)
+    w = zeros(M) # weights
+    for i = 1:M2
+        for k = 1:M1
             x, y = s[k], t[i] * S.family.ρ(s[k]) # t[i] * sqrt(1 - s[k]^2)
-            pts[i + (k - 1)N] = x, y
-            pts[N^2 + i + (k - 1)N] = x, -y
-            w[i + (k - 1)N] = ws[k] * wt[i]
+            pts[i + (k - 1)M1] = x, y
+            pts[M + i + (k - 1)M1] = x, -y
+            w[i + (k - 1)M1] = ws[k] * wt[i]
         end
     end
     @show "end pointswithweights()"
