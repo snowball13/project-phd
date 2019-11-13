@@ -567,22 +567,26 @@ R̃ = OrthogonalPolynomialFamily(β-X, X-α, 1-X, 1+X)
 
 let
     N = 300
-    for k = 0:100
+    for k = 0:99
         @show k, N
         R00 = R(S.params[1], S.params[2], B(0.5)+k)
         if k == 0
-            @show "begin initialisation"
-            OrthogonalPolynomialFamilies.resizedata!(R00, N+1)
-            @show "end initialisation"
+            # @show "begin initialisation"
+            # OrthogonalPolynomialFamilies.resizedata!(R00, N+1)
+            # @show "end initialisation"
+
+            resize!(R00.a, N+1); resize!(R00.b, N+1)
+            R00.a[:] = load("experiments/saved/R110p5-rec-coeffs-a.jld", "a")
+            R00.b[:] = load("experiments/saved/R110p5-rec-coeffs-b.jld", "b")
         end
         getopptseval(R00, N, [1.0])
         # interim coeffs
         R10 = R̃(S.params[1], S.params[2], B(0.5)+k+1, B(0.5)+k)
         getopnorm(R10)
         resize!(R10.a, N-1); resize!(R10.b, N-1)
-        C00 = zeros(N)
+        C00 = zeros(B, N)
         for n = 0:N-1
-            C00[n+1] = sqrt(getopnorm(R10) / (getopnorm(R00)
+            C00[n+1] = sqrt(B(getopnorm(R10)) / B(getopnorm(R00)
                                                 * R00.b[n+1]
                                                 * R00.opptseval[n+1][1]
                                                 * R00.opptseval[n+2][1]))
@@ -600,10 +604,10 @@ let
         R11 = R(S.params[1], S.params[2], B(0.5)+k+1)
         getopnorm(R11)
         resize!(R11.a, N-2); resize!(R11.b, N-2)
-        D10 = zeros(N-1)
+        D10 = zeros(B, N-1)
         getopptseval(R10, N, [-1.0])
         for n = 0:N-2
-            D10[n+1] = (-1)^(n) * sqrt(- getopnorm(R11) / (getopnorm(R10)
+            D10[n+1] = (-1)^(n) * sqrt(- B(getopnorm(R11)) / B(getopnorm(R10)
                                                             * R10.b[n+1]
                                                             * R10.opptseval[n+1][1]
                                                             * R10.opptseval[n+2][1]))
@@ -621,5 +625,99 @@ let
 end
 
 
+R
+for k = 0:10
+    @show k
+    aa = R(S.params[1], S.params[2], B(0.5) + k).a
+    bb = R(S.params[1], S.params[2], B(0.5) + k).b
+    @show aa[end], bb[end]
+end
 
-R(S.params[1], S.params[2], B(0.5))
+bb = R(S.params[1], S.params[2], B(0.5) + 1).b
+bb[156]
+
+
+
+
+B = BigFloat
+setprecision(800)
+α, β = 0.2, 0.8
+D = DiskSliceFamily(α, β)
+a, b, c = 1.0, 1.0, 1.0
+S = D(a, b, c)
+x, y = 0.4, -0.765; z = [x; y]
+
+R = D.R
+X = Fun(B(α)..β)
+R̃ = OrthogonalPolynomialFamily(β-X, X-α, 1-X, 1+X)
+
+let
+    N = 650
+    for k = 0:Int(floor(N/3)-1)
+        @show k, N
+        R00 = R(S.params[1], S.params[2], B(0.5)+k)
+        if k == 0
+            resize!(R00.a, N+1); resize!(R00.b, N+1)
+            R00.a[:] = load("experiments/saved/R110p5-rec-coeffs-a-N=1000.jld", "a")[1:N+1]
+            R00.b[:] = load("experiments/saved/R110p5-rec-coeffs-b-N=1000.jld", "b")[1:N+1]
+        end
+        getopptseval(R00, N, [1.0])
+        # interim coeffs
+        R10 = R̃(S.params[1], S.params[2], B(0.5)+k+1, B(0.5)+k)
+        getopnorm(R10)
+        resize!(R10.a, N-1); resize!(R10.b, N-1)
+        for n = 0:N-2
+            R10.b[n+1] = (sqrt(R00.opptseval[n+3][1])
+                            * sqrt(R00.opptseval[n+1][1])
+                            * sqrt(R00.b[n+2])
+                            * sqrt(R00.b[n+1])
+                            / R00.opptseval[n+2][1])
+            R10.a[n+1] = ((R00.opptseval[n+3][1] / R00.opptseval[n+2][1]) * R00.b[n+2]
+                        - (R00.opptseval[n+2][1] / R00.opptseval[n+1][1]) * R00.b[n+1]
+                        + R00.a[n+2])
+        end
+        R10
+        # wanted coeffs
+        # R11 = R̃(S.params[1], S.params[2], B(0.5)+k+1, B(0.5)+k+1)
+        R11 = R(S.params[1], S.params[2], B(0.5)+k+1)
+        getopnorm(R11)
+        resize!(R11.a, N-2); resize!(R11.b, N-2)
+        getopptseval(R10, N, [-1.0])
+        for n = 0:N-3
+            R11.b[n+1] = (sqrt(abs(R10.opptseval[n+3][1]))
+                            * sqrt(abs(R10.opptseval[n+1][1]))
+                            * sqrt(R10.b[n+2])
+                            * sqrt(R10.b[n+1])
+                            / abs(R10.opptseval[n+2][1]))
+            R11.a[n+1] = ((R10.opptseval[n+3][1] / R10.opptseval[n+2][1]) * R10.b[n+2]
+                        - (R10.opptseval[n+2][1] / R10.opptseval[n+1][1]) * R10.b[n+1]
+                        + R10.a[n+2])
+        end
+        N = N - 3
+    end
+end
+S
+
+R11 = R(S.params[1], S.params[2], B(0.5)+0)
+R11.a[309]
+R11.opptseval[646][1]
+
+# B = BigFloat
+# setprecision(800)
+# α, β = 0.2, 0.8
+# D = DiskSliceFamily(α, β)
+# a, b, c = 1.0, 1.0, 1.0
+# S = D(a, b, c)
+# x, y = 0.4, -0.765; z = [x; y]
+#
+# R = D.R
+# X = Fun(B(α)..β)
+# R̃ = OrthogonalPolynomialFamily(β-X, X-α, 1-X, 1+X)
+#
+# N = 1000
+# @show "begin initialisation"
+# R00 = R(S.params[1], S.params[2], B(0.5))
+# OrthogonalPolynomialFamilies.resizedata!(R00, N+1)
+# save("experiments/saved/R110p5-rec-coeffs-a-N=1000.jld", "a", R00.a)
+# save("experiments/saved/R110p5-rec-coeffs-b-N=1000.jld", "b", R00.b)
+# @show "end initialisation"
