@@ -865,15 +865,15 @@ The sparsity argument for the weighted parameter transformation operators follow
 
 \begin{figure}[t]
 	\begin{subfigure}{0.32\textwidth}
-	\includegraphics[scale=0.35]{sparsityoflaplacian-w11-diskslice-alpha=0p2-beta=0p8}
+	\includegraphics[scale=0.35]{sparsityoflaplacian-w11} %-diskslice-alpha=0p2-beta=0p8}
         \centering
 	\end{subfigure}
 	\begin{subfigure}{0.32\textwidth}
-	\includegraphics[scale=0.35]{sparsityofhelmholtz-diskslice-alpha=0p2-beta=0p8}
+	\includegraphics[scale=0.35]{sparsityofhelmholtz} %-diskslice-alpha=0p2-beta=0p8}
         \centering
 	\end{subfigure}
 	\begin{subfigure}{0.32\textwidth}
-	\includegraphics[scale=0.35]{sparsityofbiharmonic-diskslice-alpha=0p2-beta=0p8}
+	\includegraphics[scale=0.35]{sparsityofbiharmonic} %-diskslice-alpha=0p2-beta=0p8}
         \centering
 	\end{subfigure}
     	\caption{"Spy" plots of (differential) operator matrices, showing their sparsity. Left: the Laplace operator $\laplacewiii$. Centre: the weighted variable coefficient Helmholtz operator $\laplacewiii + k^2 \: T^{(0,0,0)\to(1,1,1)} \: V({J_x^{(0,0,0)}}^\top, {J_y^{(0,0,0)}}^\top) \: T_W^{(1,1,1)\to(0,0,0)}$ for $v(x,y) = 1 - (3(x-1)^2 + 5y^2)$ and $k = 200$. Right: the biharmonic operator $\biharmonictwo$.}
@@ -1131,7 +1131,7 @@ We now demonstrate how the sparse linear systems constructed as above can be use
 	\end{subfigure}
 	\begin{subfigure}{0.5\textwidth}
 	\centering
-	\includegraphics[scale=0.5]{solutionblocknorms-poisson-diskslice-alpha=0p2-beta=0p8}
+	\includegraphics[scale=0.5]{solutionblocknorms-poisson} %-diskslice-alpha=0p2-beta=0p8}
         	%\label{fig:solutionblocknorms-poisson}
 	\end{subfigure}
 	\caption{Left: The computed solution to $\Delta u = f$ with zero boundary conditions with $f(x,y) = 1 + \text{erf}(5(1 - 10((x - 0.5)^2 + y^2)))$. Right: The norms of each block of the computed solution of the Poisson equation with the given right hand side functions. This demonstrates algebraic convergence with the rate dictated by the decay at the corners, with spectral convergence observed when the right-hand side vanishes to all orders.}
@@ -1146,7 +1146,7 @@ We now demonstrate how the sparse linear systems constructed as above can be use
 	%\label{fig:solution-helmholtz}
 	\end{subfigure}
 	\begin{subfigure}{0.5\textwidth}
-	\includegraphics[scale=0.5]{solutionblocknorms-helmholtz-diskslice-alpha=0p2-beta=0p8-N=196-k=20}
+	\includegraphics[scale=0.5]{solutionblocknorms-helmholtz-k=20} %-diskslice-alpha=0p2-beta=0p8-N=196-k=20}
 	\centering
         	%\label{fig:solutionblocknorms-helmholtz}
 	\end{subfigure}
