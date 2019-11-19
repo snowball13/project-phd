@@ -713,7 +713,7 @@ The operator matrices $D_x^{(a,b,c)}, \: D_y^{(a,b,c)}, \: W_x^{(a,b,c)}, \: W_y
 First, note that:
 \begin{align}
 	\genjacw^{(a,b,c) \: \prime}(x) &= - a \: \genjacw^{(a-1,b,c)}(x) + b \: \genjacw^{(a,b-1,c)}(x) + c \: \rho(x) \: \rho'(x) \:\genjacw^{(a,b,c-2)}(x), \label{eqn:derivativeofweightgenjac} \\
-	\jacw^{(b) \: \prime}(y) &= - 2b \: y \: \jacw^{(b-1)}(y), \label{eqn:derivativeofweightjac} \\
+	\jacw^{(c) \: \prime}(y) &= - 2c \: y \: \jacw^{(b-1)}(y), \label{eqn:derivativeofweightjac} \\
 	\rho(x) \: \rho'(x) &= -x. \label{eqn:rhoderivative}
 \end{align}
 
@@ -751,48 +751,61 @@ We next consider the case for the operator $D_x^{(a,b,c)}$ for partial different
 \begin{align*}
 	c_{m,j}^x = {\ip<\pddx \hdopnkabc, \hdop^{(a+1, b+1, c+1)}_{m,j} >_{W^{(a+1, b+1, c+1)}}}{\norm{\hdop^{(a+1, b+1, c+1)}_{m,j}}^{-2}_{W^{(a+1, b+1, c+1)}}}.
 \end{align*}
-Now, again using the change of variable $t= \frac{y}{\rho(x)}$, and (\ref{eqn:rhoderivative}), we have that
-\begin{align*}
+Now, again using the change of variable $t= \frac{y}{\rho(x)}$, we have that
+\begin{align}
 	&\ip<\pddx \hdopnkabc, \hdop^{(a+1, b+1, c+1)}_{m,j} >_{W^{(a+1, b+1, c+1)}} \nonumber \\ 
-	&= \Big( \int_\alpha^\beta \: \genjacnmk^{(a, b, 2c+2k+1) \: \prime} \: \genjacmmj^{(a+1, b+1, 2c+2j+3)} \: \rho^{k+j+1} \: \genjacw^{(a+1, b+1, 2c+2)} \: \D x \Big) \\
-	&\quad \quad \quad \quad \quad \cdot \: \Big( \int_\gamma^\delta \jac_k^{(c,c)} \: \jac_j^{(c+1,c+1)} \: \jacw^{(c+1)} \: \D t \Big) \\ 
-	& \quad + k \: \Big( \int_\alpha^\beta \: \genjacnmk^{(a, b, 2c+2k+1)} \: \genjacmmj^{(a+1, b+1, 2c+2j+3)} \: \rho^{k+j} \: \rho' \: \genjacw^{(a+1, b+1, 2c+2)} \: \D x \Big) \\
-	& \quad \quad \quad \quad \quad \cdot \: \Big( \int_\gamma^\delta \jac_k^{(c,c)} \: \jac_j^{(c+1,c+1)} \: \jacw^{(c+1)} \: \D t \Big) \\
-	& \quad - \Big( \int_\alpha^\beta \: \genjacnmk^{(a, b, 2c+2k+1)} \: \genjacmmj^{(a+1, b+1, 2c+2j+3)} \: \rho^{k+j} \: \rho' \: \genjacw^{(a+1, b+1, 2c+2)} \: \D x \Big) \\
-	& \quad \quad \quad \quad \quad \cdot \: \Big( \int_\gamma^\delta t \: \jac_k^{(c,c) \: \prime} \: \jac_j^{(c+1,c+1)} \: \jacw^{(c+1)} \: \D t \Big). \\
-\end{align*}
-%\begin{align*}
-%	&\ip<\pddx \hdopnkabc, \hdop^{(a+1, b+1, c+1)}_{m,j} >_{W^{(a+1, b+1, c+1)}} \nonumber \\ 
-%	&= \normgenjac^{(a, b+\half)} \: \normjac^{(c+1)} \: \Big\{ \ip< \genjacnmk^{(a, b+k+\half) \: \prime} (x), \: \rho(x)^{k+j+2} \: \genjacmmj^{(a+1, b+1+j+\half)} >_{\genjacw^{(a, b+\half)}} \\ 
-%	&\quad \quad \quad \quad \quad \quad \quad \quad \quad \quad \quad \quad \cdot \: \ip< \jac_k^{(b,b)}, \: \jac_j^{(b+1,b+1)} >_{\jacw^{(b+1)}}  \nonumber \\ 
-%	& \quad - k \: \ip< x^2 \: \genjacnmk^{(a, b+k+\half)}(x), \: \rho(x)^{k+j} \: \genjacmmj^{(a+1, b+1+j+\half)} >_{\genjacw^{(a, b+\half)}} 
-%		\: \ip< \jac_k^{(b,b)}, \: \jac_j^{(b+1,b+1)} >_{\jacw^{(b+1)}}  \nonumber \\ 
-%	& \quad + \: \ip< x^2 \: \genjacnmk^{(a, b+k+\half)}(x), \: \rho(x)^{k+j} \: \genjacmmj^{(a+1, b+1+j+\half)} >_{\genjacw^{(a, b+\half)}} 
-%		\: \ip< y \: \jac_k^{(b,b) \: \prime} (y), \: \jac_j^{(b+1,b+1)} >_{\jacw^{(b+1)}} \Big\}
-%\end{align*}
-
-We can see from each term's second factor that the above is only possibly non-zero for $j = k-2, k$. \bstodo{Need to give the working here!!}. Now, using (\ref{eqn:derivativeofweightgenjac}), integration-by-parts, and noting that the weight $\genjacw^{(a,b,2c)}$ is a polynomial degree $a+b+2c$ and vanishes at the limits of the integral for positive parameters $a,b,c$, we have that
+	&= \Big( \int_\alpha^\beta \: \genjacnmk^{(a, b, 2c+2k+1) \: \prime} \: \genjacmmj^{(a+1, b+1, 2c+2j+3)} \: \rho^{k+j+1} \: \genjacw^{(a+1, b+1, 2c+2)} \: \D x \Big) \nonumber \\
+	&\quad \quad \quad \quad \quad \cdot \: \Big( \int_\gamma^\delta \jac_k^{(c,c)} \: \jac_j^{(c+1,c+1)} \: \jacw^{(c+1)} \: \D t \Big) \nonumber \\ 
+	& \quad + k \: \Big( \int_\alpha^\beta \: \genjacnmk^{(a, b, 2c+2k+1)} \: \genjacmmj^{(a+1, b+1, 2c+2j+3)} \: \rho^{k+j} \: \rho' \: \genjacw^{(a+1, b+1, 2c+2)} \: \D x \Big) \nonumber \\
+	& \quad \quad \quad \quad \quad \cdot \: \Big( \int_\gamma^\delta \jac_k^{(c,c)} \: \jac_j^{(c+1,c+1)} \: \jacw^{(c+1)} \: \D t \Big) \nonumber \\
+	& \quad - \Big( \int_\alpha^\beta \: \genjacnmk^{(a, b, 2c+2k+1)} \: \genjacmmj^{(a+1, b+1, 2c+2j+3)} \: \rho^{k+j} \: \rho' \: \genjacw^{(a+1, b+1, 2c+2)} \: \D x \Big) \nonumber \\
+	& \quad \quad \quad \quad \quad \cdot \: \Big( \int_\gamma^\delta t \: \jac_k^{(c,c) \: \prime} \: \jac_j^{(c+1,c+1)} \: \jacw^{(c+1)} \: \D t \Big). \label{eqn:dxsparsity}
+\end{align}
+We will first show that the second factor of each term in (\ref{eqn:dxsparsity}) are zero for $j < k - 2$ and also for $j = k - 1$. To this end, observe that, for any integer $c$, $\jac^{(c,c)}(-t) = (-1)^k \: \jac^{(c,c)}(t)$ and so $\jac_k^{(c,c)}$ is an even polynomial for even $k$, and an odd polynomial for odd $k$. Thus, $\jac_k^{(c,c)} \: \jac_{k-1}^{(c+1,c+1)}$ is an odd polynomial for any $k$. Hence
 \begin{align*}
-	&\int_\alpha^\beta \: \genjacnmk^{(a, b, 2c+2k+1) \: \prime} \: \genjacmmj^{(a+1, b+1, 2c+2j+3)} \: \rho^{k+j+1} \: \genjacw^{(a+1, b+1, 2c+2)} \: \D x  \\
-	&= \int_\alpha^\beta \: \genjacnmk^{(a, b, 2c+2k+1) \: \prime} \: \genjacmmj^{(a+1, b+1, 2c+2j+3)} \: \genjacw^{(a+1, b+1, 2c+k+j+3)} \: \D x \\
-	&= - \int_\alpha^\beta \: \genjacnmk^{(a, b, 2c+2k+1)} \: \ddx \Big[ \genjacmmj^{(a+1, b+1, 2c+2j+3)} \: \genjacw^{(a+1, b+1, 2c+k+j+3)} \Big] \: \D x \\
-	&= - \int_\alpha^\beta \: \genjacnmk^{(a, b, 2c+2k+1)} \: \Big\{ \genjacmmj^{(a+1, b+1, 2c+2j+3) \: \prime} \: \genjacw^{(a+1, b+1, 2c+k+j+3)} \\
-	&\quad \quad \quad \quad \quad \quad \quad \quad \quad \quad \quad \quad + (2c+k+j+3) \: \rho \: \rho' \:  \genjacw^{(a+1, b+1, 2c+k+j+1)} \: \genjacmmj^{(a+1, b+1, 2c+2j+3)} \\
-	&\quad \quad \quad \quad \quad \quad \quad \quad \quad \quad \quad \quad + (b+1) \: \genjacw^{(a+1, b, 2c+k+j+3)} \: \genjacmmj^{(a+1, b+1, 2c+2j+3)} \\
-	&\quad \quad \quad \quad \quad \quad \quad \quad \quad \quad \quad \quad - (a+1) \: \genjacw^{(a, b+1, 2c+k+j+3)} \: \genjacmmj^{(a+1, b+1, 2c+2j+3)} \Big\} \: \D x \\
-	&= - \: \normgenjac^{(a, b, 2c+2k+1)} \:  \Big\{ \ip<\genjacnmk^{(a, b, 2c+2k+1)}, \: \genjacw^{(1, 1, j-k+2)} \: \genjacmmj^{(a+1, b+1, 2c+2j+3) \: \prime}>_{\genjacw^{(a, b, 2c+2k+1)}} \\
-		&\quad \quad \quad + (2c+k+j+3) \: \ip<\genjacnmk^{(a, b, 2c+2k+1)}, \: \rho \: \rho' \: \genjacw^{(1,1, j-k)} \genjacmmj^{(a+1, b+1, 2c+2j+3)} >_{\genjacw^{(a, b, 2c+2k+1)}} \\
-		&\quad \quad \quad + (b+1) \: \ip<\genjacnmk^{(a, b, 2c+2k+1)}, \: \genjacw^{(1,0, j-k+2)} \genjacmmj^{(a+1, b+1, 2c+2j+3)} >_{\genjacw^{(a, b, 2c+2k+1)}} \\
-		&\quad \quad \quad - (a+1) \: \ip<\genjacnmk^{(a, b, 2c+2k+1)}, \: \genjacw^{(0,1, j-k+2)} \genjacmmj^{(a+1, b+1, 2c+2j+3)} >_{\genjacw^{(a, b, 2c+2k+1)}} \Big\}
+	\int_\gamma^\delta \jac_k^{(c,c)} \: \jac_j^{(c+1,c+1)} \: \jacw^{(c+1)} \: \D t = \int_{-\delta}^\delta \jac_k^{(c,c)} \: \jac_j^{(c+1,c+1)} \: \jacw^{(1)} \: \jacw^{(c)} \: \D t 
 \end{align*}
-By orthogonality, each term is is zero for $m-j+3+j-k < n-k \iff m < n - 3$ (since $j-k$ is even by the earlier argument and so $\text{deg}(\rho \: \rho' \: \genjacw^{(1,1, j-k)})$,  $\text{deg} (\genjacw^{(1,0, j-k+2)})$, $\text{deg} (\genjacw^{(0,1, j-k+2)}) = 3 + j-k$).
+is zero for $j < k - 2$ by orthogonality, and is zero for $j = k-1$ due to symmetry over the domain. Moreover, $t \: \jac_k^{(c,c) \: \prime}(t) \: \jac_j^{(c+1,c+1)}(t)$ is also an odd polynomial for any $k$ and so
+\begin{align*}
+	\int_\gamma^\delta t \: \jac_k^{(c,c) \: \prime}(t) \: \jac_j^{(c+1,c+1)}(t) \: \jacw^{(c+1)}(t) \: \D t
+\end{align*}
+is zero for $j = k-1$ due to symmetry over the domain, and
+\begin{align*}
+	&\int_\gamma^\delta t \: \jac_k^{(c,c) \: \prime} \: \jac_j^{(c+1,c+1)} \: \jacw^{(c+1)} \: \D t \\
+	&= - \int_{-\delta}^\delta \jac_k^{(c,c)} \: \frac{\D}{\D t} \big[ t \: \jac_j^{(c+1,c+1)} \: \jacw^{(c+1)} \big] \: \D t \\
+	&= - \int_{-\delta}^\delta \jac_k^{(c,c)} \: \big[ \jac_j^{(c+1,c+1)} \: \jacw^{(c+1)} + t \: \jac_j^{(c+1,c+1) \: \prime} \: \jacw^{(c+1)} - 2 c \: t^2 \: \jac_j^{(c+1,c+1)} \: \jacw^{(c)} \big] \: \D t \\
+	&= - \: \normjac^{(c)} \: \ip< \jac_k^{(c,c)}, \: \jac_j^{(c+1,c+1)} \: \jacw^{(1)} + t \: \jac_{j}^{(c+1,c+1) \: \prime} \: \jacw^{(1)} - 2c \: t^2 \: \jac_{j}^{(c+1,c+1)}  >_{\jacw^{(c)}}
+\end{align*}
+which is zero for $j < k - 2$ by orthogonality. Thus, (\ref{eqn:dxsparsity}) is zero for $j \notin \{k-2, k\}$.
+
+Now, using (\ref{eqn:derivativeofweightgenjac}), integration-by-parts, and noting that the weight $\genjacw^{(a,b,2c)}$ is a polynomial degree $a+b+2c$ and vanishes at the limits of the integral for positive parameters $a,b,c$, we have that
+\begin{align}
+	&\int_\alpha^\beta \: \genjacnmk^{(a, b, 2c+2k+1) \: \prime} \: \genjacmmj^{(a+1, b+1, 2c+2j+3)} \: \rho^{k+j+1} \: \genjacw^{(a+1, b+1, 2c+2)} \: \D x \nonumber  \\
+	&= \int_\alpha^\beta \: \genjacnmk^{(a, b, 2c+2k+1) \: \prime} \: \genjacmmj^{(a+1, b+1, 2c+2j+3)} \: \genjacw^{(a+1, b+1, 2c+k+j+3)} \: \D x \nonumber \\
+	&= - \int_\alpha^\beta \: \genjacnmk^{(a, b, 2c+2k+1)} \: \ddx \Big[ \genjacmmj^{(a+1, b+1, 2c+2j+3)} \: \genjacw^{(a+1, b+1, 2c+k+j+3)} \Big] \: \D x \nonumber \\
+	&= - \int_\alpha^\beta \: \genjacnmk^{(a, b, 2c+2k+1)} \: \Big\{ \genjacmmj^{(a+1, b+1, 2c+2j+3) \: \prime} \: \genjacw^{(a+1, b+1, 2c+k+j+3)} \nonumber \\
+	&\quad \quad \quad \quad \quad \quad \quad \quad \quad \quad \quad \quad + (2c+k+j+3) \: \rho \: \rho' \:  \genjacw^{(a+1, b+1, 2c+k+j+1)} \: \genjacmmj^{(a+1, b+1, 2c+2j+3)} \nonumber \\
+	&\quad \quad \quad \quad \quad \quad \quad \quad \quad \quad \quad \quad + (b+1) \: \genjacw^{(a+1, b, 2c+k+j+3)} \: \genjacmmj^{(a+1, b+1, 2c+2j+3)} \nonumber \\
+	&\quad \quad \quad \quad \quad \quad \quad \quad \quad \quad \quad \quad - (a+1) \: \genjacw^{(a, b+1, 2c+k+j+3)} \: \genjacmmj^{(a+1, b+1, 2c+2j+3)} \Big\} \: \D x \nonumber \\
+	&= - \: \normgenjac^{(a, b, 2c+2k+1)} \:  \Big\{ \ip<\genjacnmk^{(a, b, 2c+2k+1)}, \: \genjacw^{(1, 1, j-k+2)} \: \genjacmmj^{(a+1, b+1, 2c+2j+3) \: \prime}>_{\genjacw^{(a, b, 2c+2k+1)}} \nonumber \\
+		&\quad \quad \quad + (2c+k+j+3) \: \ip<\genjacnmk^{(a, b, 2c+2k+1)}, \: \rho \: \rho' \: \genjacw^{(1,1, j-k)} \genjacmmj^{(a+1, b+1, 2c+2j+3)} >_{\genjacw^{(a, b, 2c+2k+1)}} \nonumber \\
+		&\quad \quad \quad + (b+1) \: \ip<\genjacnmk^{(a, b, 2c+2k+1)}, \: \genjacw^{(1,0, j-k+2)} \genjacmmj^{(a+1, b+1, 2c+2j+3)} >_{\genjacw^{(a, b, 2c+2k+1)}} \nonumber \\
+		&\quad \quad \quad - (a+1) \: \ip<\genjacnmk^{(a, b, 2c+2k+1)}, \: \genjacw^{(0,1, j-k+2)} \genjacmmj^{(a+1, b+1, 2c+2j+3)} >_{\genjacw^{(a, b, 2c+2k+1)}} \Big\}. \label{eqn:dxsparsityR}
+\end{align}
+By recalling (\ref{eqn:rhoderivative}) and noting that $j-k$ is even by the earlier argument, we can see $\rho \: \rho' \: \genjacw^{(1,1, j-k)}$, $\genjacw^{(1,0, j-k+2)}$ and $\genjacw^{(1,0, j-k+2)}$ are all polynomials, and further that 
+$$\text{deg}(\rho \: \rho' \: \genjacw^{(1,1, j-k)}) = \text{deg} (\genjacw^{(1,0, j-k+2)}) = \text{deg} (\genjacw^{(0,1, j-k+2)}) = 3 + j-k.$$ 
+Hence, by orthogonality, each term in (\ref{eqn:dxsparsityR}) is is zero for $m-j+3+j-k < n-k \iff m < n - 3$.
 
 Finally,
 \begin{align*}
 	&\int_\alpha^\beta \: \genjacnmk^{(a, b, 2c+2k+1)} \: \genjacmmj^{(a+1, b+1, 2c+2j+3)} \: \rho^{k+j} \: \rho' \: \genjacw^{(a+1, b+1, 2c+2)} \: \D x \\
 	&= \normgenjac^{(a, b, 2c+2k+1)} \: \ip< \genjacnmk^{(a, b, 2c+2k+1)}, \: \rho \: \rho' \: \genjacw^{(1, 1, j-k)} \: \genjacmmj^{(a+1, b+1, 2c+2j+3)} >_{\genjacw^{(a, b, 2c+2k+1)}}
 \end{align*}
-which is also zero for $m < n - 3$.
+which is also zero for $m < n - 3$. Thus
+\begin{align*}
+	&\ip<\pddx \hdopnkabc, \hdop^{(a+1, b+1, c+1)}_{m,j} >_{W^{(a+1, b+1, c+1)}} = 0 \qfor m < n - 3, \: j \notin \{k-2, k\},
+\end{align*}
+showing that the only possible non-zero coefficients $c_{m,j}^x$ are when $m = n-3,\dots,n$ and $j = k-2,k$ $(j \le m)$.
 
 We can gain the non-zero entries of the weighted differential operators similarly, by noting that for the disk-slice
 \begin{align}
@@ -852,15 +865,15 @@ The sparsity argument for the weighted parameter transformation operators follow
 
 \begin{figure}[t]
 	\begin{subfigure}{0.32\textwidth}
-	\includegraphics[scale=0.35]{sparsityoflaplacian-w11}
+	\includegraphics[scale=0.35]{sparsityoflaplacian-w11-diskslice-alpha=0p2-beta=0p8}
         \centering
 	\end{subfigure}
 	\begin{subfigure}{0.32\textwidth}
-	\includegraphics[scale=0.35]{sparsityofhelmholtz}
+	\includegraphics[scale=0.35]{sparsityofhelmholtz-diskslice-alpha=0p2-beta=0p8}
         \centering
 	\end{subfigure}
 	\begin{subfigure}{0.32\textwidth}
-	\includegraphics[scale=0.35]{sparsityofbiharmonic}
+	\includegraphics[scale=0.35]{sparsityofbiharmonic-diskslice-alpha=0p2-beta=0p8}
         \centering
 	\end{subfigure}
     	\caption{"Spy" plots of (differential) operator matrices, showing their sparsity. Left: the Laplace operator $\laplacewiii$. Centre: the weighted variable coefficient Helmholtz operator $\laplacewiii + k^2 \: T^{(0,0,0)\to(1,1,1)} \: V({J_x^{(0,0,0)}}^\top, {J_y^{(0,0,0)}}^\top) \: T_W^{(1,1,1)\to(0,0,0)}$ for $v(x,y) = 1 - (3(x-1)^2 + 5y^2)$ and $k = 200$. Right: the biharmonic operator $\biharmonictwo$.}
@@ -1118,7 +1131,7 @@ We now demonstrate how the sparse linear systems constructed as above can be use
 	\end{subfigure}
 	\begin{subfigure}{0.5\textwidth}
 	\centering
-	\includegraphics[scale=0.5]{solutionblocknorms-poisson}
+	\includegraphics[scale=0.5]{solutionblocknorms-poisson-diskslice-alpha=0p2-beta=0p8}
         	%\label{fig:solutionblocknorms-poisson}
 	\end{subfigure}
 	\caption{Left: The computed solution to $\Delta u = f$ with zero boundary conditions with $f(x,y) = 1 + \text{erf}(5(1 - 10((x - 0.5)^2 + y^2)))$. Right: The norms of each block of the computed solution of the Poisson equation with the given right hand side functions. This demonstrates algebraic convergence with the rate dictated by the decay at the corners, with spectral convergence observed when the right-hand side vanishes to all orders.}
@@ -1133,7 +1146,7 @@ We now demonstrate how the sparse linear systems constructed as above can be use
 	%\label{fig:solution-helmholtz}
 	\end{subfigure}
 	\begin{subfigure}{0.5\textwidth}
-	\includegraphics[scale=0.5]{solutionblocknorms-helmholtz-k=20}
+	\includegraphics[scale=0.5]{solutionblocknorms-helmholtz-diskslice-alpha=0p2-beta=0p8-N=196-k=20}
 	\centering
         	%\label{fig:solutionblocknorms-helmholtz}
 	\end{subfigure}
@@ -1329,6 +1342,22 @@ Note \bstodo{typo 6}that since we have sparse operator matrices for partial deri
 
 
 \section{End-Disk-Slice}\label{Appendix:HalfDisk}
+
+\begin{figure}[t]
+	\begin{subfigure}{0.3\textwidth}
+	\includegraphics[scale=0.3]{solution-poisson}
+	\centering
+	%\label{fig:solution-poisson}
+	\end{subfigure}
+	\begin{subfigure}{0.5\textwidth}
+	\centering
+	\includegraphics[scale=0.5]{solutionblocknorms-poisson}
+        	%\label{fig:solutionblocknorms-poisson}
+	\end{subfigure}
+	\caption{Left: The computed solution to $\Delta u = f$ with zero boundary conditions with $f(x,y) = 1 + \text{erf}(5(1 - 10((x - 0.5)^2 + y^2)))$. Right: The norms of each block of the computed solution of the Poisson equation with the given right hand side functions. This demonstrates algebraic convergence with the rate dictated by the decay at the corners, with spectral convergence observed when the right-hand side vanishes to all orders.}
+	\centering
+	\label{fig:poisson}
+\end{figure}
 
 The work in this paper on the disk-slice can be easily transferred to the special-case domain of the end-disk-slice by which we mean
 \begin{align*}
