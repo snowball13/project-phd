@@ -387,17 +387,17 @@ In this case the weight $\jacw(x)$ is an ultraspherical weight, and the correspo
 We can express the three-term recurrences associated \bstodo{typo 3}with $\genjac_n^{(a,b,c)}$ and $\jac_n^{(d,c)}$ as 
 \begin{align}
 	x \genjac_n^{(a,b,c)}(x) &= \beta_n^{(a,b,c)} \genjac_{n+1}^{(a,b,c)}(x) + \alpha_n^{(a,b,c)} \genjac_n^{(a,b,c)}(x) + \beta_{n-1}^{(a,b,c)} \genjac_{n-1}^{(a,b,c)}(x) \label{eqn:Hrecurrence} \\
-	y \jac_n^{(d,c)}(y) &= \delta_n^{(d,c)} \jac_{n+1}^{(d,c)}(y) + \gamma_{n}^{(d,c)} \jac_{n}^{(d,c)}(y) + \delta_{n-1}^{(d,c)} \jac_{n-1}^{(d,c)}(y).
+	y \jac_n^{(d,c)}(y) &= \delta_n^{(d,c)} \jac_{n+1}^{(d,c)}(y) + \gamma_{n}^{(d,c)} \jac_{n}^{(d,c)}(y) + \delta_{n-1}^{(d,c)} \jac_{n-1}^{(d,c)}(y). \label{eqn:Precurrence}
 \end{align}
-Of course, for the disk-slice case, we have that $c = d$ and $\gamma_{n}^{(c,c)} = 0 \quad \forall n=0,1,2,\dots$. We can use these to determine the 2D recurrences for $\hdopnkabcd(x,y)$. Importantly, we can deduce sparsity in the recurrence relationships:
+Of course, for the disk-slice case, we have that $c = d$ and $\gamma_{n}^{(c,c)} = 0 \quad \forall n=0,1,2,\dots$. We can use (\ref{eqn:Hrecurrence}) and (\ref{eqn:Precurrence}) to determine the 2D recurrences for $\hdopnkabcd(x,y)$. Importantly, we can deduce sparsity in the recurrence relationships:
 
 \begin{lemma}
-$\hdopnkabc(x,y)$ satisfy the following 3-term recurrences:
+$\hdopnkabcd(x,y)$ satisfy the following 3-term recurrences:
 \begin{align*}
-x \hdopnkabcd(x,y) &= \alphaabc_{n,k,1} \: \hdop_{n-1, k}^{(a,b,c,d)}(x, y) + \alphaabc_{n,k,2} \: \hdop_{n, k}^{(a,b,c,d)}(x, y) + \alphaabc_{n+1,k,1} \: \hdop_{n+1, k}^{(a,b,c)}(x, y), \\
-y \hdopnkabcd(x,y) &= \betaab_{n,k,1} \: \hdop_{n-1, k-1}^{(a,b,c,d)}(x, y) + \betaab_{n,k,2} \: \hdop_{n-1, k}^{(a,b,c,d)}(x, y) + \betaab_{n,k,3} \: \hdop_{n-1, k+1}^{(a,b,c,d)}(x, y) \nonumber \\
-		& \quad \quad + \betaab_{n,k,4} \: \hdop_{n, k-1}^{(a,b,c,d)}(x, y) + \betaab_{n,k,5} \: \hdop_{n, k}^{(a,b,c,d)}(x, y) + \betaab_{n,k,6} \: \hdop_{n, k+1}^{(a,b,c,d)}(x, y) \nonumber \\
-		& \quad \quad + \betaab_{n,k,7} \: \hdop_{n+1, k-1}^{(a,b,c,d)}(x, y) + \betaab_{n,k,8} \: \hdop_{n+1, k}^{(a,b,c,d)}(x, y) + \betaab_{n,k,9} \: \hdop_{n+1, k+1}^{(a,b,c,d)}(x, y),
+x \hdopnkabcd(x,y) &= \alphaabcd_{n,k,1} \: \hdop_{n-1, k}^{(a,b,c,d)}(x, y) + \alphaabcd_{n,k,2} \: \hdop_{n, k}^{(a,b,c,d)}(x, y) + \alphaabcd_{n+1,k,1} \: \hdop_{n+1, k}^{(a,b,c)}(x, y), \\
+y \hdopnkabcd(x,y) &= \betaabcd_{n,k,1} \: \hdop_{n-1, k-1}^{(a,b,c,d)}(x, y) + \betaabcd_{n,k,2} \: \hdop_{n-1, k}^{(a,b,c,d)}(x, y) + \betaabcd_{n,k,3} \: \hdop_{n-1, k+1}^{(a,b,c,d)}(x, y) \nonumber \\
+		& \quad \quad + \betaabcd_{n,k,4} \: \hdop_{n, k-1}^{(a,b,c,d)}(x, y) + \betaabcd_{n,k,5} \: \hdop_{n, k}^{(a,b,c,d)}(x, y) + \betaabcd_{n,k,6} \: \hdop_{n, k+1}^{(a,b,c,d)}(x, y) \nonumber \\
+		& \quad \quad + \betaabcd_{n,k,7} \: \hdop_{n+1, k-1}^{(a,b,c,d)}(x, y) + \betaabcd_{n,k,8} \: \hdop_{n+1, k}^{(a,b,c,d)}(x, y) + \betaabcd_{n,k,9} \: \hdop_{n+1, k+1}^{(a,b,c,d)}(x, y),
 \end{align*}
 for \((x,y) \in \Omega\), where
 \begin{align*}
@@ -478,7 +478,7 @@ and set $J_x^{(a,b,c,d)}, J_y^{(a,b,c,d)}$ as the Jacobi matrices corresponding 
 J_x^{(a,b,c,d)} \: \bighdopabcd(x,y) = x \: \bighdopabcd(x,y), \quad J_y^{(a,b,c,d)} \: \bighdopabcd(x,y) = y \: \bighdopabcd(x,y).
 \label{eqn:jacobimatricesdefinition}
 \end{align}
-The matrices $J_x^{(a,b,c,d)}, J_y^{(a,b,c,d)}$ act on the coefficients vector of a function's expansion in the $\{\hdopnkabcd\}$ basis. For example, let $a, b$ be general parameters and a function $f(x,y)$ defined on $\Omega$ be approximated by its expansion $f(x,y) = \bighdopabcd(x,y)^\top \mathbf{f}$. Then $x \: f(x,y)$ is approximated by $\bighdopabcd(x,y)^\top {J_x^{(a,b)\top}} \mathbf{f}$. In other words, ${J_x^{(a,b)\top}} \mathbf{f}$ is the coefficients vector for the expansion of the function $(x,y) \mapsto x \: f(x,y)$ in the  $\{\hdopnkabcd\}$ basis. Further, note that $J_x^{(a,b,c,d)}, J_y^{(a,b,c,d)}$ are banded-block-banded matrices:
+The matrices $J_x^{(a,b,c,d)}, J_y^{(a,b,c,d)}$ act on the coefficients vector of a function's expansion in the $\{\hdopnkabcd\}$ basis. For example, let $a, b$ be general parameters and a function $f(x,y)$ defined on $\Omega$ be approximated by its expansion $f(x,y) = \bighdopabcd(x,y)^\top \mathbf{f}$. Then $x \: f(x,y)$ is approximated by $\bighdopabcd(x,y)^\top {J_x^{(a,b,c,d)\top}} \mathbf{f}$. In other words, ${J_x^{(a,b,c,d)\top}} \mathbf{f}$ is the coefficients vector for the expansion of the function $(x,y) \mapsto x \: f(x,y)$ in the  $\{\hdopnkabcd\}$ basis. Further, note that $J_x^{(a,b,c,d)}, J_y^{(a,b,c,d)}$ are banded-block-banded matrices:
 
 \begin{definition}
 A block matrix $A$ with blocks $A_{i,j}$ has block-bandwidths $(L,U)$ if $A_{i,j} = 0$ for $- L \leq j-i \leq U$, and sub-block-bandwidths $(\lambda, \mu)$ if all blocks $A_{i,j}$ are banded with bandwidths $(\lambda,\mu)$. A matrix where the block-bandwidths and sub-block-bandwidths are small compared to the dimensions is referred to as a banded-block-banded matrix. 
@@ -603,7 +603,7 @@ Note that we can define an explicit \(\Dnt\) as follows:
 \end{align*}
 It follows that we can apply $\Dnt$ in $O(n)$ complexity, and thereby calculate $\bighdopabcd_{0}(x,y)$  through $\bighdopabcd_{n}(x,y)$ in optimal $O(n^2)$ complexity.
 
-For the disk-slice, we further note that $\betaabc_{n,k,2} = \betaabc_{n,k,5} = \betaabc_{n,k,8} \equiv 0$ for any $n, k$.
+For the disk-slice, $\betaabc_{n,k,2} = \betaabc_{n,k,5} = \betaabc_{n,k,8} \equiv 0$ for any $n, k$.
 
 %
 \section{Sparse partial differential operators}\label{Section:PDOs}
@@ -713,7 +713,7 @@ The operator matrices $D_x^{(a,b,c)}, \: D_y^{(a,b,c)}, \: W_x^{(a,b,c)}, \: W_y
 First, note that:
 \begin{align}
 	\genjacw^{(a,b,c) \: \prime}(x) &= - a \: \genjacw^{(a-1,b,c)}(x) + b \: \genjacw^{(a,b-1,c)}(x) + c \: \rho(x) \: \rho'(x) \:\genjacw^{(a,b,c-2)}(x), \label{eqn:derivativeofweightgenjac} \\
-	\jacw^{(c) \: \prime}(y) &= - 2c \: y \: \jacw^{(b-1)}(y), \label{eqn:derivativeofweightjac} \\
+	\jacw^{(c) \: \prime}(y) &= - 2c \: y \: \jacw^{(c-1)}(y), \label{eqn:derivativeofweightjac} \\
 	\rho(x) \: \rho'(x) &= -x. \label{eqn:rhoderivative}
 \end{align}
 
