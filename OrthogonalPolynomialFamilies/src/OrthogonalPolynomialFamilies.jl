@@ -57,7 +57,7 @@ function lanczos!(w, P, β, γ; N₀=0)
     end
 
     for k = N₀+1:N
-        # @show "lanczos", N, k
+        @show "lanczos", N, k
         v = x*P[2] - γ[k-1]*P[1]
         β[k] = sum(P[2]*w*v)
         v = v - β[k]*P[2]

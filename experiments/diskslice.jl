@@ -231,8 +231,8 @@ a, b, c = 1.0, 1.0, 1.0
 S = D(a, b, c)
 x, y = 0.4, -0.765; z = [x; y]
 @test isindomain(z, D)
-# Δw = laplaceoperator(S, S, 200; weighted=true)
-# save("experiments/saved/laplacian-w11-array-diskslice-alpha=$α-beta=$β.jld", "Lw11", sparse(Δw))
+Δw = laplaceoperator(S, S, 990; weighted=true)
+# save("experiments/saved/laplacian-w11-array-diskslice-alpha=$α-beta=$β-N=310.jld", "Lw11", sparse(Δw))
 # save("experiments/saved/biharmonic-array-diskslice-alpha=$α-beta=$β.jld", "bihar", sparse(bihar))
 bihar = biharmonicoperator(D(2.0, 2.0, 2.0), 200)
 S
@@ -402,10 +402,11 @@ S
 f1 = Fun((x,y)->1.0, S); 1.0
 f2 = Fun((x,y)->y^2 - 1, S); 1.0
 f3 = Fun((x,y)->weight(S, x, y)^3, S, 300); f3.coefficients
-# f4 = Fun((x,y)->exp(-1000((x-0.5)^2+(y-0.5)^2)), S, 2*getopindex(N,N)); f4.coefficients
+f4 = Fun((x,y)->exp(-1000((x-0.5)^2+(y-0.5)^2)), S, 2*getopindex(N,N)); f4.coefficients
 # f4cfs = f4.coefficients[1:getopindex(N,N)]
 # save("experiments/saved/solutionblocknorms-diskslice-alpha=$α-beta=$β-f4cfs.jld", "f4cfs", f4cfs)
 f4cfs = load("experiments/saved/solutionblocknorms-diskslice-alpha=$α-beta=$β-f4cfs.jld", "f4cfs")
+mm = length(f4cfs); resize!(f4cfs, sum(1:N+1)); f4cfs[mm+1:end] .= 0.0
 u1norms, u2norms, u3norms, u4norms = getsolutionblocknorms(N, S, Δw, resizecoeffs!(f1, N),
                 resizecoeffs!(f2, N), resizecoeffs!(f3, N), f4cfs)
 using Plots
@@ -415,20 +416,23 @@ Plots.plot!(u3norms, line=(3, :dashdot), label="f(x,y) = W{(1,1,1)}^3")
 Plots.plot!(u4norms, line=(3, :dot), label = "f(x,y) = exp(-1000((x-0.5)^2+(y-0.5)^2))")
 Plots.xlabel!("Block")
 Plots.ylabel!("Norm")
-Plots.savefig("experiments/images/solutionblocknorms-poisson-diskslice-alpha=$α-beta=$β.pdf")
+Plots.savefig("experiments/images/solutionblocknorms-poisson-diskslice-alpha=$α-beta=$β-N=$N.pdf")
 
 # solutionblocknorms - helmholtz
 N = 196
 k = 20
-S
-v = Fun((x,y)->(1 - (3(x-β)^2 + 5y^2)), S); V = operatorclenshaw(v, S, N+4)
-T = transformparamsoperator(D(0.0, 0.0, 0.0), S, N+4)
-Tw = transformparamsoperator(S, D(0.0, 0.0, 0.0), N, weighted=true)
-A = sparse(Δw[1:getopindex(N,N), 1:getopindex(N,N)]) + k^2 * (V * sparse(T) * sparse(Tw))[1:getopindex(N,N), 1:getopindex(N,N)]
-save("experiments/saved/solutionblocknorms-helmholtz-diskslice-alpha=$α-beta=$β-k=$k.jld", "A", A)
+S = D(1.0, 1.0, 1.0)
+# v = Fun((x,y)->(1 - (3(x-β)^2 + 5y^2)), S); V = operatorclenshaw(v, S, N+4)
+# T = transformparamsoperator(D(0.0, 0.0, 0.0), S, N+4)
+# Tw = transformparamsoperator(S, D(0.0, 0.0, 0.0), N, weighted=true)
+# A = sparse(Δw[1:getopindex(N,N), 1:getopindex(N,N)]) + k^2 * (V * sparse(T) * sparse(Tw))[1:getopindex(N,N), 1:getopindex(N,N)]
+# save("experiments/saved/solutionblocknorms-helmholtz-diskslice-alpha=$α-beta=$β-N=$N-k=$k.jld", "A", A)
+A = load("experiments/saved/solutionblocknorms-helmholtz-diskslice-alpha=$α-beta=$β-N=$N-k=$k.jld", "A")
 f1 = Fun((x,y)->1.0, S); 1.0
 f2 = Fun((x,y)->y^2 - 1, S); 1.0
 f3 = Fun((x,y)->weight(S, x, y)^3, S, 300); f3.coefficients
+# f4 = Fun((x,y)->exp(-1000*((x-0.5)^2+(y-0.5)^2)), S, 2*getopindex(N,N))
+# save("experiments/saved/solutionblocknorms-diskslice-alpha=$α-beta=$β-f4cfs.jld", "f4cfs", f4.coefficients)
 f4cfs = load("experiments/saved/solutionblocknorms-diskslice-alpha=$α-beta=$β-f4cfs.jld", "f4cfs")
 u1norms, u2norms, u3norms, u4norms = getsolutionblocknorms(N, S, A, resizecoeffs!(f1, N),
                 resizecoeffs!(f2, N), resizecoeffs!(f3, N), f4cfs[1:sum(1:N+1)])
@@ -439,7 +443,7 @@ Plots.plot!(u3norms, line=(3, :dashdot), label="f(x,y) = W{(1,1,1)}^3")
 Plots.plot!(u4norms, line=(3, :dot), label = "f(x,y) = exp(-1000((x-0.5)^2+(y-0.5)^2))")
 Plots.xlabel!("Block")
 Plots.ylabel!("Norm")
-Plots.savefig("experiments/images/solutionblocknorms-helmholtz-diskslice-alpha=$α-beta=$β-k=$k.pdf")
+Plots.savefig("experiments/images/solutionblocknorms-helmholtz-diskslice-alpha=$α-beta=$β-N=$N-k=$k.pdf")
 
 # solutionblocknorms - biharmonic
 N = 200
@@ -473,9 +477,9 @@ B = BigFloat
 precision(B)
 setprecision(800)
 
+# DT = TrapeziumFamily()
 a, b, c, d = 1.0, 1.0, 1.0, 1.0
-D = TrapeziumFamily()
-S = D(a, b, c, d)
+S = DT(a, b, c, d)
 
 using PyPlot
 evalu(u, z) = isindomain(z, u.space.family) ? u(z) : NaN
@@ -485,8 +489,10 @@ isindomain(x, D::TrapeziumFamily) = D.α ≤ x[1] ≤ D.β && D.γ*D.ρ(x[1]) �
 Poisson
 Solution of Δu = f, where f(x,y) = 1 + erf(5(1 - 10((x - 0.5)^2 + (y)^2)))
 =#
-N = 50
+N = 200
 Δw = laplaceoperator(S, S, N; weighted=true)
+ξ = DT.slope
+save("experiments/saved/laplacian-w11-array-trapezium-xi=$ξ-N=200.jld", "Lw11", sparse(Δw))
 errfun = Fun((x,y)->1 + erf(5*(1 - 10*((x - 0.5)^2 + (y)^2))), S, N*(N+1))
 errfuncfs = errfun.coefficients
 u = Fun(S, sparse(Δw[1:getopindex(N,N), 1:getopindex(N,N)]) \ errfuncfs)
@@ -547,160 +553,195 @@ PyPlot.pcolor(x, y, sln)
 # Convert to png to pdf
 PyPlot.savefig("experiments/images/solution-trapezium-topleftcorner-helmholtz-k=$k-n=$n.png")
 
+#============#
+
+# NOTE: Explicit construction of the Rn OPs recurrence coeffs
+# TRAPEZIUM
+
+
+B = BigFloat
+setprecision(800)
+DT = TrapeziumFamily()
+a, b, c, d = 1.0, 1.0, 1.0, 1.0
+S = DT(a, b, c, d)
+
+# N = 500
+# @show "begin initialisation"
+# R0 = DT.R(B(0.0), B(0.0), B(1.0))
+# OrthogonalPolynomialFamilies.resizedata!(R0, N+1)
+# save("experiments/saved/trapezium-R001-rec-coeffs-a-N=500.jld", "a", R0.a)
+# save("experiments/saved/trapezium-R001-rec-coeffs-b-N=500.jld", "b", R0.b)
+# @show "end initialisation"
+
+S = DT(0.0, 0.0, 0.0, 0.0)
+let
+    N = 500
+    R = DT.R
+    for k = 0:Int(N/2)
+        @show N, k
+        R0 = R(S.params[1], S.params[2], B(1.0)+k)
+        if k == 0
+            resize!(R0.a, N+1); resize!(R0.b, N+1)
+            R0.a[:] = load("experiments/saved/trapezium-R001-rec-coeffs-a-N=500.jld", "a")[1:N+1]
+            R0.b[:] = load("experiments/saved/trapezium-R001-rec-coeffs-b-N=500.jld", "b")[1:N+1]
+        end
+        # wanted coeffs
+        chivec = zeros(N)
+        pt = 1.0 / DT.slope
+        n = 0
+
+        chivec[n+1] = (pt - R0.a[n+1]) / R0.b[n+1]
+        for n = 1:N-1
+            chivec[n+1] = (pt - R0.a[n+1] - R0.b[n] / chivec[n]) / R0.b[n+1]
+        end
+        @show k, maximum(abs.(chivec)), minimum(abs.(chivec))
+        R1 = R(S.params[1], S.params[2], B(1.0)+k+1)
+        resize!(R1.a, N-1); resize!(R1.b, N-1)
+        n = 0
+        R1.b[n+1] = (R0.b[n+1]
+                        * sqrt(pt - R0.a[n+2] - R00.b[n+1] / chivec[n+1])
+                        / sqrt(pt - R0.a[n+1]))
+        R1.a[n+1] = R0.a[n+1] - (R00.b[n+1] / chivec[n+1])
+        for n = 1:N-2
+            R1.b[n+1] = (R0.b[n+1]
+                            * sqrt(pt - R00.a[n+2] - R0.b[n+1] / chivec[n+1])
+                            / sqrt(pt - R00.a[n+1] - R0.b[n] / chivec[n]))
+            R1.a[n+1] = R0.a[n+1] + (R0.b[n] / chivec[n]) - (R0.b[n+1] / chivec[n+1])
+        end
+        N = N - 1
+    end
+end
 
 #============#
 
 # NOTE: Explicit construction of the Rn OPs recurrence coeffs
 # Recall that in D.R, the parameter c is already halved (as the weight factor is ρ^2)
+# DISK SLICE
 
-B = BigFloat
-setprecision(800)
-α, β = 0.2, 0.8
-D = DiskSliceFamily(α, β)
+
+# B = BigFloat
+# setprecision(800)
+# α, β = 0.2, 0.8
+# D = DiskSliceFamily(α, β)
 a, b, c = 1.0, 1.0, 1.0
 S = D(a, b, c)
 x, y = 0.4, -0.765; z = [x; y]
 
-R = D.R
-X = Fun(B(α)..β)
-R̃ = OrthogonalPolynomialFamily(β-X, X-α, 1-X, 1+X)
+# To call from resizedata!(S::OrthogonalPolynomialSpace, n) if S is an R space
+function resizedata2!(S::OrthogonalPolynomialSpace, n)
+    if length(S.params) <= 2
+        return S
+    end
+    params = S.params
+    B = BigFloat
+    R = S.family
+    D = R.higherdimfamily
+    R̃ = D.R̃
 
-let
-    N = 300
-    for k = 0:99
-        @show k, N
+    # the param k spans from 0 to S.params[3]-0.5-1 =: K
+    K = Int(S.params[3] - 0.5) - 1
+    # if I want to get n+1 OPs, then I need to initialise with N:=n+3(K+1)
+    N = n + 3 * (K + 1)
+
+    # Loop over k
+    for k = 0:K
+        @show N, K, k
+
+        # check if we already have N - 2 ops for current R
+        R11 = R(S.params[1], S.params[2], B(0.5)+k+1)
+        @show length(R11.a)
+        if length(R11.a) >= N - 2
+            @show "continue"
+            continue
+        end
+
         R00 = R(S.params[1], S.params[2], B(0.5)+k)
         if k == 0
-            # @show "begin initialisation"
-            # OrthogonalPolynomialFamilies.resizedata!(R00, N+1)
-            # @show "end initialisation"
-
+            @show "Need to setup initialisation!"
             resize!(R00.a, N+1); resize!(R00.b, N+1)
-            R00.a[:] = load("experiments/saved/R110p5-rec-coeffs-a.jld", "a")
-            R00.b[:] = load("experiments/saved/R110p5-rec-coeffs-b.jld", "b")
+            R00.a[:] = load("experiments/saved/diskslice-alpha=$α-beta=$β-R000p5-rec-coeffs-a-N=1000.jld", "a")[1:N+1]
+            R00.b[:] = load("experiments/saved/diskslice-alpha=$α-beta=$β-R000p5-rec-coeffs-b-N=1000.jld", "b")[1:N+1]
         end
-        getopptseval(R00, N, [1.0])
-        # interim coeffs
-        R10 = R̃(S.params[1], S.params[2], B(0.5)+k+1, B(0.5)+k)
-        getopnorm(R10)
-        resize!(R10.a, N-1); resize!(R10.b, N-1)
-        C00 = zeros(B, N)
-        for n = 0:N-1
-            C00[n+1] = sqrt(B(getopnorm(R10)) / B(getopnorm(R00)
-                                                * R00.b[n+1]
-                                                * R00.opptseval[n+1][1]
-                                                * R00.opptseval[n+2][1]))
-        end
-        for n = 0:N-2
-            R10.b[n+1] = ((C00[n+1] / C00[n+2])
-                        * (R00.opptseval[n+1][1] / R00.opptseval[n+2][1])
-                        * R00.b[n+1])
-            R10.a[n+1] = ((R00.opptseval[n+3][1] / R00.opptseval[n+2][1]) * R00.b[n+2]
-                        - (R00.opptseval[n+2][1] / R00.opptseval[n+1][1]) * R00.b[n+1]
-                        + R00.a[n+2])
-        end
-        # wanted coeffs
-        # R11 = R̃(S.params[1], S.params[2], B(0.5)+k+1, B(0.5)+k+1)
-        R11 = R(S.params[1], S.params[2], B(0.5)+k+1)
-        getopnorm(R11)
-        resize!(R11.a, N-2); resize!(R11.b, N-2)
-        D10 = zeros(B, N-1)
-        getopptseval(R10, N, [-1.0])
-        for n = 0:N-2
-            D10[n+1] = (-1)^(n) * sqrt(- B(getopnorm(R11)) / B(getopnorm(R10)
-                                                            * R10.b[n+1]
-                                                            * R10.opptseval[n+1][1]
-                                                            * R10.opptseval[n+2][1]))
-        end
-        for n = 0:N-3
-            R11.b[n+1] = ((D10[n+1] / D10[n+2])
-                            * (R10.opptseval[n+1][1] / R10.opptseval[n+2][1])
-                            * R10.b[n+1])
-            R11.a[n+1] = ((R10.opptseval[n+3][1] / R10.opptseval[n+2][1]) * R10.b[n+2]
-                        - (R10.opptseval[n+2][1] / R10.opptseval[n+1][1]) * R10.b[n+1]
-                        + R10.a[n+2])
-        end
-        N = N - 3
+        # ...
     end
+    S
 end
 
-
-R
-for k = 0:10
-    @show k
-    aa = R(S.params[1], S.params[2], B(0.5) + k).a
-    bb = R(S.params[1], S.params[2], B(0.5) + k).b
-    @show aa[end], bb[end]
-end
-
-bb = R(S.params[1], S.params[2], B(0.5) + 1).b
-bb[156]
-
-
-
-
-B = BigFloat
-setprecision(800)
-α, β = 0.2, 0.8
-D = DiskSliceFamily(α, β)
-a, b, c = 1.0, 1.0, 1.0
-S = D(a, b, c)
-x, y = 0.4, -0.765; z = [x; y]
-
-R = D.R
-X = Fun(B(α)..β)
-R̃ = OrthogonalPolynomialFamily(β-X, X-α, 1-X, 1+X)
-
-let
-    N = 650
-    for k = 0:Int(floor(N/3)-1)
-        @show k, N
-        R00 = R(S.params[1], S.params[2], B(0.5)+k)
-        if k == 0
-            resize!(R00.a, N+1); resize!(R00.b, N+1)
-            R00.a[:] = load("experiments/saved/R110p5-rec-coeffs-a-N=1000.jld", "a")[1:N+1]
-            R00.b[:] = load("experiments/saved/R110p5-rec-coeffs-b-N=1000.jld", "b")[1:N+1]
-        end
-        getopptseval(R00, N, [1.0])
-        # interim coeffs
-        R10 = R̃(S.params[1], S.params[2], B(0.5)+k+1, B(0.5)+k)
-        getopnorm(R10)
-        resize!(R10.a, N-1); resize!(R10.b, N-1)
-        for n = 0:N-2
-            R10.b[n+1] = (sqrt(R00.opptseval[n+3][1])
-                            * sqrt(R00.opptseval[n+1][1])
-                            * sqrt(R00.b[n+2])
-                            * sqrt(R00.b[n+1])
-                            / R00.opptseval[n+2][1])
-            R10.a[n+1] = ((R00.opptseval[n+3][1] / R00.opptseval[n+2][1]) * R00.b[n+2]
-                        - (R00.opptseval[n+2][1] / R00.opptseval[n+1][1]) * R00.b[n+1]
-                        + R00.a[n+2])
-        end
-        R10
-        # wanted coeffs
-        # R11 = R̃(S.params[1], S.params[2], B(0.5)+k+1, B(0.5)+k+1)
-        R11 = R(S.params[1], S.params[2], B(0.5)+k+1)
-        getopnorm(R11)
-        resize!(R11.a, N-2); resize!(R11.b, N-2)
-        getopptseval(R10, N, [-1.0])
-        for n = 0:N-3
-            R11.b[n+1] = (sqrt(abs(R10.opptseval[n+3][1]))
-                            * sqrt(abs(R10.opptseval[n+1][1]))
-                            * sqrt(R10.b[n+2])
-                            * sqrt(R10.b[n+1])
-                            / abs(R10.opptseval[n+2][1]))
-            R11.a[n+1] = ((R10.opptseval[n+3][1] / R10.opptseval[n+2][1]) * R10.b[n+2]
-                        - (R10.opptseval[n+2][1] / R10.opptseval[n+1][1]) * R10.b[n+1]
-                        + R10.a[n+2])
-        end
-        N = N - 3
-    end
-end
 S
 
-R11 = R(S.params[1], S.params[2], B(0.5)+0)
-R11.a[309]
-R11.opptseval[646][1]
+R(B(1.0), B(1.0), B(281.5))
+
+R = D.R
+X = Fun(B(α)..β)
+R̃ = OrthogonalPolynomialFamily(β-X, X-α, 1-X, 1+X)
+
+let
+    N = 2002
+    a, b = 0.0, 0.0
+    for k = 0:(Int(N/2)-1)
+        @show N, k
+        R00 = R(B(a), B(b), B(0.5)+k)
+        if k == 0
+            resize!(R00.a, N+1); resize!(R00.b, N+1)
+            if a == 0.0
+                R00.a[:] = load("experiments/saved/diskslice-alpha=$α-beta=$β-R000p5-rec-coeffs-a-N=2003.jld", "a")[1:N+1]
+                R00.b[:] = load("experiments/saved/diskslice-alpha=$α-beta=$β-R000p5-rec-coeffs-b-N=2003.jld", "b")[1:N+1]
+            elseif a == 1.0
+                R00.a[:] = load("experiments/saved/diskslice-alpha=$α-beta=$β-R110p5-rec-coeffs-a-N=2003.jld", "a")[1:N+1]
+                R00.b[:] = load("experiments/saved/diskslice-alpha=$α-beta=$β-R110p5-rec-coeffs-b-N=2003.jld", "b")[1:N+1]
+            else
+                @show "cant do"
+            end
+        end
+        # interim coeffs
+        chivec = zeros(N+1)
+        pt = 1.0
+        n = 0
+        chivec[n+1] = (pt - R00.a[n+1]) / R00.b[n+1]
+        for n = 1:N
+            chivec[n+1] = (pt - R00.a[n+1] - R00.b[n] / chivec[n]) / R00.b[n+1]
+        end
+        @show k, maximum(abs.(chivec)), minimum(abs.(chivec))
+        R10 = R̃(B(a), B(b), B(0.5)+k+1, B(0.5)+k)
+        resize!(R10.a, N); resize!(R10.b, N)
+        n = 0
+        R10.b[n+1] = (R00.b[n+1]
+                        * sqrt(pt - R00.a[n+2] - R00.b[n+1] / chivec[n+1])
+                        / sqrt(pt - R00.a[n+1]))
+        R10.a[n+1] = R00.a[n+1] - (R00.b[n+1] / chivec[n+1])
+        for n = 1:N-1
+            R10.b[n+1] = (R00.b[n+1]
+                            * sqrt(pt - R00.a[n+2] - R00.b[n+1] / chivec[n+1])
+                            / sqrt(pt - R00.a[n+1] - R00.b[n] / chivec[n]))
+            R10.a[n+1] = R00.a[n+1] + (R00.b[n] / chivec[n]) - (R00.b[n+1] / chivec[n+1])
+        end
+        # wanted coeffs
+        chivec = zeros(N)
+        pt = -1.0
+        n = 0
+        chivec[n+1] = (pt - R10.a[n+1]) / R10.b[n+1]
+        for n = 1:N-1
+            chivec[n+1] = (pt - R10.a[n+1] - R10.b[n] / chivec[n]) / R10.b[n+1]
+        end
+        @show k, maximum(abs.(chivec)), minimum(abs.(chivec))
+        R11 = R(B(a), B(b), B(0.5)+k+1)
+        resize!(R11.a, N-1); resize!(R11.b, N-1)
+        n = 0
+        R11.b[n+1] = (R10.b[n+1]
+                        * sqrt(abs(pt - R10.a[n+2] - R10.b[n+1] / chivec[n+1]))
+                        / sqrt(abs(pt - R10.a[n+1])))
+        R11.a[n+1] = R10.a[n+1] - (R10.b[n+1] / chivec[n+1])
+        for n = 1:N-2
+            R11.b[n+1] = (R10.b[n+1]
+                            * sqrt(abs(pt - R10.a[n+2] - R10.b[n+1] / chivec[n+1]))
+                            / sqrt(abs(pt - R10.a[n+1] - R10.b[n] / chivec[n])))
+            R11.a[n+1] = R10.a[n+1] + (R10.b[n] / chivec[n]) - (R10.b[n+1] / chivec[n+1])
+        end
+        N = N - 2
+    end
+end
+
+
 
 # B = BigFloat
 # setprecision(800)
@@ -714,10 +755,48 @@ R11.opptseval[646][1]
 # X = Fun(B(α)..β)
 # R̃ = OrthogonalPolynomialFamily(β-X, X-α, 1-X, 1+X)
 #
-# N = 1000
+# N = 2003
 # @show "begin initialisation"
-# R00 = R(S.params[1], S.params[2], B(0.5))
+# R00 = R(B(1.0), B(1.0), B(0.5))
 # OrthogonalPolynomialFamilies.resizedata!(R00, N+1)
-# save("experiments/saved/R110p5-rec-coeffs-a-N=1000.jld", "a", R00.a)
-# save("experiments/saved/R110p5-rec-coeffs-b-N=1000.jld", "b", R00.b)
+# # xx = Fun(identity, domain(R00.weight))
+# #     R00.ops[1] = Fun(1/sqrt(sum(R00.weight)),space(x))
+# #     vv = xx * R00.ops[1] - R00.a[1] * R00.ops[1]
+# #     R00.ops[2] = vv / R00.b[1]
+# #     for k = 2:1954
+# #         @show k
+# #         vv = xx * R00.ops[2] - R00.b[k-1] * R00.ops[1] - R00.a[k] * R00.ops[2]
+# #         R00.ops[1] = R00.ops[2]
+# #         R00.ops[2] = vv / R00.b[k]
+# #     end
+# save("experiments/saved/diskslice-alpha=$α-beta=$β-R110p5-rec-coeffs-a-N=2003.jld", "a", R00.a)
+# save("experiments/saved/diskslice-alpha=$α-beta=$β-R110p5-rec-coeffs-b-N=2003.jld", "b", R00.b)
 # @show "end initialisation"
+#
+# B = BigFloat
+# setprecision(800)
+# α, β = 0.2, 0.8
+# D = DiskSliceFamily(α, β)
+# a, b, c = 0.0, 0.0, 0.0
+# S = D(a, b, c)
+# x, y = 0.4, -0.765; z = [x; y]
+#
+# R = D.R
+# X = Fun(B(α)..β)
+# R̃ = OrthogonalPolynomialFamily(β-X, X-α, 1-X, 1+X)
+# #
+# N = 2003
+# @show "begin initialisation"
+# R00 = R(B(0.0), B(0.0), B(0.5))
+# OrthogonalPolynomialFamilies.resizedata!(R00, N+1)
+# save("experiments/saved/diskslice-alpha=$α-beta=$β-R000p5-rec-coeffs-a-N=2003.jld", "a", R00.a)
+# save("experiments/saved/diskslice-alpha=$α-beta=$β-R000p5-rec-coeffs-b-N=2003.jld", "b", R00.b)
+# @show "end initialisation"
+
+# save("experiments/saved/diskslice-alpha=0.2-beta=0.8-H111-clenshawmats.jld",
+#         "DT", S.DT, "A", S.A, "B", S.B, "C", S.C)
+# d = load("experiments/saved/diskslice-alpha=0.2-beta=0.8-H111-clenshawmats.jld")
+# resize!(S.DT, length(d["DT"])); S.DT[:] = d["DT"]
+# resize!(S.A, length(d["A"])); S.A[:] = d["A"]
+# resize!(S.B, length(d["B"])); S.B[:] = d["B"]
+# resize!(S.C, length(d["C"])); S.C[:] = d["C"]
