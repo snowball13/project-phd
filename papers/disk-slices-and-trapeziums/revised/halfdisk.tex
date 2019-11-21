@@ -208,7 +208,10 @@
 \newtheorem{lemma}{Lemma} 
 \newtheorem{theorem}{Theorem} 
 \newtheorem{definition}{Definition}
+\newtheorem{condition}{Condition}
 \newtheorem{algorithm}{Algorithm}
+
+\def\condref#1{Condition~\ref{cond:#1}}
 
 \include{somacros}
 
@@ -239,11 +242,16 @@ More precisely, we consider the solution of partial differential equations on th
 \begin{align*}
 	\Omega := \{(x,y) \in \R^2 \quad | \quad \alpha < x < \beta, \: \gamma \rho(x) < y < \delta \rho(x)\}
 \end{align*}
-where  either of the following scenarios hold:
-\begin{enumerate}
-\item  \(\rho\) is a degree 1 polynomial, or 
-\item \(\rho\) is the square root of a non-negative degree \(\le\) 2 polynomial, \(-\gamma = \delta > 0\).
-\end{enumerate}
+where  either of the following conditions hold:
+
+\begin{condition}\label{cond:trap}
+ \(\rho\) is a degree 1 polynomial.
+ \end{condition}
+ 
+ \begin{condition}\label{cond:disk}
+\(\rho\) is the square root of a non-negative degree \(\le\) 2 polynomial, \(-\gamma = \delta > 0\).
+\end{condition}
+
 
 For simplicity of presentation we focus on the disk-slice, where $\rho(x) = \sqrt{1-x^2}$, $(\alpha,\beta) \subset (0, 1)$, and $(\gamma, \delta)  = (-1,1)$, and discuss \bstodo{typo 1}an extension to other geometries in the appendix (including the half-disk and trapeziums). 
 
@@ -290,11 +298,7 @@ In this section we outline the construction and some basic properties of $\hdopn
 We can construct 2D orthogonal polynomials on $\Omega$ from 1D orthogonal polynomials on the intervals \([\alpha,\beta]\) and \([\gamma,\delta]\). 
 
 \begin{proposition}[{\cite[p55--56]{dunkl2014orthogonal}}]\label{prop:construction}
-Let \(w_1 : (\alpha,\beta) \: \to \R\), \(w_2 : (\gamma,\delta) \: \to \R\) be weight functions with \(\alpha,\beta,\gamma,\delta \in \R\), and let \(\rho \: : \: (\alpha,\beta) \: \to (0,\infty)\) be such that either:
-\begin{enumerate}
-\item  \(\rho\) is a degree 1 polynomial, or 
-\item \(\rho\) is the square root of a non-negative degree \(\le\) 2 polynomial, \(-\gamma = \delta > 0\), and \(w_2\) is an even function.
-\end{enumerate}
+Let \(w_1 : (\alpha,\beta) \: \to \R\), \(w_2 : (\gamma,\delta) \: \to \R\) be weight functions with \(\alpha,\beta,\gamma,\delta \in \R\), and let \(\rho \: : \: (\alpha,\beta) \: \to (0,\infty)\) be such that either \condref{trap} or \condref{disk} with \(w_2\) being an even function hold.
 $\forall$, $n = 0,1,2,\dots, $ let $\{p_{n,k}\}$ be polynomials orthogonal with respect to the weight $\rho(x)^{2k+1} w_1(x)$ where $0 \le k \le n$, and $\{q_{n}\}$ be polynomials orthogonal with respect to the weight $w_2(x)$. Then the 2D polynomials defined on $\Omega$
 $$
 \hdopnk(x,y) := p_{n-k,k}(x) \: \rho(x)^k \: q_k\fpr(\frac{y}{\rho(x)}) \qquad\hbox{for} \qquad 0 \le k \le n, \: n = 0,1,2,\dots
@@ -335,11 +339,7 @@ $\{\hdopnk^{(a,b,c,d)}\}$ are orthogonal with respect to the weight
 \begin{align*}
 	W^{(a,b,c,d)}(x,y) := \genjacw^{(a,b,c+d)}(x) \: \jacw^{(d,c)}\fpr(\frac{y}{\rho(x)}), \quad (x,y) \in \Omega,
 \end{align*}
-assuming that either of the following hold:
-\begin{enumerate}
-\item  \(\rho\) is a degree 1 polynomial, or 
-\item \(\rho\) is the square root of a non-negative degree \(\le\) 2 polynomial, \(-\gamma = \delta > 0\), and \(\jacw^{(a,b)}\) is an even function (i.e. $a = b$, and we can hence denote the weight as $\jacw^{(a)}(x) = w^{(a,a)}_P(x) =  (\delta-x^2)^a$).
-\end{enumerate}
+assuming that either \condref{trap} or \condref{disk} with  \(\jacw^{(a,b)}\) being an even function (i.e. $a = b$, and we can hence denote the weight as $\jacw^{(a)}(x) = w^{(a,a)}_P(x) =  (\delta-x^2)^a$) hold.
 That is,
 \begin{align*}
 	\ip< \hdopnk^{(a,b,c,d)}, \: \hdopmj^{(a,b,c,d)} >_{W^{(a,b,c,d)}} &= \normgenjac^{(a,b,c+d+2k+1)} \: \normjac^{(d,c)} \: \delta_{n,m} \: \delta_{k,j},
@@ -447,16 +447,11 @@ where, by orthogonality,
 	\ip<\genjacnmk^{(a, b, c+d+2k+1)}, \: \rho(x)^2 \genjac_{m-k+1}^{(a, b, c+d+2k-1)}>_{\genjacw^{(a, b, c+d+2k-1)}} &= 0 \qfor m < n-1.
 \end{align*}
 
-Finally, recall that either:
-\begin{enumerate}
-\item  \(\rho\) is a degree 1 polynomial, or 
-\item \(\rho\) is the square root of a non-negative degree \(\le\) 2 polynomial, \(-\gamma = \delta > 0\), and \(\jacw^{(d,c)}\) is an even function.
-\end{enumerate}
-For case 1, we have that 
+Finally, if \condref{trap} holds we have that 
 $$
 \ip<\genjacnmk^{(a, b, c+d+2k+1)}, \: \rho(x) \genjac_{m-k}^{(a, b, c+d+2k+1)}>_{\genjacw^{(a, b, c+d+2k+1)}} = 0 \qfor m < n-1.
 $$
-For case 2 we have that $\gamma^{(d,c)}_{k} = \gamma^{(c,c)}_{k} \equiv 0$ for any $k$.
+If \condref{disk} holds we have that $\gamma^{(d,c)}_{k} = \gamma^{(c,c)}_{k} \equiv 0$ for any $k$.
 
 \end{proof}
 
