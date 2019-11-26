@@ -88,8 +88,11 @@ getPspace(S::TrapeziumSpace) = (S.family.P)(S.params[end], S.params[end-1])
 
 #===#
 # Weight eval functions
-weight(S::TrapeziumSpace{<:Any,<:Any,T,<:Any}, x, y) where T =
-    T(getRspace(S).weight(x) * getPspace(S).weight(y / S.family.ρ(x)))
+function weight(S::TrapeziumSpace{<:Any,<:Any,T,<:Any}, x, y) where T
+    a, b, c, d = S.params
+    T((S.family.β - x)^a * (x - S.family.α)^b * y^c * (1 - S.family.slope * x - y)^d)
+    # T(getRspace(S).weight(x) * getPspace(S).weight(y / S.family.ρ(x)))
+end
 weight(S::TrapeziumSpace, z) = weight(S, z[1], z[2])
 
 

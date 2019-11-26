@@ -618,129 +618,123 @@ end
 # Recall that in D.R, the parameter c is already halved (as the weight factor is ρ^2)
 # DISK SLICE
 
-
-# B = BigFloat
-# setprecision(800)
-# α, β = 0.2, 0.8
-# D = DiskSliceFamily(α, β)
+α, β = 0.2, 0.8
+D = DiskSliceFamily(α, β)
 a, b, c = 1.0, 1.0, 1.0
 S = D(a, b, c)
 x, y = 0.4, -0.765; z = [x; y]
+getreccoeffsR(D)
+getreccoeffsP(D)
 
-# To call from resizedata!(S::OrthogonalPolynomialSpace, n) if S is an R space
-function resizedata2!(S::OrthogonalPolynomialSpace, n)
-    if length(S.params) <= 2
-        return S
-    end
-    params = S.params
+partialoperatorx(OrthogonalPolynomialFamilies.differentiateweightedspacex(S), 900)
+weightedpartialoperatorx(S, 900)
+# Do transformparamsoperator fucns!!!!!!!!!
+D
+
+Δw = laplaceoperator(S, S, 990; weighted=true)
+D
+
+function getreccoeffsP(D::DiskSliceFamily)
     B = BigFloat
-    R = S.family
-    D = R.higherdimfamily
-    R̃ = D.R̃
-
-    # the param k spans from 0 to S.params[3]-0.5-1 =: K
-    K = Int(S.params[3] - 0.5) - 1
-    # if I want to get n+1 OPs, then I need to initialise with N:=n+3(K+1)
-    N = n + 3 * (K + 1)
-
-    # Loop over k
-    for k = 0:K
-        @show N, K, k
-
-        # check if we already have N - 2 ops for current R
-        R11 = R(S.params[1], S.params[2], B(0.5)+k+1)
-        @show length(R11.a)
-        if length(R11.a) >= N - 2
-            @show "continue"
-            continue
+    N = 1000
+    cs = (0.0, 1.0)
+    α, β = D.α, D.β
+    for c in cs
+        P = D.P(B(c), B(c))
+        resize!(P.a, N); resize!(P.b, N)
+        if c == 0.0
+            P.a[:] = load("experiments/saved/diskslice-alpha=$α-beta=$β-P00-rec-coeffs-a-N=1000.jld", "a")[1:N]
+            P.b[:] = load("experiments/saved/diskslice-alpha=$α-beta=$β-P00-rec-coeffs-b-N=1000.jld", "b")[1:N]
+        else
+            P.a[:] = load("experiments/saved/diskslice-alpha=$α-beta=$β-P11-rec-coeffs-a-N=1000.jld", "a")[1:N]
+            P.b[:] = load("experiments/saved/diskslice-alpha=$α-beta=$β-P11-rec-coeffs-b-N=1000.jld", "b")[1:N]
         end
-
-        R00 = R(S.params[1], S.params[2], B(0.5)+k)
-        if k == 0
-            @show "Need to setup initialisation!"
-            resize!(R00.a, N+1); resize!(R00.b, N+1)
-            R00.a[:] = load("experiments/saved/diskslice-alpha=$α-beta=$β-R000p5-rec-coeffs-a-N=1000.jld", "a")[1:N+1]
-            R00.b[:] = load("experiments/saved/diskslice-alpha=$α-beta=$β-R000p5-rec-coeffs-b-N=1000.jld", "b")[1:N+1]
+        resize!(P.ops, 2); resize!(P.weight, 1)
+        P.weight[1] = prod(P.family.factors.^(P.params))
+        X = Fun(identity, domain(P.weight[1]))
+        P.ops[1] = Fun(1/sqrt(sum(P.weight[1])),space(X))
+        v = X * P.ops[1] - P.a[1] * P.ops[1]
+        P.ops[2] = v / P.b[1]
+        for k = 2:length(P.a)
+            v = X * P.ops[2] - P.b[k-1] * P.ops[1] - P.a[k] * P.ops[2]
+            P.ops[1] = P.ops[2]
+            P.ops[2] = v / P.b[k]
         end
-        # ...
     end
-    S
+end
+
+
+function getreccoeffsR(D::DiskSliceFamily)
+    R = D.R
+    B = BigFloat
+    X = Fun(B(D.α)..D.β)
+    R̃ = OrthogonalPolynomialFamily(β-X, X-α, 1-X, 1+X)
+    abvec = ((0.0, 0.0), (1.0, 1.0))
+    for ab in abvec
+        a, b = ab
+        N = 2000
+        for k = 0:(Int(N/2)-1)
+            R00 = R(B(a), B(b), B(0.5)+k)
+            if k == 0
+                resize!(R00.a, N+1); resize!(R00.b, N+1)
+                if a == 0.0
+                    R00.a[:] = load("experiments/saved/diskslice-alpha=$α-beta=$β-R000p5-rec-coeffs-a-N=2003.jld", "a")[1:N+1]
+                    R00.b[:] = load("experiments/saved/diskslice-alpha=$α-beta=$β-R000p5-rec-coeffs-b-N=2003.jld", "b")[1:N+1]
+                elseif a == 1.0
+                    R00.a[:] = load("experiments/saved/diskslice-alpha=$α-beta=$β-R110p5-rec-coeffs-a-N=2003.jld", "a")[1:N+1]
+                    R00.b[:] = load("experiments/saved/diskslice-alpha=$α-beta=$β-R110p5-rec-coeffs-b-N=2003.jld", "b")[1:N+1]
+                else
+                    @show "cant do"
+                end
+            end
+            # interim coeffs
+            chivec = zeros(N+1)
+            pt = 1.0
+            n = 0
+            chivec[n+1] = (pt - R00.a[n+1]) / R00.b[n+1]
+            for n = 1:N
+                chivec[n+1] = (pt - R00.a[n+1] - R00.b[n] / chivec[n]) / R00.b[n+1]
+            end
+            R10 = R̃(B(a), B(b), B(0.5)+k+1, B(0.5)+k)
+            resize!(R10.a, N); resize!(R10.b, N)
+            n = 0
+            R10.b[n+1] = (R00.b[n+1]
+                            * sqrt(pt - R00.a[n+2] - R00.b[n+1] / chivec[n+1])
+                            / sqrt(pt - R00.a[n+1]))
+            R10.a[n+1] = R00.a[n+1] - (R00.b[n+1] / chivec[n+1])
+            for n = 1:N-1
+                R10.b[n+1] = (R00.b[n+1]
+                                * sqrt(pt - R00.a[n+2] - R00.b[n+1] / chivec[n+1])
+                                / sqrt(pt - R00.a[n+1] - R00.b[n] / chivec[n]))
+                R10.a[n+1] = R00.a[n+1] + (R00.b[n] / chivec[n]) - (R00.b[n+1] / chivec[n+1])
+            end
+            # wanted coeffs
+            chivec = zeros(N)
+            pt = -1.0
+            n = 0
+            chivec[n+1] = (pt - R10.a[n+1]) / R10.b[n+1]
+            for n = 1:N-1
+                chivec[n+1] = (pt - R10.a[n+1] - R10.b[n] / chivec[n]) / R10.b[n+1]
+            end
+            R11 = R(B(a), B(b), B(0.5)+k+1)
+            resize!(R11.a, N-1); resize!(R11.b, N-1)
+            n = 0
+            R11.b[n+1] = (R10.b[n+1]
+                            * sqrt(abs(pt - R10.a[n+2] - R10.b[n+1] / chivec[n+1]))
+                            / sqrt(abs(pt - R10.a[n+1])))
+            R11.a[n+1] = R10.a[n+1] - (R10.b[n+1] / chivec[n+1])
+            for n = 1:N-2
+                R11.b[n+1] = (R10.b[n+1]
+                                * sqrt(abs(pt - R10.a[n+2] - R10.b[n+1] / chivec[n+1]))
+                                / sqrt(abs(pt - R10.a[n+1] - R10.b[n] / chivec[n])))
+                R11.a[n+1] = R10.a[n+1] + (R10.b[n] / chivec[n]) - (R10.b[n+1] / chivec[n+1])
+            end
+            N = N - 2
+        end
+    end
 end
 
 S
-
-R(B(1.0), B(1.0), B(281.5))
-
-R = D.R
-X = Fun(B(α)..β)
-R̃ = OrthogonalPolynomialFamily(β-X, X-α, 1-X, 1+X)
-
-let
-    N = 2002
-    a, b = 0.0, 0.0
-    for k = 0:(Int(N/2)-1)
-        @show N, k
-        R00 = R(B(a), B(b), B(0.5)+k)
-        if k == 0
-            resize!(R00.a, N+1); resize!(R00.b, N+1)
-            if a == 0.0
-                R00.a[:] = load("experiments/saved/diskslice-alpha=$α-beta=$β-R000p5-rec-coeffs-a-N=2003.jld", "a")[1:N+1]
-                R00.b[:] = load("experiments/saved/diskslice-alpha=$α-beta=$β-R000p5-rec-coeffs-b-N=2003.jld", "b")[1:N+1]
-            elseif a == 1.0
-                R00.a[:] = load("experiments/saved/diskslice-alpha=$α-beta=$β-R110p5-rec-coeffs-a-N=2003.jld", "a")[1:N+1]
-                R00.b[:] = load("experiments/saved/diskslice-alpha=$α-beta=$β-R110p5-rec-coeffs-b-N=2003.jld", "b")[1:N+1]
-            else
-                @show "cant do"
-            end
-        end
-        # interim coeffs
-        chivec = zeros(N+1)
-        pt = 1.0
-        n = 0
-        chivec[n+1] = (pt - R00.a[n+1]) / R00.b[n+1]
-        for n = 1:N
-            chivec[n+1] = (pt - R00.a[n+1] - R00.b[n] / chivec[n]) / R00.b[n+1]
-        end
-        @show k, maximum(abs.(chivec)), minimum(abs.(chivec))
-        R10 = R̃(B(a), B(b), B(0.5)+k+1, B(0.5)+k)
-        resize!(R10.a, N); resize!(R10.b, N)
-        n = 0
-        R10.b[n+1] = (R00.b[n+1]
-                        * sqrt(pt - R00.a[n+2] - R00.b[n+1] / chivec[n+1])
-                        / sqrt(pt - R00.a[n+1]))
-        R10.a[n+1] = R00.a[n+1] - (R00.b[n+1] / chivec[n+1])
-        for n = 1:N-1
-            R10.b[n+1] = (R00.b[n+1]
-                            * sqrt(pt - R00.a[n+2] - R00.b[n+1] / chivec[n+1])
-                            / sqrt(pt - R00.a[n+1] - R00.b[n] / chivec[n]))
-            R10.a[n+1] = R00.a[n+1] + (R00.b[n] / chivec[n]) - (R00.b[n+1] / chivec[n+1])
-        end
-        # wanted coeffs
-        chivec = zeros(N)
-        pt = -1.0
-        n = 0
-        chivec[n+1] = (pt - R10.a[n+1]) / R10.b[n+1]
-        for n = 1:N-1
-            chivec[n+1] = (pt - R10.a[n+1] - R10.b[n] / chivec[n]) / R10.b[n+1]
-        end
-        @show k, maximum(abs.(chivec)), minimum(abs.(chivec))
-        R11 = R(B(a), B(b), B(0.5)+k+1)
-        resize!(R11.a, N-1); resize!(R11.b, N-1)
-        n = 0
-        R11.b[n+1] = (R10.b[n+1]
-                        * sqrt(abs(pt - R10.a[n+2] - R10.b[n+1] / chivec[n+1]))
-                        / sqrt(abs(pt - R10.a[n+1])))
-        R11.a[n+1] = R10.a[n+1] - (R10.b[n+1] / chivec[n+1])
-        for n = 1:N-2
-            R11.b[n+1] = (R10.b[n+1]
-                            * sqrt(abs(pt - R10.a[n+2] - R10.b[n+1] / chivec[n+1]))
-                            / sqrt(abs(pt - R10.a[n+1] - R10.b[n] / chivec[n])))
-            R11.a[n+1] = R10.a[n+1] + (R10.b[n] / chivec[n]) - (R10.b[n+1] / chivec[n+1])
-        end
-        N = N - 2
-    end
-end
-
 
 
 # B = BigFloat
@@ -755,6 +749,21 @@ end
 # X = Fun(B(α)..β)
 # R̃ = OrthogonalPolynomialFamily(β-X, X-α, 1-X, 1+X)
 #
+#
+# B = BigFloat
+# N = 1000
+# prec = precision(B)
+# setprecision(800)
+# P0 = D.P(B(0.0), B(0.0)); P1 = D.P(B(1.0), B(1.0))
+# OrthogonalPolynomialFamilies.resizedata!(P0, N)
+# OrthogonalPolynomialFamilies.resizedata!(P1, N)
+# setprecision(prec)
+# save("experiments/saved/diskslice-alpha=$α-beta=$β-P00-rec-coeffs-a-N=1000.jld", "a", P0.a)
+# save("experiments/saved/diskslice-alpha=$α-beta=$β-P00-rec-coeffs-b-N=1000.jld", "b", P0.b)
+# save("experiments/saved/diskslice-alpha=$α-beta=$β-P11-rec-coeffs-a-N=1000.jld", "a", P1.a)
+# save("experiments/saved/diskslice-alpha=$α-beta=$β-P11-rec-coeffs-b-N=1000.jld", "b", P1.b)
+
+
 # N = 2003
 # @show "begin initialisation"
 # R00 = R(B(1.0), B(1.0), B(0.5))

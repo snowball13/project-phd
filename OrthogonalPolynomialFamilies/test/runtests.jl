@@ -548,7 +548,7 @@ end
     a, b, c = 1.0, 1.0, 1.0
     α, β = 0.2, 0.9
     x, y = 0.34, -0.29; z = [x; y]
-    N = 15
+    N = 30
     # W111->P111
     D = DiskSliceFamily(0.0); S = D(b, c)
     L = laplaceoperator(S, S, N, weighted=true)
