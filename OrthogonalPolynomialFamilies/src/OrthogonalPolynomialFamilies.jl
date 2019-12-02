@@ -24,7 +24,7 @@ abstract type SpaceFamily{D,R} end
 
 struct OrthogonalPolynomialSpace{FA,WW,F,D,B,R,N} <: PolynomialSpace{D,R}
     family::FA # Pointer back to the family
-    weight::WW # The full product weight
+    weight::Vector{WW} # The full product weight
     params::NTuple{N,B} # The powers of the weight factors (i.e. key to this
                         # space in the dict of the family) (could be BigFloats)
     ops::Vector{F}  # Cache the ops we get for free from lanczos
@@ -57,7 +57,6 @@ function lanczos!(w, P, β, γ; N₀=0)
     end
 
     for k = N₀+1:N
-        @show "lanczos", N, k
         v = x*P[2] - γ[k-1]*P[1]
         β[k] = sum(P[2]*w*v)
         v = v - β[k]*P[2]
@@ -78,14 +77,35 @@ function lanczos(w, N)
     lanczos!(w, P, β, γ)
 end
 
-domain(S::OrthogonalPolynomialSpace) = domain(S.weight)
+# TODO is this called for high parameter vals unnecessarily?
+domain(S::OrthogonalPolynomialSpace) = domain(getweightfun(S))
 canonicaldomain(S::OrthogonalPolynomialSpace) = domain(S)
 tocanonical(S::OrthogonalPolynomialSpace, x) = x
 
-OrthogonalPolynomialSpace(fam::SpaceFamily{D,R}, w::Fun, α::NTuple{N,B}) where {D,R,B,N} =
+function OrthogonalPolynomialSpace(fam::SpaceFamily{D,R}, w::Fun, α::NTuple{N,B}) where {D,R,B,N}
+    W = Vector{typeof(w)}(); resize!(W, 1); W[1] = w
     OrthogonalPolynomialSpace{typeof(fam),typeof(w),Fun,D,B,R,N}(
-        fam, w, α, Vector{Fun}(), Vector{R}(), Vector{R}(), Vector{R}(),
+        fam, W, α, Vector{Fun}(), Vector{R}(), Vector{R}(), Vector{R}(),
         Vector{Vector{R}}(), Vector{Vector{R}}())
+end
+
+OrthogonalPolynomialSpace(fam::SpaceFamily{D,R}, α::NTuple{N,B}) where {D,R,B,N} =
+    OrthogonalPolynomialSpace{typeof(fam),Fun,Fun,D,B,R,N}(
+        fam, Vector{Fun}(), α, Vector{Fun}(), Vector{R}(), Vector{R}(), Vector{R}(),
+        Vector{Vector{R}}(), Vector{Vector{R}}())
+
+function getweightfun(S::OrthogonalPolynomialSpace)
+    if length(S.weight) == 0
+        # @show "getweightfun() for OPSpace", S.params
+        resize!(S.weight, 1)
+        if length(S.params) == 1
+            S.weight[1] = (S.family.factors.^(S.params))[1]
+        else
+            S.weight[1] = prod(S.family.factors.^(S.params))
+        end
+    end
+    S.weight[1]
+end
 
 function resizedata!(S::OrthogonalPolynomialSpace, n)
     N₀ = length(S.a)
@@ -93,7 +113,8 @@ function resizedata!(S::OrthogonalPolynomialSpace, n)
     resize!(S.a, n)
     resize!(S.b, n)
     resize!(S.ops, 2)
-    lanczos!(S.weight, S.ops, S.a, S.b, N₀=N₀)
+    # We set the weight here when this is called
+    lanczos!(getweightfun(S), S.ops, S.a, S.b, N₀=N₀)
     S
 end
 
@@ -117,23 +138,8 @@ end
 
 function (P::OrthogonalPolynomialFamily{<:Any,<:Any,<:Any,R,B,N})(α::Vararg{B,N}) where {R,B,N}
     haskey(P.spaces,α) && return P.spaces[α]
-    # NOTE: This ensures we dont hang on calculating the weight for large
-    # parameter values
-    maxp = 100
-    if any(α .> maxp)
-        β = []
-        f = []
-        for j = 1:length(α)
-            r = α[j] % maxp
-            t = Int(div(α[j], maxp))
-            β = append!(β, [tt == 0 ? r : maxp for tt=0:t])
-            f = append!(f, [P.factors[j] for tt=0:t])
-        end
-        W = length(α) == 1 ? (f.^β)[1] : prod(f.^β)
-    else
-        W = length(α) == 1 ? (P.factors.^α)[1] : prod(P.factors.^α)
-    end
-    P.spaces[α] = OrthogonalPolynomialSpace(P, W, α)
+    # We set the weight when we call resizedata!()
+    P.spaces[α] = OrthogonalPolynomialSpace(P, α)
 end
 
 #####
@@ -162,11 +168,11 @@ recC(::Type{T}, S::OrthogonalPolynomialSpace, n) where T =
 # Returns weights and nodes for N-point quad rule for given weight
 function golubwelsch(S::OrthogonalPolynomialSpace{<:Any,<:Any,<:Any,<:Any,<:Any,T,<:Any}, N::Integer) where T
     # Golub--Welsch algorithm. Used here for N<=20.
-    resizedata!(S, N)       # 3-term recurrence
+    resizedata!(S, N)                   # 3-term recurrence
     J = SymTridiagonal(S.a[1:N], S.b[1:N-1])   # Jacobi matrix
     D, V = eigen(J)                     # Eigenvalue decomposition
     indx = sortperm(D)                  # Hermite points
-    μ = T(sum(S.weight))                # Integral of weight function
+    μ = T(sum(getweightfun(S)))         # Integral of weight function
     w = μ * V[1, indx].^2               # quad rule weights to output
     x = D[indx]                         # quad rule nodes to output
     # # Enforce symmetry:
@@ -356,8 +362,8 @@ end
 resetderivopptseval(S::OrthogonalPolynomialSpace) = resize!(S.derivopptseval, 0)
 
 function getopnorm(S::OrthogonalPolynomialSpace)
-    # NOTE this is the squared norms
-    if length(S.opnorm) == 0
+    # NOTE this is the squared norm
+    if !isnormset(S)
         resize!(S.opnorm, 1)
         pts, w = pointswithweights(S, 1)
         p = [1] # p = opevalatpts(S, 1, pts)
@@ -365,6 +371,23 @@ function getopnorm(S::OrthogonalPolynomialSpace)
     end
     S.opnorm[1]
 end
+
+# We use this function to manually set the OP norm, if it becomes
+# easier/quicker to do so without using getopnorm to set it (i.e. call
+# pointswithweights() and initialise the weight for the OPSpace)
+function setopnorm(S::OrthogonalPolynomialSpace, val)
+    # NOTE this is the squared norm
+    if !isnormset(S)
+        resize!(S.opnorm, 1)
+        S.opnorm[1] = val
+    else
+        error("Trying to set the norm for OPSpace when it has already been set")
+    end
+    S.opnorm[1]
+end
+
+# Boolean function to return if norm for OPSpace is set
+isnormset(S::OrthogonalPolynomialSpace) = (length(S.opnorm) == 1)
 
 
 #=====#

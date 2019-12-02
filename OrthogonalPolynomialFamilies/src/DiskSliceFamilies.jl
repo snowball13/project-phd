@@ -118,8 +118,15 @@ getPspace(S::DiskSliceSpace) = (S.family.P)(S.params[end], S.params[end])
 
 #===#
 # Weight eval functions
-weight(S::DiskSliceSpace{<:Any,<:Any,T,<:Any}, x, y) where T =
-    T(getRspace(S).weight(x) * getPspace(S).weight(y/S.family.ρ(x)))
+function weight(S::DiskSliceSpace{<:Any,<:Any,T,<:Any}, x, y) where T
+    # T(getRspace(S).weight(x) * getPspace(S).weight(y/S.family.ρ(x)))
+    if length(S.params) == 2
+        T((x - S.family.α)^S.params[1] * (1 - x^2 - y^2)^S.params[2])
+    else # length(S.params) == 3
+        a, b, c = S.params
+        T((S.family.β - x)^a * (x - S.family.α)^b * (1 - x^2 - y^2)^c)
+    end
+end
 weight(S::DiskSliceSpace, z) = weight(S, z[1], z[2])
 
 
@@ -167,8 +174,20 @@ function getopnorms(S::DiskSliceSpace{<:Any, <:Any, T, <:Any}, k) where T
         resize!(S.opnorms, k+1)
         P = getPspace(S)
         getopnorm(P)
-        for j = m+1:k+1
-            S.opnorms[j] = getopnorm(getRspace(S, j-1)) * P.opnorm[1]
+
+        # for j = m+1:k+1
+        #     S.opnorms[j] = getopnorm(getRspace(S, j-1)) * P.opnorm[1]
+        # end
+
+        # We get the weights for the R integral
+        ptsr, wr = pointswithweights(getRspace(S, 0), k+1)
+        rhoptsr = S.family.ρ.(ptsr)
+        for j = m:k
+            R = getRspace(S, j)
+            if !isnormset(R)
+                setopnorm(R, sum(rhoptsr.^(2j) .* wr))
+            end
+            S.opnorms[j+1] = R.opnorm[1] * P.opnorm[1]
         end
     end
     S
@@ -853,35 +872,82 @@ function partialoperatorx(S::DiskSliceSpace{<:Any, <:Any, T, <:Any}, N;
             Zeros{T}(sum(1:N), sum(1:(N+1))), (1:N, 1:N+1), (-1, band), (0, 2))
     end
 
-    # Get pt evals for the R OPs
+    # # Get pt evals for the R OPs
+    # for k = 0:N
+    #     @show "dxoperator", N, k
+    #     R = getRspace(S, k)
+    #     getopptseval(R, N-k, ptsr)
+    #     getderivopptseval(R, N-k, ptsr)
+    #     Rx = getRspace(Sx, k)
+    #     getopptseval(Rx, N-k+1, ptsr)
+    # end
+    #
+    # n, k = 1, 0
+    # m, j = n-1, k
+    # val = getpartialoperatorxval(S, ptsp, wp, ptsr, rhoptsr, dxrhoptsr, wr, n, k, m, j)
+    # view(A, Block(m+1, n+1))[1, 1] = val
+    # for n = 2:N
+    #     @show n
+    #     for k = 0:n
+    #         for m = max(0,n-band):(n-1)
+    #             for j = (k-2):2:min(k,m)
+    #                 if j < 0
+    #                     continue
+    #                 end
+    #                 val = getpartialoperatorxval(S, ptsp, wp, ptsr, rhoptsr,
+    #                                                 dxrhoptsr, wr, n, k, m, j)
+    #                 if transposed
+    #                     view(A, Block(n+1, m+1))[k+1, j+1] = val
+    #                 else
+    #                     view(A, Block(m+1, n+1))[j+1, k+1] = val
+    #                 end
+    #             end
+    #         end
+    #     end
+    # end
+    n, k = 1, 0
+    m, j = n-1, k
+    R = getRspace(S, k)
+    getopptseval(R, n-k, ptsr)
+    getderivopptseval(R, n-k, ptsr)
+    Rx = getRspace(Sx, j)
+    getopptseval(Rx, m-j, ptsr)
+    val = getpartialoperatorxval(S, ptsp, wp, ptsr, rhoptsr, dxrhoptsr, wr, n, k, m, j)
+    view(A, Block(m+1, n+1))[1, 1] = val
+    resetopptseval(R)
+    resetderivopptseval(R)
+    resetopptseval(Rx)
     for k = 0:N
-        @show "dxoperator", N, k
+        if k % 100 == 0
+            @show "dx", k
+        end
         R = getRspace(S, k)
         getopptseval(R, N-k, ptsr)
         getderivopptseval(R, N-k, ptsr)
-        Rx = getRspace(Sx, k)
-        getopptseval(Rx, N-k+1, ptsr)
-    end
-
-    n, k = 1, 0
-    m, j = n-1, k
-    val = getpartialoperatorxval(S, ptsp, wp, ptsr, rhoptsr, dxrhoptsr, wr, n, k, m, j)
-    view(A, Block(m+1, n+1))[1, 1] = val
-    for n = 2:N, k = 0:n
-        for m = max(0,n-band):(n-1)
-            for j = (k-2):2:min(k,m)
-                if j < 0
-                    continue
-                end
-                val = getpartialoperatorxval(S, ptsp, wp, ptsr, rhoptsr,
-                                                dxrhoptsr, wr, n, k, m, j)
-                if transposed
-                    view(A, Block(n+1, m+1))[k+1, j+1] = val
-                else
-                    view(A, Block(m+1, n+1))[j+1, k+1] = val
+        for j = (k-2):2:k
+            if j < 0 || j > N-1
+                continue
+            end
+            Rx = getRspace(Sx, j)
+            getopptseval(Rx, N-1-j, ptsr)
+            for n = max(k,2):N
+                for m = max(0, n-band):(n-1)
+                    if j > m
+                        continue
+                    end
+                    val = getpartialoperatorxval(S, ptsp, wp, ptsr, rhoptsr,
+                                                    dxrhoptsr, wr, n, k, m, j)
+                    if transposed
+                        view(A, Block(n+1, m+1))[k+1, j+1] = val
+                    else
+                        view(A, Block(m+1, n+1))[j+1, k+1] = val
+                    end
                 end
             end
+            resetopptseval(Rx)
         end
+        resetopptseval(R)
+        resetderivopptseval(R)
     end
     A
 end
@@ -903,6 +969,7 @@ function partialoperatory(S::DiskSliceSpace{<:Any, <:Any, T, <:Any}, N;
     getderivopptseval(P, N, pts)
     getopptseval(Py, N, pts)
     getopnorms(Sy, N-1)
+    getopnorms(S, N)
     for k = 1:N
         val = (getopnorm(getRspace(S, k))
                 * inner2(Py, derivopevalatpts(P, k+1, pts), opevalatpts(Py, k, pts), w)
@@ -989,24 +1056,54 @@ function weightedpartialoperatorx(S::DiskSliceSpace{<:Any, <:Any, T, <:Any}, N;
     wr100 = S.family.nparams == 3 ? (-ptsr .+ S.family.β) : ones(length(ptsr))
     wr010 = (ptsr .- S.family.α)
 
+    # # Get pt evals for the R OPs
+    # for k = 0:N
+    #     R = getRspace(S, k)
+    #     getopptseval(R, N-k, ptsr)
+    #     getderivopptseval(R, N-k, ptsr)
+    #     for j = k:2:k+2
+    #         Rx = getRspace(Sx, j)
+    #         getopptseval(Rx, N-k+1, ptsr)
+    #     end
+    # end
+    # for n = 0:N, k = 0:n
+    #     for m = n+1:n+S.family.nparams, j = k:2:min(m,k+2)
+    #         val = getweightedpartialoperatorxval(S, ptsp, wp1, wp, ptsr,
+    #                         rhoptsr, dxrhoptsr, wr010, wr100, wr, n, k, m, j)
+    #         if transposed
+    #             view(W, Block(n+1, m+1))[k+1, j+1] = val
+    #         else
+    #             view(W, Block(m+1, n+1))[j+1, k+1] = val
+    #         end
+    #     end
+    # end
     # Get pt evals for the R OPs
     for k = 0:N
+        if k % 100 == 0
+            @show "wghtd dx", k
+        end
         R = getRspace(S, k)
         getopptseval(R, N-k, ptsr)
         getderivopptseval(R, N-k, ptsr)
-        for j = k:2:k+2
+        for j = k:2:(k+2)
+            if j > N+S.family.nparams
+                continue
+            end
             Rx = getRspace(Sx, j)
-            getopptseval(Rx, N-k+1, ptsr)
-        end
-    end
-    for n = 0:N, k = 0:n
-        for m = n+1:n+S.family.nparams, j = k:2:min(m,k+2)
-            val = getweightedpartialoperatorxval(S, ptsp, wp1, wp, ptsr,
-                            rhoptsr, dxrhoptsr, wr010, wr100, wr, n, k, m, j)
-            if transposed
-                view(W, Block(n+1, m+1))[k+1, j+1] = val
-            else
-                view(W, Block(m+1, n+1))[j+1, k+1] = val
+            getopptseval(Rx, N+S.family.nparams-j, ptsr)
+            for n = k:N
+                for m = n+1:n+S.family.nparams
+                    if j > m
+                        continue
+                    end
+                    val = getweightedpartialoperatorxval(S, ptsp, wp1, wp, ptsr,
+                                    rhoptsr, dxrhoptsr, wr010, wr100, wr, n, k, m, j)
+                    if transposed
+                        view(W, Block(n+1, m+1))[k+1, j+1] = val
+                    else
+                        view(W, Block(m+1, n+1))[j+1, k+1] = val
+                    end
+                end
             end
         end
     end
@@ -1030,8 +1127,9 @@ function weightedpartialoperatory(S::DiskSliceSpace{<:Any, <:Any, T, <:Any}, N;
     getopptseval(Py, N+1, ptsp)
     getderivopptseval(P, N, ptsp)
     getopnorms(Sy, N+1)
+    getopnorms(S, N)
     params = S.params .* 0 .+ ntuple(i -> i == S.family.nparams ? 1 : 0, S.family.nparams)
-    wp1 = T.(getPspace(S.family(params)).weight.(ptsp)) # (-ptsp.^2 .+ 1)
+    wp1 = T.(getweightfun(getPspace(S.family(params))).(ptsp)) # (-ptsp.^2 .+ 1)
     n, m = N, N+1
     for k = 0:N
         j = k + 1
@@ -1079,31 +1177,29 @@ function transformparamsoperator(S::DiskSliceSpace{<:Any, <:Any, T, <:Any},
             rhoptsr = S.family.ρ.(ptsr)
             getopnorms(St, N)
 
-            # Get pt evals for H OPs
+            n, k = 0, 0; m = n
+            view(C, Block(m+1, n+1))[k+1, k+1] = sum(wr) * getopnorm(P) / St.opnorms[k+1]
             for k = 0:N
                 R = getRspace(S, k)
                 Rt = getRspace(St, k)
                 getopptseval(R, N-k, ptsr)
                 getopptseval(Rt, N-k, ptsr)
-            end
-
-            n, k = 0, 0; m = n
-            view(C, Block(m+1, n+1))[k+1, k+1] = sum(wr) * getopnorm(P) / St.opnorms[k+1]
-            for n=1:N, k=0:n
-                R = getRspace(S, k)
-                Rt = getRspace(St, k)
-                for m = n-band:n
-                    if k ≤ m
-                        val = inner2(R, opevalatpts(R, n-k+1, ptsr),
-                                        rhoptsr.^(2k) .* opevalatpts(Rt, m-k+1, ptsr), wr)
-                        val *= getopnorm(P)
-                        if transposed
-                            view(C, Block(n+1, m+1))[k+1, k+1] = val / St.opnorms[k+1]
-                        else
-                            view(C, Block(m+1, n+1))[k+1, k+1] = val / St.opnorms[k+1]
+                for n = max(1, k):N
+                    for m = n-band:n
+                        if k ≤ m
+                            val = inner2(R, opevalatpts(R, n-k+1, ptsr),
+                                            rhoptsr.^(2k) .* opevalatpts(Rt, m-k+1, ptsr), wr)
+                            val *= getopnorm(P)
+                            if transposed
+                                view(C, Block(n+1, m+1))[k+1, k+1] = val / St.opnorms[k+1]
+                            else
+                                view(C, Block(m+1, n+1))[k+1, k+1] = val / St.opnorms[k+1]
+                            end
                         end
                     end
                 end
+                resetopptseval(R)
+                resetopptseval(Rt)
             end
             C
         # Case 2: Takes the space H^{a,b,c} -> H^{a,b,c+1}
@@ -1132,21 +1228,34 @@ function transformparamsoperator(S::DiskSliceSpace{<:Any, <:Any, T, <:Any},
                 getopptseval(R, N-k, ptsr)
                 getopptseval(Rt, N-k, ptsr)
             end
-            for n=0:N, k=0:n
+            for k = 0:N
                 R = getRspace(S, k)
-                for m = n-band:n, j = k-2:2:k
-                    if m ≥ 0 && 0 ≤ j ≤ m
-                        Rt = getRspace(St, j)
-                        val = inner2(R, opevalatpts(R, n-k+1, ptsr),
-                                        rhoptsr.^(k+j) .* opevalatpts(Rt, m-j+1, ptsr), wr)
-                        val *= inner2(P, opevalatpts(P, k+1, ptsp), opevalatpts(Pt, j+1, ptsp), wp)
-                        if transposed
-                            view(C, Block(n+1, m+1))[k+1, j+1] = val / St.opnorms[j+1]
-                        else
-                            view(C, Block(m+1, n+1))[j+1, k+1] = val / St.opnorms[j+1]
+                getopptseval(R, N-k, ptsr)
+                for n = k:N
+                    for j = k-2:2:k
+                        if j < 0
+                            continue
                         end
+                        Rt = getRspace(St, j)
+                        getopptseval(Rt, n-j, ptsr)
+                        for m = n-band:n
+                            if m < 0 || m < j
+                                continue
+                            end
+                            Rt = getRspace(St, j)
+                            val = inner2(R, opevalatpts(R, n-k+1, ptsr),
+                                            rhoptsr.^(k+j) .* opevalatpts(Rt, m-j+1, ptsr), wr)
+                            val *= inner2(P, opevalatpts(P, k+1, ptsp), opevalatpts(Pt, j+1, ptsp), wp)
+                            if transposed
+                                view(C, Block(n+1, m+1))[k+1, j+1] = val / St.opnorms[j+1]
+                            else
+                                view(C, Block(m+1, n+1))[j+1, k+1] = val / St.opnorms[j+1]
+                            end
+                        end
+                        resetopptseval(Rt)
                     end
                 end
+                resetopptseval(R)
             end
             C
         else
@@ -1172,7 +1281,6 @@ function transformparamsoperator(S::DiskSliceSpace{<:Any, <:Any, T, <:Any},
             ptsr, wr = pointswithweights(getRspace(S, 0), N+1)
             getopnorms(St, N+1)
             rhoptsr = S.family.ρ.(ptsr)
-
             # Get pt evals for R OPs
             for k = 0:N
                 R = getRspace(S, k)
@@ -1180,11 +1288,12 @@ function transformparamsoperator(S::DiskSliceSpace{<:Any, <:Any, T, <:Any},
                 getopptseval(R, N-k, ptsr)
                 getopptseval(Rt, N-k+1, ptsr)
             end
-
-            for n=0:N, k=0:n
+            for k = 0:N
                 R = getRspace(S, k)
                 Rt = getRspace(St, k)
-                for m = n:n+band
+                getopptseval(R, N-k, ptsr)
+                getopptseval(Rt, N+band-k, ptsr)
+                for n = k:N, m = n:n+band
                     val = inner2(R, opevalatpts(R, n-k+1, ptsr),
                                     rhoptsr.^(2k) .* opevalatpts(Rt, m-k+1, ptsr), wr)
                     val *= getopnorm(P)
@@ -1194,6 +1303,8 @@ function transformparamsoperator(S::DiskSliceSpace{<:Any, <:Any, T, <:Any},
                         view(C, Block(m+1, n+1))[k+1, k+1] = val / St.opnorms[k+1]
                     end
                 end
+                resetopptseval(R)
+                resetopptseval(Rt)
             end
             C
         # Case 5: Takes the space W^{a,b,c} -> W^{a,b,c-1}
@@ -1214,31 +1325,38 @@ function transformparamsoperator(S::DiskSliceSpace{<:Any, <:Any, T, <:Any},
             rhoptsr = S.family.ρ.(ptsr)
             getopnorms(St, N+band)
 
-            # Get pt evals for P and H OPs
+            # Get pt evals for P OPs
             getopptseval(P, N, ptsp)
             getopptseval(Pt, N+band, ptsp)
+
             for k = 0:N
                 R = getRspace(S, k)
                 getopptseval(R, N-k, ptsr)
-            end
-            for j = 0:N+band
-                Rt = getRspace(St, j)
-                getopptseval(Rt, N+band-j, ptsr)
-            end
-
-            for n=0:N, k=0:n
-                R = getRspace(S, k)
-                for m = n:n+band, j = k:2:min(k+2, m)
-                    Rt = getRspace(St, j)
-                    val = inner2(R, opevalatpts(R, n-k+1, ptsr),
-                                    rhoptsr.^(k+j) .* opevalatpts(Rt, m-j+1, ptsr), wr)
-                    val *= inner2(P, opevalatpts(P, k+1, ptsp), opevalatpts(Pt, j+1, ptsp), wp)
-                    if transposed
-                        view(C, Block(n+1, m+1))[k+1, j+1] = val / St.opnorms[j+1]
-                    else
-                        view(C, Block(m+1, n+1))[j+1, k+1] = val / St.opnorms[j+1]
+                for n = k:N
+                    for j = k:2:(k+2)
+                        if j > n+band
+                            continue
+                        end
+                        Rt = getRspace(St, j)
+                        getopptseval(Rt, n+band-j, ptsr)
+                        for m = n:n+band
+                            @show n, k, m, j
+                            if m < j
+                                continue
+                            end
+                            val = inner2(R, opevalatpts(R, n-k+1, ptsr),
+                                            rhoptsr.^(k+j) .* opevalatpts(Rt, m-j+1, ptsr), wr)
+                            val *= inner2(P, opevalatpts(P, k+1, ptsp), opevalatpts(Pt, j+1, ptsp), wp)
+                            if transposed
+                                view(C, Block(n+1, m+1))[k+1, j+1] = val / St.opnorms[j+1]
+                            else
+                                view(C, Block(m+1, n+1))[j+1, k+1] = val / St.opnorms[j+1]
+                            end
+                        end
+                        resetopptseval(Rt)
                     end
                 end
+                resetopptseval(R)
             end
             C
         else
