@@ -16,7 +16,7 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [compat]
 ApproxFun = "0.11.1"
-ApproxFunOrthogonalPolynomials = "0.1.1"
+ApproxFunOrthogonalPolynomials = "0.1.1, 0.2"
 ApproxFunBase = "0.1.1"
 FastGaussQuadrature = "≥ 0.3.2"
 SingularIntegralEquations = "0.4.2"
