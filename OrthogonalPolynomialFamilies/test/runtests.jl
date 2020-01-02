@@ -1,10 +1,10 @@
-using ApproxFun, OrthogonalPolynomialFamilies, FastGaussQuadrature,
-        SingularIntegralEquations, Test, SparseArrays
+using ApproxFun, OrthogonalPolynomialFamilies,
+        Test, SparseArrays#, FastGaussQuadrature, SingularIntegralEquations
 import OrthogonalPolynomialFamilies: golubwelsch, halfdiskquadrule,
         gethalfdiskOP, jacobix, jacobiy, differentiatex, differentiatey,
         resizecoeffs!, laplaceoperator, transformparamsoperator,
         operatorclenshaw, getnk, getopindex, weight, resizedata!,
-        differentiateweightedspacex, differentiateweightedspacey
+        differentiateweightedspacex, differentiateweightedspacey, getweightfun
 
 
 
@@ -18,7 +18,7 @@ end
     x = Fun()
     P = OrthogonalPolynomialFamily(1+x, 1-x)
     for (a, b) in ((0.4, 0.2), (0.5,0.5), (0.0,0.0))
-        @test P(a,b).weight(0.1) ≈ (1+0.1)^a * (1-0.1)^b
+        @test getweightfun(P(a,b))(0.1) ≈ (1+0.1)^a * (1-0.1)^b
         w = sqrt(sum((1+x)^a*(1-x)^b))
         for n = 0:5
             P₅ = Fun(Jacobi(a,b), [zeros(n); 1])
@@ -46,18 +46,6 @@ end
     X = Fun(identity, 0..1)
     x, w = golubwelsch(H(a, b+0.5), N)
     @test w'*f.(x) ≈ g(a + d, b + 0.5, 0, 1)
-end
-
-@testset "Quad Rule" begin
-    N = 4; a = 0.5; b = 0.5
-    xe, ye, we, xo, yo, wo  = halfdiskquadrule(N, a, b)
-    # Even f
-    f = (x,y)-> x + y^2
-    @test sum(we .* f.(xe, ye)) ≈ (g(0, b, -1+1e-15, 1-1e-15) * g(a+1, b+0.5, 0, 1)
-                                    + g(2, b, -1+1e-15, 1-1e-15) * g(a, b+1.5, 0, 1))
-    # Odd f
-    f = (x,y)-> x*y^3
-    @test sum(wo .* f.(xo, yo)) < 1e-12 # Should be zero
 end
 
 @testset "Transform" begin
@@ -98,6 +86,22 @@ end
     x = 0.1567
     @test F(x) ≈ f(x)
 end # NOTE: Fun(f, S) is a λ function, and not a Fun
+
+
+#=====#
+# HelfDisk tests (irrelevant now)
+
+@testset "Quad Rule" begin
+    N = 4; a = 0.5; b = 0.5
+    xe, ye, we, xo, yo, wo  = halfdiskquadrule(N, a, b)
+    # Even f
+    f = (x,y)-> x + y^2
+    @test sum(we .* f.(xe, ye)) ≈ (g(0, b, -1+1e-15, 1-1e-15) * g(a+1, b+0.5, 0, 1)
+                                    + g(2, b, -1+1e-15, 1-1e-15) * g(a, b+1.5, 0, 1))
+    # Odd f
+    f = (x,y)-> x*y^3
+    @test sum(wo .* f.(xo, yo)) < 1e-12 # Should be zero
+end
 
 @testset "Evaluation for HalfDiskSpace (transform())" begin
     n = 10; a = 1.0; b = 2.0
