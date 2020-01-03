@@ -6,7 +6,64 @@ maxop = 150
 N = 30
 C = increaseparamsoperator(S, N)
 
-a = b = BigFloat(1)
+using ApproxFun, OrthogonalPolynomialFamilies
+a = BigFloat(1.0)
+b = BigFloat(4.5)
+X = Fun(identity, BigFloat(0)..1)
+T = Float64
+H = OrthogonalPolynomialFamily(T, X, 1-X^2)
+S = H(a, b)
+OrthogonalPolynomialFamilies.getopnorms(S, 10)
+
+Y = Fun(identity, BigFloat(-1)..1)
+P = OrthogonalPolynomialFamily(T, 1-Y, 1+Y)
+P = P(a, a)
+OrthogonalPolynomialFamilies.getopnorms(P, 10)
+OrthogonalPolynomialFamilies.resizedata!(S, 20)
+
+
+
+
+# test reccurrence
+# x p_{n-1} = γ_n p_{n-2} + α_n p_{n-1} +  p_n β_n
+x = 0.4; n = 100
+x * Fun(S, [zeros(n-1); 1])(x)- (OrthogonalPolynomialFamilies.recγ(T, S, n) * Fun(S, [zeros(n-2); 1])(x) +
+    OrthogonalPolynomialFamilies.recα(T, S, n) * Fun(S, [zeros(n-1); 1])(x) +
+    OrthogonalPolynomialFamilies.recβ(T, S, n) * Fun(S, [zeros(n); 1])(x))
+
+α = S.a
+T = typeof(α[1])
+T(sum(S.weight))
+
+Y = Fun()
+
+x, w = OrthogonalPolynomialFamilies.pointswithweights(S, 40)
+vals = OrthogonalPolynomialFamilies.transform(S, x)
+OrthogonalPolynomialFamilies.itransform(S, vals) - x
+
+
+a = b = BigFloat(1.0)
+D = HalfDiskFamily(); S = D(a, b)
+OrthogonalPolynomialFamilies.getopnorms(S, 10)
+D
+
+pts, w = OrthogonalPolynomialFamilies.pointswithweights(S, 20)
+OrthogonalPolynomialFamilies.getopptseval(S, 10, pts)
+
+cfs = rand(3)
+Fun(S, cfs)(0.2, 0.4)
+
+a = b = 1.0
+D = HalfDiskFamily(); S = D(a, b); typeof(S.a)
+f = Fun(S, cfs); z = [0.2;0.4]
+@which evaluate(f.coefficients,f.space,z)
+f.space
+OrthogonalPolynomialFamilies.clenshaw(f.coefficients, f.space, z)
+S
+
+n, k = 7, 1
+Int((n-1)n / 2) + k
+OrthogonalPolynomialFamilies.getopindex(n-1,k-1)
 
 @which HalfDiskFamily()
 
@@ -29,7 +86,7 @@ S
 
 2S.params
 
-BigFloat(30.5)
+b = BigFloat(30.5)
 
 w  = (1-x^2)^(BigFloat(30.5))
 

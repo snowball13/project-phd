@@ -16,183 +16,130 @@ using JLD
 
 #===#
 
-# Investigations on computation time/lanczos
-setprecision(800)
-B = BigFloat; a = 1.0; b = 1.0
-D = HalfDiskFamily(); S = D(a, b)
-N = 100
-@time laplaceoperator(S, S, N, weighted=true) # Compile
-A = laplaceoperator(S, S, N, weighted=true)
-k = 400; H = D.H(S.a, S.b+k+0.5)
-OrthogonalPolynomialFamilies.resizedata!(H, 200)
 
+# D = HalfDiskFamily()
+# N = 200
+# S = D(1.0, 1.0)
+# Δw = laplaceoperator(S, S, N, weighted=true, square=true)
+# bihar = biharmonicoperator(D(2.0,2.0), N, square=true)
+# save("experiments/saved/laplacian-w11-array.jld", "Lw11", sparse(Δw))
+# save("experiments/saved/biharmonic-array.jld", "bihar", sparse(bihar))
+# save("experiments/saved/clenshawmats-11.jld", "A", S.A, "B", S.B, "C", S.C, "DT", S.DT)
+# H = D.H
+#     jldopen("experiments/saved/Hspaces-dict.jld", "w") do file
+#     end
+#     paramslist = Vector{NTuple}()
+#     n = 1
+#     for params in keys(H.spaces)
+#         stra = "a" * string(params[1])
+#         stra *= "-" * string(params[2])
+#         strb = "b" * string(params[1])
+#         strb *= "-" * string(params[2])
+#         jldopen("experiments/saved/Hspaces-dict.jld", "r+") do file
+#             write(file, stra, H(params...).a)
+#             write(file, strb, H(params...).b)
+#         end
+#         resize!(paramslist, n); paramslist[n] = params
+#         global n += 1
+#     end
+#     jldopen("experiments/saved/Hspaces-dict.jld", "r+") do file
+#         write(file, "params", paramslist)
+#     end
+# P = D.P
+#     jldopen("experiments/saved/Pspaces-dict.jld", "w") do file
+#     end
+#     paramslist = Vector{NTuple}()
+#     n = 1
+#     for params in keys(P.spaces)
+#         stra = "a" * string(params[1])
+#         stra *= "-" * string(params[2])
+#         strb = "b" * string(params[1])
+#         strb *= "-" * string(params[2])
+#         strparams = string(params[1])
+#         strparams *= "-" * string(params[2])
+#         jldopen("experiments/saved/Pspaces-dict.jld", "r+") do file
+#             write(file, stra, P(params...).a)
+#             write(file, strb, P(params...).b)
+#         end
+#         resize!(paramslist, n); paramslist[n] = params
+#         global n += 1
+#     end
+#     jldopen("experiments/saved/Pspaces-dict.jld", "r+") do file
+#         write(file, "params", paramslist)
+#     end
 
-
-
-#===#
-
-# Set up for experiments
 B = BigFloat
 precision(B)
 setprecision(800)
+D = HalfDiskFamily()
+    d = load("experiments/saved/Hspaces-dict.jld")
+    paramslist = d["params"]
+    for params in paramslist
+        stra = "a" * string(params[1])
+        stra *= "-" * string(params[2])
+        strb = "b" * string(params[1])
+        strb *= "-" * string(params[2])
+        H = D.H(B(params[1]),B(params[2]))
+        resize!(H.a, length(d[stra]))
+        H.a[:] = d[stra][:]
+        resize!(H.b, length(d[strb]))
+        H.b[:] = d[strb][:]
+        # x * P[n](x) == (b[n] * P[n+1](x) + a[n] * P[n](x) + b[n-1] * P[n-1](x))
+        # => P[n+1](x) == 1/b[n] * (x * P[n](x) - a[n] * P[n](x) - b[n-1] * P[n-1](x))
+        resize!(H.ops, 2)
+        n = length(H.a)
+        w = H.weight
+        x = Fun(identity, domain(w))
+        if n > 0
+            H.ops[1] = Fun(1/sqrt(sum(w)),space(x)); H.ops[2] = ((x - H.a[1]) * H.ops[1]) / H.b[1]
+            for k = 2:n
+                p = ((x - H.a[k]) * H.ops[2] - H.b[k-1] * H.ops[1]) / H.b[k]
+                H.ops[1] = H.ops[2]
+                H.ops[2] = p
+            end
+        end
+    end
+    d = load("experiments/saved/Pspaces-dict.jld")
+    paramslist = d["params"]
+    for params in paramslist
+        stra = "a" * string(params[1])
+        stra *= "-" * string(params[2])
+        strb = "b" * string(params[1])
+        strb *= "-" * string(params[2])
+        P = D.P(B(params[1]),B(params[2]))
+        resize!(P.a, length(d[stra]))
+        P.a[:] = d[stra][:]
+        resize!(P.b, length(d[strb]))
+        P.b[:] = d[strb][:]
+        resize!(P.ops, 2)
+        n = length(P.a)
+        w = P.weight
+        x = Fun(identity, domain(w))
+        P.ops[1] = Fun(1/sqrt(sum(w)),space(x)); P.ops[2] = ((x - P.a[1]) * P.ops[1]) / P.b[1]
+        for k = 2:n
+            p = ((x - P.a[k]) * P.ops[2] - P.b[k-1] * P.ops[1]) / P.b[k]
+            P.ops[1] = P.ops[2]
+            P.ops[2] = p
+        end
+    end
+    D
+
+# Set up for experiments
 a, b = 1.0, 1.0
 x, y = 0.42, -0.2; z = [x; y]
-# save("experiments/saved/laplacian-w11.jld", "Lw11", Δw)
-# save("experiments/saved/biharmonic.jld", "bihar", bihar)
-# save("experiments/saved/halfdiskspace11.jld", "opnorms", S.opnorms, "A", S.A, "B", S.B, "C", S.C, "DT", S.DT)
-# save("experiments/saved/halfdiskspace22.jld", "opnorms", S.opnorms, "A", Array.(S.A[:]), "B", Array.(S.B[:]), "C", Array.(S.C[2:end]), "DT", Array.(S.DT[:]))
-# save("experiments/saved/Hfamily-11p5.jld", "Ha", S.family.H(B(1.0),B(1.5)).a, "Hb", S.family.H(B(1.0),B(1.5)).b)
-# save("experiments/saved/Pfamily-11.jld", "Pa", S.family.P(B(1.0),B(1.0)).a, "Pb", S.family.P(B(1.0),B(1.0)).b)
-# save("experiments/saved/errfuncfs.jld", "erfuncfs", errfuncfs)
-# save("experiments/saved/f4cfs.jld", "f4cfs", f4cfs)
-Δw = load("experiments/saved/laplacian-w11.jld", "Lw11")
-bihar = load("experiments/saved/biharmonic.jld", "bihar")
+S = D(a, b)
+d = load("experiments/saved/clenshawmats-11.jld")
+resize!(S.DT, length(d["DT"])); S.DT[:] = d["DT"]
+resize!(S.A, length(d["A"])); S.A[:] = d["A"]
+resize!(S.B, length(d["B"])); S.B[:] = d["B"]
+resize!(S.C, length(d["C"])); S.C[:] = d["C"]
+S
 errfuncfs = load("experiments/saved/errfuncfs.jld", "erfuncfs")
 errfuncfs22 = load("experiments/saved/errfuncfs-22.jld", "erfuncfs22")
 f4cfs = load("experiments/saved/f4cfs.jld", "f4cfs")
-D = HalfDiskFamily()
-    d = load("experiments/saved/halfdiskspace22.jld")
-    S = D(2.0, 2.0)
-    resize!(S.A, length(d["A"]))
-    S.A[:] = sparse.(d["A"][:])
-    resize!(S.B, length(d["B"]))
-    S.B[:] = sparse.(d["B"][:])
-    resize!(S.C, length(d["C"])+1)
-    S.C[2:end] = sparse.(d["C"][:])
-    resize!(S.DT, length(d["DT"]))
-    S.DT[:] = sparse.(d["DT"][:])
-    resize!(S.opnorms, length(d["opnorms"]))
-    S.opnorms[:] = d["opnorms"][:]
-    d = load("experiments/saved/halfdiskspace11.jld")
-    S = D(1.0, 1.0)
-    resize!(S.A, length(d["A"]))
-    S.A[:] = d["A"][:]
-    resize!(S.B, length(d["B"]))
-    S.B[:] = d["B"][:]
-    resize!(S.C, length(d["C"]))
-    S.C[:] = d["C"][:]
-    resize!(S.DT, length(d["DT"]))
-    S.DT[:] = d["DT"][:]
-    resize!(S.opnorms, length(d["opnorms"]))
-    S.opnorms[:] = d["opnorms"][:]
-d = load("experiments/saved/Hfamily-11p5.jld")
-    H = D.H(B(1.0),B(1.5)); P = D.P(B(1.0),B(1.0))
-    resize!(H.a, length(d["Ha"]))
-    H.a[:] = d["Ha"][:]
-    resize!(H.b, length(d["Hb"]))
-    H.b[:] = d["Hb"][:]
-    d = load("experiments/saved/Pfamily-11.jld")
-    resize!(P.a, length(d["Pa"]))
-    P.a[:] = d["Pa"][:]
-    resize!(P.b, length(d["Pb"]))
-    P.b[:] = d["Pb"][:]
-    # x * P[n](x) == (b[n] * P[n+1](x) + a[n] * P[n](x) + b[n-1] * P[n-1](x))
-    # => P[n+1](x) == 1/b[n] * (x * P[n](x) - a[n] * P[n](x) - b[n-1] * P[n-1](x))
-    resize!(H.ops, 2)
-    n = length(H.a)
-    w = H.weight
-    x = Fun(identity, domain(w))
-    H.ops[1] = Fun(1/sqrt(sum(w)),space(x)); H.ops[2] = ((x - H.a[1]) * H.ops[1]) / H.b[1]
-    for k = 2:n
-        p = ((x - H.a[k]) * H.ops[2] - H.b[k-1] * H.ops[1]) / H.b[k]
-        H.ops[1] = H.ops[2]
-        H.ops[2] = p
-    end
-    resize!(P.ops, 2)
-    n = length(P.a)
-    w = P.weight
-    x = Fun(identity, domain(w))
-    P.ops[1] = Fun(1/sqrt(sum(w)),space(x)); P.ops[2] = ((x - P.a[1]) * P.ops[1]) / P.b[1]
-    for k = 2:n
-        p = ((x - P.a[k]) * P.ops[2] - P.b[k-1] * P.ops[1]) / P.b[k]
-        P.ops[1] = P.ops[2]
-        P.ops[2] = p
-    end
-    S
-
-
-N = 200
-S
-Δw = laplaceoperator(S, S, N, weighted=true, square=true)
-bihar = biharmonicoperator(D(2.0,2.0), N, square=true)
-# save("experiments/saved/laplacian-w11-array.jld", "Lw11", sparse(Δw))
-# save("experiments/saved/biharmonic-array.jld", "bihar", sparse(bihar))
 Δw = load("experiments/saved/laplacian-w11-array.jld", "Lw11")
 bihar = load("experiments/saved/biharmonic-array.jld", "bihar")
-
-H = D.H
-    jldopen("experiments/saved/Hspaces-dict.jld", "w") do file
-    end
-    paramslist = Vector{NTuple}()
-    n = 1
-    for params in keys(H.spaces)
-        stra = "a" * string(params[1])
-        stra *= "-" * string(params[2])
-        strb = "b" * string(params[1])
-        strb *= "-" * string(params[2])
-        jldopen("experiments/saved/Hspaces-dict.jld", "r+") do file
-            write(file, stra, H(params...).a)
-            write(file, strb, H(params...).b)
-        end
-        resize!(paramslist, n); paramslist[n] = params
-        global n += 1
-    end
-    jldopen("experiments/saved/Hspaces-dict.jld", "r+") do file
-        write(file, "params", paramslist)
-    end
-P = D.P
-    jldopen("experiments/saved/Pspaces-dict.jld", "w") do file
-    end
-    paramslist = Vector{NTuple}()
-    n = 1
-    for params in keys(P.spaces)
-        stra = "a" * string(params[1])
-        stra *= "-" * string(params[2])
-        strb = "b" * string(params[1])
-        strb *= "-" * string(params[2])
-        strparams = string(params[1])
-        strparams *= "-" * string(params[2])
-        jldopen("experiments/saved/Pspaces-dict.jld", "r+") do file
-            write(file, stra, P(params...).a)
-            write(file, strb, P(params...).b)
-        end
-        resize!(paramslist, n); paramslist[n] = params
-        global n += 1
-    end
-    jldopen("experiments/saved/Pspaces-dict.jld", "r+") do file
-        write(file, "params", paramslist)
-    end
-
-# D = HalfDiskFamily()
-#     d = load("experiments/saved/Hspaces-dict.jld")
-#     paramslist = d["params"]
-#     for params in paramslist
-#         stra = "a" * string(params[1])
-#         stra *= "-" * string(params[2])
-#         strb = "b" * string(params[1])
-#         strb *= "-" * string(params[2])
-#         H = DD.H(B(params[1]),B(params[2]))
-#         resize!(H.a, length(d[stra]))
-#         H.a[:] = d[stra][:]
-#         resize!(H.b, length(d[strb]))
-#         H.b[:] = d[strb][:]
-#     end
-#     d = load("experiments/saved/Pspaces-dict.jld")
-#     paramslist = d["params"]
-#     for params in paramslist
-#         stra = "a" * string(params[1])
-#         stra *= "-" * string(params[2])
-#         strb = "b" * string(params[1])
-#         strb *= "-" * string(params[2])
-#         H = D.P(B(params[1]),B(params[2]))
-#         resize!(P.a, length(d[stra]))
-#         P.a[:] = d[stra][:]
-#         resize!(P.b, length(d[strb]))
-#         P.b[:] = d[strb][:]
-#     end
-#     D
-
-
+D
 
 
 
@@ -216,16 +163,17 @@ PyPlot.clf()
     PyPlot.axis(xmin=0, xmax=maxm, ymin=maxm, ymax=0)
     savefig("experiments/images/sparsityofbiharmonic.pdf")
 PyPlot.clf()
-    N = 25
-    k = 200
-    DD = HalfDiskFamily(); v = Fun((x,y)->(1 - (3(x-1)^2 + 5y^2)), DD(0.0, 0.0))
-    V = operatorclenshaw(v, D(0.0, 0.0), N+3)
-    T = transformparamsoperator(D(0.0, 0.0), S, N+3)
-    Tw = transformparamsoperator(S, D(0.0, 0.0), N, weighted=true)
-    A = Δw[1:getopindex(N,N), 1:getopindex(N,N)] + (k^2 * T * V * Tw)[1:getopindex(N,N), 1:getopindex(N,N)]
+    # N = 25
+    # k = 200
+    # v = Fun((x,y)->(1 - (3(x-1)^2 + 5y^2)), S); V = operatorclenshaw(v, S, N+3)
+    # T = transformparamsoperator(D(0.0, 0.0), S, N+3)
+    # Tw = transformparamsoperator(S, D(0.0, 0.0), N, weighted=true)
+    # A = sparse(Δw[1:getopindex(N,N), 1:getopindex(N,N)]) + k^2 * (V * sparse(T) * sparse(Tw))[1:getopindex(N,N), 1:getopindex(N,N)]
+    # save("experiments/saved/helmholtz-array-sparsity.jld", "A", A)
+    A = load("experiments/saved/helmholtz-array-sparsity.jld", "A")
     PyPlot.spy(Array(sparse(A[1:maxm, 1:maxm])))
     PyPlot.axis(xmin=0, xmax=maxm, ymin=maxm, ymax=0)
-    savefig("experiments/images/sparsityofhelmholtz.pdf")
+    PyPlot.savefig("experiments/images/sparsityofhelmholtz.pdf")
 
 #=
 Examples
@@ -259,33 +207,23 @@ PyPlot.clf()
 w, h = plt[:figaspect](2.0)
 PyPlot.figure(figsize=(w,h))
 PyPlot.pcolor(x, y, sln)
-savefig("experiments/images/solution-poisson.pdf")
+savefig("experiments/images/solution-poisson.png")
 #=
 Variable coefficient Helmholtz
 Solution of Δu + k²vu = f
 =#
-N = 100
-k = 200
-# f = Fun((x,y)->exp(x)*x*y, S, N*(N+1))
-# DD = HalfDiskFamily(); v = Fun((x,y)->(1 - (3(x-1)^2 + 5y^2)), DD(0.0, 0.0))
-# V = operatorclenshaw(v, D(0.0, 0.0), N+3)
-# T = transformparamsoperator(D(0.0, 0.0), S, N+3)
-# Tw = transformparamsoperator(S, D(0.0, 0.0), N, weighted=true)
-# save("experiments/saved/helmholtz.jld", "fcfs", f.coefficients, "T", T, "Tw", Tw)
-# save("experiments/saved/helmholtz-V.jld", "V", V)
-# fcfs = load("experiments/saved/helmholtz.jld", "fcfs")
-# T = load("experiments/saved/helmholtz.jld", "T")
-# Tw = load("experiments/saved/helmholtz.jld", "Tw")
-# V = load("experiments/saved/helmholtz-V.jld", "V")
-# (k^2 * sparse(T) * V * sparse(Tw))[1:getopindex(N,N), 1:getopindex(N,N)]
-# A = (sparse(Δw[1:getopindex(N,N), 1:getopindex(N,N)])
-#         + (k^2 * sparse(T) * V * sparse(Tw))[1:getopindex(N,N), 1:getopindex(N,N)])
-# save("experiments/saved/helmholtz-operator-N=100.jld", "A", A)
-# A = load("experiments/saved/helmholtz-operator-N=100.jld", "A")
-# u = Fun(S, A \ fcfs)
-# save("experiments/saved/helmholtz-ucfs-N=100.jld", "ucfs", u.coefficients)
-ucfs = load("experiments/saved/helmholtz-ucfs-N=100.jld", "ucfs")
-u = Fun(S, ucfs)
+N = 197
+k = 100
+S = D(1.0, 1.0)
+f = Fun((x,y)->exp(x)*x*(1-x^2-y^2), S); resizecoeffs!(f, N)
+fcfs = f.coefficients
+v = Fun((x,y)->(1 - (3(x-1)^2 + 5y^2)), S); V = operatorclenshaw(v, S, N+3)
+T = transformparamsoperator(D(0.0, 0.0), S, N+3)
+Tw = transformparamsoperator(S, D(0.0, 0.0), N, weighted=true)
+A = sparse(Δw[1:getopindex(N,N), 1:getopindex(N,N)]) + k^2 * (V * sparse(T) * sparse(Tw))[1:getopindex(N,N), 1:getopindex(N,N)]
+u = Fun(S, A \ fcfs); ucfs = PseudoBlockArray(u.coefficients, [i+1 for i=0:N])
+ucfs
+unorms = [norm(view(ucfs, Block(i+1))) for i = 0:N]
 # Create arrays of (x,y) points
 n = 1500
 x = LinRange(0, 1, n)
@@ -298,11 +236,13 @@ for i = 1:length(x)
     end
     @show i
 end
+sln
 PyPlot.clf()
-w, h = plt[:figaspect](2.0)
+w, h = PyPlot.figaspect(2.0)
 PyPlot.figure(figsize=(w,h))
 PyPlot.pcolor(x, y, sln)
-PyPlot.savefig("experiments/images/solution-helmholtz.pdf")
+PyPlot.savefig("experiments/images/solution-helmholtz-k=$k-n=$n.png") # Convert to png to pdf
+
 #=
 Biharmonic
 Solution of Δ²u = f, where f(x,y) = 1 + erf(5(1 - 10((x - 0.5)^2 + (y)^2)))
@@ -325,7 +265,7 @@ PyPlot.clf()
 w, h = plt[:figaspect](2.0)
 PyPlot.figure(figsize=(w,h))
 PyPlot.pcolor(x, y, sln)
-PyPlot.savefig("experiments/images/solution-biharmonic.pdf")
+PyPlot.savefig("experiments/images/solution-biharmonic.png")
 
 
 #=
@@ -375,17 +315,16 @@ Plots.ylabel!("Norm")
 Plots.savefig("experiments/images/solutionblocknorms-poisson.pdf")
 
 # solutionblocknorms - helmholtz
-N = 100
-k = 50
+N = 197
+k = 20
 S = D(1.0, 1.0)
-# DD = HalfDiskFamily(); v = Fun((x,y)->(1 - (3(x-1)^2 + 5y^2)), DD(0.0, 0.0))
-V = load("experiments/saved/helmholtz-V.jld", "V")
+v = Fun((x,y)->(1 - (3(x-1)^2 + 5y^2)), S); V = operatorclenshaw(v, S, N+3)
 T = transformparamsoperator(D(0.0, 0.0), S, N+3)
 Tw = transformparamsoperator(S, D(0.0, 0.0), N, weighted=true)
-A = sparse(Δw[1:getopindex(N,N), 1:getopindex(N,N)] + (k^2 * sparse(T) * V * sparse(Tw))[1:getopindex(N,N), 1:getopindex(N,N)])
-f1 = Fun((x,y)->1.0, S)
-f2 = Fun((x,y)->y^2 - 1, S)
-f3 = Fun((x,y)->x^2*(1-x^2-y^2)^2, S)
+A = sparse(Δw[1:getopindex(N,N), 1:getopindex(N,N)]) + k^2 * (V * sparse(T) * sparse(Tw))[1:getopindex(N,N), 1:getopindex(N,N)]
+f1 = Fun((x,y)->1.0, S); 1.0
+f2 = Fun((x,y)->y^2 - 1, S); 1.0
+f3 = Fun((x,y)->x^2*(1-x^2-y^2)^2, S); 1.0
 f4cfs = load("experiments/saved/f4cfs.jld", "f4cfs")
 u1norms, u2norms, u3norms, u4norms = getsolutionblocknorms(N, S, A, resizecoeffs!(f1, N),
                 resizecoeffs!(f2, N), resizecoeffs!(f3, N), f4cfs[1:sum(1:N+1)])
@@ -399,7 +338,7 @@ Plots.ylabel!("Norm")
 Plots.savefig("experiments/images/solutionblocknorms-helmholtz-k=$k.pdf")
 
 # solutionblocknorms - biharmonic
-N = nblocks(bihar)[1] - 1
+N = 200
 S = D(2.0, 2.0)
 f1 = Fun((x,y)->1.0, S)
 f2 = Fun((x,y)->y^2 - 1, S)

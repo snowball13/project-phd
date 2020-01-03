@@ -374,49 +374,72 @@ PyPlot.savefig("experiments/images/solution-biharmonic-diskslice-alpha=$α-beta=
 #=
 Plotting the norms of each block of coeffs for solutions for different RHSs
 =#
-function getsolutionblocknorms(N, S, A, f1, f2, f3, f4)
+function getsolutionblocknorms(N, S, A, f1, f2, f3)#, f4)
     u1 = Fun(S, sparse(A) \ f1)
+    @show "1"
     u2 = Fun(S, sparse(A) \ f2)
+    @show "2"
     u3 = Fun(S, sparse(A) \ f3)
-    u4 = Fun(S, sparse(A) \ f4)
+    @show "3"
+    #u4 = Fun(S, sparse(A) \ f4)
     u1coeffs = PseudoBlockArray(u1.coefficients, [i+1 for i=0:N])
     u2coeffs = PseudoBlockArray(u2.coefficients, [i+1 for i=0:N])
     u3coeffs = PseudoBlockArray(u3.coefficients, [i+1 for i=0:N])
-    u4coeffs = PseudoBlockArray(u4.coefficients, [i+1 for i=0:N])
+    #u4coeffs = PseudoBlockArray(u4.coefficients, [i+1 for i=0:N])
     u1norms = zeros(N+1)
     u2norms = zeros(N+1)
     u3norms = zeros(N+1)
-    u4norms = zeros(N+1)
+    #u4norms = zeros(N+1)
     for i = 1:N+1
         u1norms[i] = norm(view(u1coeffs, Block(i)))
         u2norms[i] = norm(view(u2coeffs, Block(i)))
         u3norms[i] = norm(view(u3coeffs, Block(i)))
-        u4norms[i] = norm(view(u4coeffs, Block(i)))
+        #u4norms[i] = norm(view(u4coeffs, Block(i)))
     end
-    u1norms, u2norms, u3norms, u4norms
+    u1norms, u2norms, u3norms#, u4norms
 end
 
 # solutionblocknorms - poisson
 N = nblocks(Δw)[1] - 1
+N = 310
 S
-f1 = Fun((x,y)->1.0, S); 1.0
-f2 = Fun((x,y)->y^2 - 1, S); 1.0
-f3 = Fun((x,y)->weight(S, x, y)^3, S, 300); f3.coefficients
-f4 = Fun((x,y)->exp(-1000((x-0.5)^2+(y-0.5)^2)), S, 2*getopindex(N,N)); f4.coefficients
+f1 = Fun((x,y)->1.0, S); f1.coefficients
+f2 = Fun((x,y)->(1 - D.α^2 - y^2)*(1 - D.β^2 - y^2), S); f2.coefficients
+f3 = Fun((x,y)->weight(S, x, y)^3, S); f3.coefficients
+u1norms, u2norms, u3norms = getsolutionblocknorms(N, S, sparse(Δw)[1:getopindex(N,N), 1:getopindex(N,N)], resizecoeffs!(f1, N),
+                resizecoeffs!(f2, N), resizecoeffs!(f3, N))
+# save("experiments/saved/solutionblocknorms-diskslice-alpha=$α-beta=$β-u1norms-N=$N.jld", "u1norms", u1norms)
+# save("experiments/saved/solutionblocknorms-diskslice-alpha=$α-beta=$β-u2norms-N=$N.jld", "u2norms", u2norms)
+# save("experiments/saved/solutionblocknorms-diskslice-alpha=$α-beta=$β-u3norms-N=$N.jld", "u3norms", u3norms)
+u1norms = load("experiments/saved/solutionblocknorms-diskslice-alpha=$α-beta=$β-u1norms-N=$N.jld", "u1norms")
+u2norms = load("experiments/saved/solutionblocknorms-diskslice-alpha=$α-beta=$β-u2norms-N=$N.jld", "u2norms")
+u3norms = load("experiments/saved/solutionblocknorms-diskslice-alpha=$α-beta=$β-u3norms-N=$N.jld", "u3norms")
+# f4 = Fun((x,y)->exp(-1000((x-0.5)^2+(y-0.5)^2)), S, 20000); f4.coefficients
 # f4cfs = f4.coefficients[1:getopindex(N,N)]
 # save("experiments/saved/solutionblocknorms-diskslice-alpha=$α-beta=$β-f4cfs.jld", "f4cfs", f4cfs)
 f4cfs = load("experiments/saved/solutionblocknorms-diskslice-alpha=$α-beta=$β-f4cfs.jld", "f4cfs")
 mm = length(f4cfs); resize!(f4cfs, sum(1:N+1)); f4cfs[mm+1:end] .= 0.0
-u1norms, u2norms, u3norms, u4norms = getsolutionblocknorms(N, S, Δw, resizecoeffs!(f1, N),
-                resizecoeffs!(f2, N), resizecoeffs!(f3, N), f4cfs)
+u4 = Fun(S, sparse(Δw)[1:getopindex(N,N), 1:getopindex(N,N)] \ f4cfs); u4.coefficients
+u4coeffs = PseudoBlockArray(u4.coefficients, [i+1 for i=0:N])
+u4norms = zeros(N+1)
+for i = 1:N+1
+    u4norms[i] = norm(view(u4coeffs, Block(i)))
+end
+u1norms[1:400]
+u1norms
+
 using Plots
 Plots.plot(u1norms, line=(3, :solid), label="f(x,y) = 1", xscale=:log10, yscale=:log10, legend=:bottomleft)
-Plots.plot!(u2norms, line=(3, :dash), label="f(x,y) = y^2 - 1")
+Plots.plot!(u2norms, line=(3, :dash), label="f(x,y) = (1 - alpha^2 - y^2)(1 - beta^2 - y^2)")
 Plots.plot!(u3norms, line=(3, :dashdot), label="f(x,y) = W{(1,1,1)}^3")
 Plots.plot!(u4norms, line=(3, :dot), label = "f(x,y) = exp(-1000((x-0.5)^2+(y-0.5)^2))")
 Plots.xlabel!("Block")
 Plots.ylabel!("Norm")
 Plots.savefig("experiments/images/solutionblocknorms-poisson-diskslice-alpha=$α-beta=$β-N=$N.pdf")
+
+AA = sparse(Δw[1:48516, 1:48516]); 1.0
+maximum(abs.((AA - Δwsmall)[1:20000, 1:20000]))
+Δwsmall = load("experiments/saved/laplacian-w11-array-diskslice-alpha=$α-beta=$β-N=310.jld", "Lw11")
 
 # solutionblocknorms - helmholtz
 N = 196
@@ -618,21 +641,39 @@ end
 # Recall that in D.R, the parameter c is already halved (as the weight factor is ρ^2)
 # DISK SLICE
 
+B = BigFloat
 α, β = 0.2, 0.8
-D = DiskSliceFamily(α, β)
-a, b, c = 1.0, 1.0, 1.0
-S = D(a, b, c)
-x, y = 0.4, -0.765; z = [x; y]
+    D = DiskSliceFamily(α, β)
+    a, b, c = 1.0, 1.0, 1.0
+    S = D(a, b, c)
+    x, y = 0.4, -0.765; z = [x; y]
+    D
 getreccoeffsR(D)
 getreccoeffsP(D)
 
-partialoperatorx(OrthogonalPolynomialFamilies.differentiateweightedspacex(S), 900)
-weightedpartialoperatorx(S, 900)
-# Do transformparamsoperator fucns!!!!!!!!!
-D
+Δw = load("experiments/saved/diskslice-alpha=0.2-beta=0.8-laplace-mat-squaresparse-N=990.jld", "Lw11")
 
-Δw = laplaceoperator(S, S, 990; weighted=true)
-D
+A = load("experiments/saved/diskslice-alpha=0.2-beta=0.8-laplace-mat-A-N=990.jld", "A")
+
+N = 990
+Asmall = sparse(A)[1:getopindex(N,N), 1:getopindex(N,N)]
+ff = Fun((x,y)->y*cos(x), differentiateweightedspacex(S)); ff.coefficients
+cfs = Asmall * resizecoeffs!(ff, N)
+maximum(abs.(cfs[935:940]))
+cfs[900:950]
+ffdx = Fun(S, cfs[1:1000])
+ffdx(z) + y * sin(x)
+
+DD = DiskSliceFamily()
+SS = DD(1.0, 1.0)
+f = Fun((x,y)->y*cos(x), differentiateweightedspacex(SS)); f.coefficients
+f.coefficients
+N = 200
+partialoperatorx(differentiateweightedspacex(SS), N+2)
+
+
+
+
 
 function getreccoeffsP(D::DiskSliceFamily)
     B = BigFloat
@@ -643,11 +684,11 @@ function getreccoeffsP(D::DiskSliceFamily)
         P = D.P(B(c), B(c))
         resize!(P.a, N); resize!(P.b, N)
         if c == 0.0
-            P.a[:] = load("experiments/saved/diskslice-alpha=$α-beta=$β-P00-rec-coeffs-a-N=1000.jld", "a")[1:N]
-            P.b[:] = load("experiments/saved/diskslice-alpha=$α-beta=$β-P00-rec-coeffs-b-N=1000.jld", "b")[1:N]
+            P.a[:] = load("experiments/saved/diskslice-alpha=$α-beta=$β-P00-rec-coeffs-a-N=1000-BF.jld", "a")[1:N]
+            P.b[:] = load("experiments/saved/diskslice-alpha=$α-beta=$β-P00-rec-coeffs-b-N=1000-BF.jld", "b")[1:N]
         else
-            P.a[:] = load("experiments/saved/diskslice-alpha=$α-beta=$β-P11-rec-coeffs-a-N=1000.jld", "a")[1:N]
-            P.b[:] = load("experiments/saved/diskslice-alpha=$α-beta=$β-P11-rec-coeffs-b-N=1000.jld", "b")[1:N]
+            P.a[:] = load("experiments/saved/diskslice-alpha=$α-beta=$β-P11-rec-coeffs-a-N=1000-BF.jld", "a")[1:N]
+            P.b[:] = load("experiments/saved/diskslice-alpha=$α-beta=$β-P11-rec-coeffs-b-N=1000-BF.jld", "b")[1:N]
         end
         resize!(P.ops, 2); resize!(P.weight, 1)
         P.weight[1] = prod(P.family.factors.^(P.params))
@@ -661,34 +702,37 @@ function getreccoeffsP(D::DiskSliceFamily)
             P.ops[2] = v / P.b[k]
         end
     end
+    D
 end
-
-
 function getreccoeffsR(D::DiskSliceFamily)
     R = D.R
     B = BigFloat
-    X = Fun(B(D.α)..D.β)
+    # setprecision(800)
+    α, β = D.α, D.β
+    X = Fun(B(α)..β)
     R̃ = OrthogonalPolynomialFamily(β-X, X-α, 1-X, 1+X)
     abvec = ((0.0, 0.0), (1.0, 1.0))
     for ab in abvec
-        a, b = ab
         N = 2000
+        a, b = ab
+        R00 = R(B(a), B(b), B(0.5))
+        resize!(R00.a, N+1); resize!(R00.b, N+1)
+        if a == 0.0
+            R00.a[:] = load("experiments/saved/diskslice-alpha=$α-beta=$β-R000p5-rec-coeffs-a-N=2003-BF.jld", "a")[1:N+1]
+            R00.b[:] = load("experiments/saved/diskslice-alpha=$α-beta=$β-R000p5-rec-coeffs-b-N=2003-BF.jld", "b")[1:N+1]
+        elseif a == 1.0
+            R00.a[:] = load("experiments/saved/diskslice-alpha=$α-beta=$β-R110p5-rec-coeffs-a-N=2003-BF.jld", "a")[1:N+1]
+            R00.b[:] = load("experiments/saved/diskslice-alpha=$α-beta=$β-R110p5-rec-coeffs-b-N=2003-BF.jld", "b")[1:N+1]
+        else
+            @show "cant do"
+        end
         for k = 0:(Int(N/2)-1)
-            R00 = R(B(a), B(b), B(0.5)+k)
-            if k == 0
-                resize!(R00.a, N+1); resize!(R00.b, N+1)
-                if a == 0.0
-                    R00.a[:] = load("experiments/saved/diskslice-alpha=$α-beta=$β-R000p5-rec-coeffs-a-N=2003.jld", "a")[1:N+1]
-                    R00.b[:] = load("experiments/saved/diskslice-alpha=$α-beta=$β-R000p5-rec-coeffs-b-N=2003.jld", "b")[1:N+1]
-                elseif a == 1.0
-                    R00.a[:] = load("experiments/saved/diskslice-alpha=$α-beta=$β-R110p5-rec-coeffs-a-N=2003.jld", "a")[1:N+1]
-                    R00.b[:] = load("experiments/saved/diskslice-alpha=$α-beta=$β-R110p5-rec-coeffs-b-N=2003.jld", "b")[1:N+1]
-                else
-                    @show "cant do"
-                end
+            if k % 100 == 0
+                @show k
             end
             # interim coeffs
-            chivec = zeros(N+1)
+            R00 = R(B(a), B(b), B(0.5)+k)
+            chivec = zeros(B, N+1)
             pt = 1.0
             n = 0
             chivec[n+1] = (pt - R00.a[n+1]) / R00.b[n+1]
@@ -701,7 +745,7 @@ function getreccoeffsR(D::DiskSliceFamily)
             R10.b[n+1] = (R00.b[n+1]
                             * sqrt(pt - R00.a[n+2] - R00.b[n+1] / chivec[n+1])
                             / sqrt(pt - R00.a[n+1]))
-            R10.a[n+1] = R00.a[n+1] - (R00.b[n+1] / chivec[n+1])
+            R10.a[n+1] = B(R00.a[n+1]) - (R00.b[n+1] / chivec[n+1])
             for n = 1:N-1
                 R10.b[n+1] = (R00.b[n+1]
                                 * sqrt(pt - R00.a[n+2] - R00.b[n+1] / chivec[n+1])
@@ -709,7 +753,7 @@ function getreccoeffsR(D::DiskSliceFamily)
                 R10.a[n+1] = R00.a[n+1] + (R00.b[n] / chivec[n]) - (R00.b[n+1] / chivec[n+1])
             end
             # wanted coeffs
-            chivec = zeros(N)
+            chivec = zeros(B, N)
             pt = -1.0
             n = 0
             chivec[n+1] = (pt - R10.a[n+1]) / R10.b[n+1]
@@ -732,23 +776,53 @@ function getreccoeffsR(D::DiskSliceFamily)
             N = N - 2
         end
     end
+    # setprecision(256)
+    D
 end
 
-S
-
-
-# B = BigFloat
-# setprecision(800)
+#
+# # Laplacian for N = 990
+# N = 990
 # α, β = 0.2, 0.8
+#     D = DiskSliceFamily(α, β)
+#     a, b, c = 1.0, 1.0, 1.0
+#     S = D(a, b, c)
+#     x, y = 0.4, -0.765; z = [x; y]
+#     getreccoeffsR(D)
+#     getreccoeffsP(D)
+# D
+# A = partialoperatorx(differentiateweightedspacex(S), N+D.nparams)
+# save("experiments/saved/diskslice-alpha=0.2-beta=0.8-laplace-mat-A-N=990.jld", "A", A)
+# @show "laplaceoperator", "1 of 6 done"
+# B = weightedpartialoperatorx(S, N)
+# save("experiments/saved/diskslice-alpha=0.2-beta=0.8-laplace-mat-B-N=990.jld", "B", B)
+# @show "laplaceoperator", "2 of 6 done"
+# C = transformparamsoperator(differentiatespacey(D(S.params .- 1)), S, N+D.nparams-1)
+# save("experiments/saved/diskslice-alpha=0.2-beta=0.8-laplace-mat-C-N=990.jld", "C", C)
+# @show "laplaceoperator", "3 of 6 done"
+# E = partialoperatory(D(S.params .- 1), N+D.nparams)
+# save("experiments/saved/diskslice-alpha=0.2-beta=0.8-laplace-mat-E-N=990.jld", "E", E)
+# @show "laplaceoperator", "4 of 6 done"
+# F = transformparamsoperator(differentiateweightedspacey(S), D(S.params .- 1), N+1, weighted=true)
+# save("experiments/saved/diskslice-alpha=0.2-beta=0.8-laplace-mat-F-N=990.jld", "F", F)
+# @show "laplaceoperator", "5 of 6 done"
+# G = weightedpartialoperatory(S, N)
+# save("experiments/saved/diskslice-alpha=0.2-beta=0.8-laplace-mat-G-N=990.jld", "G", G)
+# @show "laplaceoperator", "6 of 6 done"
+# L1 = A * B
+# L2 = sparse(C) * sparse(E) * sparse(F) * sparse(G)
+# L = sparse(L1) + L2
+# save("experiments/saved/diskslice-alpha=0.2-beta=0.8-laplace-mat-nonsquaresparse-N=990.jld", "L", L)
+# # L = load("experiments/saved/diskslice-alpha=0.2-beta=0.8-laplace-mat-nonsquaresparse-N=990.jld", "L")
+# m = sum(1:(N+1))
+# Δw = BandedBlockBandedMatrix(L[1:m, 1:m], (1:N+1, 1:N+1), (2,2), (2,2))
+# save("experiments/saved/diskslice-alpha=0.2-beta=0.8-laplace-mat-squaresparse-N=990.jld", "Lw11", sparse(Δw))
+# save("experiments/saved/diskslice-alpha=0.2-beta=0.8-laplace-mat-square-N=990.jld", "Lw11", Δw)
+#
+#
+
+
 # D = DiskSliceFamily(α, β)
-# a, b, c = 1.0, 1.0, 1.0
-# S = D(a, b, c)
-# x, y = 0.4, -0.765; z = [x; y]
-#
-# R = D.R
-# X = Fun(B(α)..β)
-# R̃ = OrthogonalPolynomialFamily(β-X, X-α, 1-X, 1+X)
-#
 #
 # B = BigFloat
 # N = 1000
@@ -758,49 +832,35 @@ S
 # OrthogonalPolynomialFamilies.resizedata!(P0, N)
 # OrthogonalPolynomialFamilies.resizedata!(P1, N)
 # setprecision(prec)
-# save("experiments/saved/diskslice-alpha=$α-beta=$β-P00-rec-coeffs-a-N=1000.jld", "a", P0.a)
-# save("experiments/saved/diskslice-alpha=$α-beta=$β-P00-rec-coeffs-b-N=1000.jld", "b", P0.b)
-# save("experiments/saved/diskslice-alpha=$α-beta=$β-P11-rec-coeffs-a-N=1000.jld", "a", P1.a)
-# save("experiments/saved/diskslice-alpha=$α-beta=$β-P11-rec-coeffs-b-N=1000.jld", "b", P1.b)
-
-
+# save("experiments/saved/diskslice-alpha=$α-beta=$β-P00-rec-coeffs-a-N=1000-BF.jld", "a", P0.a)
+# save("experiments/saved/diskslice-alpha=$α-beta=$β-P00-rec-coeffs-b-N=1000-BF.jld", "b", P0.b)
+# save("experiments/saved/diskslice-alpha=$α-beta=$β-P11-rec-coeffs-a-N=1000-BF.jld", "a", P1.a)
+# save("experiments/saved/diskslice-alpha=$α-beta=$β-P11-rec-coeffs-b-N=1000-BF.jld", "b", P1.b)
+#
+#
 # N = 2003
 # @show "begin initialisation"
-# R00 = R(B(1.0), B(1.0), B(0.5))
+# R00 = D.R(B(1.0), B(1.0), B(0.5))
 # OrthogonalPolynomialFamilies.resizedata!(R00, N+1)
 # # xx = Fun(identity, domain(R00.weight))
 # #     R00.ops[1] = Fun(1/sqrt(sum(R00.weight)),space(x))
 # #     vv = xx * R00.ops[1] - R00.a[1] * R00.ops[1]
 # #     R00.ops[2] = vv / R00.b[1]
 # #     for k = 2:1954
-# #         @show k
 # #         vv = xx * R00.ops[2] - R00.b[k-1] * R00.ops[1] - R00.a[k] * R00.ops[2]
 # #         R00.ops[1] = R00.ops[2]
 # #         R00.ops[2] = vv / R00.b[k]
 # #     end
-# save("experiments/saved/diskslice-alpha=$α-beta=$β-R110p5-rec-coeffs-a-N=2003.jld", "a", R00.a)
-# save("experiments/saved/diskslice-alpha=$α-beta=$β-R110p5-rec-coeffs-b-N=2003.jld", "b", R00.b)
+# save("experiments/saved/diskslice-alpha=$α-beta=$β-R110p5-rec-coeffs-a-N=2003-BF.jld", "a", R00.a)
+# save("experiments/saved/diskslice-alpha=$α-beta=$β-R110p5-rec-coeffs-b-N=2003-BF.jld", "b", R00.b)
 # @show "end initialisation"
-#
-# B = BigFloat
-# setprecision(800)
-# α, β = 0.2, 0.8
-# D = DiskSliceFamily(α, β)
-# a, b, c = 0.0, 0.0, 0.0
-# S = D(a, b, c)
-# x, y = 0.4, -0.765; z = [x; y]
-#
-# R = D.R
-# X = Fun(B(α)..β)
-# R̃ = OrthogonalPolynomialFamily(β-X, X-α, 1-X, 1+X)
-# #
-# N = 2003
 # @show "begin initialisation"
-# R00 = R(B(0.0), B(0.0), B(0.5))
+# R00 = D.R(B(0.0), B(0.0), B(0.5))
 # OrthogonalPolynomialFamilies.resizedata!(R00, N+1)
-# save("experiments/saved/diskslice-alpha=$α-beta=$β-R000p5-rec-coeffs-a-N=2003.jld", "a", R00.a)
-# save("experiments/saved/diskslice-alpha=$α-beta=$β-R000p5-rec-coeffs-b-N=2003.jld", "b", R00.b)
+# save("experiments/saved/diskslice-alpha=$α-beta=$β-R000p5-rec-coeffs-a-N=2003-BF.jld", "a", R00.a)
+# save("experiments/saved/diskslice-alpha=$α-beta=$β-R000p5-rec-coeffs-b-N=2003-BF.jld", "b", R00.b)
 # @show "end initialisation"
+
 
 # save("experiments/saved/diskslice-alpha=0.2-beta=0.8-H111-clenshawmats.jld",
 #         "DT", S.DT, "A", S.A, "B", S.B, "C", S.C)
