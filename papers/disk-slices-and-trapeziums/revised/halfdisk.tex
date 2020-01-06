@@ -210,6 +210,7 @@
 \newtheorem{definition}{Definition}
 \newtheorem{condition}{Condition}
 \newtheorem{algorithm}{Algorithm}
+\newtheorem{corollary}{Corollary}
 
 \def\condref#1{Condition~\ref{cond:#1}}
 
@@ -265,7 +266,7 @@ $$
 $$
 where $C_{n,k} \neq 0$ and ``lower order terms'' can  include degree $n$ polynomials with fewer $y$ terms. The precise normalization arises from their definition in terms of one-dimensional OPs in Definition~\ref{def:OPconstruction}. 
 
-Sparsity comes from expanding the domain and range of an operator  using different choices of $a$ and $b$. Whereas the sparsity pattern and entries derived in \cite{olver2018recurrence,olver2019triangle} for equations on the triangle  and \cite{vasil2016tensor} for equations on the disk results from manipulations of Jacobi polynomials, in the present work we use a more general integration-by-parts argument to deduce the sparsity structure, alongside quadrature rules\sotodo{Mention Christoffel--Darboux here?} to determine the entries.  In particular, by exploiting the connection with one-dimensional orthogonal polynomials \bstodo{typo 2}we can construct discretizations of general partial differential operators of size $p(p-1)/2 \times p(p-1)/2$ in $O(p^3)$ operations, where $p$ is the total polynomial degree. This compares favourably to $O(p^6)$ operations if one proceeds na\"ively. Furthermore, we use this framework to derive sparse $p$-finite element methods that are analogous to those of Beuchler and Sch\"oberl on tetrahedra \cite{beuchler2006new}, see also work by Li and Shen \cite{li2010optimal}.  
+Sparsity comes from expanding the domain and range of an operator using different choices of $a$ and $b$. Whereas the sparsity pattern and entries derived in \cite{olver2018recurrence,olver2019triangle} for equations on the triangle and \cite{vasil2016tensor} for equations on the disk results from manipulations of Jacobi polynomials, in the present work we use a more general integration-by-parts argument to deduce the sparsity structure, alongside careful use of the Christoffel-Darboux formula \cite[18.2.2]{DLMF} and quadrature rules to determine the entries. In particular, by exploiting the connection with one-dimensional orthogonal polynomials \bstodo{typo 2}we can construct discretizations of general partial differential operators of size $p(p-1)/2 \times p(p-1)/2$ in $O(p^3)$ operations, where $p$ is the total polynomial degree. This compares favourably to $O(p^6)$ operations if one proceeds na\"ively. Furthermore, we use this framework to derive sparse $p$-finite element methods that are analogous to those of Beuchler and Sch\"oberl on tetrahedra \cite{beuchler2006new}, see also work by Li and Shen \cite{li2010optimal}.  
 
 
 %An alternative approach is to use \sotodoinline{Compare with "Discontinuous Galerkin scheme for the spherical shallow water equations with applications to tsunami modeling and prediction"}
@@ -274,9 +275,7 @@ Here is an overview of the paper:
 
 \noindent \secref{OPs}: We present our procedure to gain a (two-parameter) family of 2D orthogonal polynomials (OPs) on the disk-slice domain, by combining 1D OPs on the interval, to form 2D OPs on the disk. 
 
-\noindent\secref{PDOs}: We demonstrate that these families will lead to sparse operators, including Jacobi operators representing multiplication by $x$ and $y$, and partial differential operators.
-
-\sotodoinline{Mention Christoffell--Darboux here}
+\noindent\secref{PDOs}: We demonstrate that these families will lead to sparse operators, including Jacobi operators representing multiplication by $x$ and $y$, and partial differential operators. We present a method involving use of the Christoffel-Darboux formula \cite[18.2.2]{DLMF} to obtain the recurrence coefficients for the non-classical 1D OPs, allowing us to exactly use the 1D quadrature rules we present to calculate the non-zero entries to the sparse operators.
 
 \noindent\secref{Computation}: We discuss computational issues, in particular, how to realise the results of the preceding sections in practice. We present a method for explicitly deriving the recurrence coefficients of the non-classical 1D OPs we detail in \secref{OPs}. We derive a quadrature rule on the disk-slice that can be used to expand a function in the OP basis up to a given order. Further, we implement function evaluation using the coefficients of the expansion of a given function using the Clenshaw algorithm.
 
@@ -862,15 +861,15 @@ The sparsity argument for the weighted parameter transformation operators follow
 
 \begin{figure}[t]
 	\begin{subfigure}{0.32\textwidth}
-	\includegraphics[scale=0.35]{sparsityoflaplacian-w11} %-diskslice-alpha=0p2-beta=0p8}
+	\includegraphics[scale=0.35]{sparsityoflaplacian-w11-diskslice-alpha=0p2-beta=0p8}
         \centering
 	\end{subfigure}
 	\begin{subfigure}{0.32\textwidth}
-	\includegraphics[scale=0.35]{sparsityofhelmholtz} %-diskslice-alpha=0p2-beta=0p8}
+	\includegraphics[scale=0.35]{sparsityofhelmholtz-diskslice-alpha=0p2-beta=0p8}
         \centering
 	\end{subfigure}
 	\begin{subfigure}{0.32\textwidth}
-	\includegraphics[scale=0.35]{sparsityofbiharmonic} %-diskslice-alpha=0p2-beta=0p8}
+	\includegraphics[scale=0.35]{sparsityofbiharmonic-diskslice-alpha=0p2-beta=0p8}
         \centering
 	\end{subfigure}
     	\caption{"Spy" plots of (differential) operator matrices, showing their sparsity. Left: the Laplace operator $\laplacewiii$. Centre: the weighted variable coefficient Helmholtz operator $\laplacewiii + k^2 \: T^{(0,0,0)\to(1,1,1)} \: V({J_x^{(0,0,0)}}^\top, {J_y^{(0,0,0)}}^\top) \: T_W^{(1,1,1)\to(0,0,0)}$ for $v(x,y) = 1 - (3(x-1)^2 + 5y^2)$ and $k = 200$. Right: the biharmonic operator $\biharmonictwo$.}
@@ -912,7 +911,7 @@ In this section we discuss how to take advantage of the proposed basis and spars
 
 %To obtain the recurrence coefficients for the $\{\genjac_n^{(a,b,c)}\}$ OPs in (\ref{eqn:Hrecurrence}), we use a variant of the Stieltjes procedure \cite{gautschi1982generating} where the polynomials are expressed as Chebyshev polynomial expansions and the inner products are calculated via Clenshaw--Curtis quadrature. This has the benefit that it is easier to incorporate high-precision arithmetic, which we use to overcome ill-conditioning present when $c$ is large, as required for large $n$ in \eqref{eq:diskpolys}. The ApproxFun.jl \cite{ApproxFun} package gives a convenient way to manipulate Chebyshev and Jacobi expansions, which we use to calculate the inner products and norms in this algorithm, utilising the {\tt BigFloat} type to handle high-precision calculations.
 
-It is possible to obtain the recurrence coefficients for the $\{\genjac_n^{(a,b,c)}\}$ OPs in (\ref{eqn:Hrecurrence}), by careful application of the Christoffel-Darboux formula \bstodo{Link!!!}. We explain the process here for the disk-slice case, however we note that a similar but simpler argument holds for the trapezium case. We thus first need to define a new set of `interim' 1D OPs.
+It is possible to obtain the recurrence coefficients for the $\{\genjac_n^{(a,b,c)}\}$ OPs in (\ref{eqn:Hrecurrence}), by careful application of the Christoffel-Darboux formula \cite[18.2.12]{DLMF}. We explain the process here for the disk-slice case, however we note that a similar but simpler argument holds for the trapezium case. We thus first need to define a new set of `interim' 1D OPs.
 \begin{definition}\label{def:InterimOPconstruction}
 Let $\genjactw^{(a,b,c,d)}(x) := (\beta - x)^a \: (x - \alpha)^{b} \: (1-x)^{c} \: (1+x)^{d} $ be a weight function on the interval $(\alpha, \beta)$, and define the associated inner product by:
 \begin{align}
@@ -941,12 +940,12 @@ Fix $n,m \in \{0,1,\dots\}$ and without loss of generality, assume $m \le n$. Fi
 \begin{align*}
 	\int_\alpha^\beta \: \genjact_n^{(a,b,c+1,d)}(x) \: \genjact_m^{(a,b,c+1,d)}(x) \: \genjactw^{(a,b,c+1,d)}(x) \: \D x &= \delta_{n,m} \: \normgenjact^{(a,b,c+1,d)}
 \end{align*}
-and define \bstodo{check signs}
+and define
 \begin{align}
 	\mathcal{C}_n^{(a,b,c,d)} &= \fpr(\frac{\normgenjact^{(a,b,c+1,d)}}{\normgenjact^{(a,b,c,d)} \: \genjact_n^{(a,b,c,d)}(1) \: \genjact_{n+1}^{(a,b,c,d)}(1) \: \tilde{\beta}_n^{(a,b,c,d)}})^\half, \label{eqn:genjactnormalisationi} \\
 	\mathcal{D}_n^{(a,b,c,d)} &= (-1)^n \: \fpr(\frac{- \normgenjact^{(a,b,c,d+1)}}{\normgenjact^{(a,b,c,d)} \: \genjact_n^{(a,b,c,d)}(-1) \: \genjact_{n+1}^{(a,b,c,d)}(-1) \: \tilde{\beta}_n^{(a,b,c,d)}})^\half. \label{eqn:genjactnormalisationii}
 \end{align}
-Now, by the Christoffel--Darboux formula \bstodo{cite}, we have that for any $x, y \in \R$,
+Now, by the Christoffel--Darboux formula \cite[18.2.12]{DLMF}, we have that for any $x, y \in \R$,
 \begin{align}
 	\sum_{k=0}^n \: \genjact_{k}^{(a,b,c,d)}(y) \: \genjact_{k}^{(a,b,c,d)}(x) &= \tilde{\beta}_n^{(a,b,c,d)} \: \frac{\genjact_{n}^{(a,b,c,d)}(x) \: \genjact_{n+1}^{(a,b,c,d)}(y) - \genjact_{n+1}^{(a,b,c,d)}(x) \: \genjact_{n}^{(a,b,c,d)}(y)}{y - x}. \label{eqn:christoffeldarboux}
 \end{align}
@@ -1006,10 +1005,28 @@ Next, note that the recurrence coefficients for $\genjact_{n}^{(a,b,c+1,d)}(x)$ 
 We can set $\tilde{\beta}_{-1}^{(a,b,c+1,d)} = 0$. By comparing coefficients of $\genjact_{n+2}^{(a,b,c,d)}(x)$ and $\genjact_{n+1}^{(a,b,c,d)}(x)$ in both (\ref{eqn:genjactproofa}) and (\ref{eqn:genjactproofb}) we obtain the desired recurrence coefficients for the OP $\genjact_{n}^{(a,b,c+1,d)}(x)$. The recurrence coefficients for the OPs $\genjact_{n}^{(a,b,c,d+1)}(x)$ are found similarly.
 \end{proof}
 
+\begin{corollary}
+The recurrence coefficients for the OPs $\{\genjact_n^{(a,b,c+1,d)}\}$ can be written as:
+\begin{align}
+	\tilde{\alpha}_n^{(a,b,c+1,d)} &= \frac{\tilde{\beta}_{n-1}^{(a,b,c,d)}}{\chi_{n-1}^{(a,b,c,d)}(1)} - \frac{\tilde{\beta}_{n}^{(a,b,c,d)}}{\chi_{n}^{(a,b,c,d)}(1)} + \tilde{\alpha}_{n}^{(a,b,c,d)}, \\
+	\tilde{\beta}_n^{(a,b,c+1,d)} &= \fpr(\frac{1 - \tilde{\alpha}_{n+1}^{(a,b,c,d)} - \frac{\tilde{\beta}_n^{(a,b,c,d)}}{\chi_n^{(a,b,c,d)}(1)}}{1 - \tilde{\alpha}_{n}^{(a,b,c,d)} - \frac{\tilde{\beta}_{n-1}^{(a,b,c,d)}}{\chi_{n-1}^{(a,b,c,d)}(1)}})^\half \tilde{\beta}_n^{(a,b,c,d)}.
+\end{align}
+The recurrence coefficients for the OPs $\{\genjact_n^{(a,b,c,d+1)}\}$ can be written as:
+\begin{align}
+	\tilde{\alpha}_n^{(a,b,c,d+1)} &= \frac{\tilde{\beta}_{n-1}^{(a,b,c,d)}}{\chi_{n-1}^{(a,b,c,d)}(-1)} - \frac{\tilde{\beta}_{n}^{(a,b,c,d)}}{\chi_{n}^{(a,b,c,d)}(-1)} + \tilde{\alpha}_{n}^{(a,b,c,d)}, \\
+	\tilde{\beta}_n^{(a,b,c,d+1)} &= \fpr(\frac{- 1 + \tilde{\alpha}_{n+1}^{(a,b,c,d)} + \frac{\tilde{\beta}_n^{(a,b,c,d)}}{\chi_n^{(a,b,c,d)}(-1)}}{- 1 + \tilde{\alpha}_{n}^{(a,b,c,d)} + \frac{\tilde{\beta}_{n-1}^{(a,b,c,d)}}{\chi_{n-1}^{(a,b,c,d)}(-1)}})^\half \tilde{\beta}_n^{(a,b,c,d)}.
+\end{align}
+where 
+\begin{align}
+	\chi_{n}^{(a,b,c,d)}(y) &:= \frac{\genjact_{n+1}^{(a,b,c,d)}(y)}{\genjact_{n}^{(a,b,c,d)}(y)} \\
+	&= \frac{1}{\tilde{\beta}_{n}^{(a,b,c,d)}} \: \fpr(y - \tilde{\alpha}_{n}^{(a,b,c,d)} - \frac{\tilde{\beta}_{n-1}^{(a,b,c,d)}}{\chi_{n-1}^{(a,b,c,d)}(y)}), \quad y \in \{-1,1\}.
+\end{align}
+\end{corollary}
+
 These two propositions allow us to recursively obtain the recurrence coefficients for the OPs $\{\genjac_{n-k}^{(a,b,2c+2k + 1)}\}$ as $k$ increases to be large. 
 
-\noindent{\bf Remark}:  \bstodo{improve this remark}
-This is the most expensive part of the current calculation, in particular the initialisation required (i.e. using the Lanczos algorithm to compute the recurrence coefficients $\{\alpha_{n}^{(a,b,2c+1)}\}$, $\{\beta_{n}^{(a,b,2c+1)}\}$ -- however, we only need to compute these once, and can store and save this initialisation to disk once computed, for the given values of $a, b, c$). Note also that in order to obtain the recurrence coefficients $\{\alpha_{n-k}^{(a,b,2c+2k+1)}\}$, $\{\beta_{n-k}^{(a,b,2c+2k+1)}\}$ for $n = 0,\dots,N$ for some $N$ and $k$, we require that we obtain the recurrence coefficients $\{\alpha_{n}^{(a,b,2c+2(k-1)+1)}\}$, $\{\beta_{n}^{(a,b,2c+2(k-1)+1)}\}$ for $n = 0,\dots,N+3$. Thus, for large $k$, this recursive method of obtaining the recurrence coefficients requires a large initialisation.
+\noindent{\bf Remark}:
+The Corollary demonstrates that in order to obtain the recurrence coefficients $\{\alpha_{m}^{(a,b,2c+2k+1)}\}$, $\{\beta_{m}^{(a,b,2c+2k+1)}\}$ for some $m$ and $k$, we require that we obtain the recurrence coefficients $\{\alpha_{m+2}^{(a,b,2c+2(k-1)+1)}\}$, $\{\beta_{m+2}^{(a,b,2c+2(k-1)+1)}\}$. Thus, for large $N$, this recursive method of obtaining the recurrence coefficients requires a large initialisation (i.e. using the Lanczos algorithm to compute the recurrence coefficients $\{\alpha_{n}^{(a,b,2c+1)}\}$, $\{\beta_{n}^{(a,b,2c+1)}\}$ -- however, we only need to compute these once, and can store and save this initialisation to disk once computed, for the given values of $a, b, c$). 
 %This is the most expensive part of the current calculation, but note that we can reuse this computation for multiple partial differential equations. Efficient construction of OPs with large parameters in the weights is an important topic, but one tangential to the proposed scheme. 
 
 \subsection{Quadrature rule on the disk-slice}
@@ -1122,13 +1139,13 @@ We now demonstrate how the sparse linear systems constructed as above can be use
 % FIGURES
 \begin{figure}[t]
 	\begin{subfigure}{0.3\textwidth}
-	\includegraphics[scale=0.3]{solution-poisson}
+	\includegraphics[scale=0.3]{solution-poisson-diskslice-alpha=0p2-beta=0p8}
 	\centering
 	%\label{fig:solution-poisson}
 	\end{subfigure}
 	\begin{subfigure}{0.5\textwidth}
 	\centering
-	\includegraphics[scale=0.5]{solutionblocknorms-poisson} %-diskslice-alpha=0p2-beta=0p8}
+	\includegraphics[scale=0.5]{solutionblocknorms-poisson-diskslice-alpha=0p2-beta=0p8-N=200}
         	%\label{fig:solutionblocknorms-poisson}
 	\end{subfigure}
 	\caption{Left: The computed solution to $\Delta u = f$ with zero boundary conditions with $f(x,y) = 1 + \text{erf}(5(1 - 10((x - 0.5)^2 + y^2)))$. Right: The norms of each block of the computed solution of the Poisson equation with the given right hand side functions. This demonstrates algebraic convergence with the rate dictated by the decay at the corners, with spectral convergence observed when the right-hand side vanishes to all orders.}
@@ -1139,11 +1156,11 @@ We now demonstrate how the sparse linear systems constructed as above can be use
 \begin{figure}[t]
 	\begin{subfigure}{0.3\textwidth}
 	\centering
-	\includegraphics[scale=0.3]{solution-helmholtz-k=100-n=1500}
+	\includegraphics[scale=0.3]{solution-helmholtz-diskslice-alpha=0p2-beta=0p8-k=100-n=300}
 	%\label{fig:solution-helmholtz}
 	\end{subfigure}
 	\begin{subfigure}{0.5\textwidth}
-	\includegraphics[scale=0.5]{solutionblocknorms-helmholtz-k=20} %-diskslice-alpha=0p2-beta=0p8-N=196-k=20}
+	\includegraphics[scale=0.5]{solutionblocknorms-helmholtz-diskslice-alpha=0p2-beta=0p8-N=196-k=20}
 	\centering
         	%\label{fig:solutionblocknorms-helmholtz}
 	\end{subfigure}
@@ -1155,11 +1172,11 @@ We now demonstrate how the sparse linear systems constructed as above can be use
 \begin{figure}[t]
 	\begin{subfigure}{0.3\textwidth}
 	\centering
-	\includegraphics[scale=0.3]{solution-biharmonic}
+	\includegraphics[scale=0.3]{solution-biharmonic-diskslice-alpha=0p2-beta=0p8}
 	%\label{fig:solution-biharmonic}
 	\end{subfigure}
 	\begin{subfigure}{0.5\textwidth}
-	\includegraphics[scale=0.5]{solutionblocknorms-biharmonic}
+	\includegraphics[scale=0.5]{solutionblocknorms-biharmonic-diskslice-alpha=0p2-beta=0p8-N=200}
 	\centering
         	%\label{fig:solutionblocknorms-biharmonic}
 	\end{subfigure}
@@ -1184,7 +1201,7 @@ We can tackle the problem as follows. Denote the coefficient vector for expansio
     \laplacewiii \mathbf{u} = \mathbf{f}
 \end{align*}
 which can be solved to find $\mathbf{u}$.
-In Figure \ref{fig:poisson} we see the solution to the Poisson equation with zero boundary conditions given in (\ref{eqn:poisson}) in the disk-slice $\Omega$. In Figure \ref{fig:poisson} we also show the norms of each block of calculated coefficients of the approximation for four right-hand sides of the Poisson equation with N = 200, that is, 20,301 unknowns. The rate of decay in the coefficients is a proxy for the rate of convergence of the computed solution. We see that we achieve algebraic convergence for the first three examples, noting that for right hand-sides that vanish at the corners of our disk-slice ($x\in\{\alpha,\beta\}, \: y = \pm \rho(x)$) we observe faster convergence. For the final Gaussian bump example, we see that we achieve spectral convergence.
+In Figure \ref{fig:poisson} we see the solution to the Poisson equation with zero boundary conditions given in (\ref{eqn:poisson}) in the disk-slice $\Omega$. In Figure \ref{fig:poisson} we also show the norms of each block of calculated coefficients of the approximation for four right-hand sides of the Poisson equation with N = 200, that is, 20,301 unknowns. The rate of decay in the coefficients is a proxy for the rate of convergence of the computed solution. We see that we achieve algebraic convergence for the first three examples, noting that for right hand-sides that vanish at the corners of our disk-slice ($x\in\{\alpha,\beta\}, \: y = \pm \rho(x)$) we observe faster convergence. For the final Gaussian bump example, we see that we also achieve algebraic convergence. \bstodoinline{Note that it is no longer correct to say that we achieve spectral convergence for ex 4 for the disk slice. Is there something more we can say? Same goes for the other examples.}
 
 \subsection{Inhomogeneous variable-coefficient Helmholtz}
 
@@ -1237,7 +1254,7 @@ where $\Delta^2$ is the Biharmonic operator, noting the imposition of zero Diric
 \section{Conclusions}
 
 \bstodo{Reviewer 2, comments 2, 3}
-We have shown that bivariate orthogonal polynomials can lead to sparse discretizations of general linear PDEs on specific domains whose boundary is specified by an algebraic curve---notably here the disk-slice---with Dirichlet boundary conditions. \bstodo{Reviewer 1, comment 3} This work is related to the triangle case \cite{olver2019triangle}, where ????. This work forms a building block in developing an $hp-$finite element method to solve PDEs on other polygonal domains by using \bstodo{typo 5}suitably shaped elements, for example, by dividing the disk into disk slice elements. 
+We have shown that bivariate orthogonal polynomials can lead to sparse discretizations of general linear PDEs on specific domains whose boundary is specified by an algebraic curve---notably here the disk-slice---with Dirichlet boundary conditions. \bstodo{Reviewer 1, comment 3} This work is related to the triangle case \cite{olver2019triangle} \bstodoinline{add more here?}, and forms a building block in developing an $hp-$finite element method to solve PDEs on other polygonal domains by using \bstodo{typo 5}suitably shaped elements, for example, by dividing the disk into disk slice elements. 
 %A further extension is to develop similar relationships for 3D domains such as the half-sphere surface. With this, we can obtain a family of OPs on the half-sphere, with sparse relations, and construct sparse spectral methods for surface PDEs on half-spheres. 
 This work serves as a stepping stone to constructing similar methods to solve partial differential equations on 3D sub-domains of the sphere, such as spherical caps and spherical triangles. In particular, orthogonal polynomials (OPs) in cartesian coordinates ($x$, $y$, and $z$) on a half-sphere can be represented using two families of OPs on the half-disk, see \cite[Theorem 3.1]{olver2018orthogonal} for a similar construction of OPs on an arc in 2D, and it is clear from the construction in this paper that discretizations of spherical gradients and Laplacian's are sparse on half-spheres and other suitable sub-components of the sphere. The resulting sparsity in high-polynomial degree discretizations presents an attractive alternative to methods based on bijective mappings (e.g., \cite{DGShallowWater,FEMShallowWater,boyd2005sphere}). Constructing these sparse spectral methods for surface PDEs on half-spheres, spherical caps, and spherical triangles is future work, and has applications in weather prediction \cite{staniforth2012horizontal}. Other extensions include a full $hp$-finite element method on sections of a disk, which has applications in turbulent pipe flow.
 
@@ -1245,6 +1262,28 @@ This work serves as a stepping stone to constructing similar methods to solve pa
 \appendix
 %
 \section{P-finite element methods using sparse operators}\label{Appendix:PFEM}
+
+\begin{figure}[t]
+	\begin{subfigure}{0.3\textwidth}
+	\includegraphics[scale=0.28]{solution-pfem-poisson-diskslice-alpha=0p2-beta=0p8-f=Wycosx}
+        	%\label{fig:solutionblocknorms-poisson}
+	\centering
+	\end{subfigure}
+	\begin{subfigure}{0.3\textwidth}
+	\includegraphics[scale=0.3]{solution-poisson}
+	\centering
+	%\label{fig:solution-poisson}
+	\end{subfigure}
+	\begin{subfigure}{0.3\textwidth}
+	\includegraphics[scale=0.3]{solution-trapezium-helmholtz-k=100-n=1500}
+	%\label{fig:solution-poisson}
+	\centering
+	\end{subfigure}
+	\centering
+	\caption{Left: The computed solution to $\Delta u = f$ with zero boundary conditions with $f(x,y) = \Wiii(x,y) y \cos(x)$ in the disk-slice using the $p$-FEM approach with a single element. Centre: The computed solution to $\Delta u = f$ with zero boundary conditions with $f(x,y) = 1 + \text{erf}(5(1 - 10((x - 0.5)^2 + y^2)))$ in the half-disk. Right: The computed solution to $\Delta u + k^2 \: v \: u = f$ with zero boundary conditions with $f(x,y) = (1-x) \: x \: y \: (1- \half x - y) \: e^x$, $v(x,y) = 1 - (3(x-1)^2 + 5y^2)$ and $k = 100$. in the trapezium.}
+	\centering
+	\label{fig:appendixfigs}
+\end{figure}
 
 We follow the method of \cite{beuchler2006new} to construct a sparse $p$-finite element method in terms of the operators constructed above, with the benefit of ensuring that the resulting discretisation is symmetric. Consider the 2D Dirichlet problem on a domain $\Omega$:
 \begin{align*}
@@ -1340,22 +1379,6 @@ Note \bstodo{typo 6}that since we have sparse operator matrices for partial deri
 
 \section{End-Disk-Slice}\label{Appendix:HalfDisk}
 
-\begin{figure}[t]
-	\begin{subfigure}{0.3\textwidth}
-	\includegraphics[scale=0.3]{solution-poisson}
-	\centering
-	%\label{fig:solution-poisson}
-	\end{subfigure}
-	\begin{subfigure}{0.5\textwidth}
-	\centering
-	\includegraphics[scale=0.5]{solutionblocknorms-poisson}
-        	%\label{fig:solutionblocknorms-poisson}
-	\end{subfigure}
-	\caption{Left: The computed solution to $\Delta u = f$ with zero boundary conditions with $f(x,y) = 1 + \text{erf}(5(1 - 10((x - 0.5)^2 + y^2)))$. Right: The norms of each block of the computed solution of the Poisson equation with the given right hand side functions. This demonstrates algebraic convergence with the rate dictated by the decay at the corners, with spectral convergence observed when the right-hand side vanishes to all orders.}
-	\centering
-	\label{fig:poisson}
-\end{figure}
-
 The work in this paper on the disk-slice can be easily transferred to the special-case domain of the end-disk-slice by which we mean
 \begin{align*}
 	\Omega := \{(x,y) \in \R^2 \quad | \quad \alpha < x < \beta, \: \gamma \rho(x) < y < \delta \rho(x)\}
@@ -1390,6 +1413,7 @@ orthogonal with respect to the weight
 
 The sparsity of operator matrices for partial differentiation by $x, y$ as well as for parameter transformations generalise to such end-disk-slice domains. For instance, if we inspect the proof of Lemma \ref{theorem:sparsityofdifferentialoperators}, we see that it can easily generalise to the weights and domain $\Omega$ for an end-disk-slice.
 
+In Figure \ref{fig:appendixfigs} we see the solution to the Poisson equation with zero boundary conditions in the half-disk $\Omega$ with $(\alpha,\beta) := (0,1)$.
 
 \section{Trapeziums}\label{Appendix:Trapezium}
 
@@ -1416,6 +1440,8 @@ orthogonal with respect to the weight
 	W^{(a,b,c,d)}(x,y) &:= \genjacw^{(a,b,c+d)}(x) \: w^{(d,c)}_P\fpr(\frac{y}{\rho(x)}) \nonumber \\
 	&= (1-x)^a \: x^b \: y^c \: (1- \xi x - y)^d, \quad (x,y) \in \Omega.
 \end{align*}
+
+In Figure \ref{fig:appendixfigs} we see the solution to the Helmholtz equation with zero boundary conditions in the trapezium $\Omega$ with $\xi := \half$.
 
 %\subsection{Quadrature rule on the trapezium}
 %
