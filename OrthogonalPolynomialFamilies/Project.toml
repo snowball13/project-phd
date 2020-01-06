@@ -15,15 +15,9 @@ StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [compat]
-<<<<<<< HEAD
 ApproxFun = "≥ 0.11.1"
 ApproxFunOrthogonalPolynomials = "≥ 0.1.1"
 ApproxFunBase = "≥ 0.1.1"
-=======
-ApproxFun = "0.11.1"
-ApproxFunOrthogonalPolynomials = "0.1.1, 0.2"
-ApproxFunBase = "0.1.1"
->>>>>>> dc163c30f83af8c8f812576d3c58d76c4fa57629
 FastGaussQuadrature = "≥ 0.3.2"
 SingularIntegralEquations = "≥ 0.4.2"
 StaticArrays = "≥ 0.8.3"

@@ -438,9 +438,10 @@ function getBs!(S::DiskSliceSpace{<:Any, <:Any, T, <:Any}, N, N₀) where T
         m += 1
     end
     for n = N+1:-1:m
-        if n > 200
-            @show "getsBs!", N, n
-        end
+        # if n > 200
+        #     @show "getsBs!", N, n
+        # end
+        @show "getsBs!", N, n
         v1 = [recα(T, S, n, k, 2) for k = 0:n]
         v2 = [recβ(T, S, n, k, 4) for k = 0:n-1]
         v3 = [recβ(T, S, n, k, 3) for k = 1:n]
@@ -1365,7 +1366,16 @@ function laplaceoperator(S::DiskSliceSpace{<:Any, <:Any, T, <:Any},
         @show "laplaceoperator", "5 of 6 done"
         G = weightedpartialoperatory(S, N)
         @show "laplaceoperator", "6 of 6 done"
-        L = A * B + C * E * F * G
+        # NOTE: Multiplying the BlockBandedMatrices fails with an error, so
+        #       convert to sparse
+        AAl, AAu = A.l + B.l, A.u + B.u
+        BBl, BBu = C.l + E.l + F.l + G.l, C.u + E.u + F.u + G.u
+        AAλ, AAμ = A.λ + B.λ, A.μ + B.μ
+        BBλ, BBμ = C.λ + E.λ + F.λ + G.λ, C.μ + E.μ + F.μ + G.μ
+        AA = sparse(A) * sparse(B)
+        BB = sparse(C) * sparse(E) * sparse(F) * sparse(G)
+        L = BandedBlockBandedMatrix(AA + BB, (1:nblocks(A)[1], 1:nblocks(B)[2]),
+                                    (max(AAl,BBl),max(AAu,BBu)), (max(AAλ,BBλ),max(AAμ,BBμ)))
         if square
             m = sum(1:(N+1))
             Δ = BandedBlockBandedMatrix(L[1:m, 1:m], (1:N+1, 1:N+1), (L.l, L.u), (L.λ, L.μ))
@@ -1386,10 +1396,16 @@ function laplaceoperator(S::DiskSliceSpace{<:Any, <:Any, T, <:Any},
         @show "laplaceoperator", "5 of 6 done"
         G = partialoperatory(S, N+2)
         @show "laplaceoperator", "6 of 6 done"
-        AA = A * B
-        BB = C * E * F * G
-        L = BandedBlockBandedMatrix(sparse(AA) + sparse(BB), (1:N+1, 1:N+3),
-                                    (max(AA.l,BB.l),max(AA.u,BB.u)), (max(AA.λ,BB.λ),max(AA.μ,BB.μ)))
+        # NOTE: Multiplying the BlockBandedMatrices fails with an error, so
+        #       convert to sparse
+        AAl, AAu = A.l + B.l, A.u + B.u
+        BBl, BBu = C.l + E.l + F.l + G.l, C.u + E.u + F.u + G.u
+        AAλ, AAμ = A.λ + B.λ, A.μ + B.μ
+        BBλ, BBμ = C.λ + E.λ + F.λ + G.λ, C.μ + E.μ + F.μ + G.μ
+        AA = sparse(A) * sparse(B)
+        BB = sparse(C) * sparse(E) * sparse(F) * sparse(G)
+        L = BandedBlockBandedMatrix(AA + BB, (1:N+1, 1:N+3),
+                                    (max(AAl,BBl),max(AAu,BBu)), (max(AAλ,BBλ),max(AAμ,BBμ)))
         if square
             m = sum(1:(N+1))
             Δ = BandedBlockBandedMatrix(L[1:m, 1:m], (1:N+1, 1:N+1), (L.l,L.u), (L.λ,L.μ))
