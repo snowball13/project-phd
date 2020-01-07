@@ -911,6 +911,7 @@ In this section we discuss how to take advantage of the proposed basis and spars
 
 %To obtain the recurrence coefficients for the $\{\genjac_n^{(a,b,c)}\}$ OPs in (\ref{eqn:Hrecurrence}), we use a variant of the Stieltjes procedure \cite{gautschi1982generating} where the polynomials are expressed as Chebyshev polynomial expansions and the inner products are calculated via Clenshaw--Curtis quadrature. This has the benefit that it is easier to incorporate high-precision arithmetic, which we use to overcome ill-conditioning present when $c$ is large, as required for large $n$ in \eqref{eq:diskpolys}. The ApproxFun.jl \cite{ApproxFun} package gives a convenient way to manipulate Chebyshev and Jacobi expansions, which we use to calculate the inner products and norms in this algorithm, utilising the {\tt BigFloat} type to handle high-precision calculations.
 
+\bstodo{Reviewer 1, comments 1,2}
 It is possible to obtain the recurrence coefficients for the $\{\genjac_n^{(a,b,c)}\}$ OPs in (\ref{eqn:Hrecurrence}), by careful application of the Christoffel-Darboux formula \cite[18.2.12]{DLMF}. We explain the process here for the disk-slice case, however we note that a similar but simpler argument holds for the trapezium case. We thus first need to define a new set of `interim' 1D OPs.
 \begin{definition}\label{def:InterimOPconstruction}
 Let $\genjactw^{(a,b,c,d)}(x) := (\beta - x)^a \: (x - \alpha)^{b} \: (1-x)^{c} \: (1+x)^{d} $ be a weight function on the interval $(\alpha, \beta)$, and define the associated inner product by:
@@ -1223,7 +1224,7 @@ We can tackle the problem as follows. Denote the coefficient vector for expansio
 which can be solved to find $\mathbf{u}$.
 In Figure \ref{fig:poisson} we see the solution to the Poisson equation with zero boundary conditions given in (\ref{eqn:poisson}) in the disk-slice $\Omega$. In Figure \ref{fig:poisson} we also show the norms of each block of calculated coefficients of the approximation for four right-hand sides of the Poisson equation with N = 200, that is, 20,301 unknowns. The rate of decay in the coefficients is a proxy for the rate of convergence of the computed solution. We see that we achieve algebraic convergence for the first three examples, noting that for right hand-sides that vanish at the corners of our disk-slice ($x\in\{\alpha,\beta\}, \: y = \pm \rho(x)$) we observe faster convergence. For the final Gaussian bump example, we see that we also achieve algebraic convergence. \bstodoinline{Note that it is no longer correct to say that we achieve spectral convergence for ex 4 for the disk slice. Is there something more we can say? Same goes for the other examples.}
 
-In Figure \ref{fig:poissonexact} we see an example where the solution calculated to the Poisson equation is shown together with a plot of the exact solution and the error. The example was chosen so that the exact solution was $u(x,y) = \Wiii (x,y) y^3 \exp(x)$, and thus the RHS function $f$ would be $f(x,y) = \Delta \big[\Wiii (x,y) y^3 \exp(x)\big]$. We see that the computed solution is almost exact.
+In Figure \ref{fig:poissonexact} we see an example where the solution calculated to the Poisson equation is shown together with a plot of the exact solution and the error. The example was chosen so that the exact solution was $u(x,y) = \Wiii (x,y) y^3 \exp(x)$, and thus the RHS function $f$ would be $f(x,y) = \Delta \big[\Wiii (x,y) y^3 \exp(x)\big]$. We see that the computed solution is almost exact. \bstodo{Reviewer 2, comment 5}
 
 
 \subsection{Inhomogeneous variable-coefficient Helmholtz}
@@ -1464,7 +1465,7 @@ orthogonal with respect to the weight
 	&= (1-x)^a \: x^b \: y^c \: (1- \xi x - y)^d, \quad (x,y) \in \Omega.
 \end{align*}
 
-In Figure \ref{fig:appendixfigs} we see the solution to the Helmholtz equation with zero boundary conditions in the trapezium $\Omega$ with $\xi := \half$.
+In Figure \ref{fig:appendixfigs} we see the solution to the Helmholtz equation with zero boundary conditions in the trapezium $\Omega$ with $\xi := \half$. \bstodo{Reviewer 2, comment 6}
 
 %\subsection{Quadrature rule on the trapezium}
 %
