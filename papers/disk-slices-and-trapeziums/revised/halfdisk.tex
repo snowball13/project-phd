@@ -1152,6 +1152,26 @@ We now demonstrate how the sparse linear systems constructed as above can be use
 	\centering
 	\label{fig:poisson}
 \end{figure}
+solution-exact-poisson-diskslice-alpha=0.2-beta=0.8-u=y3expx-actual
+\begin{figure}[t]
+	\begin{subfigure}{0.3\textwidth}
+	\includegraphics[scale=0.3]{solution-exact-poisson-diskslice-alpha=0p2-beta=0p8-u=y3expx}
+	\centering
+	\end{subfigure}
+	\begin{subfigure}{0.3\textwidth}
+	\centering
+	\includegraphics[scale=0.3]{solution-exact-poisson-diskslice-alpha=0p2-beta=0p8-u=y3expx-actual}
+	\centering
+	\end{subfigure}
+	\begin{subfigure}{0.3\textwidth}
+	\includegraphics[scale=0.3]{solution-exact-poisson-diskslice-alpha=0p2-beta=0p8-u=y3expx-compare}
+	\centering
+	\end{subfigure}
+	\centering
+	\caption{The computed solution to $\Delta u = f$ with zero boundary conditions compared with the exact solution $u(x,y) = \Wiii (x,y) y^3 \exp(x)$. Left: Computed. Centre: Exact. Right: Plot of the error (colourbar is shown to demonstrate magnitude of the error is of the order $10^{-17}$)}
+	\centering
+	\label{fig:poissonexact}
+\end{figure}
 
 \begin{figure}[t]
 	\begin{subfigure}{0.3\textwidth}
@@ -1202,6 +1222,9 @@ We can tackle the problem as follows. Denote the coefficient vector for expansio
 \end{align*}
 which can be solved to find $\mathbf{u}$.
 In Figure \ref{fig:poisson} we see the solution to the Poisson equation with zero boundary conditions given in (\ref{eqn:poisson}) in the disk-slice $\Omega$. In Figure \ref{fig:poisson} we also show the norms of each block of calculated coefficients of the approximation for four right-hand sides of the Poisson equation with N = 200, that is, 20,301 unknowns. The rate of decay in the coefficients is a proxy for the rate of convergence of the computed solution. We see that we achieve algebraic convergence for the first three examples, noting that for right hand-sides that vanish at the corners of our disk-slice ($x\in\{\alpha,\beta\}, \: y = \pm \rho(x)$) we observe faster convergence. For the final Gaussian bump example, we see that we also achieve algebraic convergence. \bstodoinline{Note that it is no longer correct to say that we achieve spectral convergence for ex 4 for the disk slice. Is there something more we can say? Same goes for the other examples.}
+
+In Figure \ref{fig:poissonexact} we see an example where the solution calculated to the Poisson equation is shown together with a plot of the exact solution and the error. The example was chosen so that the exact solution was $u(x,y) = \Wiii (x,y) y^3 \exp(x)$, and thus the RHS function $f$ would be $f(x,y) = \Delta \big[\Wiii (x,y) y^3 \exp(x)\big]$. We see that the computed solution is almost exact.
+
 
 \subsection{Inhomogeneous variable-coefficient Helmholtz}
 
