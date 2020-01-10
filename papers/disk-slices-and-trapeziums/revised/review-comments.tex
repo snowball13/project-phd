@@ -1,0 +1,156 @@
+\documentclass[10pt]{letter}
+
+\usepackage[papersize={8.5in,11in},margin=1in]{geometry}
+\usepackage[final,stretch=10,shrink=10]{microtype} % default of stretch=shrink=20 is a little too much
+\usepackage{amsmath,amsfonts,amsxtra,amssymb}
+\usepackage{url}
+\usepackage{bm}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{xcolor}
+
+\definecolor{bluey}{rgb}{0.0,0.2,0.5}
+\newcommand{\comment}[1]{\textit{\color{bluey}#1}}
+
+%\definecolor{rev1}{HTML}{cb270f}
+%\definecolor{rev2}{HTML}{1c8235}
+
+
+\usepackage{todonotes}
+\newcommand{\sotodo}{\todo[color=green]}
+\newcommand{\sotodoinline}{\todo[color=green,inline=true]}
+\newcommand{\bstodo}{\todo[color=pink]}
+\newcommand{\bstodoinline}{\todo[color=pink,inline=true]}
+
+\newcommand{\half}{\frac{1}{2}}
+\newcommand{\genjac}{R}
+
+
+\begin{document}
+
+\thispagestyle{empty}
+
+\hfill
+\begin{flushright}
+Correspondence to: \\
+Sheehan Olver \\
+s.olver@imperial.ac.uk \\
+\end{flushright}
+
+\vspace{1em}
+\hfill\today
+
+Dear Jose Bautista Francisco III
+
+Thank you for forwarding the reviews of our article. We greatly appreciate your time as well as that of the referees.  Below we detail our response to the referees' reports. 
+
+Ben Snowball and Sheehan Olver
+
+\bigskip 
+
+\centerline{\textbf{Response to Referee 1}}
+
+We have fixed the typos and minor suggestions. The other comments are addressed below.
+
+\begin{itemize}[parsep=1em,leftmargin=1em]
+
+\item \comment{Conditioning for large b: In Section 4.1, the authors mention that there is an ill-conditioning issue when b is large. First, does this ill-conditioning grow algebraically with b (I suspect so)? Second, I do not understand where this ill-conditioning is coming from. Can the authors explain?}
+
+Firstly, we note that that with the changes we have made in focusing on the disk-slice case rather than the half-disk, the parameter $b$ being refered to here is now $c$. We have altered our approach for finding the recurrence coefficients of the (non-classical) 1D OPs $\{\genjac_n^{(a,b,c)}\}$, from using the Lanczos algorithm (that lead to the ill-conditioning for large $c$) to using an alternative recursive approach involving the Christoffel-Darboux formula.
+
+
+\item \comment{Explicit recurrence relations: The manuscript demonstrates that sparse differentiation and conversion recurrence relations exist between $H_{n,k}$ but the recurrences are not given explicitly (as they are defined via integrals). This means that one must numerically generate the entries of the differentiation matrices as well as the conversion operators. I am strongly encouraging the authors to derive the explicit recurrence relationship for this paper: both for conversion and differentiation.}
+
+To the first comment, we have now implemented a way to exactly calculate the recurrence coefficients for the non-classical 1D OPs, allowing one to exactly evaluate these integrals using quadrature.
+
+
+\item \comment{Boundary conditions: I think a few more details are needed on how the authors are imposing boundary conditions. I understand for zero Dirichlet conditions and zero Dirichlet+Neumann, but how does one impose general boundary conditions in this spectral method? For example, can one impose zero Neumann condition with a zero mean condition? Or, non-homogeneous Dirichlet conditions. The authors mention that they can now use this to construct an element method. The authors may like to add a comment on how one might patch together domains (and impose any interface constraints on the solution)}
+
+We have addressed point in the abstract that we focus on the BCs mentioned. We have also added a point in the conclusion about how this work relates to the triangle, and the work done there on implementing other BCs.
+
+
+\item \comment{p-finite element method with sparse operator: Preserving symmetry and sparsity in the discretization sounds like an all-round win. Why are the authors not advocating this approach in the body of the manuscript? Are these symmetric FEM discretizations as sparse?}
+
+\bstodoinline{something about not wanting to make this a FEM paper, when we are looking at a single element?}
+
+
+\end{itemize}
+
+\bigskip 
+
+\centerline{\textbf{Response to Referee 2}}
+
+We have fixed the typos and minor suggestions. The other comments are addressed below.
+
+\begin{itemize}[parsep=1em,leftmargin=1em]
+
+\item \comment{The title says "disk slices, and trapezium", but then the definition of $\Omega$ gives a definition in terms of the function $\rho(x)$. It's not obvious (without digging out paper) that these are the same. Please make the connection for the reader. Next it says that you specialise to $\rho(x) = (1-x^2)^\half$, which is the half disk. Later in the paper it's not obvious if your more technical results apply only to the half disk, or if the half disk is simply used to get the conversation started. It seems to me that the paper is not about "disk slices, and trapezium", but really the "half disk". If so, then I think the authors should do one of two things:}
+
+A) \comment{Explain why, in detail, why the half disk implies the same results automatically for disk slices, and trapezium. Or,}
+
+B) \comment{Change the title to the paper to reflect the focus on the half disk. }
+
+\comment{If the choice is option B, then I strongly suggest rewriting the introduction to reflect the more limited scope. This means talking about the half disk right away, rather than to defining $\Omega$ so generally.}
+
+We have altered the paper so that we now focus on the general disk-slice case, rather than the specific half-disk. In the main body of the paper, we present how to build the OPs for a general case, and then focus on how to build the operators for the disk-slice case. In the appendix we include an explanation for how the framework we present in the paper can also be applied to the trapezium and "end-disk-slice" (of which the half-disk is a specific case).
+
+
+\item \comment{The final full paragraph before the overview is highly misleading. This paper is not about spheres, weather, or turbulent pipe flow. This seems a bit like pandering. I don't think the authors need such tactics to justify the importance of their work. The mathematics are enough justification. I would rather see a short summary of where this work sits in comparison to some of the other similar past work. As I said, this work is part of a larger program to understand orthogonal polynomials on interesting domains.}
+
+Removed and added to conclusions.
+
+
+\item \comment{The conclusion is very short. If the authors want to talk about spheres, or "disk slices, and trapezium", then this might be a good place to put it. There could be a short discussion about how the methods and relations might be extended to the more general cases. I have no doubt this is possible.}
+
+Added the motivation/future work of spherical sub-domains to the conclusions.
+
+
+\item \comment{Looking at the past work, it seem Olver was involved in a similar effort for the full disk.}
+
+\comment{I would like to see an explanation of how the half disk is more than just half the full disk? It seems in the full disk that Fourier series was used in the angular direction. But the full 2D functions are Cartesian polynomials. How do these problems map into each other? }
+
+\comment{It seem that one could obtain a basis on the half disk by restricting to even and odd functions on the full disk. But half-period Fourier series have a hard time representing all functions on the 1D interval. This is one of the motivations behind Chebyshev polynomials, and the authors surely know this.} 
+
+\comment{My guess is that the half-disk basis contains something different than the even/odd restricted full-disk basis. It would be good to know what.}
+
+\bstodoinline{I am not to sure how to address this comment.}
+
+
+\item \comment{The examples could be improved somewhat.}
+
+\comment{The Norm plots on the right-hand side of the figures needs more explanation. Is this roughly the norm of the coefficients on the solution? It seems this is a proxy for the error of the solution. But it's not exactly that. }
+
+\comment{I would like to see at least one example where the authors compare the numerical solution to a known exact solution. This could happen by putting an answer into an operator and generating a right-hand side. Or is this what was done?}
+
+Added in example showing comparison to an exact known solution.
+
+
+\item \comment{It would be useful to see one example with the action near the straight boundary. }
+
+\comment{Relating to the earlier discussion about the difference between even/odd full disk, and the half disk, I believe the benefit to this basis is the ability to capture things near the outer edge. }
+
+\comment{Even better would be a demonstration with non-zero boundary conditions at the straight edge. I don't think the even/odd full disk basis would easily (or at all) be able to handle arbitrary boundary conditions at $x=0$.}
+
+We have added an example demonstrating the Helmholtz equation with the action in one corner of the trapezium.
+
+\bstodoinline{Should I put more here?}
+
+
+\end{itemize}
+
+\end{document}
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
