@@ -43,7 +43,9 @@ s.olver@imperial.ac.uk \\
 
 Dear Jose Bautista Francisco III
 
-Thank you for forwarding the reviews of our article. We greatly appreciate your time as well as that of the referees.  Below we detail our response to the referees' reports. 
+Thank you for forwarding the reviews of our article. We greatly appreciate your time as well as that of the referees.  We have made substantial changes in this revision, having changed the exposition to focus on general disk slices and to use the Christofel-Darboux formula in generating the necessary families of orthogonal polynomials. Below we detail our response to the referees' reports. 
+
+Note that we are  hoping to improve the figures in the final version to go beyond degree $N = 200$ polynomials. We have decided to resubmit the draft now, as improving the figures will be a minor change.
 
 Ben Snowball and Sheehan Olver
 
@@ -72,7 +74,7 @@ We have addressed point in the abstract that we focus on the BCs mentioned. We h
 
 \item \comment{p-finite element method with sparse operator: Preserving symmetry and sparsity in the discretization sounds like an all-round win. Why are the authors not advocating this approach in the body of the manuscript? Are these symmetric FEM discretizations as sparse?}
 
-\bstodoinline{something about not wanting to make this a FEM paper, when we are looking at a single element?}
+The $p$-finite element method only applies to more specific classes of PDEs so we have chosen to focus on the more general strong formulation version. The extension to $p$-FEM then follows as a specialisation of the results, which does indeed have substantial benefits in terms of symmetry.
 
 
 \end{itemize}
@@ -114,7 +116,7 @@ Added the motivation/future work of spherical sub-domains to the conclusions.
 
 \comment{My guess is that the half-disk basis contains something different than the even/odd restricted full-disk basis. It would be good to know what.}
 
-\bstodoinline{I am not to sure how to address this comment.}
+We don't believe the suggested restriction of the full disk polynomials  spans all polynomials in cartesian coordinates. In any case, the changed emphasis to general disk-slices makes these comments less relevant. 
 
 
 \item \comment{The examples could be improved somewhat.}
@@ -123,7 +125,7 @@ Added the motivation/future work of spherical sub-domains to the conclusions.
 
 \comment{I would like to see at least one example where the authors compare the numerical solution to a known exact solution. This could happen by putting an answer into an operator and generating a right-hand side. Or is this what was done?}
 
-Added in example showing comparison to an exact known solution.
+We added an example showing comparison to an exact known solution.
 
 
 \item \comment{It would be useful to see one example with the action near the straight boundary. }
@@ -133,8 +135,6 @@ Added in example showing comparison to an exact known solution.
 \comment{Even better would be a demonstration with non-zero boundary conditions at the straight edge. I don't think the even/odd full disk basis would easily (or at all) be able to handle arbitrary boundary conditions at $x=0$.}
 
 We have added an example demonstrating the Helmholtz equation with the action in one corner of the trapezium.
-
-\bstodoinline{Should I put more here?}
 
 
 \end{itemize}
