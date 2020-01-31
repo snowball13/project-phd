@@ -117,6 +117,7 @@ function resizedata!(S::OrthogonalPolynomialSpace, n)
     resize!(S.b, n)
     resize!(S.ops, 2)
     # We set the weight here when this is called
+    @show "resizedata! for OPSpace", length(S.params)
     lanczos!(getweightfun(S), S.ops, S.a, S.b, N₀=N₀)
     S
 end
