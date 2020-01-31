@@ -15,7 +15,6 @@ using SparseArrays
 using BlockBandedMatrices
 using BlockArrays
 using GenericLinearAlgebra
-# using SingularIntegralEquations
 using Test
 
 export OrthogonalPolynomialFamily, HalfDisk, HalfDiskSpace, HalfDiskFamily
@@ -32,7 +31,7 @@ struct OrthogonalPolynomialSpace{FA,WW,F,D,B,R,N} <: PolynomialSpace{D,R}
     a::Vector{B} # Diagonal recurrence coefficients
     b::Vector{B} # Off diagonal recurrence coefficients
     opnorm::Vector{B} # The norm of the OPs (all OPs of an OPSpace have the same norm).
-                        # NOTE this is the value of the norm squared
+                      # NOTE this is the value of the norm squared
     opptseval::Vector{Vector{B}}
     derivopptseval::Vector{Vector{B}}
 end
@@ -97,6 +96,7 @@ OrthogonalPolynomialSpace(fam::SpaceFamily{D,R}, α::NTuple{N,B}) where {D,R,B,N
         fam, Vector{Fun}(), α, Vector{Fun}(), Vector{B}(), Vector{B}(),
         Vector{B}(), Vector{Vector{B}}(), Vector{Vector{B}}())
 
+# Creates and returns the Fun() representing the weight function for the OPSpace
 function getweightfun(S::OrthogonalPolynomialSpace)
     if length(S.weight) == 0
         # @show "getweightfun() for OPSpace", S.params
@@ -110,6 +110,7 @@ function getweightfun(S::OrthogonalPolynomialSpace)
     S.weight[1]
 end
 
+# Calls lanczos!() to get the recurrence coeffs for the OPSpace up to deg n
 function resizedata!(S::OrthogonalPolynomialSpace, n)
     N₀ = length(S.a)
     n ≤ N₀ && return S
@@ -146,6 +147,9 @@ function (P::OrthogonalPolynomialFamily{<:Any,<:Any,<:Any,R,B,N})(α::Vararg{B,N
     P.spaces[α] = OrthogonalPolynomialSpace(P, α)
 end
 
+#======#
+# Methods to return the recurrence coeffs
+
 #####
 # recα/β/γ are given by
 #       x p_{n-1} = γ_n p_{n-2} + α_n p_{n-1} +  p_n β_n
@@ -168,6 +172,8 @@ recB(::Type{T}, S::OrthogonalPolynomialSpace, n) where T =
 recC(::Type{T}, S::OrthogonalPolynomialSpace, n) where T =
     recγ(T, S, n+1) / recβ(T, S, n+1)
 
+#======#
+# points() and associanted methods
 
 # Returns weights and nodes for N-point quad rule for given weight
 function golubwelsch(S::OrthogonalPolynomialSpace{<:Any,<:Any,<:Any,<:Any,B,T,<:Any},
@@ -182,6 +188,7 @@ function golubwelsch(S::OrthogonalPolynomialSpace{<:Any,<:Any,<:Any,<:Any,B,T,<:
     x = D[indx]                      # quad rule nodes to output
     return T.(x), T.(w)
 end
+# Returns, as type B, weights and nodes for N-point quad rule for given weight
 function golubwelsch(::Type{B}, S::OrthogonalPolynomialSpace{<:Any,<:Any,<:Any,<:Any,B,T,<:Any},
                         N::Integer) where {B,T}
     # Golub--Welsch algorithm. Used here for N<=20.
@@ -201,6 +208,9 @@ pointswithweights(::Type{B}, S::OrthogonalPolynomialSpace, n) where B =
 
 spacescompatible(A::OrthogonalPolynomialSpace, B::OrthogonalPolynomialSpace) =
     A.weight ≈ B.weight
+
+#=====#
+# transforms
 
 # Inputs: OP space, f(pts) for desired f
 # Output: Coeffs of the function f for its expansion in the OPSpace OPs
@@ -242,6 +252,8 @@ function itransform(S::OrthogonalPolynomialSpace, cfs::Vector{T}) where T
     # V * cfs
 end
 
+#======#
+# inner product methods (inner2() is NOT squared, just the alternative method)
 inner(S::OrthogonalPolynomialSpace, f::Fun, g::Fun, pts, w) =
     sum(f.(pts) .* g.(pts) .* w)
 inner2(S::OrthogonalPolynomialSpace, f, g, w) = sum(f .* g .* w)
@@ -273,7 +285,9 @@ function differentiateop(S::OrthogonalPolynomialSpace{<:Any,<:Any,<:Any,<:Any,<:
     dp1
 end
 
+#=====#
 # Method to gather and evaluate the ops of space S at the transform pts given
+
 function getopptseval(S::OrthogonalPolynomialSpace, N, pts)
     resetopptseval(S)
     for n = 0:N
@@ -322,6 +336,7 @@ function opevalatpts(S::OrthogonalPolynomialSpace{<:Any,<:Any,<:Any,<:Any,T,<:An
 end
 resetopptseval(S::OrthogonalPolynomialSpace) = resize!(S.opptseval, 0)
 
+#=====#
 # Method to gather and evaluate the op derivatives of space S at the transform pts given
 # NOTE: getopptseval() has to be called first
 function getderivopptseval(S::OrthogonalPolynomialSpace, N, pts)
@@ -375,6 +390,9 @@ function derivopevalatpts(S::OrthogonalPolynomialSpace{<:Any,<:Any,<:Any,<:Any,T
 end
 resetderivopptseval(S::OrthogonalPolynomialSpace) = resize!(S.derivopptseval, 0)
 
+#======#
+# Get/Set the opnorm
+
 function getopnorm(S::OrthogonalPolynomialSpace{<:Any,<:Any,<:Any,<:Any,T,<:Any,<:Any}) where T
     # NOTE this is the squared norm
     if !isnormset(S)
@@ -404,6 +422,12 @@ end
 # Boolean function to return if norm for OPSpace is set
 isnormset(S::OrthogonalPolynomialSpace) = (length(S.opnorm) == 1)
 
+#==================================#
+
+"""
+The following is now obsolete (i think) code for a HalfDisk special case.
+We can get a HalfDisk using the DiskSlice framework with α=0, β=1.
+"""
 
 #=====#
 # Half Disk

@@ -1,24 +1,7 @@
-# module DiskSliceFamilies
-
-# using ApproxFun
-#     import ApproxFun: evaluate, PolynomialSpace, recα, recβ, recγ, recA, recB, recC, domain,
-#                         domainspace, rangespace, bandwidths, prectype, canonicaldomain, tocanonical,
-#                         spacescompatible, points, transform, itransform, AbstractProductSpace, tensorizer,
-#                         columnspace, checkpoints, plan_transform, clenshaw
-#     import Base: in, *
-# using OrthogonalPolynomialFamilies
-# using StaticArrays
-# using FastGaussQuadrature
-# using LinearAlgebra
-# using SparseArrays
-# using BlockBandedMatrices
-# using BlockArrays
-# # using SingularIntegralEquations
-# using Test
 
 export DiskSliceFamily, DiskSliceSpace
 
-# R should be Float64, B should be BigFloat
+# R should be Float64, B should be BigFloat for best accuracy
 abstract type DiskFamily{B,R,N} end
 struct DiskSlice{B,T} <: Domain{SVector{2,B}} end
 DiskSlice(::Type{B}, ::Type{T}) where {B,T} = DiskSlice{B,T}()
@@ -33,7 +16,7 @@ struct DiskSliceSpace{DF, B, T, N} <: Space{DiskSlice{B,T}, T}
                                     # at the transform pts
     yderivopptseval::Vector{Vector{B}} # Store the y deriv of the ops evaluated
                                     # at the transform pts
-    A::Vector{SparseMatrixCSC{B}}
+    A::Vector{SparseMatrixCSC{B}} # A, B, C, DT store the clenshaw matrices (for function evaluation)
     B::Vector{SparseMatrixCSC{B}}
     C::Vector{SparseMatrixCSC{B}}
     DT::Vector{SparseMatrixCSC{B}}
@@ -54,7 +37,6 @@ spacescompatible(A::DiskSliceSpace, B::DiskSliceSpace) = (A.params == B.params)
 
 domain(::DiskSliceSpace{DF,B,T,N}) where {DF,B,T,N} = DiskSlice(B,T)
 
-# R should be Float64, B BigFloat
 struct DiskSliceFamily{B,T,N,FAR,FAP,F,I} <: DiskFamily{B,T,N}
     spaces::Dict{NTuple{N,B}, DiskSliceSpace}
     α::T
@@ -67,15 +49,15 @@ struct DiskSliceFamily{B,T,N,FAR,FAP,F,I} <: DiskFamily{B,T,N}
     nparams::I
 end
 
+# Creates and returns the space desired
 function (D::DiskSliceFamily{B,T,N,<:Any,<:Any,<:Any,<:Any})(params::NTuple{N,B}) where {B,T,N}
     haskey(D.spaces,params) && return D.spaces[params]
     D.spaces[params] = DiskSliceSpace(D, params)
 end
-# (D::DiskSliceFamily{B,T,N,<:Any,<:Any,<:Any,<:Any})(params::Vararg{B,N}) where {B,T,N} =
-#     D(params)
 (D::DiskSliceFamily{B,T,N,<:Any,<:Any,<:Any,<:Any})(params::Vararg{T,N}) where {B,T,N} =
     D(B.(params))
 
+# Constructor for the Family
 function DiskSliceFamily(::Type{B},::Type{T}, α::T, β::T, γ::T, δ::T) where {B,T}
     nparams = 3 # Default
     X = Fun(identity, B(α)..β)
@@ -99,7 +81,7 @@ DiskSliceFamily(α::T) where T = DiskSliceFamily(BigFloat, T, α, 1.0, -1.0, 1.0
 DiskSliceFamily() = DiskSliceFamily(BigFloat, Float64, 0.0, 1.0, -1.0, 1.0)
 
 #===#
-# Retrieve spaces methods
+# Retrieve 1D OP spaces methods
 function getRspace(S::DiskSliceSpace, k::Int)
     if S.family.nparams == 3
         (S.family.R)(S.params[1], S.params[2], (2S.params[3] + 2k + 1) / 2)
@@ -117,7 +99,7 @@ end
 getPspace(S::DiskSliceSpace) = (S.family.P)(S.params[end], S.params[end])
 
 #===#
-# Weight eval functions
+# Weight eval functions for the 2D space
 function weight(S::DiskSliceSpace, x, y)
     # T(getRspace(S).weight(x) * getPspace(S).weight(y/S.family.ρ(x)))
     if length(S.params) == 2
@@ -344,7 +326,7 @@ function itransform(S::DiskSliceSpace, cfs::Vector{T}) where T
 end
 
 #===#
-# Jacobi operator entries
+# Jacobi operator/Clenshaw matrices entries
 
 function recα(::Type{T}, S::DiskSliceSpace, n, k, j) where T
     R = getRspace(S, k)
@@ -487,6 +469,7 @@ function getCs!(S::DiskSliceSpace{<:Any, T, <:Any, <:Any}, N, N₀) where T
     end
 end
 
+# Method to calculate and store the Clenshaw matrices
 function resizedata!(S::DiskSliceSpace, N)
     # N is the max degree of the OPs
     N₀ = length(S.B)
@@ -507,6 +490,7 @@ function resizedata!(S::DiskSliceSpace, N)
     S
 end
 
+# Methods to return the Jacobi operator matrices for mult by x, y
 function jacobix(S::DiskSliceSpace, N)
     resizedata!(S, N)
     rows = cols = 1:N+1
@@ -524,7 +508,6 @@ function jacobix(S::DiskSliceSpace, N)
     view(J, Block(N+1, N+1)) .= S.B[N+1][1:Int(end/2), :]
     J
 end
-
 function jacobiy(S::DiskSliceSpace, N)
     # Transposed operator, so acts directly on coeffs vec
     resizedata!(S, N)
@@ -680,7 +663,7 @@ operatorclenshaw(f::Fun, S::DiskSliceSpace, N) = operatorclenshaw(f.coefficients
 
 #====#
 # Methods to gather and evaluate the derivatives of the ops of space S at the
-# transform pts given
+# transform pts given. Used for quicker computation of the operator matrices
 
 resetxderivopptseval(S::DiskSliceSpace) = resize!(S.xderivopptseval, 0)
 function clenshawGtildex(S::DiskSliceSpace, n, z)
@@ -807,7 +790,7 @@ function yderivopevalatpts(S::DiskSliceSpace{<:Any, T, <:Any, <:Any}, j, pts) wh
 end
 
 #====#
-# Differential operator matrices
+# Methods to return the spaces corresponding to applying the derivative operators
 
 differentiatespacex(S::DiskSliceSpace) = (S.family)(S.params .+ 1)
 function differentiatespacey(S::DiskSliceSpace)
@@ -822,6 +805,8 @@ function differentiateweightedspacey(S::DiskSliceSpace)
     (S.family)(S.params .- p)
 end
 
+# Convienience mathods to return the ApproxFun.Fun() or the coeffs in the
+# relevent space for differentiation
 differentiatex(f::Fun, S::DiskSliceSpace) =
     Fun(differentiatespacex(S), differentiatex(S, f.coefficients))
 differentiatey(f::Fun, S::DiskSliceSpace) =
@@ -848,6 +833,10 @@ function differentiatey(S::DiskSliceSpace, cfs::AbstractVector)
         partialoperatory(S, N) * cfs
     end
 end
+
+
+#====#
+# Differential operator matrices
 
 function getpartialoperatorxval(S::DiskSliceSpace{<:Any, <:Any, T, <:Any},
                                     ptsp, wp, ptsr, rhoptsr, dxrhoptsr, wr, n, k, m, j) where T
