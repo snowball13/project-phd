@@ -138,6 +138,9 @@ function pointswithweights(S::DiskSliceSpace{<:Any, B, T, <:Any}, n) where {B,T}
     M = M1 * M2 # ≈ n
     @show "begin pointswithweights()", n, N, M
     t, wt = pointswithweights(B, getPspace(S), M2)
+    # Need to maunally call the method to get R coeffs here
+    m = isodd(M1) ? Int((M1 + 1) / 2) : Int((M1 + 2) / 2); m -= Int(S.params[end])
+    getreccoeffsR!(S, m; maxk=0)
     s, ws = pointswithweights(B, getRspace(S, 0), M1)
     pts = Vector{SArray{Tuple{2},B,1,2}}(undef, 2M) # stores both (x,y) and (x,-y)
     w = zeros(B, M) # weights
@@ -487,6 +490,98 @@ function resizedata!(S::DiskSliceSpace, N)
     resize!(S.DT, N + 2)
     getDTs!(S, N, N₀)
     @show "done DTs"
+    S
+end
+
+# Method to calculate the rec coeffs for the 1D R OPs (the non classical ones)
+# using a recursive algorithm invloving use of the Christoffel-Darboux formula
+function getreccoeffsR!(S::DiskSliceSpace{<:Any, B, T, <:Any}, N; maxk=-1) where {B,T}
+    c = Int(S.params[end])
+    # Set maxkval - allows us to, if set, stop the iteration (note that the N
+    # value needs to be adjusted accordingly before input)
+    if maxk < 0
+        maxkval = N + c
+    else
+        maxkval = maxk + c
+    end
+    R00 = getRspace(S, -c) # R00 = R(S.a, S.b, B(0.5))
+    M = 2 * (N + c)
+
+    # See if we need to proceed (is length(R(0,0,N+c+0.5).α) > 0)
+    length(getRspace(S, N).a) > 0 && return S
+
+    # resizedata!() on R(0,0,0.5) up to deg M to initialise
+    resizedata!(R00, M+1)
+
+    # Loop over k value in R(0,0,k+0.5) to recursively build the rec coeffs for
+    # each OPSpace, so that length(R(0,0,N+c+0.5).α) == 1
+    for k = 0:(maxkval - 1)
+        if k % 100 == 0
+            @show "getreccoeffsR!", k
+        end
+        # interim coeffs
+        R00 = getRspace(S, k - c) # R00 = R(S.a, S.b, B(0.5)+k)
+        chivec = zeros(B, M+1)
+        pt = B(1)
+        n = 0
+        chivec[n+1] = (pt - R00.a[n+1]) / R00.b[n+1]
+        for n = 1:M
+            chivec[n+1] = (pt - R00.a[n+1] - R00.b[n] / chivec[n]) / R00.b[n+1]
+        end
+        R10a, R10b = zeros(B, M), zeros(B, M)
+        n = 0
+        R10b[n+1] = (R00.b[n+1]
+                        * sqrt(pt - R00.a[n+2] - R00.b[n+1] / chivec[n+1])
+                        / sqrt(pt - R00.a[n+1]))
+        R10a[n+1] = B(R00.a[n+1]) - (R00.b[n+1] / chivec[n+1])
+        for n = 1:M-1
+            R10b[n+1] = (R00.b[n+1]
+                            * sqrt(pt - R00.a[n+2] - R00.b[n+1] / chivec[n+1])
+                            / sqrt(pt - R00.a[n+1] - R00.b[n] / chivec[n]))
+            R10a[n+1] = R00.a[n+1] + (R00.b[n] / chivec[n]) - (R00.b[n+1] / chivec[n+1])
+        end
+        # wanted coeffs
+        chivec = zeros(B, M)
+        pt = -B(1)
+        n = 0
+        chivec[n+1] = (pt - R10a[n+1]) / R10b[n+1]
+        for n = 1:M-1
+            chivec[n+1] = (pt - R10a[n+1] - R10b[n] / chivec[n]) / R10b[n+1]
+        end
+        R11 = getRspace(S, k - c + 1) # R11 = R(S.a, S.b, B(0.5)+k+1)
+        n₀ = length(R11.a); resize!(R11.a, M-1); resize!(R11.b, M-1)
+        if n₀ == 0
+            n = n₀
+            R11.b[n+1] = (R10b[n+1]
+                            * sqrt(abs(pt - R10a[n+2] - R10b[n+1] / chivec[n+1]))
+                            / sqrt(abs(pt - R10a[n+1])))
+            R11.a[n+1] = R10a[n+1] - (R10b[n+1] / chivec[n+1])
+            n₀ += 1
+        end
+        for n = n₀:M-2
+            R11.b[n+1] = (R10b[n+1]
+                            * sqrt(abs(pt - R10a[n+2] - R10b[n+1] / chivec[n+1]))
+                            / sqrt(abs(pt - R10a[n+1] - R10b[n] / chivec[n])))
+            R11.a[n+1] = R10a[n+1] + (R10b[n] / chivec[n]) - (R10b[n+1] / chivec[n+1])
+        end
+        M = M - 2
+    end
+    S
+end
+
+# Method to retrieve the rec coeffs (resizedata!) for the 1D OP families
+# associated with the DSSpace's DiskSliceFamily
+function resizedataonedimops!(S::DiskSliceSpace, N)
+    # N = max degree desired
+    length(getPspace(S).a) ≥ N && length(getRspace(S, N).a) > 0 && return S
+
+    # Use our algorithm to generate the rec coeffs recursively for R's
+    # We assume that we have R(a,b,0.5).ops up to the previous required degree
+    # (to build on) and thus subsequent OP rec coeffs for R(a,b,k+0.5) for
+    # k = 1:N
+    @show "resizedata! (one dim ops) for DSSpace", Float64.(S.params)
+    getreccoeffsR!(S, N)
+    resizedata!(getPspace(S), N)
     S
 end
 
@@ -863,6 +958,10 @@ function partialoperatorx(S::DiskSliceSpace{<:Any, B, T, <:Any}, N;
                             transposed=false) where {B,T}
     # Takes the space P^{a,b,c} -> P^{a+1,b+1,c+1}
     Sx = differentiatespacex(S)
+    # resizedataonedimops! for both DSSpaces
+    resizedataonedimops!(S, N)
+    resizedataonedimops!(Sx, N+4)
+
     P = getPspace(S)
     Px = getPspace(Sx)
     ptsp, wp = pointswithweights(B, Px, N+2) # TODO
@@ -872,7 +971,7 @@ function partialoperatorx(S::DiskSliceSpace{<:Any, B, T, <:Any}, N;
     ptsr, wr = pointswithweights(B, getRspace(Sx, -1), N+4)
     getopnorms(Sx, N-1)
 
-    # ρ.(ptsr) and dρ/dx.(ptsr)
+    # Evaluate ρ.(ptsr) dρ/dx.(ptsr) at the R inner product points
     rhoptsr = S.family.ρ.(ptsr)
     dxrhoptsr = differentiate(S.family.ρ).(ptsr)
 

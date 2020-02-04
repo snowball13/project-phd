@@ -118,7 +118,7 @@ function resizedata!(S::OrthogonalPolynomialSpace, n)
     resize!(S.b, n)
     resize!(S.ops, 2)
     # We set the weight here when this is called
-    @show "resizedata! for OPSpace", length(S.params)
+    @show "resizedata! for OPSpace", Float64.(S.params)
     lanczos!(getweightfun(S), S.ops, S.a, S.b, N₀=N₀)
     S
 end
@@ -178,7 +178,6 @@ recC(::Type{T}, S::OrthogonalPolynomialSpace, n) where T =
 # Returns weights and nodes for N-point quad rule for given weight
 function golubwelsch(S::OrthogonalPolynomialSpace{<:Any,<:Any,<:Any,<:Any,B,T,<:Any},
                         N::Integer) where {B,T}
-    # Golub--Welsch algorithm. Used here for N<=20.
     resizedata!(S, N)                # 3-term recurrence
     J = SymTridiagonal(T.(S.a[1:N]), T.(S.b[1:N-1]))   # Jacobi matrix
     D, V = eigen(J)                  # Eigenvalue decomposition using BigFloats
@@ -191,7 +190,6 @@ end
 # Returns, as type B, weights and nodes for N-point quad rule for given weight
 function golubwelsch(::Type{B}, S::OrthogonalPolynomialSpace{<:Any,<:Any,<:Any,<:Any,B,T,<:Any},
                         N::Integer) where {B,T}
-    # Golub--Welsch algorithm. Used here for N<=20.
     resizedata!(S, N)                # 3-term recurrence
     J = SymTridiagonal(S.a[1:N], S.b[1:N-1])   # Jacobi matrix
     D, V = eigen(J)                  # Eigenvalue decomposition using BigFloats
