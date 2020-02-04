@@ -873,6 +873,7 @@ function getreccoeffsP(D::DiskSliceFamily{B,T,<:Any,<:Any,<:Any,<:Any,<:Any}) wh
     end
     D
 end
+D.P(BigFloat(0.0), BigFloat(0.0))
 function getreccoeffsR(D::DiskSliceFamily{B,T,<:Any,<:Any,<:Any,<:Any,<:Any}) where {B,T}
     R = D.R
     # setprecision(800)
@@ -893,6 +894,17 @@ function getreccoeffsR(D::DiskSliceFamily{B,T,<:Any,<:Any,<:Any,<:Any,<:Any}) wh
             R00.b[:] = load("experiments/saved/diskslice-alpha=$α-beta=$β-R110p5-rec-coeffs-b-N=2003-BF.jld", "b")[1:N+1]
         else
             @show "cant do"
+        end
+        resize!(R00.ops, 2); resize!(R00.weight, 1)
+        R00.weight[1] = prod(R00.family.factors.^(R00.params))
+        Z = Fun(identity, domain(R00.weight[1]))
+        R00.ops[1] = Fun(1/sqrt(sum(R00.weight[1])),space(Z))
+        v = Z * R00.ops[1] - R00.a[1] * R00.ops[1]
+        R00.ops[2] = v / R00.b[1]
+        for k = 2:length(R00.a)
+            v = X * R00.ops[2] - R00.b[k-1] * R00.ops[1] - R00.a[k] * R00.ops[2]
+            R00.ops[1] = R00.ops[2]
+            R00.ops[2] = v / R00.b[k]
         end
         for k = 0:(Int(N/2)-1)
             if k % 100 == 0
@@ -947,7 +959,8 @@ function getreccoeffsR(D::DiskSliceFamily{B,T,<:Any,<:Any,<:Any,<:Any,<:Any}) wh
     # setprecision(256)
     D
 end
-
+k = 0
+D.R(BigFloat(1.0), BigFloat(1.0), BigFloat(0.5)+k)
 #
 # # Laplacian for N = 990
 # N = 990
@@ -1066,21 +1079,22 @@ resize!(SS.B, length(d["B"])); SS.B[:] = d["B"]
 resize!(SS.C, length(d["C"])); SS.C[:] = d["C"]
 
 # Operators
-Δw111bf = load("experiments/saved/diskslice-alpha=0.2-beta=0.8-laplacian-111-N=$N-bf.jld", "Lw111")
+# N = 600
 # A = partialoperatorx(differentiateweightedspacex(S), N+3)
+# save("experiments/saved/diskslice-alpha=0.2-beta=0.8-operators-N=$N-dx-bf.jld", "dx", A)
 # B = weightedpartialoperatorx(S, N)
 # C = transformparamsoperator(differentiatespacey(D(S.params .- 1)), S, N+2)
 # E = partialoperatory(D(S.params .- 1), N+3)
 # F = transformparamsoperator(differentiateweightedspacey(S), D(S.params .- 1), N+1, weighted=true)
 # G = weightedpartialoperatory(S, N)
-# AAl, AAu = A.l + B.l, A.u + B.u
-# BBl, BBu = C.l + E.l + F.l + G.l, C.u + E.u + F.u + G.u
-# AAλ, AAμ = A.λ + B.λ, A.μ + B.μ
-# BBλ, BBμ = C.λ + E.λ + F.λ + G.λ, C.μ + E.μ + F.μ + G.μ
-# AA = sparse(A) * sparse(B)
-# BB = sparse(C) * sparse(E) * sparse(F) * sparse(G)
-# L = BandedBlockBandedMatrix(AA + BB, (1:nblocks(A)[1], 1:nblocks(B)[2]),
-#                             (max(AAl,BBl),max(AAu,BBu)), (max(AAλ,BBλ),max(AAμ,BBμ)))
+AAl, AAu = A.l + B.l, A.u + B.u
+BBl, BBu = C.l + E.l + F.l + G.l, C.u + E.u + F.u + G.u
+AAλ, AAμ = A.λ + B.λ, A.μ + B.μ
+BBλ, BBμ = C.λ + E.λ + F.λ + G.λ, C.μ + E.μ + F.μ + G.μ
+AA = sparse(A) * sparse(B)
+BB = sparse(C) * sparse(E) * sparse(F) * sparse(G)
+L = BandedBlockBandedMatrix(AA + BB, (1:nblocks(A)[1], 1:nblocks(B)[2]),
+                            (max(AAl,BBl),max(AAu,BBu)), (max(AAλ,BBλ),max(AAμ,BBμ)))
 # m = sum(1:(N+1))
 # Δw111bf = BandedBlockBandedMatrix{BigFloat}(sparse(L)[1:m, 1:m], (1:N+1, 1:N+1), (L.l,L.u), (L.λ,L.μ))
 # save("experiments/saved/diskslice-alpha=0.2-beta=0.8-laplacian-111-N=$N-bf.jld", "Lw111", Δw111bf)
@@ -1091,6 +1105,7 @@ wdx = load("experiments/saved/diskslice-alpha=0.2-beta=0.8-operators-N=$N-wdx-bf
 wdy = load("experiments/saved/diskslice-alpha=0.2-beta=0.8-operators-N=$N-wdy-bf.jld", "wdy")
 t = load("experiments/saved/diskslice-alpha=0.2-beta=0.8-operators-N=$N-t-bf.jld", "t")
 wt = load("experiments/saved/diskslice-alpha=0.2-beta=0.8-operators-N=$N-wt-bf.jld", "wt")
+Δw111bf = load("experiments/saved/diskslice-alpha=0.2-beta=0.8-laplacian-111-N=$N-bf.jld", "Lw111")
 N = 990
 ddx = load("experiments/saved/diskslice-alpha=0.2-beta=0.8-operators-N=$N-dx.jld", "dx")
 ddy = load("experiments/saved/diskslice-alpha=0.2-beta=0.8-operators-N=$N-dy.jld", "dy")
@@ -1167,23 +1182,28 @@ function testoperatorlinearsystem(N, fbf, f, Abf, A, Sbf, S, z)
     u = Fun(S, sparse(A)[1:getopindex(N,N), 1:getopindex(N,N)] \ resizecoeffs!(f, N))
     ucfs = PseudoBlockArray(u.coefficients, [i+1 for i=0:N])
     ucfsbf = PseudoBlockArray(ubf.coefficients, [i+1 for i=0:N])
-    unorms = zeros(N); unormsbf = zeros(N)
-    for i = 1:N
-        unorms[i] = norm(view(ucfs, Block(i)))
-        unormsbf[i] = norm(view(ucfsbf, Block(i)))
-    end
+    unorms = [norm(view(ucfs, Block(i))) for i = 1:N+1]
+    unormsbf = [norm(view(ucfsbf, Block(i))) for i = 1:N+1]
+    ubf, u, unormsbf, unorms
+end
+function testoperatorlinearsystem2(N, fbf, f, Abf, A, Sbf, S, z)
+    ubf = Fun(Sbf, SparseMatrixCSC{Float64}(sparse(Abf)) \ Float64.(resizecoeffs!(fbf, N+2)))
+    u = Fun(S, sparse(A)[1:getopindex(N+2,N+2), 1:getopindex(N,N)] \ resizecoeffs!(f, N+2))
+    ucfs = PseudoBlockArray(u.coefficients, [i+1 for i=0:N])
+    ucfsbf = PseudoBlockArray(ubf.coefficients, [i+1 for i=0:N])
+    unorms = [norm(view(ucfs, Block(i))) for i = 1:N+1]
+    unormsbf = [norm(view(ucfsbf, Block(i))) for i = 1:N+1]
     ubf, u, unormsbf, unorms
 end
 
-# Example
+# Laplacian
+# 1)
 isindomain(z, D)
 u = (x,y)->(x^2 * y + y^3)
 ux = (x,y)->(2 * x * y)
 uxx = (x,y)->(2 * y)
 uy = (x,y)->(x^2 + 3 * y^2)
 uyy = (x,y)->(6 * y)
-
-# Laplacian
 fanonbf = (x,y)->(d2xweight(S, x, y) * u(x, y)
                 + 2 * dxweight(S, x, y) * ux(x, y)
                 + weight(S, x, y) * uxx(x, y)
@@ -1195,14 +1215,86 @@ ncoeffs = 18
 fbf = Fun(fanonbf, S, 2 * ncoeffs); fbf.coefficients
 f = Fun(fanon, SS, 2 * ncoeffs); f.coefficients
 Float64(f(z) - fanon(z...)), Float64(fbf(z) - fanonbf(z...))
-N = 200
-Ubf, U, unormsbf, unorms = testoperatorlinearsystem(N, fbf, f, Δw111bf, Δw111, S, SS, z)
-Float64(Ubf(z) - u(z...)), Float64(U(z) - u(z...))
+N = 300
+resizecoeffs!(fbf, N+2)
+SparseMatrixCSC{Float64}(sparse(L))
+ucfsbf = SparseMatrixCSC{Float64}(sparse(L)) \ Float64.(resizecoeffs!(fbf, N+2))
+pba = PseudoBlockArray(ucfsbf, [i+1 for i=0:N])
+unormsbf = [norm(view(pba, Block(i))) for i=1:N+1]
+
+
+Ubf, U, unormsbf, unorms = testoperatorlinearsystem2(N, fbf, f, L, Δw111, S, SS, z)
+# Float64(Ubf(z) - u(z...)), Float64(U(z) - u(z...))
 using Plots
 Plots.plot(unorms[2:end], line=(3, :solid), label="L(Wu) = f, u = y*x^2 + y^3", xscale=:log10, yscale=:log10, legend=:bottomleft)
 Plots.plot!(unormsbf[2:end], line=(3, :solid), label="L(Wu) = f, u = y*x^2 + y^3, bf", xscale=:log10, yscale=:log10, legend=:bottomleft)
 Plots.xlabel!("Block")
 Plots.ylabel!("Norm")
+Plots.savefig("experiments/images/test-operators-laplacian-u=poly-N=$N.pdf")
+
+# 2)
+isindomain(z, D)
+u = (x,y)->cos(x+y)
+ux = (x,y)->-sin(x+y)
+uxx = (x,y)->-cos(x+y)
+uy = (x,y)->-sin(x+y)
+uyy = (x,y)->-cos(x+y)
+fanonbf = (x,y)->(d2xweight(S, x, y) * u(x, y)
+                + 2 * dxweight(S, x, y) * ux(x, y)
+                + weight(S, x, y) * uxx(x, y)
+                + d2yweight(S, x, y) * u(x, y)
+                + 2 * dyweight(S, x, y) * uy(x, y)
+                + weight(S, x, y) * uyy(x, y))
+fanon = (x,y)->Float64(fanonbf(x,y))
+ncoeffs = 600
+fbf = Fun(fanonbf, S, 2 * ncoeffs); fbf.coefficients
+f = Fun(fanon, SS, 2 * ncoeffs); f.coefficients
+Float64(f(z) - fanon(z...)), Float64(fbf(z) - fanonbf(z...))
+N = 200
+Ubf, U, unormsbf, unorms = testoperatorlinearsystem(N, fbf, f, Δw111bf, Δw111, S, SS, z)
+# Float64(Ubf(z) - u(z...)), Float64(U(z) - u(z...))
+using Plots
+Plots.plot(unorms[2:end], line=(3, :solid), label="L(Wu) = f, u = cos(x+y)", xscale=:log10, yscale=:log10, legend=:bottomleft)
+Plots.plot!(unormsbf[2:end], line=(3, :solid), label="L(Wu) = f, u = cos(x+y), bf", xscale=:log10, yscale=:log10, legend=:bottomleft)
+Plots.xlabel!("Block")
+Plots.ylabel!("Norm")
+Plots.savefig("experiments/images/test-operators-laplacian-u=cos-N=$N.pdf")
+
+# 3)
+isindomain(z, D)
+fanonbf = (x,y)->BigFloat(1)
+fanon = (x,y)->Float64(fanonbf(x,y))
+ncoeffs = 1
+fbf = Fun(fanonbf, S, 2 * ncoeffs); fbf.coefficients
+f = Fun(fanon, SS, 2 * ncoeffs); f.coefficients
+Float64(f(z) - fanon(z...)), Float64(fbf(z) - fanonbf(z...))
+N = 300
+Ubf, U, unormsbf, unorms = testoperatorlinearsystem2(N, fbf, f, L, Δw111, S, SS, z)
+# Float64(Ubf(z) - u(z...)), Float64(U(z) - u(z...))
+using Plots
+Plots.plot(unorms, line=(3, :solid), label="L(Wu) = f, f = 1", xscale=:log10, yscale=:log10, legend=:bottomleft)
+Plots.plot!(unormsbf, line=(3, :solid), label="L(Wu) = f, f = 1, bf", xscale=:log10, yscale=:log10, legend=:bottomleft)
+Plots.xlabel!("Block")
+Plots.ylabel!("Norm")
+Plots.savefig("experiments/images/test-operators-laplacian-f=1-N=$N.pdf")
+
+# 4)
+isindomain(z, D)
+fanonbf = (x,y)->weight(S, x, y)^3
+fanon = (x,y)->Float64(fanonbf(x,y))
+ncoeffs = 100
+fbf = Fun(fanonbf, S, 2 * ncoeffs); fbf.coefficients
+f = Fun(fanon, SS, 2 * ncoeffs); f.coefficients
+Float64(f(z) - fanon(z...)), Float64(fbf(z) - fanonbf(z...))
+N = 300
+Ubf, U, unormsbf, unorms = testoperatorlinearsystem2(N, fbf, f, L, Δw111, S, SS, z)
+# Float64(Ubf(z) - u(z...)), Float64(U(z) - u(z...))
+using Plots
+Plots.plot(unorms, line=(3, :solid), label="L(Wu) = f, f = W111", xscale=:log10, yscale=:log10, legend=:bottomleft)
+Plots.plot!(unormsbf, line=(3, :solid), label="L(Wu) = f, f = W111, bf", xscale=:log10, yscale=:log10, legend=:bottomleft)
+Plots.xlabel!("Block")
+Plots.ylabel!("Norm")
+Plots.savefig("experiments/images/test-operators-laplacian-f=W111-N=$N.pdf")
 
 
 #==================#
