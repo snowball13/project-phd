@@ -334,6 +334,16 @@ function opevalatpts(S::OrthogonalPolynomialSpace{<:Any,<:Any,<:Any,<:Any,T,<:An
 end
 resetopptseval(S::OrthogonalPolynomialSpace) = resize!(S.opptseval, 0)
 
+# This func returns the S.opptseval for the degree n OP
+# We assume that we have called getopptseval(S, N, pts)
+function getptsevalforop(S::OrthogonalPolynomialSpace, n)
+    if length(S.opevalatpts) > n+1
+        error('Invalid OP requested in getptsevalforop - getopptseval(S,N,pts) may not have been correctly called')
+    else
+        S.opevalatpts[n+1]
+    end
+end
+
 #=====#
 # Method to gather and evaluate the op derivatives of space S at the transform pts given
 # NOTE: getopptseval() has to be called first
@@ -387,6 +397,16 @@ function derivopevalatpts(S::OrthogonalPolynomialSpace{<:Any,<:Any,<:Any,<:Any,T
     S.derivopptseval[j]
 end
 resetderivopptseval(S::OrthogonalPolynomialSpace) = resize!(S.derivopptseval, 0)
+
+# This func returns the S.derivopptseval for the degree n OP
+# We assume that we have called getderivopptseval(S, N, pts)
+function getderivptsevalforop(S::OrthogonalPolynomialSpace, n)
+    if length(S.derivopptseval) > n+1
+        error('Invalid OP requested in getderivptsevalforop - getderivopptseval(S,N,pts) may not have been correctly called')
+    else
+        S.derivopptseval[n+1]
+    end
+end
 
 #======#
 # Get/Set the opnorm
@@ -1722,6 +1742,6 @@ weightderivativey(S::HalfDiskSpace, z) = weightderivativey(S, z[1], z[2])
 # Include other OP Families
 include("DiskSliceFamilies.jl")
 include("TrapeziumFamilies.jl")
-include("SphericalCaps.jl")
+# include("SphericalCaps.jl")
 
 end # module

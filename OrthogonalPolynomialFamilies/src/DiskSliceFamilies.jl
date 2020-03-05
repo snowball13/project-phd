@@ -3,9 +3,21 @@ export DiskSliceFamily, DiskSliceSpace
 
 # R should be Float64, B should be BigFloat for best accuracy
 abstract type DiskFamily{B,R,N} end
+
+
+# TODO: Should I make this:
+#   struct DiskSlice{B,T} <: Domain{SVector{2,B}}
+#       checkpoints::Vector{SArray{Tuple{2},T,1,2}}
+#   end
+#   domain(S::DiskSliceSpace{DF,B,T,N}) where {DF,B,T,N} = DiskSlice(B,T,S.checkpoints)
+#   DiskSlice(::Type{B}, ::Type{T}, checkpoints) where {B,T} = DiskSlice{B,T}(checkpoints)
+#   checkpoints(S::DiskSlice) = S.checkpoints
+
+# TODO
 struct DiskSlice{B,T} <: Domain{SVector{2,B}} end
 DiskSlice(::Type{B}, ::Type{T}) where {B,T} = DiskSlice{B,T}()
 checkpoints(::DiskSlice) = [SVector(0.23,-0.78), SVector(0.76,0.56)]
+in(x::SVector{2}, D::DiskSlice) = D.α ≤ x[1] ≤ D.β && D.γ*D.ρ(x[1]) ≤ x[2] ≤ D.δ*D.ρ(x[1])
 
 struct DiskSliceSpace{DF, B, T, N} <: Space{DiskSlice{B,T}, T}
     family::DF # Pointer back to the family
@@ -24,17 +36,14 @@ end
 
 function DiskSliceSpace(fam::DiskFamily{B,T,N}, params::NTuple{N,B}) where {B,T,N}
     DiskSliceSpace{typeof(fam), B, T, N}(
-        fam, params, Vector{T}(), Vector{Vector{T}}(),
-        Vector{Vector{T}}(), Vector{Vector{T}}(), Vector{SparseMatrixCSC{T}}(),
-        Vector{SparseMatrixCSC{T}}(), Vector{SparseMatrixCSC{T}}(),
-        Vector{SparseMatrixCSC{T}}())
+        fam, params, Vector{B}(), Vector{Vector{B}}(),
+        Vector{Vector{B}}(), Vector{Vector{B}}(), Vector{SparseMatrixCSC{B}}(),
+        Vector{SparseMatrixCSC{B}}(), Vector{SparseMatrixCSC{B}}(),
+        Vector{SparseMatrixCSC{B}}())
 end
 
 # TODO
-in(x::SVector{2}, D::DiskSlice) = D.α ≤ x[1] ≤ D.β && D.γ*D.ρ(x[1]) ≤ x[2] ≤ D.δ*D.ρ(x[1])
-
 spacescompatible(A::DiskSliceSpace, B::DiskSliceSpace) = (A.params == B.params)
-
 domain(::DiskSliceSpace{DF,B,T,N}) where {DF,B,T,N} = DiskSlice(B,T)
 
 struct DiskSliceFamily{B,T,N,FAR,FAP,F,I} <: DiskFamily{B,T,N}
@@ -478,6 +487,10 @@ function resizedata!(S::DiskSliceSpace, N)
     N₀ = length(S.B)
     N ≤ N₀ - 2 && return S
     @show "begin resizedata! for DiskSliceSpace"
+
+    # First, we need to call this to get the 1D OP rec coeffs
+    resizedataonedimops!(S, N+3)
+
     resize!(S.B, N + 2)
     getBs!(S, N, N₀)
     @show "done Bs"
@@ -1246,7 +1259,7 @@ function transformparamsoperator(S::DiskSliceSpace{<:Any, B, T, <:Any},
             n, k = 0, 0; m = n
             view(C, Block(m+1, n+1))[k+1, k+1] = sum(wr) * getopnorm(P) / St.opnorms[k+1]
             for k = 0:N
-                if k % 20 == 0
+                if k % 100 == 0
                     @show "trnsfrm (a,b,c)->(a+1,b+1,c)", k
                 end
                 R = getRspace(S, k)
@@ -1292,7 +1305,7 @@ function transformparamsoperator(S::DiskSliceSpace{<:Any, B, T, <:Any},
             getopnorms(St, N)
 
             for k = 0:N
-                if k % 20 == 0
+                if k % 100 == 0
                     @show "trnsfrm (a,b,c)->(a+1,b+1,c+1)", k
                 end
                 R = getRspace(S, k)

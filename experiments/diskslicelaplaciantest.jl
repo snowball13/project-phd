@@ -16,6 +16,37 @@ import OrthogonalPolynomialFamilies: points, pointswithweights, getopptseval,
                     resizedata!, resizedataonedimops!
 using JLD
 
+f = Fun()
+@which Fun()
+x = 0.9
+S = JacobiWeight(-0.5,-0.5)
+S.space
+p = points(JacobiWeight(-0.5,-0.5), 20)
+@which chebyshevpoints(float(real(eltype(Float64))), 20, kind=1)
+x(0.9)
+
+B = BigFloat; T = Float64
+n = 100
+X = Fun(B(-1)..1); J = OrthogonalPolynomialFamily(T, 1-X^2)
+s, ws = pointswithweights(B, J(B(-0.5)), n) # Quad for W = 1/sqrt(1-s^2)
+X = Fun(-1..1); J = OrthogonalPolynomialFamily(T, 1-X^2)
+s, ws = pointswithweights(J(-0.5), n) # Quad for W = 1/sqrt(1-s^2)
+reverse!(s)
+p - s
+ws[1] - π / n
+
+
+D = DiskSliceFamily(); a, b = 1.0, 1.0; ap, bp = 1.0, 2.0
+S1 = D(a, b); S2 = D(ap, bp)
+k = 2
+R1 = getRspace(S1, k)
+R2 = getRspace(S2, k)
+pts, w = pointswithweights(D.R(S2.params[1], S2.params[2] + k - 0.5), 50)
+getopptseval(R1, 20, pts); getopptseval(R2, 20, pts)
+n = 5; m = 20
+Float64(inner2(R1, opevalatpts(R1, n-k+1, pts), opevalatpts(R2, m-k+1, pts), w))
+ret
+
 function getreccoeffsP!(S::DiskSliceSpace{<:Any, B, T, <:Any}, N) where {B,T}
     @show "getreccoeffsP!"
     P = getPspace(S)
@@ -42,48 +73,111 @@ function getreccoeffsP!(S::DiskSliceSpace{<:Any, B, T, <:Any}, N) where {B,T}
     S
 end
 
+function solutionblocknorms(D::DiskSliceFamily, f, A, N)
+    ucfs = sparse(A)[1:getopindex(N+D.nparams-1,N+D.nparams-1), 1:getopindex(N,N)] \ resizecoeffs!(f, N+D.nparams-1)
+    ucfspsa = PseudoBlockArray(ucfs, [i+1 for i=0:N])
+    unorms = [norm(view(ucfspsa, Block(i))) for i = 1:N+1]
+    unorms
+end
+function plotnorms(unorms, label; append=false, line=:solid)
+    if append
+        Plots.plot!(unorms, line=(3, line), label=label, xscale=:log10, yscale=:log10, legend=:bottomleft)
+    else
+        Plots.plot(unorms, line=(3, :solid), label=label, xscale=:log10, yscale=:log10, legend=:bottomleft)
+        Plots.xlabel!("Block")
+        Plots.ylabel!("Norm")
+    end
+end
 
-α = 0.2
+#=======================#
+
+# Half Disk / End Disk Slice
+
+α, β = 0.2, 0.8
 a, b = 1.0, 1.0
-HD = DiskSliceFamily(α)
+HD = DiskSliceFamily(Float64, typeof(α), 0.0, 1.0, -1.0, 1.0)
 S = HD(a, b); S0 = HD(a - 1, b - 1)
 isindomain(x, D::DiskSliceFamily) = D.α ≤ x[1] ≤ D.β && D.γ*D.ρ(x[1]) ≤ x[2] ≤ D.δ*D.ρ(x[1])
 x, y = BigFloat(1)/3, -BigFloat(1)/10; z = [x;y]; isindomain(z, HD)
 
-
-
-N = 230
+N = 530
 getreccoeffsP!(S, N)
 getreccoeffsP!(S0, N)
 resizedataonedimops!(S, N)
 resizedataonedimops!(S0, N)
 
+N = 500
+LL = laplaceoperator(S, S, N; square=false, weighted=true)
+LLold = load("experiments/saved/laplacian-w11-array.jld", "Lw11")
 
-u = (x,y)->cos(x+y)
-ux = (x,y)->-sin(x+y)
-uxx = (x,y)->-cos(x+y)
-uy = (x,y)->-sin(x+y)
-uyy = (x,y)->-cos(x+y)
-fanonbf = (x,y)->(d2xweight(S, x, y) * u(x, y)
-                + 2 * dxweight(S, x, y) * ux(x, y)
-                + weight(S, x, y) * uxx(x, y)
-                + d2yweight(S, x, y) * u(x, y)
-                + 2 * dyweight(S, x, y) * uy(x, y)
-                + weight(S, x, y) * uyy(x, y))
-ncoeffs = 600
-f = Fun(fanonbf, S, 2 * ncoeffs); f.coefficients
-Float64(f(z) - fanonbf(z...))
-N = 200
-# U = Fun(S, SparseMatrixCSC{Float64}(sparse(L)) \ Float64.(resizecoeffs!(f, N+1)))
-U = Fun(S, iterimprove(sparse(L)[1:getopindex(N,N), 1:getopindex(N,N)], resizecoeffs!(f, N)))
-ucfs = PseudoBlockArray(U.coefficients, [i+1 for i=0:N])
-unorms = [norm(view(ucfs, Block(i))) for i = 1:N+1]
+maximum(abs, sparse(LL)[1:getopindex(N,N), 1:getopindex(N,N)] - sparse(LLold))
+
+f1 = Fun((x,y)->1.0, S); f1.coefficients
+f2 = Fun((x,y)->(1 - HD.α^2 - y^2), S); f2.coefficients
+f3 = Fun((x,y)->weight(S, x, y)^2, S); f3.coefficients
+f4 = Fun((x,y)->exp(-1000((x-0.5)^2+(y-0.5)^2)), S, 20000); f4.coefficients
+N = 198
+unorms1 = solutionblocknorms(HD, f1, LL, N)
+unorms2 = solutionblocknorms(HD, f2, LL, N)
+unorms3 = solutionblocknorms(HD, f3, LL, N)
+unorms4 = solutionblocknorms(HD, f4, LL, N)
 using Plots
-Plots.plot(unorms, line=(3, :solid), label="L(Wu) = f, u = cos(x+y), bf", xscale=:log10, yscale=:log10, legend=:bottomleft)
-Plots.xlabel!("Block")
-Plots.ylabel!("Norm")
-Plots.savefig("experiments/images/test-operators-laplacian-halfdisk-u=cos-N=$N.pdf")
+plotnorms(unorms1, "f(x,y) = 1"; append=false)
+plotnorms(unorms2, "f(x,y) = (1-alpha^2-y^2)"; append=true, line=:dash)
+plotnorms(unorms3, "f(x,y) = W{(1,1,1)}^2"; append=true, line=:dashdot)
+plotnorms(unorms4, "f(x,y) = exp(-1000((x-0.5)^2+(y-0.5)^2))"; append=true, line=:dot)
+Plots.savefig("experiments/images/solutionblocknorms-poisson-halfdisk-N=$N-f64.pdf")
 
+#=======================#
+
+# Disk Slice
+a, b, c = 1.0, 1.0, 1.0
+α, β = 0.2, 0.8
+DD = DiskSliceFamily(Float64, typeof(α), α, β, -1.0, 1.0)
+S = DD(a, b, c); S0 = DD(a - 1, b - 1, c - 1)
+D = DiskSliceFamily(α, β)
+S = D(a, b, c); S0 = D(a - 1, b - 1, c - 1)
+isindomain(x, D::DiskSliceFamily) = D.α ≤ x[1] ≤ D.β && D.γ*D.ρ(x[1]) ≤ x[2] ≤ D.δ*D.ρ(x[1])
+x, y = BigFloat(1)/3, -BigFloat(1)/10; z = [x;y]; isindomain(z, D)
+
+N = 999
+getreccoeffsP!(S, N)
+resizedataonedimops!(S, N)
+getreccoeffsP!(S0, N)
+resizedataonedimops!(S0, N)
+
+N = 990
+LLds = laplaceoperator(S, S, N; square=false, weighted=true)
+save("experiments/saved/diskslice-alpha=0.2-beta=0.8-laplacian-111-N=$N-f64.jld", "Lw111", LLds)
+# N = 990
+# Δw111 = load("experiments/saved/diskslice-alpha=0.2-beta=0.8-laplacian-111-N=$N.jld", "Lw111")
+
+
+f1 = Fun((x,y)->1.0, S); f1.coefficients
+f2 = Fun((x,y)->(1 - DD.α^2 - y^2)*(1 - DD.β^2 - y^2), S); f2.coefficients
+f3 = Fun((x,y)->weight(S, x, y)^3, S); f3.coefficients
+f4 = Fun((x,y)->exp(-1000((x-0.5)^2+(y-0.5)^2)), S, 20000); f4.coefficients
+
+N = 950
+unorms1 = solutionblocknorms(f1, LLds, N)
+unorms2 = solutionblocknorms(f2, LLds, N)
+unorms3 = solutionblocknorms(f3, LLds, N)
+unorms4 = solutionblocknorms(f4, LLds, N)
+using Plots
+plotnorms(unorms1, "f(x,y) = 1"; append=false)
+plotnorms(unorms2, "f(x,y) = (1-alpha^2-y^2)(1-beta^2-y^2)"; append=true, line=:dash)
+plotnorms(unorms3, "f(x,y) = W{(1,1,1)}^3"; append=true, line=:dashdot)
+plotnorms(unorms4, "f(x,y) = exp(-1000((x-0.5)^2+(y-0.5)^2))"; append=true, line=:dot)
+Plots.savefig("experiments/images/solutionblocknorms-poisson-diskslice-alpha=$α-beta=$β-N=$N-f64.pdf")
+
+D.R
+
+T = Float64
+v = Vector{SArray{Tuple{3},T,1,3}}()
+resize!(v, 3)
+
+
+#=======================#
 
 
 """

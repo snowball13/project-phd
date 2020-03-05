@@ -873,7 +873,6 @@ function getreccoeffsP(D::DiskSliceFamily{B,T,<:Any,<:Any,<:Any,<:Any,<:Any}) wh
     end
     D
 end
-D.P(BigFloat(0.0), BigFloat(0.0))
 function getreccoeffsR(D::DiskSliceFamily{B,T,<:Any,<:Any,<:Any,<:Any,<:Any}) where {B,T}
     R = D.R
     # setprecision(800)
@@ -1046,7 +1045,7 @@ D.R(BigFloat(1.0), BigFloat(1.0), BigFloat(0.5)+k)
 α, β = 0.2, 0.8
 a, b, c = 1.0, 1.0, 1.0
 isindomain(x, D::DiskSliceFamily) = D.α ≤ x[1] ≤ D.β && D.γ*D.ρ(x[1]) ≤ x[2] ≤ D.δ*D.ρ(x[1])
-x, y = BigFloat(1)/3, -BigFloat(1)/10; z = [x;y]; isindomain(z, D)
+x, y = BigFloat(1)/3, -BigFloat(1)/10; z = [x;y]
 
 D = DiskSliceFamily(α, β)
 getreccoeffsR(D)
@@ -1114,7 +1113,7 @@ wddy = load("experiments/saved/diskslice-alpha=0.2-beta=0.8-operators-N=$N-wdy.j
 tt = load("experiments/saved/diskslice-alpha=0.2-beta=0.8-operators-N=$N-t.jld", "t")
 wtt = load("experiments/saved/diskslice-alpha=0.2-beta=0.8-operators-N=$N-wt.jld", "wt")
 Δw111 = load("experiments/saved/diskslice-alpha=0.2-beta=0.8-laplacian-111-N=$N.jld", "Lw111")
-Δw111bf = load("experiments/saved/diskslice-alpha=0.2-beta=0.8-laplace-mat-squaresparse-N=990.jld", "Lw11")
+# Δw111bf = load("experiments/saved/diskslice-alpha=0.2-beta=0.8-laplace-mat-squaresparse-N=990.jld", "Lw11")
 function testdiff(A, B)
     maximum(abs, sparse(A) - sparse(B))
 end
