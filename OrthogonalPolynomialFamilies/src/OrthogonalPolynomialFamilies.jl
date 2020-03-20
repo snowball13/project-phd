@@ -337,10 +337,10 @@ resetopptseval(S::OrthogonalPolynomialSpace) = resize!(S.opptseval, 0)
 # This func returns the S.opptseval for the degree n OP
 # We assume that we have called getopptseval(S, N, pts)
 function getptsevalforop(S::OrthogonalPolynomialSpace, n)
-    if length(S.opevalatpts) > n+1
-        error('Invalid OP requested in getptsevalforop - getopptseval(S,N,pts) may not have been correctly called')
+    if length(S.opptseval) < n+1
+        error("Invalid OP requested in getptsevalforop - getopptseval(S,N,pts) may not have been correctly called")
     else
-        S.opevalatpts[n+1]
+        S.opptseval[n+1]
     end
 end
 
@@ -402,7 +402,7 @@ resetderivopptseval(S::OrthogonalPolynomialSpace) = resize!(S.derivopptseval, 0)
 # We assume that we have called getderivopptseval(S, N, pts)
 function getderivptsevalforop(S::OrthogonalPolynomialSpace, n)
     if length(S.derivopptseval) > n+1
-        error('Invalid OP requested in getderivptsevalforop - getderivopptseval(S,N,pts) may not have been correctly called')
+        error("Invalid OP requested in getderivptsevalforop - getderivopptseval(S,N,pts) may not have been correctly called")
     else
         S.derivopptseval[n+1]
     end
@@ -1423,7 +1423,7 @@ function resizecoeffs!(f::Fun, N)
         cfs[m̃+1:end] .= 0.0
     elseif m̃ > m
         for j = m+1:m̃
-            if cfs[j] > 1e-15
+            if cfs[j] > 1e-16
                 error("Trying to decrease degree of f")
             end
         end
@@ -1742,6 +1742,6 @@ weightderivativey(S::HalfDiskSpace, z) = weightderivativey(S, z[1], z[2])
 # Include other OP Families
 include("DiskSliceFamilies.jl")
 include("TrapeziumFamilies.jl")
-# include("SphericalCaps.jl")
+include("SphericalCaps.jl")
 
 end # module
