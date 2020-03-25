@@ -3,18 +3,25 @@
 #=
 NOTE
 
-    OPs: Q^{(a,b)}_{n,k}(x,y,z) := R^{(a,b+k+0.5)}_{n-k}(z) * ρ(z)^k * ℯ^{ikθ}
+    OPs: Q^{(a,b)}_{n,k,i}(x,y,z) := R^{(a,b+k+0.5)}_{n-k}(z) * ρ(z)^k * Y_{k,i}(θ)
 
-where: x = cosθ sinϕ, y = sinθ sinϕ, z = cosϕ; ρ(z) = (1-z)^2 = sinϕ
+for n ∈ ℕ₀, k = 0,...,n, i ∈ {0,1}
+
+where Y_{k,0}(θ) := cos(kθ), Y_{k,1}(θ) := sin(kθ) for k > 0
+      Y_{0,0}(θ) := 1 (for k = 0, and there is no Y_{0,1})
+
+and x = cosθ sinϕ, y = sinθ sinϕ, z = cosϕ; ρ(z) = sqrt(1-z^2) = sinϕ
 
 The ordering of the OP vector is not done by polynomial degree, but by Fourier
 mode (not by n but by k)
 
 i.e. for a given max degree N:
 
-    ℚ^{(a,b)}_N := [ℚ^{(a,b)}_{N,0};...;ℚ^{(a,b)}_{N,N}] ∈ ℂ^{(N+1)(N+2)/2}
-    ℚ^{(a,b)}_{N,k} := [Q^{(a,b)}_{k,k};...;Q^{(a,b)}_{N,k}] ∈ ℂ^{N-k+1}
-                                                            for k = 0,...,N
+    ℚ^{(a,b)}_N := [ℚ^{(a,b)}_{N,0};...;ℚ^{(a,b)}_{N,N}]
+    ℚ^{(a,b)}_{N,k} := [Q^{(a,b)}_{k,k,0};Q^{(a,b)}_{k,k,1}...;Q^{(a,b)}_{N,k,0};Q^{(a,b)}_{N,k,1}] ∈ ℝ^{2(N-k+1)}
+                                                            for k = 1,...,N
+    ℚ^{(a,b)}_{N,0} := [Q^{(a,b)}_{0,0,0};Q^{(a,b)}_{1,0,0};Q^{(a,b)}_{1,0,1}...;Q^{(a,b)}_{N,0,0};Q^{(a,b)}_{N,0,1}] ∈ ℝ^{2N+1}
+                                                            for k = 0
 
 =#
 
@@ -34,29 +41,27 @@ function checkpoints(::SphericalCap)
 end
 in(x::SVector{3}, D::SphericalCap) = D.α ≤ x[3] ≤ D.β && sqrt(x[1]^2 + x[2]^2) == D.ρ(x[3])
 
-struct SphericalCapSpace{DF, B, T, CB, N} <: Space{SphericalCap{B,T}, T}
+struct SphericalCapSpace{DF, B, T, N} <: Space{SphericalCap{B,T}, T}
     family::DF # Pointer back to the family
     params::NTuple{N,B} # Parameters
     opnorms::Vector{B} # squared norms
-    # NOTE type CB is Complex{B}
-    opptseval::Vector{Vector{CB}} # Store the ops evaluated at the transform pts
-    A::Vector{SparseMatrixCSC{CB}}
-    B::Vector{SparseMatrixCSC{CB}}
-    C::Vector{SparseMatrixCSC{CB}}
-    DT::Vector{SparseMatrixCSC{CB}}
+    opptseval::Vector{Vector{B}} # Store the ops evaluated at the transform pts
+    A::Vector{SparseMatrixCSC{B}}
+    B::Vector{SparseMatrixCSC{B}}
+    C::Vector{SparseMatrixCSC{B}}
+    DT::Vector{SparseMatrixCSC{B}}
 end
 
 function SphericalCapSpace(fam::SphericalFamily{B,T,N}, params::NTuple{N,B}) where {B,T,N}
-    CB = Complex{B}
-    SphericalCapSpace{typeof(fam), B, T, CB, N}(
-        fam, params, Vector{B}(), Vector{Vector{CB}}(),
-        Vector{SparseMatrixCSC{CB}}(), Vector{SparseMatrixCSC{CB}}(),
-        Vector{SparseMatrixCSC{CB}}(), Vector{SparseMatrixCSC{CB}}())
+    SphericalCapSpace{typeof(fam), B, T, N}(
+        fam, params, Vector{B}(), Vector{Vector{B}}(),
+        Vector{SparseMatrixCSC{B}}(), Vector{SparseMatrixCSC{B}}(),
+        Vector{SparseMatrixCSC{B}}(), Vector{SparseMatrixCSC{B}}())
 end
 
 spacescompatible(A::SphericalCapSpace, B::SphericalCapSpace) = (A.params == B.params)
 
-domain(::SphericalCapSpace{<:Any, B, T, <:Any, <:Any}) where {B,T} = SphericalCap{B,T}()
+domain(::SphericalCapSpace{<:Any, B, T, <:Any}) where {B,T} = SphericalCap{B,T}()
 
 struct SphericalCapFamily{B,T,N,FA,F,I} <: SphericalFamily{B,T,N}
     spaces::Dict{NTuple{N,B}, SphericalCapSpace}
@@ -105,7 +110,7 @@ getRspace(S::SphericalCapSpace) =
 
 # Method to calculate the rec coeffs for the 1D R OPs (the non classical ones)
 # using a recursive algorithm invloving use of the Christoffel-Darboux formula
-function getreccoeffsR!(S::SphericalCapSpace{<:Any, B, T, CB, <:Any}, N; maxk=-1) where {B,T,CB}
+function getreccoeffsR!(S::SphericalCapSpace{<:Any, B, T, <:Any}, N; maxk=-1) where {B,T}
     c = Int(S.params[end])
     # Set maxkval - allows us to, if set, stop the iteration (note that the N
     # value needs to be adjusted accordingly before input)
@@ -195,7 +200,7 @@ function resizedataonedimops!(S::SphericalCapSpace, N)
 end
 
 # Method to get the normalising constants for the 1D R OPs
-function getopnorms(S::SphericalCapSpace{<:Any, B, T, CB, <:Any}, k) where {B,T,CB}
+function getopnorms(S::SphericalCapSpace{<:Any, B, T, <:Any}, k) where {B,T}
     m = length(S.opnorms)
     if k + 1 > m
         resize!(S.opnorms, k+1)
@@ -207,7 +212,7 @@ function getopnorms(S::SphericalCapSpace{<:Any, B, T, CB, <:Any}, k) where {B,T,
             if !isnormset(R)
                 setopnorm(R, sum(rhoptsr.^(2j) .* wr))
             end
-            S.opnorms[j+1] = R.opnorm[1] # * 2π NOTE we do not add the 2pi
+            S.opnorms[j+1] = R.opnorm[1] # * π NOTE we do not add the pi
                                          # factor, as this cancels out whenever
                                          # we need to use the S norms directly
         end
@@ -261,11 +266,17 @@ function recα(::Type{T}, S::SphericalCapSpace, n, k, j) where T
     else
         error("Invalid entry to function")
     end
-    T(ret / 2)
+
+    if k == 0 || (k == 1 && isodd(j))
+        getdegzeropteval(T, S) * T(ret)
+    else
+        T(ret) / 2
+    end
 end
-function recβ(::Type{T}, S::SphericalCapSpace, n, k, j) where T
-    ret = im * recα(T, S, n, k, j)
-    if iseven(j)
+function recβ(::Type{T}, S::SphericalCapSpace, n, k, i, j) where T
+    # NOTE the extra input i repesents the index in Q_{n,k,i}
+    ret = recα(T, S, n, k, j)
+    if (i == 0 && isodd(j)) || (i == 1 && iseven(j))
         -ret
     else
         ret
@@ -287,43 +298,59 @@ end
 #===#
 # Indexing retrieval methods
 
-# function getopindex(S::SphericalCapSpace, n, k; bydegree=true, N=0)
-#     if bydegree
-#         sum(1:n) + k + 1
-#     else
-#         # N should be set
-#         if k == 0
-#             n - k + 1
-#         else
-#             sum((N+2-k):(N+1)) + n - k + 1
-#         end
-#     end
-# end
-# function getnk(S::SphericalCapSpace, ind; bydegree=true)
-#     if bydegree
-#         i = ind - 1
-#         n = 0
-#         m = 0
-#         while true
-#             if (m+1)*(m+2) > 2i
-#                 n = m
-#                 break
-#             end
-#             m += 1
-#         end
-#         k = i - (n+1)n/2
-#         Int(n), Int(k)
-#     else
-#         error("Can only do this for bydegree=true")
-#     end
-# end
-function getNforcoeffsvec(S::SphericalCapSpace, cfs::AbstractArray)
-    m = length(cfs)
-    N = (-3 + sqrt(9 - 4 * (2 - 2m))) / 2
-    if !isinteger(N)
-        error("length of coeffs vec does not match an N value")
+function getopindex(S::SphericalCapSpace, n, k, i; bydegree=true, N=0)
+    if k > n
+        error("Invalid k input to getopindex")
+    elseif i > 1 || i < 0
+        error("Invalid i input to getopindex")
+    elseif k == 0 && i == 1
+        error("Invalid inputs to getopindex - i must be zero if k is zero")
     end
-    Int(N)
+    if bydegree
+        if k == 0
+            ret = n^2 + 1
+        else
+            ret = n^2 + 2k + i
+        end
+    else # by Fourier mode k
+        # N must be set
+        if k == 0
+            ret = n + 1
+        else
+            ret = N + 1 + 2 * sum([N-j+1 for j=1:k-1]) + 2 * (n - k) + i + 1
+        end
+    end
+    ret
+end
+function getnki(S::SphericalCapSpace, ind; bydegree=true)
+    if bydegree
+        n = 0
+        while true
+            if (n+1)^2 ≥ ind
+                break
+            end
+            n += 1
+        end
+        r = ind - n^2
+        if r == 1
+            n, 0, 0
+        elseif iseven(r)
+            n, Int(r/2), 0
+        else
+            n, Int((r-1)/2), 1
+        end
+    else
+        error("Can only do this for bydegree=true")
+    end
+end
+function getNforcoeffsvec(S::SphericalCapSpace, cfs::AbstractArray)
+    # m = length(cfs)
+    # N = (-3 + sqrt(9 - 4 * (2 - 2m))) / 2
+    # if !isinteger(N)
+    #     error("length of coeffs vec does not match an N value")
+    # end
+    # Int(N)
+    # TODO
 end
 
 
@@ -331,8 +358,8 @@ end
 # points()
 
 # NOTE we output ≈n points (x,y,z), plus the ≈n points corresponding to (-x,-y,z)
-function pointswithweights(S::SphericalCapSpace{<:Any, B, T, CB, <:Any}, n;
-                            nofactor=false) where {B,T,CB}
+function pointswithweights(S::SphericalCapSpace{<:Any, B, T, <:Any}, n;
+                            nofactor=false) where {B,T}
     # Return the weights and nodes to use for the even part of a function,
     # i.e. for the spherical cap Ω:
     #   int_Ω w_R^{a,2b}(x) f(x,y,z) dσ(x,y)dz ≈ 0.5 * Σ_j wⱼ*(f(xⱼ,yⱼ,zⱼ) + f(-xⱼ,-yⱼ,zⱼ))
@@ -352,7 +379,7 @@ function pointswithweights(S::SphericalCapSpace{<:Any, B, T, CB, <:Any}, n;
     m = isodd(M1) ? Int((M1 + 1) / 2) : Int((M1 + 2) / 2); m -= Int(S.params[end])
     getreccoeffsR!(S, m; maxk=0)
     t, wt = pointswithweights(B, getRspace(S, 0), M1) # Quad for w_R^{(a,2b+1)}
-    s = [(cospi(2.0 * (it - 1) / M2), sinpi(2.0 * (it - 1) / M2)) for it=1:M2]
+    s = [(cospi(B(2 * (it - 1)) / M2), sinpi(B(2 * (it - 1)) / M2)) for it=1:M2]
     ws = ones(B, M2) / M2  # Quad for circumference of unit circle
     if !nofactor
         ws *= 2 * B(π)
@@ -381,10 +408,17 @@ points(S::SphericalCapSpace, n) = pointswithweights(S, n)[1]
 # Point evaluation (opevalatpts)
 # NOTE for now, we store these by degree order n.
 
+# Returns the constant that is Q^{a,b}_{0,0,0} ( = Y_{0,0}, so that the Y_ki's
+# are normalised)
+function getdegzeropteval(::Type{T}, S::SphericalCapSpace) where T
+    sqrt(T(2)) / 2
+end
+getdegzeropteval(S::SphericalCapSpace{<:Any, T, <:Any, <:Any}) where T =
+    getdegzeropteval(T, S)
 # Methods to gather and evaluate the ops of space S at the transform pts given
 function getopptseval(S::SphericalCapSpace, N, pts)
     resetopptseval(S)
-    jj = [getopindex(n, 0) for n=0:N]
+    jj = [getopindex(S, n, 0, 0) for n = 0:N]
     for j in jj
         opevalatpts(S, j, pts)
     end
@@ -394,47 +428,57 @@ function resetopptseval(S::SphericalCapSpace)
     resize!(S.opptseval, 0)
     S
 end
-function opevalatpts(S::SphericalCapSpace{<:Any, B, T, CB, <:Any}, j, pts) where {B,T,CB}
+function opevalatpts(S::SphericalCapSpace{<:Any, B, T, <:Any}, j, pts) where {B,T}
+    # NOTE This function should be used only from getopptseval().
+    #      The idea here is that we have all OPs up to degree N already
+    #      evaluated at pts, and we simply iterate once to calculate the pts
+    #      evals for the deg N+1 OPs.
+    # The input j refers to the index of a deg N+1 OP, that can be used to
+    # return it.
+
     len = length(S.opptseval)
     if len ≥ j
         return S.opptseval[j]
     end
 
     # We iterate up from the last obtained pts eval
-    N = len == 0 ? -1 : getnk(len)[1]
-    n = getnk(j)[1]
+    N = len == 0 ? -1 : getnki(S, len)[1]
+    n = getnki(S, j)[1]
     if  N != n - 1 || (len == 0 && j > 1)
         error("Invalid index")
     end
 
-    jj = getopindex(n, 0)
-    resizedata!(S, n)
-    resize!(S.opptseval, getopindex(n, n))
-    for k = 0:n
-        S.opptseval[jj+k] = Vector{CB}(undef, length(pts))
-    end
-
     if n == 0
-        S.opptseval[1][:] .= 1.0
-    elseif n == 1
-        nm1 = getopindex(n-1, 0)
-        for r = 1:length(pts)
-            P1 = [opevalatpts(S, nm1+i, pts)[r] for i = 0:n-1]
-            P = - S.DT[n] * (S.B[n] - clenshawG(S, n-1, pts[r])) * P1
-            for k = 0:n
-                S.opptseval[jj+k][r] = P[k+1]
-            end
-        end
+        resize!(S.opptseval, 1)
+        S.opptseval[1] = Vector{B}(undef, length(pts))
+        S.opptseval[1][:] .= getdegzeropteval(B, S)
     else
-        nm1 = getopindex(n-1, 0)
-        nm2 = getopindex(n-2, 0)
-        for r = 1:length(pts)
-            P1 = [opevalatpts(S, nm1+i, pts)[r] for i = 0:n-1]
-            P2 = [opevalatpts(S, nm2+i, pts)[r] for i = 0:n-2]
-            P = (- S.DT[n] * (S.B[n] - clenshawG(S, n-1, pts[r])) * P1
-                 - S.DT[n] * S.C[n] * P2)
-            for k = 0:n
-                S.opptseval[jj+k][r] = P[k+1]
+        jj = getopindex(S, n, 0, 0)
+        resizedata!(S, n)
+        resize!(S.opptseval, getopindex(S, n, n, 1))
+        for k = 0:2n
+            S.opptseval[jj+k] = Vector{B}(undef, length(pts))
+        end
+        if n == 1
+            nm1 = getopindex(S, n-1, 0, 0)
+            for r = 1:length(pts)
+                P1 = [opevalatpts(S, nm1+it, pts)[r] for it = 0:2(n-1)]
+                P = - S.DT[n] * (S.B[n] - clenshawG(S, n-1, pts[r])) * P1
+                for k = 0:2n
+                    S.opptseval[jj+k][r] = P[k+1]
+                end
+            end
+        else
+            nm1 = getopindex(S, n-1, 0, 0)
+            nm2 = getopindex(S, n-2, 0, 0)
+            for r = 1:length(pts)
+                P1 = [opevalatpts(S, nm1+it, pts)[r] for it = 0:2(n-1)]
+                P2 = [opevalatpts(S, nm2+it, pts)[r] for it = 0:2(n-2)]
+                P = (- S.DT[n] * (S.B[n] - clenshawG(S, n-1, pts[r])) * P1
+                     - S.DT[n] * S.C[n] * P2)
+                for k = 0:2n
+                    S.opptseval[jj+k][r] = P[k+1]
+                end
             end
         end
     end
@@ -449,8 +493,8 @@ function getptsevalforop(S::SphericalCapSpace, ind)
         S.opptseval[ind]
     end
 end
-getptsevalforop(S::SphericalCapSpace, n, k) =
-    getptsevalforop(S, getopindex(n, k))
+getptsevalforop(S::SphericalCapSpace, n, k, i) =
+    getptsevalforop(S, getopindex(S, n, k, i))
 
 
 
@@ -458,19 +502,21 @@ getptsevalforop(S::SphericalCapSpace, n, k) =
 # transform and itransform
 
 struct SphericalCapTransformPlan{T}
-    # w::Vector{T}
-    # pts::Vector{SArray{Tuple{3},T,1,3}}
-    # S::SphericalCapSpace{<:Any, T, <:Any, <:Any}
     Vp::Array{T}
     Vm::Array{T}
 end
 
-function SphericalCapTransformPlan(S::SphericalCapSpace{<:Any, B, T, CB, <:Any}, vals) where {B,T,CB}
+function SphericalCapTransformPlan(S::SphericalCapSpace{<:Any, B, T, <:Any}, vals) where {B,T}
     @show "Begin SphericalCapTransformPlan"
 
+    # NOTE N here is the degree of the function f that we are finding the
+    #      coefficients for. We should have m2 = (N+1)^2 vals (pts).
+    #      m1 is the number of OPs we require, that is all OPs up to and
+    #      including deg N, i.e. length of ℚ^{(a,b)}_N, which is (N+1)^2.
+
     m2 = Int(length(vals) / 2)
-    N = Int(sqrt(m2)) - 1
-    m1 = sum(1:N+1)
+    N = m2 < 2 ? Int(sqrt(m2)) - 1 : Int(sqrt(m2)) - 2 # TODO sqrt(m2)-1 doesnt work here when it gives N as odd...
+    m1 = (N+1)^2
     @show N, m1, m2
 
     # nofactor=true means we dont have the 2pi factor in the weights
@@ -479,24 +525,27 @@ function SphericalCapTransformPlan(S::SphericalCapSpace{<:Any, B, T, CB, <:Any},
 
     # calculate the Vandermonde matrix
     Vp = zeros(B, m1, m2); Vm = zeros(B, m1, m2)
+    p = Vector{SArray{Tuple{3},B,1,3}}(undef, 2)
     for j = 1:m2
-        p = Vector{SArray{Tuple{3},B,1,3}}(undef, 2)
         p[1] = pts[j]; p[2] = pts[j+m2]
         getopptseval(S, N, p)
+        indv = 1
         for k = 0:N
-            indv = sum([N-t+1 for t = 0:k-1])
-            inde = k + 1 + sum(1:k)
+            # indv = getopindex(S, k, k, 0; bydegree=false, N=N)
             for n = k:N
-                # NOTE use indexing of opptseval to order rows of V by Fourier mode k (not degree)
-                Vp[indv + n - k + 1, j] = getptsevalforop(S, inde)[1] * w[j] / (2 * S.opnorms[k+1])
-                Vm[indv + n - k + 1, j] = getptsevalforop(S, inde)[2] * w[j] / (2 * S.opnorms[k+1])
-                inde += n + 1
+                inde = getopindex(S, n, k, 0)
+                for i = 0:min(1, k) # This catches the k == 0 case
+                    # NOTE use indexing of opptseval to order rows of V by Fourier mode k (not degree)
+                    Vp[indv, j] = getptsevalforop(S, inde+i)[1] * w[j] / S.opnorms[k+1]
+                    Vm[indv, j] = getptsevalforop(S, inde+i)[2] * w[j] / S.opnorms[k+1]
+                    indv += 1
+                end
             end
         end
         resetopptseval(S)
     end
 
-    SCTP = SphericalCapTransformPlan{CB}(Vp, Vm)
+    SCTP = SphericalCapTransformPlan{B}(Vp, Vm)
     @show "End SphericalCapTransformPlan"
     SCTP
 end
@@ -519,21 +568,24 @@ end
 function itransform(S::SphericalCapSpace, cfs::AbstractVector{T}) where T
     @show "begin itransform"
     ncfs = length(cfs)
-    pts = points(S, ncfs)
-    N = getnk(ncfs)[1]
+    N = Int(sqrt(ncfs)) - 1
+    pts = points(S, (N+2)^2)
     npts = length(pts)
     ret = zeros(T, npts)
     m = Int(npts / 2)
     for j = 1:m
         getopptseval(S, N, (pts[j], pts[j + m]))
+        indc = 1
         for k = 0:N
-            inde = sum([N-t+1 for t = 0:k-1])
-            indc = k + 1 + sum(1:k)
+            # indc = getopindex(S, k, k, 0; bydegree=false, N=N)
             for n = k:N
-                # NOTE use indexing of opptseval to order rows of V by Fourier mode k (not degree)
-                ret[j] += getptsevalforop(S, inde + n - k + 1)[1] * cfs[indc]
-                ret[j + m] += getptsevalforop(S, inde + n - k + 1)[2] * cfs[indc]
-                indc += n + 1
+                inde = getopindex(S, n, k, 0)
+                for i = 0:min(1, k) # This catches the k == 0 case
+                    # NOTE use indexing of opptseval to order rows of V by Fourier mode k (not degree)
+                    ret[j] += getptsevalforop(S, inde+i)[1] * cfs[indc]
+                    ret[j + m] += getptsevalforop(S, inde+i)[2] * cfs[indc]
+                    indc += 1
+                end
             end
         end
         resetopptseval(S)
@@ -557,34 +609,86 @@ OR since constructing/storing these takes a looong time, we do the clenshaw alg
 when needed *not* using the clenshaw matrices.
 =#
 
-function getBs!(S::SphericalCapSpace{<:Any, T, <:Any, <:Any, <:Any}, N, N₀) where T
+function getBs!(S::SphericalCapSpace{<:Any, T, <:Any, <:Any}, N, N₀) where T
     m = N₀
     resize!(S.B, N + 1)
     if m == 0
         S.B[1] = sparse([0; 0; recγ(T, S, 0, 0, 2)])
         m += 1
     end
+    if m == 1
+        n = 1
+        S.B[n+1] = sparse(zeros(T, 3*(2n+1), 2n+1))
+
+        k = 0; i = 0
+        S.B[n+1][1, 2] = recα(T, S, n, k, 4)
+        S.B[n+1][2n+1+1, 3] = recβ(T, S, n, k, i, 4)
+        S.B[n+1][2*(2n+1)+1, 1] = recγ(T, S, n, k, 2)
+
+        k = 1
+        c2 = recγ(T, S, n, k, 2)
+        i = 0
+        S.B[n+1][2k+i, 1] = recα(T, S, n, k, 3)
+        S.B[n+1][2*(2n+1)+2k+i, 2k+i] = c2
+        i = 1
+        S.B[n+1][2n+1+2k+i, 1] = recβ(T, S, n, k, i, 3)
+        S.B[n+1][2*(2n+1)+2k+i, 2k+i] = c2
+        m += 1
+    end
     for n = N:-1:m
-        S.B[n+1] = sparse(zeros(T, 3*(n+1), n+1))
-        k = 0
-        S.B[n+1][k+1, k+2] = recα(T, S, n, k, 4)
-        S.B[n+1][n+1+k+1, k+2] = recβ(T, S, n, k, 4)
-        S.B[n+1][2*(n+1)+k+1, k+1] = recγ(T, S, n, k, 2)
-        for k = 1:n-1
-            S.B[n+1][k+1, k] = recα(T, S, n, k, 3)
-            S.B[n+1][k+1, k+2] = recα(T, S, n, k, 4)
-            S.B[n+1][n+1+k+1, k] = recβ(T, S, n, k, 3)
-            S.B[n+1][n+1+k+1, k+2] = recβ(T, S, n, k, 4)
-            S.B[n+1][2*(n+1)+k+1, k+1] = recγ(T, S, n, k, 2)
+        S.B[n+1] = sparse(zeros(T, 3*(2n+1), 2n+1))
+
+        k = 0; i = 0
+        S.B[n+1][1, 2] = recα(T, S, n, k, 4)
+        S.B[n+1][2n+1+1, 3] = recβ(T, S, n, k, i, 4)
+        S.B[n+1][2*(2n+1)+1, 1] = recγ(T, S, n, k, 2)
+
+        k = 1
+        a3, a4 = recα(T, S, n, k, 3), recα(T, S, n, k, 4)
+        c2 = recγ(T, S, n, k, 2)
+        i = 0
+        S.B[n+1][2k+i, 1] = a3
+        S.B[n+1][2k+i, 2(k+1)+i] = a4
+        S.B[n+1][2n+1+2k+i, 2(k+1)+i+1] = recβ(T, S, n, k, i, 4)
+        S.B[n+1][2*(2n+1)+2k+i, 2k+i] = c2
+        i = 1
+        S.B[n+1][2k+i, 2(k+1)+i] = a4
+        S.B[n+1][2n+1+2k+i, 1] = recβ(T, S, n, k, i, 3)
+        S.B[n+1][2n+1+2k+i, 2(k+1)+i-1] = recβ(T, S, n, k, i, 4)
+        S.B[n+1][2*(2n+1)+2k+i, 2k+i] = c2
+
+        for k = 2:n-1
+            a3, a4 = recα(T, S, n, k, 3), recα(T, S, n, k, 4)
+            c2 = recγ(T, S, n, k, 2)
+            i = 0
+            S.B[n+1][2k+i, 2(k-1)+i] = a3
+            S.B[n+1][2k+i, 2(k+1)+i] = a4
+            S.B[n+1][2n+1+2k+i, 2(k-1)+i+1] = recβ(T, S, n, k, i, 3)
+            S.B[n+1][2n+1+2k+i, 2(k+1)+i+1] = recβ(T, S, n, k, i, 4)
+            S.B[n+1][2*(2n+1)+2k+i, 2k+i] = c2
+            i = 1
+            S.B[n+1][2k+i, 2(k-1)+i] = a3
+            S.B[n+1][2k+i, 2(k+1)+i] = a4
+            S.B[n+1][2n+1+2k+i, 2(k-1)+i-1] = recβ(T, S, n, k, i, 3)
+            S.B[n+1][2n+1+2k+i, 2(k+1)+i-1] = recβ(T, S, n, k, i, 4)
+            S.B[n+1][2*(2n+1)+2k+i, 2k+i] = c2
         end
+
         k = n
-        S.B[n+1][k+1, k] = recα(T, S, n, k, 3)
-        S.B[n+1][n+1+k+1, k] = recβ(T, S, n, k, 3)
-        S.B[n+1][2*(n+1)+k+1, k+1] = recγ(T, S, n, k, 2)
+        a3 = recα(T, S, n, k, 3)
+        c2 = recγ(T, S, n, k, 2)
+        i = 0
+        S.B[n+1][2k+i, 2(k-1)+i] = a3
+        S.B[n+1][2n+1+2k+i, 2(k-1)+i+1] = recβ(T, S, n, k, i, 3)
+        S.B[n+1][2*(2n+1)+2k+i, 2k+i] = c2
+        i = 1
+        S.B[n+1][2k+i, 2(k-1)+i] = a3
+        S.B[n+1][2n+1+2k+i, 2(k-1)+i-1] = recβ(T, S, n, k, i, 3)
+        S.B[n+1][2*(2n+1)+2k+i, 2k+i] = c2
     end
     S
 end
-function getCs!(S::SphericalCapSpace{<:Any, T, <:Any, <:Any, <:Any}, N, N₀) where T
+function getCs!(S::SphericalCapSpace{<:Any, T, <:Any, <:Any}, N, N₀) where T
     m = N₀
     resize!(S.C, N + 1)
     if N₀ == 0
@@ -592,80 +696,144 @@ function getCs!(S::SphericalCapSpace{<:Any, T, <:Any, <:Any, <:Any}, N, N₀) wh
         m += 1
     end
     if m == 1
-        S.C[2] = sparse([0; recα(T, S, 1, 1, 1);
-                         0; recβ(T, S, 1, 1, 1);
-                         recγ(T, S, 1, 0, 1); 0])
+        n = 1
+        S.C[n+1] = sparse(zeros(T, 3*(2n+1), 2n-1))
+        k = 0; i = 0
+        S.C[n+1][2, 1] = recα(T, S, n, k+1, 1)
+        S.C[n+1][2n+1+3, 1] = recβ(T, S, n, k+1, i+1, 1)
+        S.C[n+1][2*(2n+1)+1, 1] = recγ(T, S, n, k, 1)
         m += 1
     end
     for n = N:-1:m
-        S.C[n+1] = sparse(zeros(T, 3*(n+1), n)) # TODO should this be resize!(n+2, 3*(n+1)) ??
-        k = 0
-        S.C[n+1][k+1, k+2] = recα(T, S, n, k, 2)
-        S.C[n+1][n+1+k+1, k+2] = recβ(T, S, n, k, 2)
-        S.C[n+1][2*(n+1)+k+1, k+1] = recγ(T, S, n, k, 1)
-        for k = 1:n-2
-            S.C[n+1][k+1, k] = recα(T, S, n, k, 1)
-            S.C[n+1][k+1, k+2] = recα(T, S, n, k, 2)
-            S.C[n+1][n+1+k+1, k] = recβ(T, S, n, k, 1)
-            S.C[n+1][n+1+k+1, k+2] = recβ(T, S, n, k, 2)
-            S.C[n+1][2*(n+1)+k+1, k+1] = recγ(T, S, n, k, 1)
+        # We iterate over columns, not rows, for the C matrices
+
+        S.C[n+1] = sparse(zeros(T, 3*(2n+1), 2n-1))
+
+        k = 0; i = 0
+        S.C[n+1][2, 1] = recα(T, S, n, k+1, 1)
+        S.C[n+1][2n+1+3, 1] = recβ(T, S, n, k+1, i+1, 1)
+        S.C[n+1][2*(2n+1)+1, 1] = recγ(T, S, n, k, 1)
+
+        k = 1
+        a1, a2 = recα(T, S, n, k+1, 1), recα(T, S, n, k-1, 2)
+        c1 = recγ(T, S, n, k, 1)
+        i = 0
+        S.C[n+1][1, 2k+i] = a2
+        S.C[n+1][2(k+1)+i, 2k+i] = a1
+        S.C[n+1][2n+1+2(k+1)+i+1, 2k+i] = recβ(T, S, n, k+1, i+1, 1)
+        S.C[n+1][2*(2n+1)+2k+i, 2k+i] = c1
+        i = 1
+        S.C[n+1][2(k+1)+i, 2k+i] = a1
+        S.C[n+1][2n+1+1, 2k+i] = recβ(T, S, n, k-1, i-1, 2)
+        S.C[n+1][2n+1+2(k+1)+i-1, 2k+i] = recβ(T, S, n, k+1, i-1, 1)
+        S.C[n+1][2*(2n+1)+2k+i, 2k+i] = c1
+
+        for k = 2:n-1
+            a1, a2 = recα(T, S, n, k+1, 1), recα(T, S, n, k-1, 2)
+            c1 = recγ(T, S, n, k, 1)
+            i = 0
+            S.C[n+1][2(k-1)+i, 2k+i] = a2
+            S.C[n+1][2(k+1)+i, 2k+i] = a1
+            S.C[n+1][2n+1+2(k-1)+i+1, 2k+i] = recβ(T, S, n, k-1, i+1, 2)
+            S.C[n+1][2n+1+2(k+1)+i+1, 2k+i] = recβ(T, S, n, k+1, i+1, 1)
+            S.C[n+1][2*(2n+1)+2k+i, 2k+i] = c1
+            i = 1
+            S.C[n+1][2(k-1)+i, 2k+i] = a2
+            S.C[n+1][2(k+1)+i, 2k+i] = a1
+            S.C[n+1][2n+1+2(k-1)+i-1, 2k+i] = recβ(T, S, n, k-1, i-1, 2)
+            S.C[n+1][2n+1+2(k+1)+i-1, 2k+i] = recβ(T, S, n, k+1, i-1, 1)
+            S.C[n+1][2*(2n+1)+2k+i, 2k+i] = c1
         end
-        k = n-1
-        S.C[n+1][k+1, k] = recα(T, S, n, k, 1)
-        S.C[n+1][n+1+k+1, k] = recβ(T, S, n, k, 1)
-        S.C[n+1][2*(n+1)+k+1, k+1] = recγ(T, S, n, k, 1)
-        k = n
-        S.C[n+1][k+1, k] = recα(T, S, n, k, 1)
-        S.C[n+1][n+1+k+1, k] = recβ(T, S, n, k, 1)
     end
     S
 end
-function getDTs!(S::SphericalCapSpace{<:Any, T, <:Any, <:Any, <:Any}, N, N₀) where T
+function getDTs!(S::SphericalCapSpace{<:Any, T, <:Any, <:Any}, N, N₀) where T
     m = N₀
     resize!(S.DT, N + 1)
     if m == 0
         S.DT[1] = sparse([0 0 (1 / recγ(T, S, 0, 0, 3));
-                          1 im 0])
+                          (1 / recα(T, S, 0, 0, 6)) 0 0;
+                          0 (1 / recβ(T, S, 0, 0, 0, 6)) 0])
+        m += 1
+    end
+    if m == 1
+        n = 1
+        S.DT[n+1] = sparse(zeros(T, 2n+3, 3*(2n+1)))
+        k = 0; S.DT[n+1][k+1, 2*(2n+1)+k+1] = 1 / recγ(T, S, n, k, 3)
+        for k = 1:n, i = 0:1
+            S.DT[n+1][2k+i, 2*(2n+1)+2k+i] = 1 / recγ(T, S, n, k, 3)
+        end
+        η1 = 1 / recα(T, S, n, n, 6)
+        η3 = 1 / recβ(T, S, n, n, 0, 6)
+        η2 = - η1 * recα(T, S, n, n, 5) / recγ(T, S, n, n-1, 3)
+        S.DT[n+1][2n+2, 2n] = η1
+        S.DT[n+1][2n+2, 3*(2n+1)-2] = η2
+        S.DT[n+1][2n+3, (2n+1)+2] = η3
         m += 1
     end
     for n = N:-1:m
-        S.DT[n+1] = sparse(zeros(T, n+2, 3*(n+1))) # TODO should this be resize!(n+2, 3*(n+1)) ??
-        for k = 0:n
-            S.DT[n+1][k+1, 2n+3+k] = 1 / recγ(T, S, n, k, 3)
+        S.DT[n+1] = sparse(zeros(T, 2n+3, 3*(2n+1)))
+        k = 0; S.DT[n+1][k+1, 2*(2n+1)+k+1] = 1 / recγ(T, S, n, k, 3)
+        for k = 1:n, i = 0:1
+            S.DT[n+1][2k+i, 2*(2n+1)+2k+i] = 1 / recγ(T, S, n, k, 3)
         end
-        η = 1 / recα(T, S, n, n, 6)
-        S.DT[n+1][n+2, n+1] = η
-        for j = n-1:-2:1
-            η = - η * recα(T, S, n, j+1, 5) / recα(T, S, n, j-1, 6)
-            S.DT[n+1][n+2, j] = η
-        end
-        if isodd(n)
-            S.DT[n+1][n+2, 2n+3] = - η * recα(T, S, n, 1, 5) / recγ(T, S, n, 0, 3)
+        η1 = 1 / recα(T, S, n, n, 6)
+        η2 = - η1 * recα(T, S, n, n, 5) / recγ(T, S, n, n-1, 3)
+        for j = 0:1
+            S.DT[n+1][2n+2+j, 2n+j] = η1
+            S.DT[n+1][2n+2+j, 3*(2n+1)-3+j] = η2
         end
     end
     S
 end
-function getAs!(S::SphericalCapSpace{<:Any, T, <:Any, <:Any, <:Any}, N, N₀) where T
+function getAs!(S::SphericalCapSpace{<:Any, T, <:Any, <:Any}, N, N₀) where T
     m = N₀
     resize!(S.A, N + 1)
-    if m == 0
-        S.A[1] = sparse([0 recα(T, S, 0, 0, 6);
-                         0 recβ(T, S, 0, 0, 6);
-                         recγ(T, S, 0, 0, 3) 0])
+    if N₀ == 0
+        S.A[1] = sparse([0 recα(T, S, 0, 0, 6) 0;
+                         0 0 recβ(T, S, 0, 0, 0, 6);
+                         recγ(T, S, 0, 0, 3) 0 0])
         m += 1
     end
     for n = N:-1:m
-        S.A[n+1] = sparse(zeros(T, 3*(n+1), n+2))
-        k = 0
-        S.A[n+1][k+1, k+2] = recα(T, S, n, k, 6)
-        S.A[n+1][n+1+k+1, k+2] = recβ(T, S, n, k, 6)
-        S.A[n+1][2*(n+1)+k+1, k+1] = recγ(T, S, n, k, 3)
-        for k = 1:n
-            S.A[n+1][k+1, k] = recα(T, S, n, k, 5)
-            S.A[n+1][k+1, k+2] = recα(T, S, n, k, 6)
-            S.A[n+1][n+1+k+1, k] = recβ(T, S, n, k, 5)
-            S.A[n+1][n+1+k+1, k+2] = recβ(T, S, n, k, 6)
-            S.A[n+1][2*(n+1)+k+1, k+1] = recγ(T, S, n, k, 3)
+        # We iterate over rows, not cols, for the A matrices
+
+        S.A[n+1] = sparse(zeros(T, 3*(2n+1), 2n+3))
+
+        k = 0; i = 0
+        S.A[n+1][1, 2] = recα(T, S, n, k, 6)
+        S.A[n+1][2n+1+1, 3] = recβ(T, S, n, k, i, 6)
+        S.A[n+1][2*(2n+1)+1, 1] = recγ(T, S, n, k, 3)
+
+        k = 1
+        a5, a6 = recα(T, S, n, k, 5), recα(T, S, n, k, 6)
+        c3 = recγ(T, S, n, k, 3)
+        i = 0
+        S.A[n+1][2k+i, 1] = a5
+        S.A[n+1][2k+i, 2(k+1)+i] = a6
+        S.A[n+1][2n+1+2k+i, 2(k+1)+i+1] = recβ(T, S, n, k, i, 6)
+        S.A[n+1][2*(2n+1)+2k+i, 2k+i] = c3
+        i = 1
+        S.A[n+1][2k+i, 2(k+1)+i] = a6
+        S.A[n+1][2n+1+2k+i, 1] = recβ(T, S, n, k, i, 5)
+        S.A[n+1][2n+1+2k+i, 2(k+1)+i-1] = recβ(T, S, n, k, i, 6)
+        S.A[n+1][2*(2n+1)+2k+i, 2k+i] = c3
+
+        for k = 2:n
+            a5, a6 = recα(T, S, n, k, 5), recα(T, S, n, k, 6)
+            c3 = recγ(T, S, n, k, 3)
+            i = 0
+            S.A[n+1][2k+i, 2(k-1)+i] = a5
+            S.A[n+1][2k+i, 2(k+1)+i] = a6
+            S.A[n+1][2n+1+2k+i, 2(k-1)+i+1] = recβ(T, S, n, k, i, 5)
+            S.A[n+1][2n+1+2k+i, 2(k+1)+i+1] = recβ(T, S, n, k, i, 6)
+            S.A[n+1][2*(2n+1)+2k+i, 2k+i] = c3
+            i = 1
+            S.A[n+1][2k+i, 2(k-1)+i] = a5
+            S.A[n+1][2k+i, 2(k+1)+i] = a6
+            S.A[n+1][2n+1+2k+i, 2(k-1)+i-1] = recβ(T, S, n, k, i, 5)
+            S.A[n+1][2n+1+2k+i, 2(k+1)+i-1] = recβ(T, S, n, k, i, 6)
+            S.A[n+1][2*(2n+1)+2k+i, 2k+i] = c3
         end
     end
     S
@@ -680,8 +848,8 @@ function resizedata!(S::SphericalCapSpace, N)
     # First, we need to call this to get the 1D OP rec coeffs
     resizedataonedimops!(S, N+4)
 
-    getAs!(S, N+1, N₀)
-    @show "done As"
+    # getAs!(S, N+1, N₀)
+    # @show "done As"
     getBs!(S, N+1, N₀)
     @show "done Bs"
     getCs!(S, N+1, N₀)
@@ -692,37 +860,31 @@ function resizedata!(S::SphericalCapSpace, N)
 end
 
 function clenshawG(::SphericalCapSpace, n, z)
-    sp = sparse(I, n+1, n+1)
+    sp = sparse(I, 2n+1, 2n+1)
     [z[1] * sp; z[2] * sp; z[3] * sp]
 end
-function clenshaw(cfs::AbstractVector, S::SphericalCapSpace, z)
+function clenshaw(cfs::AbstractVector{T}, S::SphericalCapSpace, z) where T
     # TODO: Implement clenshaw for the spherical cap, without using the clenshaw
     #       mats (i.e. dont build the mats, just implement the arithmetic)
 
     # NOTE for now, we simply implement with the clenshaw mats as required
 
     # Convert the cfs vector from ordered by Fourier mode k, to by degree n
-    f = convertcoeffsvecorder(cfs)
+    f = convertcoeffsvecorder(S, cfs)
 
-    m̃ = length(f)
-    N = -1 + Int(round(sqrt(1+2(m̃-1))))
+    m = length(f)
+    N = Int(sqrt(m)) - 1
     resizedata!(S, N+1)
-    m = Int((N+1)*(N+2)/2)
-    if m̃ < m
-        resize!(f, m)
-        f[m̃+1:end] .= 0.0
-    end
-    P0 = 1.0
+    f = PseudoBlockArray(f, [2n+1 for n=0:N])
+
+    P0 = getdegzeropteval(T, S)
     if N == 0
         return f[1] * P0
     end
-    inds2 = m-N:m
-    inds1 = (m-2N):(m-N-1)
-    γ2 = view(f, inds2)'
-    γ1 = view(f, inds1)' - γ2 * S.DT[N] * (S.B[N] - clenshawG(S, N-1, z))
+    γ2 = view(f, Block(N+1))'
+    γ1 = view(f, Block(N))' - γ2 * S.DT[N] * (S.B[N] - clenshawG(S, N-1, z))
     for n = N-2:-1:0
-        ind = sum(1:n)
-        γ = (view(f, ind+1:ind+n+1)'
+        γ = (view(f, Block(n+1))'
              - γ1 * S.DT[n+1] * (S.B[n+1] - clenshawG(S, n, z))
              - γ2 * S.DT[n+2] * S.C[n+2])
         γ2 = copy(γ1)
@@ -737,28 +899,33 @@ evaluate(cfs::AbstractVector, S::SphericalCapSpace, z) = clenshaw(cfs, S, z)
 # Resizing/Reordering coeffs vectors
 
 # Method to convert coeffs vec from ordered by Fourier mode k to by degree n
-function convertcoeffsvecorder(cfs::AbstractVector; todegree=true)
+function convertcoeffsvecorder(S::SphericalCapSpace, cfs::AbstractVector; todegree=true)
     f = copy(cfs)
     m = length(cfs)
-    N = Int(-1.5 + 0.5 * sqrt(1 + 8m))
+    N = Int(sqrt(m)) - 1
+    if (N+1)^2 != m
+        error("coeffs vec incorrect length")
+    end
     if todegree
         for k = 0:N
-            indc = sum([N-t+1 for t = 0:k-1])
-            indf = k + 1 + sum(1:k)
+            indc = getopindex(S, k, k, 0; bydegree=false, N=N)
             for n = k:N
-                f[indf] = cfs[indc + n - k + 1]
-                indf += n + 1
+                for i = 0:min(1, k) # This catches the k == 0 case
+                    f[getopindex(S, n, k, i)] = cfs[indc]
+                    indc += 1
+                end
             end
         end
     else
         # if todegree is false (or not true) then we convert to ordering by
         # Fourier mode k
         for k = 0:N
-            indf = sum([N-t+1 for t = 0:k-1])
-            indc = k + 1 + sum(1:k)
+            indf = getopindex(S, k, k, 0; bydegree=false, N=N)
             for n = k:N
-                f[indf + n - k + 1] = cfs[indc]
-                indc += n + 1
+                for i = 0:min(1, k) # This catches the k == 0 case
+                    f[indf] = cfs[getopindex(S, n, k, i)]
+                    indf += 1
+                end
             end
         end
     end
@@ -850,8 +1017,8 @@ function getweightedpartialphival(S::SphericalCapSpace, ptsr, rhoptsr2,
                     getptsevalforop(Rp, m-k) .* rhoptsr2 .* wr10, wr)
     - ret / getopnorm(Rp)
 end
-function diffoperatorphi(S::SphericalCapSpace{<:Any, B, T, CB, <:Any}, N::Int;
-                            weighted=false) where {B,T,CB}
+function diffoperatorphi(S::SphericalCapSpace{<:Any, B, T, <:Any}, N::Int;
+                            weighted=false) where {B,T}
     # ρ(z)*∂/∂ϕ operator
     # Takes the space:
     #   Q^{a,b} -> Q^{a+1,b} or
@@ -877,7 +1044,7 @@ function diffoperatorphi(S::SphericalCapSpace{<:Any, B, T, CB, <:Any}, N::Int;
         band2 = 1
     end
     # TODO sort out the blocks and stuff of this, and the allocation of val
-    A = BandedBlockBandedMatrix(Zeros{CB}(sum(1:(N+1+band2)), sum(1:(N+1))),
+    A = BandedBlockBandedMatrix(Zeros{B}(sum(1:(N+1+band2)), sum(1:(N+1))),
                                 (N+1+band2:-1:1, N+1:-1:1), (band2, band1), (0, 0))
     for k = 0:N
         if k % 20 == 0
@@ -899,13 +1066,13 @@ function diffoperatorphi(S::SphericalCapSpace{<:Any, B, T, CB, <:Any}, N::Int;
     end
     A
 end
-function diffoperatortheta2(S::SphericalCapSpace{<:Any, B, T, CB, <:Any}, N::Int;
-                            weighted=false) where {B,T,CB}
+function diffoperatortheta2(S::SphericalCapSpace{<:Any, B, T, <:Any}, N::Int;
+                            weighted=false) where {B,T}
     # ∂²/∂θ² operator
     # Takes the space:
     #   Q^{a,b} -> Q^{a,b} or
     #   w_R^{(a,0)} Q^{a,b} -> w_R^{(a,0)} Q^{a,b}
-    A = BandedBlockBandedMatrix(Zeros{CB}(sum(1:(N+1)), sum(1:(N+1))), (N+1:-1:1, N+1:-1:1), (0, 0), (0, 0))
+    A = BandedBlockBandedMatrix(Zeros{B}(sum(1:(N+1)), sum(1:(N+1))), (N+1:-1:1, N+1:-1:1), (0, 0), (0, 0))
     for k = 0:N
         view(A, Block(k+1, k+1)) .= Diagonal(ones(N-k+1)) * k^2
     end
@@ -916,9 +1083,9 @@ end
 #===#
 # Parameter Transform/Conversion operator matrices
 
-function transformparamsoperator(S::SphericalCapSpace{<:Any, B, T, CB, <:Any},
-            St::SphericalCapSpace{<:Any, B, T, CB, <:Any}, N;
-            weighted=false) where {B,T,CB}
+function transformparamsoperator(S::SphericalCapSpace{<:Any, B, T, <:Any},
+            St::SphericalCapSpace{<:Any, B, T, <:Any}, N;
+            weighted=false) where {B,T}
     # TODO sort out the blocks and stuff of this, and the allocation of val
     # TODO do the other parameter conversions
     if weighted
@@ -930,7 +1097,7 @@ function transformparamsoperator(S::SphericalCapSpace{<:Any, B, T, CB, <:Any},
         band2 = 0
         ptsr, wr = pointswithweights(B, getRspace(St, 0), N+1) # TODO check npts
     end
-    C = BandedBlockBandedMatrix(Zeros{CB}(sum(1:(N+1+band2)),sum(1:(N+1))),
+    C = BandedBlockBandedMatrix(Zeros{B}(sum(1:(N+1+band2)),sum(1:(N+1))),
                                 (1:N+1+band2, 1:N+1), (band,0), (0,0))
     rhoptsr = S.family.ρ.(ptsr)
     getopnorms(St, N)
@@ -990,6 +1157,16 @@ function laplaceoperator(S::SphericalCapSpace, St::SphericalCapSpace, N;
 end
 
 
+#===#
+# inner product
+
+function inner(::Type{T}, S::SphericalCapSpace, fpts, gpts, w) where T
+    m = length(w)
+    T(sum((fpts[1:m] .* gpts[1:m] + fpts[m+1:end] .* gpts[m+1:end]) .* w) / 2)
+end
+inner(S::SphericalCapSpace, fpts, gpts, w::AbstractVector{T}) where T =
+    inner(T, S, fpts, gpts, w)
+
 
 
 #==========#
@@ -999,7 +1176,7 @@ end
 NOTE
 These As Bs and Cs are only needed to be constructed for the Jacobi operators.
 =#
-function getjacobiAs(S::SphericalCapSpace{<:Any, B, T, CB, <:Any}, N) where {B,T,CB}
+function getjacobiAs(S::SphericalCapSpace{<:Any, B, T, <:Any}, N) where {B,T}
     A = Vector{SparseMatrixCSC{T}}()
     resize!(A, N+1)
     A[N+1] = [recα(T, S, N, N, 3) recα(T, S, N, N, 1);
@@ -1019,7 +1196,7 @@ function getjacobiAs(S::SphericalCapSpace{<:Any, B, T, CB, <:Any}, N) where {B,T
     end
     A
 end
-function getjacobiBs(S::SphericalCapSpace{<:Any, B, T, CB, <:Any}, N) where {B,T,CB}
+function getjacobiBs(S::SphericalCapSpace{<:Any, B, T, <:Any}, N) where {B,T}
     # B = Vector{SparseMatrixCSC{T}}()
     # resize!(B, N+1)
     # B[N+1] = [zeros(T, 2); recγ(T, S, N, N, 2)]
@@ -1034,7 +1211,7 @@ function getjacobiBs(S::SphericalCapSpace{<:Any, B, T, CB, <:Any}, N) where {B,T
     # end
     # B
 end
-function getjacobiCs(S::SphericalCapSpace{<:Any, B, T, CB, <:Any}, N) where {B,T,CB}
+function getjacobiCs(S::SphericalCapSpace{<:Any, B, T, <:Any}, N) where {B,T}
     C = Vector{SparseMatrixCSC{T}}()
     resize!(C, N+1)
     C[N+1] = [recα(T, S, N, N, 4); recα(T, S, N-1, N, 6);
