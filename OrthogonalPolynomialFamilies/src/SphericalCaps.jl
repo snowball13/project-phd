@@ -357,22 +357,27 @@ end
 #===#
 # points()
 
-# NOTE we output ≈n points (x,y,z), plus the ≈n points corresponding to (-x,-y,z)
+# NOTE we output M≈n points (x,y,z), plus the M≈n points corresponding to (-x,-y,z)
 function pointswithweights(S::SphericalCapSpace{<:Any, B, T, <:Any}, n;
                             nofactor=false) where {B,T}
     # Return the weights and nodes to use for the even part of a function,
     # i.e. for the spherical cap Ω:
     #   int_Ω w_R^{a,2b}(x) f(x,y,z) dσ(x,y)dz ≈ 0.5 * Σ_j wⱼ*(f(xⱼ,yⱼ,zⱼ) + f(-xⱼ,-yⱼ,zⱼ))
-    # NOTE: the odd part of the quad rule will equal 0 for polynomials,
+    # NOTE: the "odd" part of the quad rule will equal 0 for polynomials,
     #       so can be ignored.
 
     # When nofactor is true, then the weights are not multiplyed by 2π
 
-    N = 2 * Int(ceil(sqrt(n))) - 1 # degree we approximate up to with M quadrature pts
-    M1 = Int(ceil((N + 1) / 2))
-    M2 = M1 # TODO what should M2 be????
-    M = M1 * M2 # ≈ n
-    @show "begin pointswithweights()", n, N, M
+    if n < 1
+        error("At least 1 point needs to be asked for in pointswithweights().")
+    end
+
+    # Degree of polynomial f(x,y,z) is N
+    N = Int(ceil(-1.5 + 0.5 * sqrt(9 - 4 * (2 - 2n)))) # degree we approximate up to with M quadrature pts
+    M1 = Int(ceil((N+1) / 2)) # Quad rule for z interval exact for degree polynomial up to 2M1 - 1 (= N)
+    M2 = N + 1 # Quad rule for circle exact for polynomial up to degree M2 - 1 (= N)
+    M = M1 * M2 # Quad rule on Ω is exact for polynomials of degree N s.t. we have M points
+    @show "begin pointswithweights()", n, M, N
 
     # Get the 1D quadrature pts and weights
     # Need to maunally call the method to get R coeffs here
@@ -393,9 +398,9 @@ function pointswithweights(S::SphericalCapSpace{<:Any, B, T, <:Any}, n;
         rhoz = S.family.ρ(z)
         for j2 = 1:M2
             x, y = rhoz * s[j2][1], rhoz * s[j2][2]
-            pts[j2 + (j1 - 1)M1] = x, y, z
-            pts[M + j2 + (j1 - 1)M1] = -x, -y, z
-            w[j2 + (j1 - 1)M1] = wt[j1] * ws[j2]
+            pts[j2 + (j1 - 1)M2] = x, y, z
+            pts[M + j2 + (j1 - 1)M2] = -x, -y, z
+            w[j2 + (j1 - 1)M2] = wt[j1] * ws[j2]
         end
     end
 
@@ -510,24 +515,31 @@ function SphericalCapTransformPlan(S::SphericalCapSpace{<:Any, B, T, <:Any}, val
     @show "Begin SphericalCapTransformPlan"
 
     # NOTE N here is the degree of the function f that we are finding the
-    #      coefficients for. We should have m2 = (N+1)^2 vals (pts).
-    #      m1 is the number of OPs we require, that is all OPs up to and
-    #      including deg N, i.e. length of ℚ^{(a,b)}_N, which is (N+1)^2.
-
-    m2 = Int(length(vals) / 2)
-    N = m2 < 2 ? Int(sqrt(m2)) - 1 : Int(sqrt(m2)) - 2 # TODO sqrt(m2)-1 doesnt work here when it gives N as odd...
-    m1 = (N+1)^2
-    @show N, m1, m2
-
+    #      coefficients for.
+    #      We should have M vals such that the quadrature rule is exact to
+    #      calculate integrals of f * Q_{n,k,i} for n=0:N, which will have a max
+    #      degree of 2N (i.e. N is constrained by the number of vals we have -
+    #      with M pts, we have a quad rule exact for a poly of 2N).
+    #      nops is the number of OPs we require (that is, all OPs up to and
+    #      including deg N, i.e. length of ℚ^{(a,b)}_N) which is (N+1)^2.
     # nofactor=true means we dont have the 2pi factor in the weights
-    pts, w = pointswithweights(S, m2; nofactor=true)
+
+    npts = Int(length(vals) / 2) # = M
+
+    # Divide by 2 as the quad rule is for ∫_Ω f(x,y,z)*Q_{n,k,i}(x,y,z) dσ(x,y) dz for n=0,...,N where deg(f)=N
+    N = Int(floor(ceil(-1.5 + 0.5 * sqrt(9 - 4 * (2 - 2npts))) / 2))
+    nops = (N+1)^2
+    @show N, npts, nops
+
+    resizedata!(S, N)
     getopnorms(S, N)
+    pts, w = pointswithweights(S, npts; nofactor=true)
 
     # calculate the Vandermonde matrix
-    Vp = zeros(B, m1, m2); Vm = zeros(B, m1, m2)
+    Vp = zeros(B, nops, npts); Vm = zeros(B, nops, npts)
     p = Vector{SArray{Tuple{3},B,1,3}}(undef, 2)
-    for j = 1:m2
-        p[1] = pts[j]; p[2] = pts[j+m2]
+    for j = 1:npts
+        p[1] = pts[j]; p[2] = pts[j+npts]
         getopptseval(S, N, p)
         indv = 1
         for k = 0:N
@@ -568,13 +580,13 @@ end
 function itransform(S::SphericalCapSpace, cfs::AbstractVector{T}) where T
     @show "begin itransform"
     ncfs = length(cfs)
-    N = Int(sqrt(ncfs)) - 1
-    pts = points(S, (N+2)^2)
-    npts = length(pts)
-    ret = zeros(T, npts)
-    m = Int(npts / 2)
-    for j = 1:m
-        getopptseval(S, N, (pts[j], pts[j + m]))
+    N = Int(sqrt(ncfs)) - 1 # We have (N+1)^2 OPs (number of OPs deg ≤ N)
+    npts = (2N+1) * (N+1) # = (2N+1)(2N+2)/2
+    @show npts, N
+    pts = points(S, npts)
+    ret = zeros(T, 2npts)
+    for j = 1:npts
+        getopptseval(S, N, (pts[j], pts[j+npts]))
         indc = 1
         for k = 0:N
             # indc = getopindex(S, k, k, 0; bydegree=false, N=N)
@@ -583,7 +595,7 @@ function itransform(S::SphericalCapSpace, cfs::AbstractVector{T}) where T
                 for i = 0:min(1, k) # This catches the k == 0 case
                     # NOTE use indexing of opptseval to order rows of V by Fourier mode k (not degree)
                     ret[j] += getptsevalforop(S, inde+i)[1] * cfs[indc]
-                    ret[j + m] += getptsevalforop(S, inde+i)[2] * cfs[indc]
+                    ret[j + npts] += getptsevalforop(S, inde+i)[2] * cfs[indc]
                     indc += 1
                 end
             end
@@ -907,8 +919,8 @@ function convertcoeffsvecorder(S::SphericalCapSpace, cfs::AbstractVector; todegr
         error("coeffs vec incorrect length")
     end
     if todegree
+        indc = 1
         for k = 0:N
-            indc = getopindex(S, k, k, 0; bydegree=false, N=N)
             for n = k:N
                 for i = 0:min(1, k) # This catches the k == 0 case
                     f[getopindex(S, n, k, i)] = cfs[indc]
@@ -919,8 +931,8 @@ function convertcoeffsvecorder(S::SphericalCapSpace, cfs::AbstractVector; todegr
     else
         # if todegree is false (or not true) then we convert to ordering by
         # Fourier mode k
+        indf = 1
         for k = 0:N
-            indf = getopindex(S, k, k, 0; bydegree=false, N=N)
             for n = k:N
                 for i = 0:min(1, k) # This catches the k == 0 case
                     f[indf] = cfs[getopindex(S, n, k, i)]
