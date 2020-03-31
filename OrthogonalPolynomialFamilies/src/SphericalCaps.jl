@@ -31,7 +31,7 @@ export SphericalCapFamily, SphericalCapSpace
 
 # TODO Sort out checkpoints, in, and domain - should
 abstract type SphericalFamily{B,T,N} end
-struct SphericalCap{B,T} <: Domain{SVector{2,T}} end
+struct SphericalCap{B,T} <: Domain{SVector{2,B}} end
 SphericalCap() = SphericalCap{BigFloat, Float64}()
 function checkpoints(::SphericalCap)
     # Return 2 3D points that will lie on the domain TODO
@@ -96,6 +96,28 @@ SphericalCapFamily() = SphericalCapFamily(BigFloat, Float64, 0.0) # Hemisphere
 
 
 #=======#
+
+
+#===#
+# Weight eval functions for the 3D space
+function weight(S::SphericalCapSpace, x, y, z)
+    (z - S.family.α)^S.params[1]
+    # if length(S.params) == 1
+    #     (x - S.family.α)^S.params[1]
+    # else # length(S.params) == 2
+    #     (S.family.β - x)^S.params[1] * (x - S.family.α)^S.params[2]
+    # end
+end
+weight(S::SphericalCapSpace, z) = weight(S, z[1], z[2], z[3])
+function weight(::Type{T}, S::SphericalCapSpace, x, y, z) where T
+    T((z - S.family.α)^S.params[1])
+    # if length(S.params) == 1
+    #     T((x - S.family.α)^S.params[1])
+    # else # length(S.params) == 2
+    #     T((S.family.β - x)^S.params[1] * (x - S.family.α)^S.params[2])
+    # end
+end
+weight(::Type{T}, S::SphericalCapSpace, z) where T = weight(T, S, z[1], z[2], z[3])
 
 
 #===#
@@ -539,6 +561,9 @@ function SphericalCapTransformPlan(S::SphericalCapSpace{<:Any, B, T, <:Any}, val
     Vp = zeros(B, nops, npts); Vm = zeros(B, nops, npts)
     p = Vector{SArray{Tuple{3},B,1,3}}(undef, 2)
     for j = 1:npts
+        if j % 100 == 0
+            @show j, npts
+        end
         p[1] = pts[j]; p[2] = pts[j+npts]
         getopptseval(S, N, p)
         indv = 1
@@ -944,40 +969,6 @@ function convertcoeffsvecorder(S::SphericalCapSpace, cfs::AbstractVector; todegr
     f
 end
 
-# Resize the coeffs vector to be of the expected/standard length for a degree N
-# expansion (so we can apply operators).
-function resizecoeffs2!(f::Fun, N; bydegree=true)
-    # NOTE if bydegree is true, then the order of the coeffs should already
-    #      be ordered by degree
-    if bydegree
-        cfs = f.coefficients
-        m̃ = length(cfs)
-        m = Int((N+1)*(N+2)/2)
-        if m̃ < m
-            resize!(cfs, m)
-            cfs[m̃+1:end] .= 0.0
-        elseif m̃ > m
-            for j = m+1:m̃
-                if cfs[j] > 1e-16
-                    error("Trying to decrease degree of f")
-                end
-            end
-            resize!(cfs, m)
-        end
-        cfs
-    else
-        m̃ = length(f.coefficients)
-        m = Int((N+1)*(N+2)/2)
-        if m̃ > m
-            error("Trying to decrease degree of f")
-        end
-        cfs = convertcoeffsvecorder(f.coefficients; todegree=false)
-        resize!(cfs, m)
-        cfs[m̃+1:end] .= 0.0
-        f.coefficients[:] = convertcoeffsvecorder(cfs; todegree=true)[:]
-        f.coefficients
-    end
-end
 
 
 #===#
@@ -988,9 +979,9 @@ end
 function differentiatespacephi(S::SphericalCapSpace; weighted=false, kind::Int=1)
     if kind == 1 # ρ(z)*∂/∂ϕ operator
         if weighted
-            S.family(S.params[1]-1, S.params[2])
+            (S.family)((S.params[1]-1, S.params[2]))
         else
-            S.family(S.params[1]+1, S.params[2])
+            (S.family)((S.params[1]+1, S.params[2]))
         end
     elseif kind == 2 # (1/ρ(z))*∂/∂ϕ operator
         S
@@ -1008,25 +999,34 @@ end
 #===#
 # Differential operator matrices
 
+function getblockindex(S::SphericalCapSpace, n, k, i)
+    if k == 0
+        n + 1
+    else
+        2(n - k) + i + 1
+    end
+end
 function getpartialphival(S::SphericalCapSpace, ptsr, rhoptsr2, rhodxrhoptsr,
                             wr, n::Int, m::Int, k::Int)
     Sp = differentiatespacephi(S)
     R = getRspace(S, k); Rp = getRspace(Sp, k)
-    ret = k * inner2(Rp, getptsevalforop(R, n-k),
-                        getptsevalforop(Rp, m-k) .* rhodxrhoptsr, wr)
-    ret += inner2(Rp, getderivptsevalforop(R, n-k),
-                    getptsevalforop(Rp, m-k) .* rhoptsr2, wr)
+    dRrho = (k * getptsevalforop(R, n-k) .* rhodxrhoptsr
+                + getderivptsevalforop(R, n-k) .* rhoptsr2)
+    ret = inner2(Rp, getptsevalforop(Rp, m-k) .* rhoptsr2.^k, dRrho, wr)
     - ret / getopnorm(Rp)
 end
 function getweightedpartialphival(S::SphericalCapSpace, ptsr, rhoptsr2,
                                     rhodxrhoptsr, wr10, wr, n::Int, m::Int, k::Int)
     Sp = differentiatespacephi(S; weighted=true)
     R = getRspace(S, k); Rp = getRspace(Sp, k)
-    ret = inner2(Rp, getptsevalforop(R, n-k),
-                (k * rhodxrhoptsr .* wr10 + S.params[1] * rhoptsr2) .* getptsevalforop(Rp, m-k),
-                wr)
-    ret += inner2(Rp, getderivptsevalforop(R, n-k),
-                    getptsevalforop(Rp, m-k) .* rhoptsr2 .* wr10, wr)
+    # ret = inner2(Rp, getptsevalforop(R, n-k),
+    #             (k * rhodxrhoptsr .* wr10 + S.params[1] * rhoptsr2) .* getptsevalforop(Rp, m-k),
+    #             wr)
+    # ret += inner2(Rp, getderivptsevalforop(R, n-k),
+    #                 getptsevalforop(Rp, m-k) .* rhoptsr2 .* wr10, wr)
+    dRrho = (getptsevalforop(R, n-k) .* (k * rhodxrhoptsr .* wr10 + S.params[1] * rhoptsr2)
+             + getderivptsevalforop(R, n-k) .* rhoptsr2 .* wr10)
+    ret = inner2(Rp, getptsevalforop(Rp, m-k) .* rhoptsr2.^k, dRrho, wr)
     - ret / getopnorm(Rp)
 end
 function diffoperatorphi(S::SphericalCapSpace{<:Any, B, T, <:Any}, N::Int;
@@ -1035,18 +1035,21 @@ function diffoperatorphi(S::SphericalCapSpace{<:Any, B, T, <:Any}, N::Int;
     # Takes the space:
     #   Q^{a,b} -> Q^{a+1,b} or
     #   w_R^{(a,0)} Q^{a,b} -> w_R^{(a-1,0)} Q^{a-1,b}
+
     Sp = differentiatespacephi(S; weighted=weighted)
     # resizedataonedimops! for both SCSpaces
-    resizedataonedimops!(S, N)
-    resizedataonedimops!(Sp, N)
+    resizedataonedimops!(S, N+1)
+    resizedataonedimops!(Sp, N+1)
     # Get pts and weights, and set the R norms
-    ptsr, wr = pointswithweights(B, getRspace(Sp, 0), N+4) # TODO how many pts needed?
+    # TODO how many pts needed?
+    ptsr, wr = pointswithweights(B, getRspace(Sp, 0), N+4) # R^{(a±1, 1)}
     getopnorms(Sp, N)
 
     # Evaluate ρ.(ptsr) dρ/dx.(ptsr) at the R inner product points
     rhoptsr2 = S.family.ρ.(ptsr).^2
     rhodxrhoptsr = S.family.ρ.(ptsr) .* differentiate(S.family.ρ).(ptsr)
 
+    # TODO sort out the blocks and stuff of this, and the allocation of val
     if weighted
         band1 = 1
         band2 = 2
@@ -1055,26 +1058,48 @@ function diffoperatorphi(S::SphericalCapSpace{<:Any, B, T, <:Any}, N::Int;
         band1 = 2
         band2 = 1
     end
-    # TODO sort out the blocks and stuff of this, and the allocation of val
-    A = BandedBlockBandedMatrix(Zeros{B}(sum(1:(N+1+band2)), sum(1:(N+1))),
-                                (N+1+band2:-1:1, N+1:-1:1), (band2, band1), (0, 0))
+    A = BandedBlockBandedMatrix(Zeros{B}((N+band2+1)^2, (N+1)^2),
+                                ([N+band2+1; 2(N+band2):-2:1], [N+1; 2N:-2:1]),
+                                (0, 0), (2band2, 2band1))
     for k = 0:N
         if k % 20 == 0
             @show "dϕ", weighted, k
         end
         R = getRspace(S, k); Rp = getRspace(Sp, k)
-        getopptseval(R, N-k, ptsr); getopptseval(Rp, N-k, ptsr)
+        getopptseval(R, N-k, ptsr); getopptseval(Rp, N+band2-k, ptsr)
         getderivopptseval(R, N-k, ptsr)
         for n = k:N, m = max(0,n-band1):n+band2
-            if weighted
-                val = getweightedpartialphival(S, ptsr, rhoptsr, dxrhoptsr, wr10, wr, n, m, k)
-            else
-                val = getpartialphival(S, ptsr, rhoptsr, dxrhoptsr, wr, n, m, k)
+            if k ≤ m
+                if weighted
+                    val = getweightedpartialphival(S, ptsr, rhoptsr2, rhodxrhoptsr, wr10, wr, n, m, k)
+                else
+                    val = getpartialphival(S, ptsr, rhoptsr2, rhodxrhoptsr, wr, n, m, k)
+                end
+                for i = 0:min(1,k)
+                    view(A, Block(k+1, k+1))[getblockindex(S, m, k, i), getblockindex(S, n, k, i)] = val
+                end
             end
-            view(A, Block(k+1, k+1))[m-k+1, n-k+1] = val
         end
-        resetopptseval(R); resetopptseval(Rx)
+        resetopptseval(R); resetopptseval(Rp)
         resetderivopptseval(R)
+    end
+    A
+end
+function diffoperatortheta(S::SphericalCapSpace{<:Any, B, T, <:Any}, N::Int;
+                            weighted=false) where {B,T}
+    # ∂/∂θ operator
+    # Takes the space:
+    #   Q^{a,b} -> Q^{a,b} or
+    #   w_R^{(a,0)} Q^{a,b} -> w_R^{(a,0)} Q^{a,b}
+    # NOTE the weighted keyword here doesnt affect the resulting operator
+    A = BandedBlockBandedMatrix(Zeros{B}((N+1)^2, (N+1)^2),
+                                ([N+1; 2N:-2:1], [N+1; 2N:-2:1]),
+                                (0, 0), (1, 1))
+    # A = BandedBlockBandedMatrix(Zeros{B}(sum(1:(N+1)), sum(1:(N+1))), (N+1:-1:1, N+1:-1:1), (0, 0), (0, 0))
+    for k = 1:N, n = k:N
+        ind = getblockindex(S, n, k, 0)
+        view(A, Block(k+1, k+1))[ind+1, ind] = -k
+        view(A, Block(k+1, k+1))[ind, ind+1] = k
     end
     A
 end
@@ -1084,9 +1109,13 @@ function diffoperatortheta2(S::SphericalCapSpace{<:Any, B, T, <:Any}, N::Int;
     # Takes the space:
     #   Q^{a,b} -> Q^{a,b} or
     #   w_R^{(a,0)} Q^{a,b} -> w_R^{(a,0)} Q^{a,b}
-    A = BandedBlockBandedMatrix(Zeros{B}(sum(1:(N+1)), sum(1:(N+1))), (N+1:-1:1, N+1:-1:1), (0, 0), (0, 0))
-    for k = 0:N
-        view(A, Block(k+1, k+1)) .= Diagonal(ones(N-k+1)) * k^2
+    # NOTE the weighted keyword here doesnt affect the resulting operator
+    A = BandedBlockBandedMatrix(Zeros{B}((N+1)^2, (N+1)^2),
+                                ([N+1; 2N:-2:1], [N+1; 2N:-2:1]),
+                                (0, 0), (0, 0))
+    # A = BandedBlockBandedMatrix(Zeros{B}(sum(1:(N+1)), sum(1:(N+1))), (N+1:-1:1, N+1:-1:1), (0, 0), (0, 0))
+    for k = 1:N
+        view(A, Block(k+1, k+1)) .= Diagonal(ones(2(N-k+1)) * (-k^2))
     end
     A
 end
@@ -1098,8 +1127,11 @@ end
 function transformparamsoperator(S::SphericalCapSpace{<:Any, B, T, <:Any},
             St::SphericalCapSpace{<:Any, B, T, <:Any}, N;
             weighted=false) where {B,T}
-    # TODO sort out the blocks and stuff of this, and the allocation of val
     # TODO do the other parameter conversions
+
+    # The St space is the target space. Applying this operator to coeffs in the
+    # (weighted) S space will result in coeffs in the (weighted) St space.
+
     if weighted
         band1 = 0
         band2 = Int(S.params[1] - St.params[1])
@@ -1109,24 +1141,51 @@ function transformparamsoperator(S::SphericalCapSpace{<:Any, B, T, <:Any},
         band2 = 0
         ptsr, wr = pointswithweights(B, getRspace(St, 0), N+1) # TODO check npts
     end
-    C = BandedBlockBandedMatrix(Zeros{B}(sum(1:(N+1+band2)),sum(1:(N+1))),
-                                (1:N+1+band2, 1:N+1), (band,0), (0,0))
-    rhoptsr = S.family.ρ.(ptsr)
-    getopnorms(St, N)
+    C = BandedBlockBandedMatrix(Zeros{B}((N+band2+1)^2, (N+1)^2),
+                                ([N+band2+1; 2(N+band2):-2:1], [N+1; 2N:-2:1]),
+                                (0, 0), (2band2, 2band1))
+    rhoptsr2 = S.family.ρ.(ptsr).^2
+    getopnorms(St, N+band2+1)
     for k = 0:N
         if k % 100 == 0
             @show "trnsfrm (a,b)->(a±1,b)", weighted, k
         end
         R = getRspace(S, k); Rt = getRspace(St, k)
-        getopptseval(R, N-k, ptsr); getopptseval(Rt, N-k, ptsr)
-        for n = k:N, m = (n-band1):(n+band2)
+        getopptseval(R, N-k, ptsr); getopptseval(Rt, N+band2-k, ptsr)
+        for n = k:N, m = max(0, n-band1):n+band2
             if k ≤ m
                 val = inner2(R, opevalatpts(R, n-k+1, ptsr),
-                                rhoptsr.^(2k) .* opevalatpts(Rt, m-k+1, ptsr), wr)
-                view(C, Block(k+1, k+1))[m-k+1, n-k+1] = val / Rt.opnorm[1]
+                                rhoptsr2.^(k) .* opevalatpts(Rt, m-k+1, ptsr), wr)
+                val /= Rt.opnorm[1]
+                for i = 0:min(1,k)
+                    view(C, Block(k+1, k+1))[getblockindex(S, m, k, i), getblockindex(S, n, k, i)] = val
+                end
             end
         end
         resetopptseval(R); resetopptseval(Rt)
+    end
+    C
+end
+
+
+#===#
+# "Coeffs degree increaser" operator matrix
+
+function increasedegreeoperator(S::SphericalCapSpace{<:Any, B, T, <:Any}, N, Nto;
+                                weighted=false) where {B,T}
+    # This operator acts on the coeffs vector of a Fun in the space S to just
+    # reorganise the coeffs so that the length is increased from deg N to
+    # deg Nto, with all coeffs representing the extra degrees being zero.
+
+    # TODO weighted=true
+    C = BandedBlockBandedMatrix(Zeros{B}((Nto+1)^2, (N+1)^2),
+                                ([Nto+1; 2(Nto):-2:1], [N+1; 2N:-2:1]),
+                                (0, 0), (0, 0))
+    @show "incr deg", N, Nto, weighted
+    for k = 0:N, n = k:N
+        for i = 0:min(1,k)
+            view(C, Block(k+1, k+1))[getblockindex(S, n, k, i), getblockindex(S, n, k, i)] = 1.0
+        end
     end
     C
 end
@@ -1141,16 +1200,19 @@ function laplaceoperator(S::SphericalCapSpace, St::SphericalCapSpace, N;
     # Outputs the sum(1:N+1) × sum(1:N+1) matrix operator if square=true
     D = S.family
     # if ????
-    A = diffoperatorphi(S, N)
-    @show "laplaceoperator", "1 of 5 done"
+    A = diffoperatorphi(S, N+2)
+    @show "laplaceoperator", "1 of 6 done"
     B = diffoperatorphi(S, N; weighted=true)
-    @show "laplaceoperator", "2 of 5 done"
-    C = transformparamsoperator(differentiatespacephi(S; weighted=true), S, N)
-    @show "laplaceoperator", "3 of 5 done"
-    E = transformparamsoperator(S, differentiatespacephi(S; weighted=true), N; weighted=true)
-    @show "laplaceoperator", "4 of 5 done"
-    F = diffoperatortheta2(S, N)
-    @show "laplaceoperator", "5 of 5 done"
+    @show "laplaceoperator", "2 of 6 done"
+    C = transformparamsoperator(differentiatespacephi(S; weighted=true), S, N+3)
+    @show "laplaceoperator", "3 of 6 done"
+    E = transformparamsoperator(S, differentiatespacephi(S; weighted=true), N+2; weighted=true)
+    @show "laplaceoperator", "4 of 6 done"
+    F = diffoperatortheta2(S, N+2)
+    @show "laplaceoperator", "5 of 6 done"
+    G = increasedegreeoperator(S, N, N+2)
+    @show "laplaceoperator", "6 of 6 done"
+    A, B, C, E, F, G
     # AAl, AAu = A.l + B.l, A.u + B.u
     # BBl, BBu = C.l + E.l, C.u + E.u + F.u
     # AAλ, AAμ = A.λ + B.λ, A.μ + B.μ
@@ -1159,13 +1221,14 @@ function laplaceoperator(S::SphericalCapSpace, St::SphericalCapSpace, N;
     # BB = sparse(C) * sparse(E) * sparse(F)
     # L = BandedBlockBandedMatrix(AA + BB, (1:nblocks(A)[1], 1:nblocks(B)[2]),
     #                             (max(AAl,BBl),max(AAu,BBu)), (max(AAλ,BBλ),max(AAμ,BBμ)))
+    # L = A * B + C * E * F * G
     # if square
-    #     m = sum(1:(N+1))
-    #     Δ = BandedBlockBandedMatrix(L[1:m, 1:m], (1:N+1, 1:N+1), (L.l,L.u), (L.λ,L.μ))
+    #     m = (N+1)^2
+    #     Δ = BandedBlockBandedMatrix(L[1:m, 1:m], ([N+1; 2N:-2:1], [N+1; 2N:-2:1]),
+    #                                 (L.l, L.u), (L.λ, L.μ))
     # else
     #     L
     # end
-    A, B, C, E, F
 end
 
 

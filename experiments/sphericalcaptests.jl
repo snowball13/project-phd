@@ -11,239 +11,179 @@ import OrthogonalPolynomialFamilies: points, pointswithweights, getopptseval,
                     getopnorm, operatorclenshaw, weight, biharmonicoperator,
                     getPspace, getRspace, differentiatespacex, differentiatespacey,
                     differentiateweightedspacex, differentiateweightedspacey,
-                    resizedata!, resizedataonedimops!, resizecoeffs2!, getnki
+                    resizedata!,
+                    resizedataonedimops!, getnki, convertcoeffsvecorder,
+                    diffoperatorphi, diffoperatortheta, diffoperatortheta2,
+                    differentiatespacephi, increasedegreeoperator
 using JLD
 
+# Useful functions for testing
+function converttopseudo(S::SphericalCapSpace, cfs; converttobydegree=true)
+    N = getnki(S, length(cfs))[1]
+    if converttobydegree
+        PseudoBlockArray(convertcoeffsvecorder(S, cfs), [2n+1 for n=0:N])
+    else
+        PseudoBlockArray(cfs, [2n+1 for n=0:N])
+    end
+end
 isindomain(pt, D::SphericalCapFamily) = D.α ≤ pt[3] ≤ D.β && norm(pt) == 1.0
 isindomain(pt, S::SphericalCapSpace) = isindomain(pt, S.family)
+"""
+Solve `A x = b` for `x` using iterative improvement
+(for BigFloat sparse matrix and vector)
+"""
+function iterimprove(A::SparseMatrixCSC{T}, b::Vector{T};
+                        iters=5, verbose=true) where T
+    eps(T) < eps(Float64) || throw(ArgumentError("wrong implementation"))
+    A0 = SparseMatrixCSC{Float64}(A)
+    F = factorize(A0)
+    x = zeros(T, length(b))
+    r = copy(b)
+    for iter = 1:iters
+        y = F \ Vector{Float64}(r)
+        for i in eachindex(x)
+            x[i] += y[i]
+        end
+        r = b - A * x
+        if verbose
+            @show "at iter %d resnorm = %.3g\n" iter norm(r)
+        end
+    end
+    x
+end
 
-
-T = Float64; B = T#BigFloat
+# Setup
+T = Float64; B = T# BigFloat
 α = 0.2
-DSF = DiskSliceFamily(T, T, α, 1.0, -1.0, 1.0); a, b = 1.0, 1.0; ap, bp = 1.0, 2.0
+DSF = DiskSliceFamily(α)# DiskSliceFamily(T, T, α, 1.0, -1.0, 1.0); a, b = 1.0, 1.0; ap, bp = 1.0, 2.0
 SCF = SphericalCapFamily(B, T, α)
+a = 1.0
 S = SCF(a, 0.0); S2 = DSF(a, 0.0)
 
 y, z = B(-0.234), B(0.643); x = sqrt(1 - z^2 - y^2); p = [x; y; z]; isindomain(p, SCF)
+θ = atan(y / x)
 resizedata!(S, 10)
 
+#===#
 
 # Test transform
-n = 110
-f = (x,y,z)->x
-f2 = (x,y)->x
+n = 200
+f = (x,y,z)->cos(y)
 pts, w = pointswithweights(S, n)
 vals = [f(pt...) for pt in pts]
 cfs = transform(S, vals)
 N = getnki(S, length(cfs))[1]
-cfs2 = PseudoBlockArray(OrthogonalPolynomialFamilies.convertcoeffsvecorder(S, cfs), [2n+1 for n=0:N])
-itransform(S, cfs)
+cfs2 = PseudoBlockArray(convertcoeffsvecorder(S, cfs), [2n+1 for n=0:N])
 F = Fun(S, cfs)
 F(p)
 f(p...)
 T(F(p) - f(p...))
-@test F(p) ≈ f(p...)
-@test itransform(S, cfs) ≈ vals
-F = Fun(f, S, 1); F.coefficients
-@test F(p) ≈ f(p...)
+@test T(F(p)) ≈ T(f(p...))
+vals2 = itransform(S, cfs); pts2 = points(S, length(vals2)/2); @test T.(vals2) ≈ T.([f(pt...) for pt in pts2])
+F = Fun(f, S, 200); F.coefficients
+@test T(F(p)) ≈ T(f(p...))
 
+# ∂/∂θ operator
+f = (x,y,z)->x^2 + y^4 # (cos2t + sin4t*ρ2(z))ρ2(z)
+dθf = (x,y,z)->-2x * y + 4y^3 * x
+F = Fun(f, S, 100); F.coefficients
+N = getnki(S, ncoefficients(F))[1]
+dθ = diffoperatortheta(S, N)
+dθF = Fun(S, dθ * F.coefficients)
+@test dθF(p) ≈ dθf(p...)
 
-# Testing recs
-n, k, i = 12, 7, 0
-α = [OrthogonalPolynomialFamilies.recα(B, S, n, k, j) for j=1:6]
-β = [OrthogonalPolynomialFamilies.recβ(B, S, n, k, i, j) for j=1:6]
-γ = [OrthogonalPolynomialFamilies.recγ(B, S, n, k, j) for j=1:3]
-N = 15
-pts = [p]
-pp = OrthogonalPolynomialFamilies.getopptseval(S, N, pts)
-j = 1
-for j = 1:length(pts)
-    lhs = pts[j][1] * OrthogonalPolynomialFamilies.getptsevalforop(S, n, k, i)[j]
-    rhs = (α[1] * OrthogonalPolynomialFamilies.getptsevalforop(S, n-1, k-1, i)[j]
-            + α[2] * OrthogonalPolynomialFamilies.getptsevalforop(S, n-1, k+1, i)[j]
-            + α[3] * OrthogonalPolynomialFamilies.getptsevalforop(S, n, k-1, i)[j]
-            + α[4] * OrthogonalPolynomialFamilies.getptsevalforop(S, n, k+1, i)[j]
-            + α[5] * OrthogonalPolynomialFamilies.getptsevalforop(S, n+1, k-1, i)[j]
-            + α[6] * OrthogonalPolynomialFamilies.getptsevalforop(S, n+1, k+1, i)[j])
-    if abs(lhs - rhs) > 1e-22
-        @show j, T(lhs), T(rhs), T(abs(lhs - rhs))
-    end
-end
-for j = 1:length(pts)
-    lhs = pts[j][2] * OrthogonalPolynomialFamilies.getptsevalforop(S, n, k, i)[j]
-    rhs = (β[1] * OrthogonalPolynomialFamilies.getptsevalforop(S, n-1, k-1, abs(i-1))[j]
-            + β[2] * OrthogonalPolynomialFamilies.getptsevalforop(S, n-1, k+1, abs(i-1))[j]
-            + β[3] * OrthogonalPolynomialFamilies.getptsevalforop(S, n, k-1, abs(i-1))[j]
-            + β[4] * OrthogonalPolynomialFamilies.getptsevalforop(S, n, k+1, abs(i-1))[j]
-            + β[5] * OrthogonalPolynomialFamilies.getptsevalforop(S, n+1, k-1, abs(i-1))[j]
-            + β[6] * OrthogonalPolynomialFamilies.getptsevalforop(S, n+1, k+1, abs(i-1))[j])
-    if abs(lhs - rhs) > 1e-22
-        @show j, T(lhs), T(rhs), T(abs(lhs - rhs))
-    end
-end
-for j = 1:length(pts)
-    lhs = pts[j][3] * OrthogonalPolynomialFamilies.getptsevalforop(S, n, k, i)[j]
-    rhs = (γ[1] * OrthogonalPolynomialFamilies.getptsevalforop(S, n-1, k, i)[j]
-            + γ[2] * OrthogonalPolynomialFamilies.getptsevalforop(S, n, k, i)[j]
-            + γ[3] * OrthogonalPolynomialFamilies.getptsevalforop(S, n+1, k, i)[j])
-    if abs(lhs - rhs) > 1e-22
-        @show j, T(lhs), T(rhs), T(abs(lhs - rhs))
-    end
-end
+# ∂²/∂θ² operator
+f = (x,y,z)->x^2 + y^4 # (cos2t + sin4t*ρ2(z))ρ2(z)
+d2θf = (x,y,z)->2y^2 - 2x^2 + 12x^2*y^2 - 4y^4
+F = Fun(f, S, 100); F.coefficients
+N = getnki(S, ncoefficients(F))[1]
+dθ2 = diffoperatortheta2(S, N; weighted=false)
+d2θF = Fun(S, dθ2 * F.coefficients)
+@test d2θF(p) ≈ d2θf(p...)
 
-# Testing recs
-n, k, i = 1, 1, 0
-α = [OrthogonalPolynomialFamilies.recα(B, S, n, k, j) for j in [1,3,5,6]]
-β = [OrthogonalPolynomialFamilies.recβ(B, S, n, k, i, j) for j in [1,3,5,6]]
-γ = [OrthogonalPolynomialFamilies.recγ(B, S, n, k, j) for j=2:3]
-N = 15
-pts = [p]
-pp = OrthogonalPolynomialFamilies.getopptseval(S, N, pts)
+# ρ(z)∂/∂ϕ operator
+# f = (x,y,z)->x^a y^b z^c
+# df = (x,y,z)->x^a y^b z^(c-1) [(a+b)z^2 - cρ(z)^2]
+inds = [4, 3, 5]; sum(inds)
+f = (x,y,z)->x^inds[1] * y^inds[2] * z^inds[3]
+df = (x,y,z)->((inds[1] + inds[2]) * z^2 - inds[3] * S.family.ρ(z)^2) * x^inds[1] * y^inds[2] * z^(inds[3]-1) # deg = degf + 1
+F = Fun(f, S, 2*(sum(inds)+1)^2); F.coefficients
+N = getnki(S, ncoefficients(F))[1]
+dϕ = diffoperatorphi(S, N; weighted=false)
+cfs = dϕ * F.coefficients
+dF = Fun(differentiatespacephi(S), cfs)
+@test dF(p) ≈ df(p...)
 
-n = 1
-θ = atan(p[2]/p[1])
-R0 = getRspace(S, 0); OrthogonalPolynomialFamilies.getopptseval(R0, 5, [p[3]])
-R1 = getRspace(S, 1); OrthogonalPolynomialFamilies.getopptseval(R1, 5, [p[3]])
-Q1 = [OrthogonalPolynomialFamilies.getdegzeropteval(B, S)] # n = 0
-Q2 = [R0.opptseval[n+1][1] * OrthogonalPolynomialFamilies.getdegzeropteval(B, S);
-      S.family.ρ(p[3]) * Yop(1, 0, θ);
-      S.family.ρ(p[3]) * Yop(1, 1, θ)] # n = 1
-Q3 = [R0.opptseval[n+1+1][1] * OrthogonalPolynomialFamilies.getdegzeropteval(B, S);
-      R1.opptseval[n+1][1] * S.family.ρ(p[3]) * Yop(1, 0, θ);
-      R1.opptseval[n+1][1] * S.family.ρ(p[3]) * Yop(1, 1, θ);
-      S.family.ρ(p[3])^2 * Yop(2, 0, θ);
-      S.family.ρ(p[3])^2 * Yop(2, 1, θ)] # n = 2
-T(p[1] * Q2[2])
-T(α[1] * Q1[1] + α[2] * Q2[1] + α[3] * Q3[1] + α[4] * Q3[4])
+# ρ(z)∂/∂ϕ weighted operator
+# f = (x,y,z)->x^a y^b z^c
+# df = (x,y,z)->x^a y^b z^(c-1) [(a+b)z^2 - cρ(z)^2]
+inds = [4, 3, 5]; sum(inds)
+f = (x,y,z)->x^inds[1] * y^inds[2] * z^inds[3]
+df = (x,y,z)->((z - S.family.α) * ((inds[1] + inds[2]) * z^2 - inds[3] * S.family.ρ(z)^2) * x^inds[1] * y^inds[2] * z^(inds[3]-1)
+                - S.params[1] * S.family.ρ(z)^2 * f(x,y,z)) # deg = degf + 2
+F = Fun(f, S, 2*(sum(inds)+1)^2); F.coefficients
+N = getnki(S, ncoefficients(F))[1]
+dϕ = diffoperatorphi(S, N; weighted=true)
+cfs = dϕ * F.coefficients
+dF = Fun(differentiatespacephi(S; weighted=true), cfs)
+@test dF(p) ≈ df(p...)
 
-function Yop(k, i, θ)
-    if k == 0
-        sqrt(B(2))/2
-    elseif i == 0
-        cos(k * θ)
-    else
-        sin(k * θ)
-    end
-end
+# non-weighted transform params operator
+S0 = differentiatespacephi(S; weighted=true)
+inds = [3, 4, 5]; sum(inds)
+f = (x,y,z)->x^inds[1] * y^inds[2] * z^inds[3]
+F0 = Fun(f, S0, 2*(sum(inds)+1)^2); F0.coefficients
+N = getnki(S0, ncoefficients(F0))[1]
+t = transformparamsoperator(S0, S, N)
+F = Fun(S, t * F0.coefficients); F.coefficients
+@test F(p) ≈ F0(p)
 
-R = getRspace(S, 0); OrthogonalPolynomialFamilies.getopptseval(R, 100, [p[3]])
-OrthogonalPolynomialFamilies.resetopptseval(S)
-resize!(S.opptseval, 1)
-pts = [p]
-S.opptseval[1] = Vector{B}(undef, length(pts))
-S.opptseval[1][:] .= OrthogonalPolynomialFamilies.getdegzeropteval(B, S)
+# weighted transform params operator
+S0 = differentiatespacephi(S; weighted=true)
+inds = [7, 2, 3]; sum(inds)
+f = (x,y,z)->x^inds[1] * y^inds[2] * z^inds[3]
+F = Fun(f, S, 2*(sum(inds)+1)^2); F.coefficients
+N = getnki(S, ncoefficients(F))[1]
+t = transformparamsoperator(S, S0, N; weighted=true)
+F0 = Fun(S0, t * F.coefficients); F0.coefficients
+@test F(p) * weight(S, p) ≈ F0(p) * weight(S0, p)
 
-n = 1
-jj = getopindex(S, n, 0, 0)
-resizedata!(S, n)
-resize!(S.opptseval, getopindex(S, n, n, 1))
-for k = 0:2n
-    S.opptseval[jj+k] = Vector{B}(undef, length(pts))
-end
-S.opptseval
-nm1 = getopindex(S, n-1, 0, 0)
-r = length(pts)
-P1 = [opevalatpts(S, nm1+it, pts)[r] for it = 0:2(n-1)]
-P = - S.DT[n] * (S.B[n] - OrthogonalPolynomialFamilies.clenshawG(S, n-1, pts[r])) * P1
-for k = 0:2n
-    S.opptseval[jj+k][r] = P[k+1]
-end
-S.opptseval
-T(S.opptseval[getopindex(S, 1, 0, 0)][1] - R.opptseval[2][1] * OrthogonalPolynomialFamilies.getdegzeropteval(B, S))
-T(S.opptseval[getopindex(S, 1, 1, 0)][1] - S.family.ρ(p[3]) * cos(θ))
-T(S.opptseval[getopindex(S, 1, 1, 1)][1] - S.family.ρ(p[3]) * sin(θ))
+# increase degree
+inds = [3, 1, 5]; sum(inds)
+f = (x,y,z)->cos(x+y)# x^inds[1] * y^inds[2] * z^inds[3]
+F = Fun(f, S, 2*(sum(inds)+1)^2); F.coefficients
+N = getnki(S, ncoefficients(F))[1]
+t = increasedegreeoperator(S, N, N+2)
+Fi = Fun(S, t * F.coefficients); Fi.coefficients
+@test F(p) == Fi(p)
+F(p)
+Fi(p)
 
+# Laplacian
+N = 2
+A, B, C, E, F, G = laplaceoperator(S, S, N; square=true)
+U = (x,y,z)->1.0
+rho2f = (x,y,z)->-2 * z * (1-z^2) # 2 * ρ * ρ' * ρ^2
+F = Fun(rho2f, S, 2*(N+1)^2); F.coefficients
+ucfs = sparse(Δ)[1:(N+1)^2, 1:(N+1)^2] \ F.coefficients
 
-n = 2
-jj = getopindex(S, n, 0, 0)
-resizedata!(S, n)
-resize!(S.opptseval, getopindex(S, n, n, 1))
-for k = 0:2n
-    S.opptseval[jj+k] = Vector{B}(undef, length(pts))
-end
-nm1 = getopindex(S, n-1, 0, 0)
-nm2 = getopindex(S, n-2, 0, 0)
-P1 = [opevalatpts(S, nm1+it, pts)[r] for it = 0:2(n-1)]
-P2 = [opevalatpts(S, nm2+it, pts)[r] for it = 0:2(n-2)]
-P = (- S.DT[n] * (S.B[n] - OrthogonalPolynomialFamilies.clenshawG(S, n-1, pts[r])) * P1
-     - S.DT[n] * S.C[n] * P2)
-for k = 0:2n
-    S.opptseval[jj+k][r] = P[k+1]
-end
-θ = atan(p[2]/p[1])
-S.opptseval
-T(S.opptseval[getopindex(S, 2, 0, 0)][1] - R.opptseval[n+1][1] * OrthogonalPolynomialFamilies.getdegzeropteval(B, S))
-T(S.opptseval[getopindex(S, 2, 2, 0)][1]) - T(S.family.ρ(p[3])^2 * cos(2 * θ))
-T(S.opptseval[getopindex(S, 2, 2, 1)][1] - S.family.ρ(p[3])^2 * sin(2 * θ))
+A
+B
+C
+E
+F
+G
 
-Array(S.DT[n] * (S.B[n] - OrthogonalPolynomialFamilies.clenshawG(S, n-1, pts[r])))
-Array(S.DT[n] * S.C[n])
-Array(S.B[n] - OrthogonalPolynomialFamilies.clenshawG(S, n-1, pts[r]))
-Array(S.DT[n])
-Array(S.C[n])
-
-pts
-OrthogonalPolynomialFamilies.getopptseval(S, N, pts)
+Array(A * B)
+Array(C * E * F * G)
 
 
 
+#==============#
+# Saving to disk
 
-
-n = 1
-Jx = [S.C[n+1][1:2n+1, :] S.B[n+1][1:2n+1, :] S.A[n+1][1:2n+1, :]]
-Jy = [S.C[n+1][2n+1+1:2*(2n+1), :] S.B[n+1][2n+1+1:2*(2n+1), :] S.A[n+1][2n+1+1:2*(2n+1), :]]
-Jz = [S.C[n+1][2*(2n+1)+1:end, :] S.B[n+1][2*(2n+1)+1:end, :] S.A[n+1][2*(2n+1)+1:end, :]]
-θ = atan(p[2]/p[1])
-R0 = getRspace(S, 0); OrthogonalPolynomialFamilies.getopptseval(R0, 5, [p[3]])
-R1 = getRspace(S, 1); OrthogonalPolynomialFamilies.getopptseval(R1, 5, [p[3]])
-Q1 = [OrthogonalPolynomialFamilies.getdegzeropteval(B, S)] # n = 0
-Q2 = [R0.opptseval[n+1][1] * OrthogonalPolynomialFamilies.getdegzeropteval(B, S);
-      S.family.ρ(p[3]) * Yop(1, 0, θ);
-      S.family.ρ(p[3]) * Yop(1, 1, θ)] # n = 1
-Q3 = [R0.opptseval[n+1+1][1] * OrthogonalPolynomialFamilies.getdegzeropteval(B, S);
-      R1.opptseval[n+1][1] * S.family.ρ(p[3]) * Yop(1, 0, θ);
-      R1.opptseval[n+1][1] * S.family.ρ(p[3]) * Yop(1, 1, θ);
-      S.family.ρ(p[3])^2 * Yop(2, 0, θ);
-      S.family.ρ(p[3])^2 * Yop(2, 1, θ)] # n = 2
-Q = [Q1; Q2; Q3]
-T.(p[1] * Q2 - Jx * Q)
-T.(p[2] * Q2 - Jy * Q)
-T.(p[3] * Q2 - Jz * Q)
-
-T.(p[1] * Q2), T.(p[2] * Q2)
-
-
-
-T.(Jx * Q), T.(Jy * Q)
-
-
-
-Array(Jx)
-Array(Jy)
-
-
-
-
-n = 2
-Q1 = [OrthogonalPolynomialFamilies.getptsevalforop(S, ind)[1] for ind=getopindex(S, n-1, 0, 0):getopindex(S, n-1, n-1, 1)]
-Q2 = [OrthogonalPolynomialFamilies.getptsevalforop(S, ind)[1] for ind=getopindex(S, n, 0, 0):getopindex(S, n, n, 1)]
-Q3 = [OrthogonalPolynomialFamilies.getptsevalforop(S, ind)[1] for ind=getopindex(S, n+1, 0, 0):getopindex(S, n+1, n+1, 1)]
-Q = [Q1; Q2; Q3]
-Jx = [S.C[n+1][1:2n+1, :] S.B[n+1][1:2n+1, :] S.A[n+1][1:2n+1, :]]
-Jy = [S.C[n+1][2n+1+1:2*(2n+1), :] S.B[n+1][2n+1+1:2*(2n+1), :] S.A[n+1][2n+1+1:2*(2n+1), :]]
-Jz = [S.C[n+1][2*(2n+1)+1:end, :] S.B[n+1][2*(2n+1)+1:end, :] S.A[n+1][2*(2n+1)+1:end, :]]
-T.(p[1] * Q2 - Jx * Q)
-T.(p[2] * Q2 - Jy * Q)
-T.(p[3] * Q2 - Jz * Q)
-
-n = 1
-Q1 = [OrthogonalPolynomialFamilies.getptsevalforop(S, 1)[1]]
-Q2 = [OrthogonalPolynomialFamilies.getptsevalforop(S, ind)[1] for ind=getopindex(S, n, 0, 0):getopindex(S, n, n, 1)]
-Q3 = [OrthogonalPolynomialFamilies.getptsevalforop(S, ind)[1] for ind=getopindex(S, n+1, 0, 0):getopindex(S, n+1, n+1, 1)]
-Q = [Q1; Q2; Q3]
-Jx = [S.C[n+1][1:2n+1, :] S.B[n+1][1:2n+1, :] S.A[n+1][1:2n+1, :]]
-Jy = [S.C[n+1][2n+1+1:2*(2n+1), :] S.B[n+1][2n+1+1:2*(2n+1), :] S.A[n+1][2n+1+1:2*(2n+1), :]]
-Jz = [S.C[n+1][2*(2n+1)+1:end, :] S.B[n+1][2*(2n+1)+1:end, :] S.A[n+1][2*(2n+1)+1:end, :]]
-T.(p[1] * Q2 - Jx * Q)
-T.(p[3] * Q2 - Jz * Q)
-T.(p[2] * Q2 - Jy * Q)
+# Clenshaw mats
+this
+sb = load("experiments/saved/sphericalcap/sphericalcap-alpha=0.2-clenshawmats-B-BF.jld", "B"); resize!(S.B, length(sb)); S.B[:] = sb[:]
+sc = load("experiments/saved/sphericalcap/sphericalcap-alpha=0.2-clenshawmats-C-BF.jld", "C", S.C); resize!(S.C, length(sc)); S.C[:] = sc[:]
+sdt = load("experiments/saved/sphericalcap/sphericalcap-alpha=0.2-clenshawmats-DT-BF.jld", "DT", S.DT); resize!(S.DT, length(sdt)); S.DT[:] = sdt[:]

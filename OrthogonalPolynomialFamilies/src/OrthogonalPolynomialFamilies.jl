@@ -401,7 +401,7 @@ resetderivopptseval(S::OrthogonalPolynomialSpace) = resize!(S.derivopptseval, 0)
 # This func returns the S.derivopptseval for the degree n OP
 # We assume that we have called getderivopptseval(S, N, pts)
 function getderivptsevalforop(S::OrthogonalPolynomialSpace, n)
-    if length(S.derivopptseval) > n+1
+    if length(S.derivopptseval) < n+1
         error("Invalid OP requested in getderivptsevalforop - getderivopptseval(S,N,pts) may not have been correctly called")
     else
         S.derivopptseval[n+1]
