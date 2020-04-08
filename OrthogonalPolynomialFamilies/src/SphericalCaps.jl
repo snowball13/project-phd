@@ -937,22 +937,7 @@ evaluate(cfs::AbstractVector, S::SphericalCapSpace, z) = clenshaw(cfs, S, z)
 # Operator Clenshaw
 
 # Operator Clenshaw
-function operatorclenshawG(S::SphericalCapSpace{<:Any, <:Any, T, <:Any}, n, Jx, Jy, Jz, zeromat) where T
-    G = Matrix{SparseMatrixCSC{T}}(undef, 3(2n+1), 2n+1)
-    for i = 1:2n+1, j = 1:2n+1
-        if i == j
-            G[i,j] = Jx
-            G[i+2n+1,j] = Jy
-            G[i+2(2n+1),j] = Jz
-        else
-            G[i,j] = zeromat
-            G[i+2n+1,j] = zeromat
-            G[i+2(2n+1),j] = zeromat
-        end
-    end
-    G
-end
-function operatorclenshawvector(S::SphericalCapSpace{<:Any, <:Any, T, <:Any}, v, id) where T
+function operatorclenshawvector(S::SphericalCapSpace{<:Any, T, <:Any, <:Any}, v, id) where T
     s = size(v)[1]
     B = Array{SparseMatrixCSC{T}}(undef, (1, s))
     for i = 1:s
@@ -960,14 +945,14 @@ function operatorclenshawvector(S::SphericalCapSpace{<:Any, <:Any, T, <:Any}, v,
     end
     B
 end
-function operatorclenshawmatrixDT(S::SphericalCapSpace{<:Any, <:Any, T, <:Any}, A, id) where T
+function operatorclenshawmatrixDT(S::SphericalCapSpace{<:Any, T, <:Any, <:Any}, A, id) where T
     B = Array{SparseMatrixCSC{T}}(undef, size(A))
     for ij = 1:length(A)
         B[ij] = id * A[ij]
     end
     B
 end
-function operatorclenshawmatrixBmG(S::SphericalCapSpace{<:Any, <:Any, T, <:Any}, A, id, Jx, Jy, Jz) where T
+function operatorclenshawmatrixBmG(S::SphericalCapSpace{<:Any, T, <:Any, <:Any}, A, id, Jx, Jy, Jz) where T
     ii, jj = size(A)
     B = Array{SparseMatrixCSC{T}}(undef, (ii, jj))
     for i = 1:jj, j = 1:jj
