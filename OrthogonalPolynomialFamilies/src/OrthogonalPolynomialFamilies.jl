@@ -60,8 +60,12 @@ function lanczos!(w, P, β, γ; N₀=0)
         @show "lanczos", N, k
         v = x*P[2] - γ[k-1]*P[1]
         β[k] = sum(P[2]*w*v)
+        # β[k] = sum(P[2]^2 * w * x)
         v = v - β[k]*P[2]
         γ[k] = sqrt(sum(w*v*v))
+        # γ[k] = sqrt(sum((x - β[k])^2 * P[2]^2)
+        #                 + γ[k-1]^2 * sum(P[1]^2)
+        #                 - 2 * γ[k-1] * sum((x - β[k]) * (P[2] * P[1])))
         P[1] = P[2]
         P[2] = v/γ[k]
     end

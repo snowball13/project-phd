@@ -17,6 +17,7 @@ import OrthogonalPolynomialFamilies: points, pointswithweights, getopptseval,
                     differentiatespacephi, increasedegreeoperator
 using JLD
 
+
 # Useful functions for testing
 function converttopseudo(S::SphericalCapSpace, cfs; converttobydegree=true)
     N = getnki(S, length(cfs))[1]
@@ -33,14 +34,18 @@ Solve `A x = b` for `x` using iterative improvement
 (for BigFloat sparse matrix and vector)
 """
 function iterimprove(A::SparseMatrixCSC{T}, b::Vector{T};
-                        iters=5, verbose=true) where T
-    eps(T) < eps(Float64) || throw(ArgumentError("wrong implementation"))
+                        iters=1, verbose=true) where T
+    if eps(T) ≥ eps(Float64)
+        # throw(ArgumentError("wrong implementation"))
+        return A \ b
+    end
     A0 = SparseMatrixCSC{Float64}(A)
     F = factorize(A0)
     x = zeros(T, length(b))
     r = copy(b)
     for iter = 1:iters
         y = F \ Vector{Float64}(r)
+        x = zeros(T, length(y))
         for i in eachindex(x)
             x[i] += y[i]
         end
@@ -53,14 +58,14 @@ function iterimprove(A::SparseMatrixCSC{T}, b::Vector{T};
 end
 
 # Setup
-T = Float64; B = T# BigFloat
+T = Float64; B = BigFloat
 α = 0.2
-DSF = DiskSliceFamily(α)# DiskSliceFamily(T, T, α, 1.0, -1.0, 1.0); a, b = 1.0, 1.0; ap, bp = 1.0, 2.0
-SCF = SphericalCapFamily(B, T, α)
+DSF = DiskSliceFamily(B, T, α, 1.0, -1.0, 1.0)
+SCF = SphericalCapFamily(B, T, B(α * 1000) / 1000)
 a = 1.0
-S = SCF(a, 0.0); S2 = DSF(a, 0.0)
+S = SCF(a, 0.0); S2 = DSF(a, a)
 
-y, z = B(-0.234), B(0.643); x = sqrt(1 - z^2 - y^2); p = [x; y; z]; isindomain(p, SCF)
+y, z = B(-234)/1000, B(643)/1000; x = sqrt(1 - z^2 - y^2); p = [x; y; z]; isindomain(p, SCF)
 θ = atan(y / x)
 resizedata!(S, 10)
 
@@ -156,26 +161,162 @@ N = getnki(S, ncoefficients(F))[1]
 t = increasedegreeoperator(S, N, N+2)
 Fi = Fun(S, t * F.coefficients); Fi.coefficients
 @test F(p) == Fi(p)
-F(p)
-Fi(p)
 
-# Laplacian
-N = 2
-A, B, C, E, F, G = laplaceoperator(S, S, N; square=true)
-U = (x,y,z)->1.0
-rho2f = (x,y,z)->-2 * z * (1-z^2) # 2 * ρ * ρ' * ρ^2
-F = Fun(rho2f, S, 2*(N+1)^2); F.coefficients
-ucfs = sparse(Δ)[1:(N+1)^2, 1:(N+1)^2] \ F.coefficients
+# Laplacian tests
+# 1) u = constant
+N = 10
+Δ = laplaceoperator(S, S, N)
+c = 2.0
+u = (x,y,z)->c
+rho2f = (x,y,z)->-c * 2 * z * (1-z^2) # 2 * ρ * ρ' * ρ^2
+F = Fun(rho2f, S, 2*(N+4)^2); F.coefficients
+ucfs = iterimprove(sparse(Δ), F.coefficients)
+U = Fun(S, ucfs)
+@test U(p) ≈ u(p...)
 
-A
-B
-C
-E
-F
-G
+# 2) u = monomial
+inds = [2, 3, 3]; N = 50
+u = (x,y,z)->x^inds[1] * y^inds[2] * z^inds[3]
+Δ = laplaceoperator(S, S, N)
+rho2f = (x,y,z)->rholaplacian(S, u, inds, [x;y;z]) # NOTE methods at bottom of script for this
+F = Fun(rho2f, S, 2*(sum(inds)+4)^2); resizecoeffs!(S, F, N+3)
+F(p) - rho2f(p...)
+ucfs = iterimprove(sparse(Δ), F.coefficients)
+U = Fun(S, ucfs)
+@test U(p) ≈ u(p...)
+U(p) - u(p...)
 
-Array(A * B)
-Array(C * E * F * G)
+
+# Jacobi operators
+inds = [2, 3, 3]; N = sum(inds) + 1 # +1 so that the Jacobi operator can work
+f = (x,y,z)->x^inds[1] * y^inds[2] * z^inds[3]
+F = Fun(f, S, 2*(N+1)^2); F.coefficients
+# x
+J = OrthogonalPolynomialFamilies.jacobix(S, N)
+xF = Fun(S, J * F.coefficients)
+@test xF(p) ≈ p[1] * f(p...)
+# y
+J = OrthogonalPolynomialFamilies.jacobiy(S, N)
+xF = Fun(S, J * F.coefficients)
+@test xF(p) ≈ p[2] * f(p...)
+# z
+J = OrthogonalPolynomialFamilies.jacobiz(S, N)
+xF = Fun(S, J * F.coefficients)
+@test xF(p) ≈ p[3] * f(p...)
+
+# Operator Clenshaw
+inds = [4, 5, 3]; N = sum(inds) + 2 # Needs +2 buffer
+f = Fun((x,y,z)->x^inds[1] * y^inds[2] * z^inds[3], S, 2*(N+1)^2)
+v = Fun((x,y,z)->(1 - (3(x-0.2)^2 + 5y^2)), S, 30); v.coefficients
+V = operatorclenshaw(v, S, N)
+vf = Fun(S, V * f.coefficients)
+@test vf(p) ≈ v(p) * f(p)
+
+# Examples
+function getsolutionblocknorms(S::SphericalCapSpace, A, f; withcoeffs=false)
+    N = nblocks(A)[2] - 1
+    u1 = Fun(S, iterimprove(sparse(A), f))
+    u1coeffs = PseudoBlockArray(convertcoeffsvecorder(S, u1.coefficients), [i+1 for i=0:N])
+    u1norms = zeros(N+1)
+    for i = 1:N+1
+        u1norms[i] = norm(view(u1coeffs, Block(i)))
+    end
+    if withcoeffs
+        u1norms, u1coeffs
+    else
+        u1norms
+    end
+end
+N = 50
+Δw = laplaceoperator(S, S, N)
+f1 = Fun((x,y,z)->1.0, S, 10); f1.coefficients
+f2 = Fun((x,y,z)->(1 - x^2 - y^2 - α^2), S, 30); f2.coefficients
+f3 = Fun((x,y,z)->weight(S, x, y, z), S, 30); f3.coefficients
+#f4 = Fun((x,y,z)->exp(-1000*((x-0.5)^2+(y-0.5)^2)), S, 10000); f4.coefficients
+u1norms = getsolutionblocknorms(S, Δw, resizecoeffs!(S, f1, N+3))
+u2norms = getsolutionblocknorms(S, Δw, resizecoeffs!(S, f2, N+3))
+u3norms = getsolutionblocknorms(S, Δw, resizecoeffs!(S, f2, N+3))
+f4cfs = convertcoeffsvecorder(S, convertcoeffsvecorder(S, f4.coefficients)[1:getopindex(S, N+3, N+3, 1)]; todegree=false)
+u4norms = getsolutionblocknorms(S, Δw, f4cfs)
+u1 = Fun(S, iterimprove(sparse(Δw), f1.coefficients))
+u1cfs = PseudoBlockArray(convertcoeffsvecorder(S, u1.coefficients), [i+1 for i=0:N])
+minimum(u1cfs[Block(51)])
+using Plots
+Plots.plot(u1norms, line=(3, :solid), label="f(x,y) = 1", xscale=:log10, yscale=:log10, legend=:bottomleft)
+Plots.plot!(u2norms, line=(3, :dash), label="f(x,y) = (1 - alpha^2 - x^2 - y^2)")
+Plots.plot!(u3norms, line=(3, :dashdot), label="f(x,y) = W{(1,1,1)}^3")
+Plots.plot(u4norms, line=(3, :dot), label = "f(x,y) = exp(-1000((x-0.5)^2+(y-0.5)^2))")
+Plots.xlabel!("Block")
+Plots.ylabel!("Norm")
+
+N = 50
+Δw = laplaceoperator(S2, S2, N; weighted=true, square=false)
+f1 = Fun((x,y)->1.0, S2, 10); f1.coefficients
+u1 = Fun(S2, iterimprove(sparse(Δw), resizecoeffs!(f1, N+1)))
+u1cfs = PseudoBlockArray(u1.coefficients, [i+1 for i=0:N])
+maximum(abs, u1cfs[Block(51)])
+u1cfs[Block(51)]
+u1norms = [norm(u1cfs[Block(n+1)]) for n=0:N]
+
+
+
+
+
+#====#
+# The Poisson/Laplacian test methods for Q^{1}
+rhoval(z) = sqrt(1 - z^2)
+function rholaplacian(S::SphericalCapSpace, u, uinds, xvec)
+    x, y, z = xvec
+    wght = weight(S, xvec)
+    rhoz = rhoval(z)
+    utt = getuttfrommononial(uinds, xvec)
+    up = getrhoupfrommononial(uinds, xvec)
+    upp = getrho2uppfrommononial(uinds, xvec)
+    # a = S.params[1]
+    # wghtm1 = weight(S.family(a-1, 0.0), xvec)
+    # θ = atan(y / x)
+
+    ret = - rhoz^2 * up
+    ret += wght * upp
+    ret += z * wght * up
+    ret -= 2 * rhoz^2 * z * u(x,y,z)
+    ret -= rhoz^2 * up
+    ret += utt * wght
+    ret
+end
+function getuttfrommononial(inds, p)
+    a, b, c = inds
+    x, y, z = p
+    ret = a * (a-1) * y^4
+    ret -= (2a * b + a + b) * x^2 * y^2
+    ret += b * (b-1) * x^4
+    ret *= x^(a-2) * y^(b-2) * z^c
+    ret
+end
+function getrhoupfrommononial(inds, p)
+    a, b, c = inds
+    x, y, z = p
+    θ = atan(y / x)
+    rhoz = rhoval(z)
+    ret = (a + b) * z^2
+    ret -= c * rhoz^2
+    ret *= x^a * y^b * z^(c-1)
+    ret
+end
+function getrho2uppfrommononial(inds, p)
+    a, b, c = inds
+    x, y, z = p
+    θ = atan(y / x)
+    rhoz = rhoval(z)
+    ret = (a + b) * (a + b - 1) * z^4
+    ret -= (2c * (a + b) + a + b + c) * z^2 * rhoz^2
+    ret += c * (c - 1) * rhoz^4
+    ret *= x^a * y^b * z^(c-2)
+    ret
+end
+
+
+
 
 
 
