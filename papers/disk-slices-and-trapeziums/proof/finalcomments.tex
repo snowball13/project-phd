@@ -1,0 +1,75 @@
+\documentclass[11pt, oneside]{article}   	% use "amsart" instead of "article" for AMSLaTeX format
+\usepackage{geometry}                		% See geometry.pdf to learn the layout options. There are lots.
+\geometry{letterpaper}                   		% ... or a4paper or a5paper or ... 
+%\geometry{landscape}                		% Activate for rotated page geometry
+\usepackage[parfill]{parskip}    		% Activate to begin paragraphs with an empty line rather than an indent
+\usepackage{graphicx}				% Use pdf, png, jpg, or eps§ with pdflatex; use eps in DVI mode
+								% TeX will automatically convert eps --> pdf in pdflatex		
+\usepackage[margin=10pt,font=footnotesize,labelfont=bf]{caption}
+\usepackage{subcaption}
+\usepackage{float}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{bm}
+\usepackage{bbm}
+\usepackage{mleftright}
+\usepackage{todonotes}
+
+\include{somacros}
+
+\begin{document}
+
+Queries:
+
+1) Yes 
+
+2) Yes
+
+3) Reference Figure 1 after Definition 4.
+	"... and on the triangle. An illustration of how the non-weighted differential operators increment the parameters (a,b,c) is seen in Figure 1"
+	
+4) OK
+
+5) Should be ``2020, IMA. J. Numer. Anal., https://doi.org/10.1093/imanum/draa001''
+
+6) Replace the problematic sentence with the following:
+	"Recall that the OPs $\mathbb{H}^{(a,b,c)}$ are orthogonal with respect to the weight $W^{(a,b,c)}$ on $\Omega$, and define the matrix $\Lambda^{(a,b,c)} := \ip< \mathbb{H}^{(a,b,c)}, \: {\mathbb{H}^{(a,b,c)}}^\top >_{W^{(a,b,c)}}$"
+	
+	
+Typos:
+
+1) In Lemma 1, it should say 
+$$
+\alpha^{(a,b,c,d)}_{n,k,1} := \beta_{n-k-1}^{(a, b, c+d+2k+1)}, \qquad \alpha^{(a,b,c,d)}_{n,k,2} := \alpha_{n-k}^{(a, b, c+d+2k+1)}
+$$
+
+2) At the end of Section 3, we are missing a couple of minus signs. We should have:
+\begin{align*}
+	\eta_j &= - \frac{1}{\beta^{(a,b,c,d)}_{n,j-1,9}} \big( \beta^{(a,b,c,d)}_{n,n+j+1,7} \: \eta_{j+2} + \beta^{(a,b,c,d)}_{n,n+j,8} \: \eta_{j+1} \big) \qfor j = n-1,n-2,\dots,1, \\
+	\eta_0 &= - \frac{1}{\alpha^{(a,b,c,d)}_{n+1,0,1}} \big( \beta^{(a,b,c,d)}_{n,1,7} \: \eta_{2} + \beta^{(a,b,c,d)}_{n,0,8} \: \eta_{1} \big).
+\end{align*}
+
+3) Near the end of the proof for Theorem 1, it should read:
+	"... nonzero coefficients $c^x_{m,j}$ are when $m = n-3, n-2, n-1$ and $j = k-2, k$"
+(and not $m = n-3,...,n$)
+
+4) Near the end of Section 3, it should read:
+	"... for the Laplacian $\Delta$ that will take us from the coefficients for expansion in the space $\mathbb{H}^{(0,0,0)}$ to coefficients in the space $\mathbb{H}^{(2,2,2)}$"
+(and not $\mathbb{H}^{(2,2)}$)
+
+5) Similarly, it should read:
+	"... Laplacian as a map from coefficients in the space $\mathbb{W}^{(2,2,2)}$ to coefficients in the space $\mathbb{H}^{(0,0,0)}$. Note a function expanded in the $\mathbb{W}^{(2,2,2)}$ basis will satisfy ..."
+(and not $\mathbb{W}^{(2,2)}$)
+
+
+Additional changes for Figures:
+
+1) Figure 3b will be a new figure, that increases the N value used in the original. We would also then need to update the text in Section 5.1 that reads "N = 200, that is, 20,301 unknowns" to instead be "N = 990, that is, 491,536 unknowns"
+
+2) Figure 5b will be a new figure, that increases the N value used in the original. We would also then need to update the text in Section 5.1 that reads "N = 200, that is, 20,301 unknowns" to instead be "N = 500, that is, 125,751 unknowns" (Note: Depends how high I can go before I run out of memory with the factorization/time)
+
+3) Figure 6b will be a new figure, that increases the N value used in the original. We would also then need to update the text in Section 5.1 that reads "N = 200, that is, 20,301 unknowns" to instead be "N = 500, that is, 125,751 unknowns" (Note: Depends how high I can go before I run out of memory with the factorization/time)
+
+
+\end{document}
+
