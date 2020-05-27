@@ -25,6 +25,8 @@ i.e. for a given max degree N:
 
 =#
 
+# TODO there should only be one parameter, not two (as b is not used)
+
 export SphericalCapFamily, SphericalCapSpace
 
 # T should be Float64, B should be BigFloat
@@ -1200,7 +1202,6 @@ end
 function transformparamsoperator(S::SphericalCapSpace{<:Any, B, T, <:Any},
             St::SphericalCapSpace{<:Any, B, T, <:Any}, N;
             weighted=false) where {B,T}
-    # TODO do the other parameter conversions
 
     # The St space is the target space. Applying this operator to coeffs in the
     # (weighted) S space will result in coeffs in the (weighted) St space.
@@ -1242,7 +1243,25 @@ function transformparamsoperator(S::SphericalCapSpace{<:Any, B, T, <:Any},
     end
     C
 end
-
+function convertweightedtononweightedoperator(S::SphericalCapSpace, N; Nout=-1)
+    # Converts coeffs in W^{a} to coeffs in Q^{a}
+    # If Nout is set, then we increase the resulting dimension so that the
+    # operator outputs coeffs of degree Nout (probably to be used for Helholtz
+    # type equations, to match dimension of Laplacian, in which case we should
+    # have Nout=N+3)
+    S0 = S.family(0.0, 0.0)
+    T = transformparamsoperator(S0, S, N+1; weighted=false)
+    Tw = transformparamsoperator(S, S0, N; weighted=true)
+    if Nout > 0 # ie is set
+        if Nout <= N
+            error("invalid Nout value given - must be bigger than N")
+        else
+            increasedegreeoperator(S, N+1, Nout) * T * Tw
+        end
+    else
+        T * Tw
+    end
+end
 
 #===#
 # "Coeffs degree increaser" operator matrix
@@ -1270,31 +1289,91 @@ end
 #===#
 # Spherical Laplacian operator matrix
 
-# TODO this is currently the operator for ρ²Δ
-function laplaceoperator(S::SphericalCapSpace, St::SphericalCapSpace, N;
-                            weighted=true, square=false)
+function getlaplacianval(S::SphericalCapSpace{<:Any, B, T, <:Any},
+                            ptsr::Vector{B}, wr::Vector{B}, rhoptsr2::Vector{B},
+                            w10ptsr::Vector{B}, n::Int, m::Int, k::Int
+                            ) where {B,T}
+    R = getRspace(S, k)
+    ret = - inner2(R, getptsevalforop(R, n-k) .* getptsevalforop(R, m-k) .* rhoptsr2.^k,
+                    (2(k+1) * ptsr .+ k*(k+1) * w10ptsr),
+                    wr)
+    ret -= inner2(R, w10ptsr .* getderivptsevalforop(R, n-k),
+                    getderivptsevalforop(R, m-k) .* rhoptsr2.^(k+1), wr)
+    ret / getopnorm(R)
+end
+# The operator for Δ
+function laplacianoperator(S::SphericalCapSpace{<:Any, B, T, <:Any}, N::Int;
+                            weighted=true) where {B,T}
+    # (1/ρ^2)*∂/∂θ + (1/ρ)*∂/∂ϕ(ρ*∂/∂ϕ) = Δ operator
+    # Takes the space:
+    #   w_R^{(1,0)} Q^{1} -> Q^{1,b}
+
+    # NOTE a, the param, must be 1 for the maths to work
+    @assert (Int(S.params[1]) == 1) "Invalid parameter for SphericalCapSpace"
+
+    # resizedataonedimops! for the SCSpace
+    resizedataonedimops!(S, N+5)
+
+    # Get pts and weights, and set the R norms
+    # TODO how many pts needed?
+    ptsr, wr = pointswithweights(B, getRspace(S, 0), N+4) # R^{(a, 1)}
+    getopnorms(S, N)
+
+    # Evaluate ρ.(ptsr).^2 at the R inner product points
+    rhoptsr2 = S.family.ρ.(ptsr).^2
+    w10ptsr = ptsr .- S.family.α
+
+    band1 = 1
+    band2 = 1
+    A = BandedBlockBandedMatrix(Zeros{B}((N+band2+1)^2, (N+1)^2),
+                                ([N+band2+1; 2(N+band2):-2:1], [N+1; 2N:-2:1]),
+                                (0, 0), (2band2, 2band1))
+    for k = 0:N
+        if k % 20 == 0
+            @show "Δ", k
+        end
+        R = getRspace(S, k)
+        getopptseval(R, N-k+band2, ptsr); getderivopptseval(R, N-k+band2, ptsr)
+        for n = k:N, m = max(0, n-band1):n+band2 # min(n+band2, N)
+            if k ≤ m
+                val = getlaplacianval(S, ptsr, wr, rhoptsr2, w10ptsr, n, m, k)
+                for i = 0:min(1,k)
+                    view(A, Block(k+1, k+1))[getblockindex(S, m, k, i), getblockindex(S, n, k, i)] = val
+                end
+            end
+        end
+        resetopptseval(R); resetderivopptseval(R)
+    end
+    A
+end
+
+# The operator for ρ²Δ
+function rholaplacianoperator(S::SphericalCapSpace, St::SphericalCapSpace, N;
+                            weightedin=true, weightedout=false, square=false)
     # Outputs the sum(1:N+1) × sum(1:N+1) matrix operator if square=true
+    # TODO fix the square=true cases
     D = S.family
-    # if ????
-    A = diffoperatorphi(differentiatespacephi(S; weighted=true), N+2)
-    @show "laplaceoperator", "1 of 6 done"
-    B = diffoperatorphi(S, N; weighted=true)
-    @show "laplaceoperator", "2 of 6 done"
-    C = transformparamsoperator(differentiatespacephi(S; weighted=true), S, N+1)
-    @show "laplaceoperator", "3 of 6 done"
-    E = transformparamsoperator(S, differentiatespacephi(S; weighted=true), N; weighted=true)
-    @show "laplaceoperator", "4 of 6 done"
-    F = diffoperatortheta2(S, N)
-    @show "laplaceoperator", "5 of 6 done"
-    G = increasedegreeoperator(S, N+1, N+3)
-    @show "laplaceoperator", "6 of 6 done"
-    L = A * B + G * C * E * F
-    if square
-        m = (N+1)^2
-        Δ = BandedBlockBandedMatrix(L[1:m, 1:m], ([N+1; 2N:-2:1], [N+1; 2N:-2:1]),
-                                    (L.l, L.u), (L.λ, L.μ))
-    else
-        L
+    if weightedin && !weightedout
+        A = diffoperatorphi(differentiatespacephi(S; weighted=true), N+2)
+        @show "laplaceoperator", "1 of 6 done"
+        B = diffoperatorphi(S, N; weighted=true)
+        @show "laplaceoperator", "2 of 6 done"
+        C = transformparamsoperator(differentiatespacephi(S; weighted=true), S, N+1)
+        @show "laplaceoperator", "3 of 6 done"
+        E = transformparamsoperator(S, differentiatespacephi(S; weighted=true), N; weighted=true)
+        @show "laplaceoperator", "4 of 6 done"
+        F = diffoperatortheta2(S, N)
+        @show "laplaceoperator", "5 of 6 done"
+        G = increasedegreeoperator(S, N+1, N+3)
+        @show "laplaceoperator", "6 of 6 done"
+        L = A * B + G * C * E * F
+        if square
+            m = (N+1)^2
+            Δ = BandedBlockBandedMatrix(L[1:m, 1:m], ([N+1; 2N:-2:1], [N+1; 2N:-2:1]),
+                                        (L.l, L.u), (L.λ, L.μ))
+        else
+            L
+        end
     end
 end
 

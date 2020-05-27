@@ -7,72 +7,89 @@ import OrthogonalPolynomialFamilies: points, pointswithweights, getopptseval,
                     opevalatpts, inner2, getopindex, getnk, resizecoeffs!,
                     transformparamsoperator, weightedpartialoperatorx,
                     weightedpartialoperatory, partialoperatorx, partialoperatory,
-                    laplaceoperator, derivopevalatpts, getderivopptseval, getopnorms,
+                    derivopevalatpts, getderivopptseval, getopnorms,
                     getopnorm, operatorclenshaw, weight, biharmonicoperator,
                     getPspace, getRspace, differentiatespacex, differentiatespacey,
                     differentiateweightedspacex, differentiateweightedspacey,
                     resizedata!,
                     resizedataonedimops!, getnki, convertcoeffsvecorder,
                     diffoperatorphi, diffoperatortheta, diffoperatortheta2,
-                    differentiatespacephi, increasedegreeoperator
+                    differentiatespacephi, increasedegreeoperator,
+                    getptsevalforop, getderivptsevalforop, laplacianoperator,
+                    rholaplacianoperator
 using JLD
 
 
-# Useful functions for testing
-function converttopseudo(S::SphericalCapSpace, cfs; converttobydegree=true)
-    N = getnki(S, length(cfs))[1]
-    if converttobydegree
-        PseudoBlockArray(convertcoeffsvecorder(S, cfs), [2n+1 for n=0:N])
-    else
-        PseudoBlockArray(cfs, [2n+1 for n=0:N])
-    end
-end
 isindomain(pt, D::SphericalCapFamily) = D.α ≤ pt[3] ≤ D.β && norm(pt) == 1.0
 isindomain(pt, S::SphericalCapSpace) = isindomain(pt, S.family)
-"""
-Solve `A x = b` for `x` using iterative improvement
-(for BigFloat sparse matrix and vector)
-"""
-function iterimprove(A::SparseMatrixCSC{T}, b::Vector{T};
-                        iters=1, verbose=true) where T
-    if eps(T) ≥ eps(Float64)
-        # throw(ArgumentError("wrong implementation"))
-        return A \ b
-    end
-    A0 = SparseMatrixCSC{Float64}(A)
-    F = factorize(A0)
-    x = zeros(T, length(b))
-    r = copy(b)
-    for iter = 1:iters
-        y = F \ Vector{Float64}(r)
-        x = zeros(T, length(y))
-        for i in eachindex(x)
-            x[i] += y[i]
-        end
-        r = b - A * x
-        if verbose
-            @show "at iter %d resnorm = %.3g\n" iter norm(r)
-        end
-    end
-    x
-end
+rhoval(z) = sqrt(1 - z^2)
+
 
 # Setup
-T = Float64; B = BigFloat
+T = Float64; B = T#BigFloat
 α = 0.2
 DSF = DiskSliceFamily(B, T, α, 1.0, -1.0, 1.0)
 SCF = SphericalCapFamily(B, T, B(α * 1000) / 1000)
 a = 1.0
-S = SCF(a, 0.0); S2 = DSF(a, a)
+S = SCF(a, 0.0); S2 = DSF(a, a); S0 = SCF(0.0, 0.0)
 
 y, z = B(-234)/1000, B(643)/1000; x = sqrt(1 - z^2 - y^2); p = [x; y; z]; isindomain(p, SCF)
 θ = atan(y / x)
-resizedata!(S, 10)
+resizedata!(S, 100)
+resizedata!(S0, 100)
+
+
+
+N = 10
+n, k, i = 6, 3, 1
+cfs = zeros(B, (N+1)^2); cfs[getopindex(S, n, k, i)] = 1.0
+q = Fun(S, convertcoeffsvecorder(S, cfs))
+
+
+# Laplacian tests
+# 1) u = constant
+N = 10
+L = laplacianoperator(S, N)
+c = 2.0
+u = (x,y,z)->c
+f = (x,y,z)->-c * 2 * z
+F = Fun(f, S, 2*(N+2)^2); F.coefficients
+ucfs = iterimprove(sparse(L), F.coefficients)
+U = Fun(S, ucfs)
+U(p)
+u(p...)
+@test U(p) ≈ u(p...)
+
+# 2) u = monomial
+inds = [2, 3, 3]; N = 50
+u = (x,y,z)->x^inds[1] * y^inds[2] * z^inds[3]
+L = laplacianoperator(S, N)
+f = (x,y,z)->(rholaplacian(S, u, inds, [x;y;z]) / rhoval(z)^2) # NOTE methods at bottom of script for this
+F = Fun(f, S, 2*(sum(inds)+2)^2); F.coefficients
+resizecoeffs!(S, F, N+1)
+ucfs = iterimprove(sparse(L), F.coefficients)
+U = Fun(S, ucfs)
+@test U(p) ≈ u(p...)
+
+
+checklaplacian(S, p)
+function checklaplacian(S, p)
+    x, y, z = p[1], p[2], p[3]
+    θ = atan(y / x)
+    ρ = sqrt(1 - z^2)
+    w10 = (z - S.family.α)
+    ret = - 4 * w10 + (-z - S.family.α) * ρ^2 + 5 * (-ρ - S.family.α) * ρ * z
+    ret += 4 * w10 * z^2 - 2 * w10 * ρ^2
+    ret *= cos(θ) * sin(θ)
+    ret
+end
+
+
 
 #===#
 
 # Test transform
-n = 200
+n = B == T ? 400 : 200
 f = (x,y,z)->cos(y)
 pts, w = pointswithweights(S, n)
 vals = [f(pt...) for pt in pts]
@@ -124,7 +141,7 @@ dF = Fun(differentiatespacephi(S), cfs)
 # df = (x,y,z)->x^a y^b z^(c-1) [(a+b)z^2 - cρ(z)^2]
 inds = [4, 3, 5]; sum(inds)
 f = (x,y,z)->x^inds[1] * y^inds[2] * z^inds[3]
-df = (x,y,z)->((z - S.family.α) * ((inds[1] + inds[2]) * z^2 - inds[3] * S.family.ρ(z)^2) * x^inds[1] * y^inds[2] * z^(inds[3]-1)
+df = (x,y,z)->((z - S.family.α)^S.params[1] * ((inds[1] + inds[2]) * z^2 - inds[3] * S.family.ρ(z)^2) * x^inds[1] * y^inds[2] * z^(inds[3]-1)
                 - S.params[1] * S.family.ρ(z)^2 * f(x,y,z)) # deg = degf + 2
 F = Fun(f, S, 2*(sum(inds)+1)^2); F.coefficients
 N = getnki(S, ncoefficients(F))[1]
@@ -184,8 +201,6 @@ F(p) - rho2f(p...)
 ucfs = iterimprove(sparse(Δ), F.coefficients)
 U = Fun(S, ucfs)
 @test U(p) ≈ u(p...)
-U(p) - u(p...)
-
 
 # Jacobi operators
 inds = [2, 3, 3]; N = sum(inds) + 1 # +1 so that the Jacobi operator can work
@@ -206,11 +221,13 @@ xF = Fun(S, J * F.coefficients)
 
 # Operator Clenshaw
 inds = [4, 5, 3]; N = sum(inds) + 2 # Needs +2 buffer
-f = Fun((x,y,z)->x^inds[1] * y^inds[2] * z^inds[3], S, 2*(N+1)^2)
+f = Fun((x,y,z)->x^inds[1] * y^inds[2] * z^inds[3], S, 2*(N+1)^2); f.coefficients
 v = Fun((x,y,z)->(1 - (3(x-0.2)^2 + 5y^2)), S, 30); v.coefficients
 V = operatorclenshaw(v, S, N)
 vf = Fun(S, V * f.coefficients)
 @test vf(p) ≈ v(p) * f(p)
+
+
 
 # Examples
 function getsolutionblocknorms(S::SphericalCapSpace, A, f; withcoeffs=false)
@@ -232,10 +249,10 @@ N = 50
 f1 = Fun((x,y,z)->1.0, S, 10); f1.coefficients
 f2 = Fun((x,y,z)->(1 - x^2 - y^2 - α^2), S, 30); f2.coefficients
 f3 = Fun((x,y,z)->weight(S, x, y, z), S, 30); f3.coefficients
-#f4 = Fun((x,y,z)->exp(-1000*((x-0.5)^2+(y-0.5)^2)), S, 10000); f4.coefficients
+# f4 = Fun((x,y,z)->exp(-1000*((x-0.5)^2+(y-0.5)^2)), S, 10000); f4.coefficients
 u1norms = getsolutionblocknorms(S, Δw, resizecoeffs!(S, f1, N+3))
 u2norms = getsolutionblocknorms(S, Δw, resizecoeffs!(S, f2, N+3))
-u3norms = getsolutionblocknorms(S, Δw, resizecoeffs!(S, f2, N+3))
+u3norms = getsolutionblocknorms(S, Δw, resizecoeffs!(S, f3, N+3))
 f4cfs = convertcoeffsvecorder(S, convertcoeffsvecorder(S, f4.coefficients)[1:getopindex(S, N+3, N+3, 1)]; todegree=false)
 u4norms = getsolutionblocknorms(S, Δw, f4cfs)
 u1 = Fun(S, iterimprove(sparse(Δw), f1.coefficients))
@@ -248,6 +265,8 @@ Plots.plot!(u3norms, line=(3, :dashdot), label="f(x,y) = W{(1,1,1)}^3")
 Plots.plot(u4norms, line=(3, :dot), label = "f(x,y) = exp(-1000((x-0.5)^2+(y-0.5)^2))")
 Plots.xlabel!("Block")
 Plots.ylabel!("Norm")
+
+
 
 N = 50
 Δw = laplaceoperator(S2, S2, N; weighted=true, square=false)
@@ -263,6 +282,43 @@ u1norms = [norm(u1cfs[Block(n+1)]) for n=0:N]
 
 
 #====#
+
+# Useful functions for testing
+function converttopseudo(S::SphericalCapSpace, cfs; converttobydegree=true)
+    N = getnki(S, length(cfs))[1]
+    if converttobydegree
+        PseudoBlockArray(convertcoeffsvecorder(S, cfs), [2n+1 for n=0:N])
+    else
+        PseudoBlockArray(cfs, [2n+1 for n=0:N])
+    end
+end
+isindomain(pt, D::SphericalCapFamily) = D.α ≤ pt[3] ≤ D.β && norm(pt) == 1.0
+isindomain(pt, S::SphericalCapSpace) = isindomain(pt, S.family)
+# Solve `A x = b` for `x` using iterative improvement
+# (for BigFloat sparse matrix and vector)
+function iterimprove(A::SparseMatrixCSC{T}, b::Vector{T};
+                        iters=5, verbose=true) where T
+    if eps(T) ≥ eps(Float64)
+        # throw(ArgumentError("wrong implementation"))
+        return A \ b
+    end
+    A0 = SparseMatrixCSC{Float64}(A)
+    F = factorize(A0)
+    x = zeros(T, size(A)[2]) # x = zeros(T, length(b))
+    r = copy(b)
+    for iter = 1:iters
+        y = F \ Vector{Float64}(r)
+        for i in eachindex(x)
+            x[i] += y[i]
+        end
+        r = b - A * x
+        if verbose
+            @show "at iter %d resnorm = %.3g\n" iter norm(r)
+        end
+    end
+    x
+end
+
 # The Poisson/Laplacian test methods for Q^{1}
 rhoval(z) = sqrt(1 - z^2)
 function rholaplacian(S::SphericalCapSpace, u, uinds, xvec)

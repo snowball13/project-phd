@@ -180,12 +180,30 @@ function getopnorms(S::DiskSliceSpace{<:Any, B, T, <:Any}, k) where {B,T}
         P = getPspace(S)
         getopnorm(P)
 
-        # for j = m+1:k+1
-        #     S.opnorms[j] = getopnorm(getRspace(S, j-1)) * P.opnorm[1]
-        # end
-
         # We get the weights for the R integral
         ptsr, wr = pointswithweights(B, getRspace(S, 0), k+1)
+        rhoptsr = S.family.ρ.(ptsr)
+        for j = m:k
+            R = getRspace(S, j)
+            if !isnormset(R)
+                setopnorm(R, sum(rhoptsr.^(2j) .* wr))
+            end
+            S.opnorms[j+1] = R.opnorm[1] * P.opnorm[1]
+        end
+    end
+    S
+end
+function getopnorms(S::DiskSliceSpace{<:Any, B, T, <:Any}, k::Int,
+                    ptsr::Vector{B}, wr::Vector{B}) where {B,T}
+    # NOTE Here ptsr, wr = pointswithweights(B, getRspace(S, 0), k+1)
+    # NOTE these are squared norms
+    m = length(S.opnorms)
+    if k + 1 > m
+        resize!(S.opnorms, k+1)
+        P = getPspace(S)
+        getopnorm(P)
+
+        # We get the weights for the R integral
         rhoptsr = S.family.ρ.(ptsr)
         for j = m:k
             R = getRspace(S, j)
@@ -351,8 +369,57 @@ function recα(::Type{T}, S::DiskSliceSpace, n, k, j) where T
     end
 end
 
+function recβ(::Type{T}, S::DiskSliceSpace, n, k, j, pts, w) where T
+    # NOTE Here we expect that pts, w are the pts, weights wrt weight of getRspace(S, 0)
+
+    getopnorms(S, k+1, pts, w)
+
+    R1 = getRspace(S, k-1)
+    R2 = getRspace(S, k)
+    R3 = getRspace(S, k+1)
+    P = getPspace(S)
+    getopnorm(P)
+
+    if isodd(j)
+        # pts, w = pointswithweights(T, R2, Int(ceil(n-k+1.5)))
+        rhoptsr = S.family.ρ.(pts).^(2k)
+        δ = recγ(T, P, k+1) * P.opnorm[1]
+    else
+        # pts, w = pointswithweights(T, R3, Int(ceil(n-k+1.5)))
+        rhoptsr = S.family.ρ.(pts).^(2k+2)
+        δ = recβ(T, P, k+1) * P.opnorm[1]
+    end
+    getopptseval(R2, n-k+1, pts)
+
+    if j == 1
+        getopptseval(R1, n-k+1, pts)
+        T(inner2(R2, opevalatpts(R2, n-k+1, pts) .* rhoptsr, opevalatpts(R1, n-k+1, pts), w)
+            * δ / S.opnorms[k])
+    elseif j == 2
+        getopptseval(R3, n-k-1, pts)
+        T(inner2(R3, opevalatpts(R2, n-k+1, pts) .* rhoptsr, opevalatpts(R3, n-k-1, pts), w)
+            * δ / S.opnorms[k+2])
+    elseif j == 3
+        getopptseval(R1, n-k+2, pts)
+        T(inner2(R2, opevalatpts(R2, n-k+1, pts) .* rhoptsr, opevalatpts(R1, n-k+2, pts), w)
+            * δ / S.opnorms[k])
+    elseif j == 4
+        getopptseval(R3, n-k, pts)
+        T(inner2(R3, opevalatpts(R2, n-k+1, pts) .* rhoptsr, opevalatpts(R3, n-k, pts), w)
+            * δ / S.opnorms[k+2])
+    elseif j == 5
+        getopptseval(R1, n-k+3, pts)
+        T(inner2(R2, opevalatpts(R2, n-k+1, pts) .* rhoptsr, opevalatpts(R1, n-k+3, pts), w)
+            * δ / S.opnorms[k])
+    elseif j == 6
+        getopptseval(R3, n-k+1, pts)
+        T(inner2(R3, opevalatpts(R2, n-k+1, pts) .* rhoptsr, opevalatpts(R3, n-k+1, pts), w)
+            * δ / S.opnorms[k+2])
+    else
+        error("Invalid entry to function")
+    end
+end
 function recβ(::Type{T}, S::DiskSliceSpace, n, k, j) where T
-    # We get the norms of the 2D OPs
     getopnorms(S, k+1)
 
     R1 = getRspace(S, k-1)
@@ -399,90 +466,173 @@ function recβ(::Type{T}, S::DiskSliceSpace, n, k, j) where T
     end
 end
 
-function getAs!(S::DiskSliceSpace{<:Any, T, <:Any, <:Any}, N, N₀) where T
+function getAs!(S::DiskSliceSpace{<:Any, T, <:Any, <:Any}, N::Int, N₀::Int,
+                ptsr::Vector{T}, wr::Vector{T}) where T
     m = N₀
     if m == 0
-        S.A[1] = [recα(T, S, 1, 0, 1) 0; 0 recβ(T, S, 0, 0, 6)]
+        S.A[1] = [recα(T, S, 1, 0, 1) 0; 0 recβ(T, S, 0, 0, 6, ptsr, wr)]
         m += 1
     end
     for n = N+1:-1:m
-        v1 = [recα(T, S, n+1, k, 1) for k = 0:n]
-        v2 = [recβ(T, S, n, k, 6) for k = 0:n-1]
-        v3 = [recβ(T, S, n, k, 5) for k = 1:n]
-        S.A[n+1] = [Diagonal(v1) zeros(T, n+1);
-                    Tridiagonal(v3, zeros(T, n+1), v2) [zeros(T, n); recβ(T, S, n, n, 6)]]
+        S.A[n+1] = sparse(zeros(T, 2(n+1), n+2))
+        k = 0
+        S.A[n+1][k+1, k+1] = recα(T, S, n+1, k, 1)
+        S.A[n+1][n+1+k+1, k+2] = recβ(T, S, n, k, 6, ptsr, wr)
+        for k = 1:n
+            S.A[n+1][k+1, k+1] = recα(T, S, n+1, k, 1)
+            S.A[n+1][n+1+k+1, k] = recβ(T, S, n, k, 5, ptsr, wr)
+            S.A[n+1][n+1+k+1, k+2] = recβ(T, S, n, k, 6, ptsr, wr)
+        end
     end
 end
 
-function getDTs!(S::DiskSliceSpace{<:Any, T, <:Any, <:Any}, N, N₀) where T
-    for n = N+1:-1:N₀
-        vα = [1 / recα(T, S, n+1, k, 1) for k = 0:n]
+function getDTs!(S::DiskSliceSpace{<:Any, T, <:Any, <:Any}, N, N₀,
+                    ptsr::Vector{T}, wr::Vector{T}) where T
+    # for n = N+1:-1:N₀
+    #     vα = [1 / recα(T, S, n+1, k, 1) for k = 0:n]
+    #     m = iseven(n) ? Int(n/2) + 1 : Int((n+1)/2) + 1
+    #     vβ = zeros(T, m)
+    #     vβ[end] = 1 / recβ(T, S, n, n, 6)
+    #     if iseven(n)
+    #         for k = 1:m-1
+    #             vβ[end-k] = - (vβ[end-k+1]
+    #                             * recβ(T, S, n, n - 2(k - 1), 5)
+    #                             / recβ(T, S, n, n - 2k, 6))
+    #         end
+    #     else
+    #         for k = 1:m-2
+    #             vβ[end-k] = - (vβ[end-k+1]
+    #                             * recβ(T, S, n, n - 2(k - 1), 5)
+    #                             / recβ(T, S, n, n - 2k, 6))
+    #         end
+    #         vβ[1] = - (vβ[2]
+    #                     * recβ(T, S, n, 1, 5)
+    #                     / recα(T, S, n+1, 0, 1))
+    #     end
+    #     ij = [i for i=1:n+1]
+    #     ind1 = [ij; [n+2 for i=1:m]]
+    #     ind2 = [ij; iseven(n) ? [n+2k for k=1:m] : [1; [n-1+2k for k=2:m]]]
+    #     S.DT[n+1] = sparse(ind1, ind2, [vα; vβ])
+    #     # S.DT[n+1] = sparse(pinv(Array(S.A[n+1])))
+    # end
+    m = N₀
+    for n = N+1:-1:m
+        S.DT[n+1] = sparse(zeros(T, n+2, 2(n+1)))
+        for k = 0:n
+            S.DT[n+1][k+1, k+1] = 1 / recα(T, S, n+1, k, 1)
+        end
+        ind = 2(n+1)
+        η = 1 / recβ(T, S, n, n, 6)
+        S.DT[n+1][end, ind] = η
         m = iseven(n) ? Int(n/2) + 1 : Int((n+1)/2) + 1
-        vβ = zeros(T, m)
-        vβ[end] = 1 / recβ(T, S, n, n, 6)
         if iseven(n)
             for k = 1:m-1
-                vβ[end-k] = - (vβ[end-k+1]
-                                * recβ(T, S, n, n - 2(k - 1), 5)
-                                / recβ(T, S, n, n - 2k, 6))
+                ind = ind - 2
+                η = - (η * recβ(T, S, n, n - 2(k - 1), 5, ptsr, wr)
+                        / recβ(T, S, n, n - 2k, 6, ptsr, wr))
+                S.DT[n+1][end, ind] = η
             end
         else
             for k = 1:m-2
-                vβ[end-k] = - (vβ[end-k+1]
-                                * recβ(T, S, n, n - 2(k - 1), 5)
-                                / recβ(T, S, n, n - 2k, 6))
+                ind = ind - 2
+                η = - (η * recβ(T, S, n, n - 2(k - 1), 5, ptsr, wr)
+                        / recβ(T, S, n, n - 2k, 6, ptsr, wr))
+                S.DT[n+1][end, ind] = η
             end
-            vβ[1] = - (vβ[2]
-                        * recβ(T, S, n, 1, 5)
-                        / recα(T, S, n+1, 0, 1))
+            ind = 1
+            η = - (η * recβ(T, S, n, 1, 5, ptsr, wr) / recα(T, S, n+1, 0, 1))
+            S.DT[n+1][end, ind] = η
         end
-        ij = [i for i=1:n+1]
-        ind1 = [ij; [n+2 for i=1:m]]
-        ind2 = [ij; iseven(n) ? [n+2k for k=1:m] : [1; [n-1+2k for k=2:m]]]
-        S.DT[n+1] = sparse(ind1, ind2, [vα; vβ])
-        # S.DT[n+1] = sparse(pinv(Array(S.A[n+1])))
     end
 end
-function getBs!(S::DiskSliceSpace{<:Any, T, <:Any, <:Any}, N, N₀) where T
+function getBs!(S::DiskSliceSpace{<:Any, T, <:Any, <:Any}, N, N₀,
+                ptsr::Vector{T}, wr::Vector{T}) where T
+    # m = N₀
+    # if N₀ == 0
+    #     S.B[1] = sparse([1, 2], [1, 1], [recα(T, S, 0, 0, 2), 0])
+    #     m += 1
+    # end
+    # for n = N+1:-1:m
+    #     # if n > 200
+    #     #     @show "getsBs!", N, n
+    #     # end
+    #     @show "getsBs!", N, n
+    #     v1 = [recα(T, S, n, k, 2) for k = 0:n]
+    #     v2 = [recβ(T, S, n, k, 4) for k = 0:n-1]
+    #     v3 = [recβ(T, S, n, k, 3) for k = 1:n]
+    #     S.B[n+1] = sparse([Diagonal(v1); Tridiagonal(v3, zeros(T, n+1), v2)])
+    # end
     m = N₀
     if N₀ == 0
         S.B[1] = sparse([1, 2], [1, 1], [recα(T, S, 0, 0, 2), 0])
         m += 1
     end
     for n = N+1:-1:m
-        # if n > 200
-        #     @show "getsBs!", N, n
-        # end
         @show "getsBs!", N, n
-        v1 = [recα(T, S, n, k, 2) for k = 0:n]
-        v2 = [recβ(T, S, n, k, 4) for k = 0:n-1]
-        v3 = [recβ(T, S, n, k, 3) for k = 1:n]
-        S.B[n+1] = sparse([Diagonal(v1); Tridiagonal(v3, zeros(T, n+1), v2)])
+        S.B[n+1] = sparse(zeros(T, 2(n+1), n+1))
+        k = 0
+        S.B[n+1][k+1, k+1] = recα(T, S, n, k, 2)
+        S.B[n+1][n+1+k+1, k+2] = recβ(T, S, n, k, 4, ptsr, wr)
+        for k = 1:n-1
+            S.B[n+1][k+1, k+1] = recα(T, S, n, k, 2)
+            S.B[n+1][n+1+k+1, k] = recβ(T, S, n, k, 3, ptsr, wr)
+            S.B[n+1][n+1+k+1, k+2] = recβ(T, S, n, k, 4, ptsr, wr)
+        end
+        k = n
+        S.B[n+1][k+1, k+1] = recα(T, S, n, k, 2)
+        S.B[n+1][n+1+k+1, k] = recβ(T, S, n, k, 3, ptsr, wr)
     end
 end
-function getCs!(S::DiskSliceSpace{<:Any, T, <:Any, <:Any}, N, N₀) where T
+function getCs!(S::DiskSliceSpace{<:Any, T, <:Any, <:Any}, N, N₀,
+                ptsr::Vector{T}, wr::Vector{T}) where T
+    # m = N₀
+    # if N₀ == 0
+    #     # C_0 does not exist
+    #     m += 1
+    # end
+    # if m == 1
+    #     S.C[2] = sparse([1, 4], [1, 1], [recα(T, S, 1, 0, 1), recβ(T, S, 1, 1, 1)])
+    #     m += 1
+    # end
+    # for n = N+1:-1:m
+    #     v1 = [recα(T, S, n, k, 1) for k = 0:n-1]
+    #     v2 = [recβ(T, S, n, k, 2) for k = 0:n-2]
+    #     v3 = [recβ(T, S, n, k, 1) for k = 1:n-1]
+    #     S.C[n+1] = sparse([Diagonal(v1);
+    #                        zeros(T, 1, n);
+    #                        Tridiagonal(v3, zeros(T, n), v2);
+    #                        [zeros(T, 1, n-1) recβ(T, S, n, n, 1)]])
+    # end
     m = N₀
     if N₀ == 0
         # C_0 does not exist
         m += 1
     end
     if m == 1
-        S.C[2] = sparse([1, 4], [1, 1], [recα(T, S, 1, 0, 1), recβ(T, S, 1, 1, 1)])
+        S.C[2] = sparse([1, 4], [1, 1], [recα(T, S, 1, 0, 1), recβ(T, S, 1, 1, 1, ptsr, wr)])
         m += 1
     end
     for n = N+1:-1:m
-        v1 = [recα(T, S, n, k, 1) for k = 0:n-1]
-        v2 = [recβ(T, S, n, k, 2) for k = 0:n-2]
-        v3 = [recβ(T, S, n, k, 1) for k = 1:n-1]
-        S.C[n+1] = sparse([Diagonal(v1);
-                           zeros(T, 1, n);
-                           Tridiagonal(v3, zeros(T, n), v2);
-                           [zeros(T, 1, n-1) recβ(T, S, n, n, 1)]])
+        S.C[n+1] = sparse(zeros(T, 2(n+1), n))
+        k = 0
+        S.C[n+1][k+1, k+1] = recα(T, S, n, k, 1)
+        S.C[n+1][n+1+k+1, k+2] = recβ(T, S, n, k, 2, ptsr, wr)
+        for k = 1:n-2
+            S.C[n+1][k+1, k+1] = recα(T, S, n, k, 1)
+            S.C[n+1][n+1+k+1, k] = recβ(T, S, n, k, 1, ptsr, wr)
+            S.C[n+1][n+1+k+1, k+2] = recβ(T, S, n, k, 2, ptsr, wr)
+        end
+        k = n - 1
+        S.C[n+1][k+1, k+1] = recα(T, S, n, k, 1)
+        S.C[n+1][n+1+k+1, k] = recβ(T, S, n, k, 1, ptsr, wr)
+        k = n
+        S.C[n+1][n+1+k+1, k] = recβ(T, S, n, k, 1, ptsr, wr)
+        S.C[n+1]
     end
 end
 
 # Method to calculate and store the Clenshaw matrices
-function resizedata!(S::DiskSliceSpace, N)
+function resizedata!(S::DiskSliceSpace{<:Any, T, <:Any, <:Any}, N) where T
     # N is the max degree of the OPs
     N₀ = length(S.B)
     N ≤ N₀ - 2 && return S
@@ -491,17 +641,20 @@ function resizedata!(S::DiskSliceSpace, N)
     # First, we need to call this to get the 1D OP rec coeffs
     resizedataonedimops!(S, N+3)
 
+    # For efficiency, we can reuse the 1D R pts, ws, so get them here
+    # setup pts, w
+    ptsr, wr = pointswithweights(T, getRspace(S, 0), N+4)
     resize!(S.B, N + 2)
-    getBs!(S, N, N₀)
+    getBs!(S, N, N₀, ptsr, wr)
     @show "done Bs"
     resize!(S.C, N + 2)
-    getCs!(S, N, N₀)
+    getCs!(S, N, N₀, ptsr, wr)
     @show "done Cs"
     resize!(S.A, N + 2)
-    getAs!(S, N, N₀)
+    getAs!(S, N, N₀, ptsr, wr)
     @show "done As"
     resize!(S.DT, N + 2)
-    getDTs!(S, N, N₀)
+    getDTs!(S, N, N₀, ptsr, wr)
     @show "done DTs"
     S
 end
@@ -1547,6 +1700,7 @@ end
 function biharmonicoperator(S::DiskSliceSpace{<:Any, <:Any, T, <:Any}, N; square=true) where T
     D = S.family
     if S.params == ntuple(x->2, D.nparams)
+        resizedataonedimops!(S, N+5)
         A = laplaceoperator(D(S.params .- 2), S, N+2(D.nparams-1); square=false)
         B = laplaceoperator(S, D(S.params .- 2), N; weighted=true, square=false)
         C = A * B
