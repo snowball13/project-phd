@@ -20,7 +20,7 @@ i.e. for a given max degree N:
     ℚ^{(a,b)}_N := [ℚ^{(a,b)}_{N,0};...;ℚ^{(a,b)}_{N,N}]
     ℚ^{(a,b)}_{N,k} := [Q^{(a,b)}_{k,k,0};Q^{(a,b)}_{k,k,1}...;Q^{(a,b)}_{N,k,0};Q^{(a,b)}_{N,k,1}] ∈ ℝ^{2(N-k+1)}
                                                             for k = 1,...,N
-    ℚ^{(a,b)}_{N,0} := [Q^{(a,b)}_{0,0,0};Q^{(a,b)}_{1,0,0};Q^{(a,b)}_{1,0,1}...;Q^{(a,b)}_{N,0,0};Q^{(a,b)}_{N,0,1}] ∈ ℝ^{2N+1}
+    ℚ^{(a,b)}_{N,0} := [Q^{(a,b)}_{0,0,0};Q^{(a,b)}_{1,0,0};...;Q^{(a,b)}_{N,0,0}] ∈ ℝ^{N+1}
                                                             for k = 0
 
 =#
@@ -67,6 +67,7 @@ domain(::SphericalCapSpace{<:Any, B, T, <:Any}) where {B,T} = SphericalCap{B,T}(
 
 struct SphericalCapFamily{B,T,N,FA,F,I} <: SphericalFamily{B,T,N}
     spaces::Dict{NTuple{N,B}, SphericalCapSpace}
+    tangentspace::Vector{SphericalCapTangentSpace}
     α::B
     β::B
     R::FA # 1D OP family for the semiclassical ops
@@ -90,7 +91,8 @@ function SphericalCapFamily(::Type{B}, ::Type{T}, α::B) where {B,T}
     nparams = 2
     R = OrthogonalPolynomialFamily(T, X-α, ρ2)
     spaces = Dict{NTuple{nparams,B}, SphericalCapSpace}()
-    SphericalCapFamily{B,T,nparams,typeof(R),typeof(ρ),Int}(spaces, α, β, R, ρ, nparams)
+    tspace = Vector{SphericalCapTangentSpace}()
+    SphericalCapFamily{B,T,nparams,typeof(R),typeof(ρ),Int}(spaces, tspace, α, β, R, ρ, nparams)
 end
 # Useful quick constructors
 SphericalCapFamily(α::T) where T = SphericalCapFamily(BigFloat, T, BigFloat(α * 1000) / 1000)
@@ -1262,6 +1264,30 @@ function convertweightedtononweightedoperator(S::SphericalCapSpace, N; Nout=-1)
         T * Tw
     end
 end
+# The operator for ρ^2
+function rho2operator(S::SphericalCapSpace, St::SphericalCapSpace, N::Int;
+                        weightedin=true, weightedout=false, square=false)
+    # This operator can also convert the param spaces, by inputing valid entry
+    # and tangent spaces and weihgtedin/out keywords
+    (!weightedin && weightedout) && error("invalid weighted keywords")
+    rho2 = operatorclenshaw(Fun((x,y,z)->(1-z^2), S, 10), S, N+1)
+    if weightedin && !weightedout
+        S0 = S.family(S.params .* 0)
+        Tw = transformparamsoperator(S, S0, N; weighted=weightedin)
+        T = transformparamsoperator(S0, St, N+1; weighted=weightedout)
+        band2 = band1 = 1
+        C = BandedBlockBandedMatrix(rho2 * sparse(T * Tw),
+                                    ([N+band2+1; 2(N+band2):-2:1], [N+1; 2N:-2:1]),
+                                    (0, 0), (2band2, 2band1))
+    else
+        T = transformparamsoperator(S, St, N; weighted=weightedout)
+        band2 = 0; band1 = 1
+        BandedBlockBandedMatrix(rho2 * sparse(T),
+                                    ([N+band2+1; 2(N+band2):-2:1], [N+1; 2N:-2:1]),
+                                    (0, 0), (2band2, 2band1))
+    end
+end
+
 
 #===#
 # "Coeffs degree increaser" operator matrix
@@ -1348,8 +1374,8 @@ function laplacianoperator(S::SphericalCapSpace{<:Any, B, T, <:Any}, N::Int;
 end
 
 # The operator for ρ²Δ
-function rholaplacianoperator(S::SphericalCapSpace, St::SphericalCapSpace, N;
-                            weightedin=true, weightedout=false, square=false)
+function rho2laplacianoperator(S::SphericalCapSpace, St::SphericalCapSpace, N::Int;
+                                weightedin=true, weightedout=false, square=false)
     # Outputs the sum(1:N+1) × sum(1:N+1) matrix operator if square=true
     # TODO fix the square=true cases
     D = S.family
@@ -1375,6 +1401,178 @@ function rholaplacianoperator(S::SphericalCapSpace, St::SphericalCapSpace, N;
             L
         end
     end
+end
+
+
+#===#
+# Divergence and Grad operator matrices, and other tangent space operators
+
+""" NOTE: The tangent space basis we use is
+        Φ̲_{n,k,i} = ϕ̲ * Q^{0}_{n,k,i}
+        Ψ̲_{n,k,i} = θ̲ * Q^{0}_{n,k,abs(i-1)}
+    Let u̲ be a function that is a sum of gradients and perp gradients (hence
+    lies in the tangent space). Then we can expand ρu̲ in this basis, i.e.
+        ρu̲ = Σ u_{n,k,i}\^Φ * Φ̲_{n,k,i} + u_{n,k,i}\^Ψ Ψ̲_{n,k,i}
+    where {u\^Φ, u\^Φ} are coefficients. The coefficients vector is ordered
+    as follows:
+    i.e. for a given max degree N:
+
+        𝕋_N := [𝕋_{N,0};...;𝕋_{N,N}]
+        𝕋_{N,k} := [Φ̲_{k,k,0};Ψ̲_{k,k,0};Φ̲_{k,k,1};Ψ̲_{k,k,1}...;Φ̲_{N,k,0};Ψ̲_{N,k,0};Φ̲_{N,k,1};Ψ̲_{N,k,1}] ∈ ℝ^{4(N-k+1)}
+                                                                for k = 1,...,N
+        𝕋_{N,0} := [Φ̲_{0,0,0};Ψ̲_{0,0,0};Φ̲_{1,0,0};Ψ̲_{1,0,0};...;Φ̲_{N,0,0};Ψ̲_{N,0,0}] ∈ ℝ^{2(N+1)}
+                                                                for k = 0
+
+    Note also that
+        ρ²∇.u̲ = ρ∇.(ρu̲) - ρu̲.∇ρ = Σ u\^Φ ρ ∂/∂ϕ (Q^{0}_{n,k,i}) + u\^Ψ ∂/∂θ (Q^{0}_{n,k,abs(i-1)})
+                                = Σ ũ Q^{1}_{n,k,i}
+    where {ũ} are coefficients.
+
+    We output these coefficients {ũ}, for expansion in the ℚ^{1} basis.
+"""
+
+function getblockindextangent(S::SphericalCapSpace, n::Int, k::Int, i::Int, j::Int)
+    # j refers to either 1 (Φ) or 2 (Ψ)
+    if j == 1
+        2 * getblockindex(S, n, k, i) - 1
+    elseif j == 2
+        2 * getblockindex(S, n, k, i)
+    else
+        error("invalid argument j - should be 1 or 2")
+    end
+end
+
+# Divergence operator (ρ²∇.)
+function getrho2divval(S, ptsr, rhoptsr2, rhodxrhoptsr, wr, n, m, k, i, j)
+    if j == 1
+        ret = getpartialphival(S, ptsr, rhoptsr2, rhodxrhoptsr, wr, n, m, k)
+    elseif j == 2
+        R0 = getRspace(S, 0); R1 = getRspace(differentiatespacephi(S), 0)
+        ret = inner2(R1, getptsevalforop(R0, n-k) .* rhoptsr2.^k,
+                        getptsevalforop(R1, m-k), wr)
+        ret *= k * (-1)^(i+1)
+    else
+        error("invalid param j")
+    end
+    ret
+end
+function rho2divoperator(S::SphericalCapSpace{<:Any, B, T, <:Any}, N) where {B,T}
+    # Operator acts on coeffs in the 𝕋 basis, and results in coeffs in the ℚ^{1}
+    # basis.
+    @assert Int(S.params[1]) == 1 "Invalid SCSpace"
+    S0 = differentiatespacephi(S; weighted=true)
+    R0 = getRspace(S0, 0)
+    ptsr, wr = pointswithweights(B, R0, N+3)
+    rho2ptsr = S.family.ρ.(ptsr).^2
+    rhodxrhoptsr = S.family.ρ.(ptsr) .* differentiate(S.family.ρ).(ptsr)
+
+    band1 = 2
+    band2 = 1
+    A = BandedBlockBandedMatrix(Zeros{B}((N+band2+1)^2, 2 * (N+1)^2),
+                                ([N+band2+1; 2(N+band2):-2:1], 2 * [N+1; 2N:-2:1]),
+                                (0, 0), (2band2, 2band1))
+    for k = 0:N
+        if k % 100 == 0
+            @show "rho2div", k
+        end
+        R0 = getRspace(S0, k); R1 = getRspace(S1, k)
+        getopptseval(R0, N-k, ptsr); getopptseval(R1, N-k+band2, ptsr)
+        for n = k:N, m = max(0, n-band1):n+band2 # min(n+band2, N)
+            if k ≤ m
+                for i = 0:min(1,k), j = 1:2
+                    # TODO check indexing here
+                    val = getrho2divval(S, ptsr, rhoptsr2, rhodxrhoptsr, wr, n, m, k, i, j)
+                    view(A, Block(k+1, k+1))[getblockindex(S, m, k, i), getblockindextangent(S0, n, k, abs(i-j+1), j)] = val
+                end
+            end
+        end
+        resetopptseval(R)
+    end
+    A
+end
+
+# Grad operator (ρ∇)
+function getrhogradval(S, ptsr, rhoptsr2, rhodxrhoptsr, wr10, wr, n, m, k, i, j)
+    if j == 1
+        ret = getweightedpartialphival(S, ptsr, rhoptsr2, rhodxrhoptsr, wr10,
+                                        wr, n, m, k)
+    elseif j == 2
+        R1 = getRspace(S, 0); R0 = getRspace(differentiatespacephi(S; weighted=true), 0)
+        ret = inner2(R1, getptsevalforop(R1, n-k) .* rhoptsr2.^k,
+                        getptsevalforop(R0, m-k) .* w10, wr)
+        ret *= k * (-1)^(i+1)
+    else
+        error("invalid param j")
+    end
+    ret
+end
+function rhogradoperator(S::SphericalCapSpace{<:Any, B, T, <:Any}, N) where {B,T}
+    # Operator acts on coeffs in the weighted space 𝕎^{1}, and results in
+    # coefficients {u\^Φ, u\^Φ}, for expansion in the 𝕋 basis
+    @assert Int(S.params[1]) == 1 "Invalid SCSpace"
+    S0 = differentiatespacephi(S; weighted=true)
+    R0 = getRspace(S0, 0)
+    ptsr, wr = pointswithweights(B, R0, N+3)
+    w10 = ptsr .- S.family.α
+    rho2ptsr = S.family.ρ.(ptsr).^2
+    rhodxrhoptsr = S.family.ρ.(ptsr) .* differentiate(S.family.ρ).(ptsr)
+
+    band1 = 1
+    band2 = 2
+    A = BandedBlockBandedMatrix(Zeros{B}(2 * (N+band2+1)^2, (N+1)^2),
+                                (2 * [N+band2+1; 2(N+band2):-2:1], [N+1; 2N:-2:1]),
+                                (0, 0), (2band2, 2band1))
+    for k = 0:N
+        if k % 100 == 0
+            @show "rhograd", k
+        end
+        R1 = getRspace(S, k); R0 = getRspace(S0, k)
+        getopptseval(R1, N-k, ptsr); getopptseval(R0, N-k+band2, ptsr)
+        for n = k:N, m = max(0, n-band1):n+band2 # min(n+band2, N)
+            if k ≤ m
+                for i = 0:min(1,k), j = 1:2
+                    # TODO check indexing here
+                    val = getrhogradval(S, ptsr, rhoptsr2, rhodxrhoptsr, wr10, wr, n, m, k, i, j)
+                    view(A, Block(k+1, k+1))[getblockindextangent(S0, m, k, i, j), getblockindex(S, n, k, abs(i-j+1))] = val
+                end
+            end
+        end
+        resetopptseval(R)
+    end
+    A
+end
+
+# Coriolis operator (2Ωz r̲̂ ×)
+function coriolisoperator(S::SphericalCapSpace{<:Any, B, T, <:Any}, N) where {B,T}
+    # We output the operator that results in coefficients {u\^Φ, u\^Φ}, for
+    # expansion in the 𝕋 basis
+
+    Ω = B(72921) / 1e9 # TODO make this a global definition somehow (maybe a
+                       # member of the class struct)
+
+   # resizedataonedimops! for the SCSpace
+   S0 = S.family(S.params .* 0)
+   resizedataonedimops!(S0, N+1)
+
+   band1 = 1
+   band2 = 1
+   A = BandedBlockBandedMatrix(Zeros{B}(2 * (N+band2+1)^2, 2 * (N+1)^2),
+                               (2 * [N+band2+1; 2(N+band2):-2:1], 2 * [N+1; 2N:-2:1]),
+                               (0, 0), (2band2, 2band1))
+   for k = 0:N
+       if k % 100 == 0
+           @show "coriolis", k
+       end
+       for n = k:N, m = max(0, n-band1):n+band2 # min(n+band2, N)
+           if k ≤ m
+               c = 2 * Ω * recγ(B, S0, m, k, n-m+2)
+               for i = 0:min(1,k), j = 1:2
+                   view(A, Block(k+1, k+1))[getblockindextangent(S0, m, k, i, abs(j-1)), getblockindextangent(S0, n, k, i, j)] = c * (-1)^j
+               end
+           end
+       end
+   end
+   A
 end
 
 
