@@ -1747,5 +1747,6 @@ weightderivativey(S::HalfDiskSpace, z) = weightderivativey(S, z[1], z[2])
 include("DiskSliceFamilies.jl")
 include("TrapeziumFamilies.jl")
 include("SphericalCaps.jl")
+include("SphericalCapsTangent.jl")
 
 end # module
