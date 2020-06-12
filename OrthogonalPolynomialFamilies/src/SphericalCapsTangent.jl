@@ -111,6 +111,7 @@ function getnkij(S::SphericalCapTangentSpace, ind; bydegree=true)
         if r > 2n + 1
             j += 1
             r -= 2n + 1
+        end
         if r == 1
             n, 0, 0, j
         elseif iseven(r)
@@ -186,8 +187,8 @@ function clenshaw(cfs::AbstractVector{T}, S::SphericalCapTangentSpace, pt) where
             fn = PseudoBlockArray(f, [2n+1 for i=1:2])
             M1 = S.DT[n+1] * (S.B[n+1] - clenshawG(S, n, pt))
             M2 = S.DT[n+2] * S.C[n+2]
-            γϕ = (view(fn, Block(1))' - γ1ϕ * M1 - γ2ϕ * M2
-            γψ = (view(fn, Block(2))' - γ1ψ * M1 - γ2ψ * M2
+            γϕ = view(fn, Block(1))' - γ1ϕ * M1 - γ2ϕ * M2
+            γψ = view(fn, Block(2))' - γ1ψ * M1 - γ2ψ * M2
             γ2ϕ = copy(γ1ϕ)
             γ2ψ = copy(γ1ψ)
             γ1ϕ = copy(γϕ)

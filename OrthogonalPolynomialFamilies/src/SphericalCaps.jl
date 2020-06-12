@@ -1414,7 +1414,7 @@ end
 #===#
 # Grad operator matrix
 
-""" NOTE: The tangent space basis we use is
+#= NOTE: The tangent space basis we use is
         Φ̲_{n,k,i} = ϕ̲ * Q^{0}_{n,k,i}
         Ψ̲_{n,k,i} = θ̲ * Q^{0}_{n,k,abs(i-1)}
     Let u̲ be a function that is a sum of gradients and perp gradients (hence
@@ -1436,7 +1436,7 @@ end
     where {ũ} are coefficients.
 
     We output these coefficients {ũ}, for expansion in the ℚ^{1} basis.
-"""
+=#
 
 function getblockindextangent(S::SphericalCapSpace, n::Int, k::Int, i::Int, j::Int)
     # j refers to either 0 (Φ) or 1 (Ψ)
