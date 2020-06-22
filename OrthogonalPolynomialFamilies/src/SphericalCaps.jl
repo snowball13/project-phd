@@ -57,7 +57,6 @@ end
 struct SphericalCapTangentSpace{DF, B, T, N} <: Space{SphericalCap{B,T}, T}
     family::DF # Pointer back to the family
     params::NTuple{N,B} # Parameters
-    DT::Vector{SparseMatrixCSC{B}}
 end
 
 function SphericalCapSpace(fam::SphericalFamily{B,T,N}, params::NTuple{N,B}) where {B,T,N}
@@ -1091,12 +1090,15 @@ end
 # Differential operator matrices
 
 function getblockindex(S::SphericalCapSpace, n, k, i)
+    @assert !(i == 1 && k == 0) "Invalid i value"
     if k == 0
         n + 1
     else
         2(n - k) + i + 1
     end
 end
+
+# ρ(z)*∂/∂ϕ operator
 function getpartialphival(S::SphericalCapSpace, ptsr, rhoptsr2, rhodxrhoptsr,
                             wr, n::Int, m::Int, k::Int)
     Sp = differentiatespacephi(S)
@@ -1171,6 +1173,11 @@ function diffoperatorphi(S::SphericalCapSpace{<:Any, B, T, <:Any}, N::Int;
     end
     A
 end
+
+# ∂/∂θ operator
+function getpartialthetaval(S::SphericalCapSpace, k::Int, i::Int)
+    (-1)^(i+1) * k
+end
 function diffoperatortheta(S::SphericalCapSpace{<:Any, B, T, <:Any}, N::Int;
                             weighted=false) where {B,T}
     # ∂/∂θ operator
@@ -1183,11 +1190,12 @@ function diffoperatortheta(S::SphericalCapSpace{<:Any, B, T, <:Any}, N::Int;
                                 (0, 0), (1, 1))
     for k = 1:N, n = k:N
         ind = getblockindex(S, n, k, 0)
-        view(A, Block(k+1, k+1))[ind+1, ind] = -k
-        view(A, Block(k+1, k+1))[ind, ind+1] = k
+        view(A, Block(k+1, k+1))[ind+1, ind] = getpartialthetaval(S, k, 0)
+        view(A, Block(k+1, k+1))[ind, ind+1] = getpartialthetaval(S, k, 1)
     end
     A
 end
+# ∂²/∂θ² operator
 function diffoperatortheta2(S::SphericalCapSpace{<:Any, B, T, <:Any}, N::Int;
                             weighted=false) where {B,T}
     # ∂²/∂θ² operator
@@ -1208,6 +1216,13 @@ end
 #===#
 # Parameter Transform/Conversion operator matrices
 
+function gettransformparamsval(S::SphericalCapSpace, St::SphericalCapSpace,
+                                rhoptsr2, wr, n::Int, m::Int, k::Int)
+    R = getRspace(S, k); Rt = getRspace(St, k)
+    ret = inner2(R, getptsevalforop(R, n-k),
+                    rhoptsr2.^(k) .* getptsevalforop(Rt, m-k), wr)
+    ret / getopnorm(Rt)
+end
 function transformparamsoperator(S::SphericalCapSpace{<:Any, B, T, <:Any},
             St::SphericalCapSpace{<:Any, B, T, <:Any}, N;
             weighted=false) where {B,T}
@@ -1237,14 +1252,12 @@ function transformparamsoperator(S::SphericalCapSpace{<:Any, B, T, <:Any},
             @show "trnsfrm (a,b)->(a±1,b)", weighted, k
         end
         R = getRspace(S, k); Rt = getRspace(St, k)
-        getopptseval(R, N-k, ptsr); getopptseval(Rt, N-k, ptsr)
+        getopptseval(R, N-k, ptsr); getopptseval(Rt, N-k+band2, ptsr)
         for n = k:N, m = max(0, n-band1):n+band2 # min(n+band2, N)
             if k ≤ m
-                val = inner2(R, opevalatpts(R, n-k+1, ptsr),
-                                rhoptsr2.^(k) .* opevalatpts(Rt, m-k+1, ptsr), wr)
-                val /= Rt.opnorm[1]
+                val = gettransformparamsval(S, St, rhoptsr2, wr, n, m, k)
                 for i = 0:min(1,k)
-                    view(C, Block(k+1, k+1))[getblockindex(S, m, k, i), getblockindex(S, n, k, i)] = val
+                    view(C, Block(k+1, k+1))[getblockindex(St, m, k, i), getblockindex(S, n, k, i)] = val
                 end
             end
         end
@@ -1256,7 +1269,7 @@ function convertweightedtononweightedoperator(S::SphericalCapSpace, N; Nout=-1)
     # Converts coeffs in W^{a} to coeffs in Q^{a}
     # If Nout is set, then we increase the resulting dimension so that the
     # operator outputs coeffs of degree Nout (probably to be used for Helholtz
-    # type equations, to match dimension of Laplacian, in which case we should
+    # type equations, to match dimension of rhoLaplacian, in which case we should
     # have Nout=N+3)
     S0 = S.family(0.0, 0.0)
     T = transformparamsoperator(S0, S, N+1; weighted=false)
@@ -1272,27 +1285,60 @@ function convertweightedtononweightedoperator(S::SphericalCapSpace, N; Nout=-1)
     end
 end
 # The operator for ρ^2
-function rho2operator(S::SphericalCapSpace, St::SphericalCapSpace, N::Int;
-                        weightedin=true, weightedout=false, square=false)
+function rho2operator(S::SphericalCapSpace{<:Any, B, T, <:Any},
+                        St::SphericalCapSpace{<:Any, B, T, <:Any}, N::Int;
+                        weightedin=true, weightedout=false, square=false) where {B,T}
     # This operator can also convert the param spaces, by inputing valid entry
     # and tangent spaces and weihgtedin/out keywords
     (!weightedin && weightedout) && error("invalid weighted keywords")
-    rho2 = operatorclenshaw(Fun((x,y,z)->(1-z^2), S, 10), S, N+1)
+    band1 = band2 = 2
+    P = BandedBlockBandedMatrix(Zeros{B}((N+band2+1)^2, (N+1)^2),
+                                ([N+band2+1; 2(N+band2):-2:1], [N+1; 2N:-2:1]),
+                                (0, 0), (2band2, 2band1))
+
+    # Get the operator for mult by ρ²
+    ptsr, wr = pointswithweights(B, getRspace(S, 0), N+2)
+    rhoptsr2 = S.family.ρ.(ptsr).^2
+    getopnorms(St, N+band2+1)
+    for k = 0:N
+        R = getRspace(S, k)
+        getopptseval(R, N-k+band2, ptsr)
+        for n = k:N, m = max(0, n-band1):n+band2 # min(n+band2, N)
+            if k ≤ m
+                val = inner2(R, getptsevalforop(R, n-k), getptsevalforop(R, m-k) .* rhoptsr2.^(k+1), wr)
+                for i = 0:min(1,k)
+                    view(P, Block(k+1, k+1))[getblockindex(S, m, k, i), getblockindex(S, n, k, i)] = val / getopnorm(R)
+                end
+            end
+        end
+        resetopptseval(R)
+    end
     if weightedin && !weightedout
         S0 = S.family(S.params .* 0)
-        Tw = transformparamsoperator(S, S0, N; weighted=weightedin)
-        T = transformparamsoperator(S0, St, N+1; weighted=weightedout)
-        band2 = band1 = 1
-        C = BandedBlockBandedMatrix(rho2 * sparse(T * Tw),
-                                    ([N+band2+1; 2(N+band2):-2:1], [N+1; 2N:-2:1]),
-                                    (0, 0), (2band2, 2band1))
+        tw = transformparamsoperator(S, S0, N+2; weighted=weightedin)
+        t = transformparamsoperator(S0, St, N+3; weighted=weightedout)
+        t * tw * P
     else
-        T = transformparamsoperator(S, St, N; weighted=weightedout)
-        band2 = 0; band1 = 1
-        BandedBlockBandedMatrix(rho2 * sparse(T),
-                                    ([N+band2+1; 2(N+band2):-2:1], [N+1; 2N:-2:1]),
-                                    (0, 0), (2band2, 2band1))
+        t = transformparamsoperator(S, St, N+2; weighted=weightedout)
+        t * P
     end
+
+    # rho2 = operatorclenshaw(Fun((x,y,z)->(1-z^2), S, 10), S, N+1)
+    # if weightedin && !weightedout
+    #     S0 = S.family(S.params .* 0)
+    #     Tw = transformparamsoperator(S, S0, N; weighted=weightedin)
+    #     T = transformparamsoperator(S0, St, N+1; weighted=weightedout)
+    #     band2 = band1 = 1
+    #     C = BandedBlockBandedMatrix(rho2 * sparse(T * Tw),
+    #                                 ([N+band2+1; 2(N+band2):-2:1], [N+1; 2N:-2:1]),
+    #                                 (0, 0), (2band2, 2band1))
+    # else
+    #     T = transformparamsoperator(S, St, N; weighted=weightedout)
+    #     band2 = 0; band1 = 1
+    #     BandedBlockBandedMatrix(rho2 * sparse(T),
+    #                                 ([N+band2+1; 2(N+band2):-2:1], [N+1; 2N:-2:1]),
+    #                                 (0, 0), (2band2, 2band1))
+    # end
 end
 
 
@@ -1440,25 +1486,22 @@ end
 
 function getblockindextangent(S::SphericalCapSpace, n::Int, k::Int, i::Int, j::Int)
     # j refers to either 0 (Φ) or 1 (Ψ)
-    if j == 0
-        2 * getblockindex(S, n, k, i) - 1
-    elseif j == 1
-        2 * getblockindex(S, n, k, i)
+    if k == 0
+        2 * (n + 1) - 1 + j
     else
-        error("invalid argument j - should be 1 or 2")
+        4 * (n - k) + 2i + j + 1
     end
 end
-
 # Grad operator (ρ∇)
 function getrhogradval(S, ptsr, rhoptsr2, rhodxrhoptsr, wr10, wr, n, m, k, i, j)
     if j == 0
         ret = getweightedpartialphival(S, ptsr, rhoptsr2, rhodxrhoptsr, wr10,
                                         wr, n, m, k)
     elseif j == 1
-        R1 = getRspace(S, 0); R0 = getRspace(differentiatespacephi(S; weighted=true), 0)
-        ret = inner2(R1, getptsevalforop(R1, n-k) .* rhoptsr2.^k,
-                        getptsevalforop(R0, m-k) .* w10, wr)
-        ret *= k * (-1)^(i+1)
+        R1 = getRspace(S, k); R0 = getRspace(differentiatespacephi(S; weighted=true), k)
+        ret = inner2(R0, getptsevalforop(R1, n-k) .* rhoptsr2.^k,
+                        getptsevalforop(R0, m-k) .* wr10, wr)
+        ret *= k * (-1)^(i+1) / getopnorm(R0)
     else
         error("invalid param j")
     end
@@ -1469,33 +1512,39 @@ function rhogradoperator(S::SphericalCapSpace{<:Any, B, T, <:Any}, N) where {B,T
     # coefficients {u\^Φ, u\^Φ}, for expansion in the 𝕋 basis
     @assert Int(S.params[1]) == 1 "Invalid SCSpace"
     S0 = differentiatespacephi(S; weighted=true)
-    R0 = getRspace(S0, 0)
-    ptsr, wr = pointswithweights(B, R0, N+3)
-    w10 = ptsr .- S.family.α
-    rho2ptsr = S.family.ρ.(ptsr).^2
-    rhodxrhoptsr = S.family.ρ.(ptsr) .* differentiate(S.family.ρ).(ptsr)
 
     band1 = 1
     band2 = 2
     A = BandedBlockBandedMatrix(Zeros{B}(2 * (N+band2+1)^2, (N+1)^2),
                                 (2 * [N+band2+1; 2(N+band2):-2:1], [N+1; 2N:-2:1]),
-                                (0, 0), (2band2, 2band1))
+                                (0, 0), (2N + 4band2 + 1, 2band1))
+    resizedataonedimops!(S, N+1)
+    resizedataonedimops!(S0, N+1)
+
+    R0 = getRspace(S0, 0)
+    ptsr, wr = pointswithweights(B, R0, N+4)
+    wr10 = ptsr .- S.family.α
+    rhoptsr2 = S.family.ρ.(ptsr).^2
+    rhodxrhoptsr = S.family.ρ.(ptsr) .* differentiate(S.family.ρ).(ptsr)
+
     for k = 0:N
         if k % 100 == 0
             @show "rhograd", k
         end
         R1 = getRspace(S, k); R0 = getRspace(S0, k)
         getopptseval(R1, N-k, ptsr); getopptseval(R0, N-k+band2, ptsr)
+        getderivopptseval(R1, N-k, ptsr)
         for n = k:N, m = max(0, n-band1):n+band2 # min(n+band2, N)
             if k ≤ m
                 for i = 0:min(1,k), j = 0:1
                     # TODO check indexing here
+                    j == 1 && (m < n || m > n+1 || k == 0) && continue
                     val = getrhogradval(S, ptsr, rhoptsr2, rhodxrhoptsr, wr10, wr, n, m, k, i, j)
-                    view(A, Block(k+1, k+1))[getblockindextangent(S0, m, k, i, j), getblockindex(S, n, k, abs(i-j))] = val
+                    view(A, Block(k+1, k+1))[getblockindextangent(S0, m, k, abs(i-j), j), getblockindex(S, n, k, i)] = val
                 end
             end
         end
-        resetopptseval(R)
+        resetopptseval(R1); resetopptseval(R0); resetderivopptseval(R1)
     end
     A
 end

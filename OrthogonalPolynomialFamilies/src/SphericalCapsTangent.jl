@@ -27,10 +27,10 @@ export SphericalCapTangentSpace
 # the arithmetic)
 
 
-function SphericalCapTangentSpace(fam::SphericalCapFamily{B,T,N,<:Any,<:Any}, params::NTuple{N,B}) where {B,T,N}
-    SphericalCapTangentSpace{typeof(fam), B, T, N}(
-        fam, params, Vector{SparseMatrixCSC{B}}(), Vector{SparseMatrixCSC{B}}(),
-        Vector{SparseMatrixCSC{B}}(), Vector{SparseMatrixCSC{B}}())
+function SphericalCapTangentSpace(fam::SphericalCapFamily{B,T,N,<:Any,<:Any},
+                                    params::NTuple{N,B}
+                                    ) where {B,T,N}
+    SphericalCapTangentSpace{typeof(fam), B, T, N}(fam, params)
 end
 
 spacescompatible(A::SphericalCapTangentSpace, B::SphericalCapTangentSpace) = (A.params == B.params)
@@ -38,7 +38,7 @@ spacescompatible(A::SphericalCapTangentSpace, B::SphericalCapTangentSpace) = (A.
 function gettangentspace(D::SphericalCapFamily{B,T,N,<:Any,<:Any}) where {B,T,N}
     length(D.tangentspace) == 1 && return D.tangentspace[1]
     resize!(D.tangentspace, 1)
-    params = B.(0.0, 0.0)
+    params = (B(0.0), B(0.0))
     D.tangentspace[1] = SphericalCapTangentSpace(D, params)
 end
 
@@ -67,7 +67,7 @@ function getopindex(S::SphericalCapTangentSpace, n::Int, k::Int, i::Int, j::Int;
         error("Invalid i input to getopindex")
     elseif k == 0 && i == 1
         error("Invalid inputs to getopindex - i must be zero if k is zero")
-    elseif j < 1 || j > 2
+    elseif j < 0 || j > 1
         error("Invalid j input to getopindex")
     end
     if bydegree
@@ -86,12 +86,12 @@ function getopindex(S::SphericalCapTangentSpace, n::Int, k::Int, i::Int, j::Int;
     else # by Fourier mode k
         # N must be set
         if k == 0
-            ret = 2 * (n + 1)
+            ret = 2 * (n + 1) - 1 + j
         else
             # Sum of the number of OPs up to and including Fourier mode k-1
-            ret = 2 * (N + 1) + 4 * sum([N-j+1 for j=1:k-1])
-            # Now count from the beginning of the Fourier mode k OPs
-            ret += 4 * (n - k) + i + j + 1
+            ret = 2 * (N + 1) + 4 * sum([N-m+1 for m=1:k-1])
+            # Now count from the beginning of the Fourier mode k OP block
+            ret += 4 * (n - k) + 2i + j + 1
         end
     end
     ret
@@ -129,15 +129,6 @@ end
 #===#
 # Function evaluation (clenshaw)
 
-function resizedata!(S::SphericalCapTangentSpace, N)
-    N₀ = length(S.DT)
-    N ≤ N₀ - 2 && return S
-    @show "begin resizedata! for SphericalCapTangentSpace", N
-    resizedata!(getSCSpace(S), N)
-    getDTs!(S, N+1, N₀)
-    S
-end
-
 # Returns the constant that is Q^{a,b}_{0,0,0} ( = Y_{0,0}, so that the Y_ki's
 # are normalised)
 function getdegzeropteval(::Type{T},
@@ -147,7 +138,7 @@ function getdegzeropteval(::Type{T},
     @assert length(pt) == 3 "Invalid pt"
     q = getdegzeropteval(getSCSpace(S))
     x, y, z = pt[1], pt[2], pt[3]
-    ϕ = acos(z); θ = atan(y / x)
+    θ = atan(y / x)
     ϕ̂ = [cos(θ) * z; sin(θ) * z; - S.family.ρ(z)] # TODO make global/CONST?
     θ̂ = [-sin(θ); cos(θ); 0] # TODO make global/CONST?
     q * ϕ̂, q * θ̂
@@ -161,30 +152,31 @@ function clenshawG(::SphericalCapTangentSpace, n::Int, z)
     sp = sparse(I, 2n+1, 2n+1)
     [z[1] * sp; z[2] * sp; z[3] * sp]
 end
-function clenshaw(cfs::AbstractVector{T}, S::SphericalCapTangentSpace, pt) where T
+function clenshaw(cfs::AbstractVector{T}, ST::SphericalCapTangentSpace, pt) where T
     # Convert the cfs vector from ordered by Fourier mode k, to by degree n
-    f = convertcoeffsvecorder(S, cfs)
+    f = convertcoeffsvecorder(ST, cfs)
+    S = getSCSpace(ST)
 
     m = length(f)
-    N = Int(sqrt(m)) - 1
+    N = Int(sqrt(m / 2)) - 1
     resizedata!(S, N+1)
-    f = PseudoBlockArray(f, [2(2n+1) for n=0:N])
+    f = PseudoBlockArray(f, [2*(2n+1) for n=0:N])
 
-    Φ0, Ψ0 = getdegzeropteval(T, S, pt)
+    Φ0, Ψ0 = getdegzeropteval(T, ST, pt)
     if N == 0
-        f[1] * Φ0 + f[2] * Ψ0
+        ret = f[1] * Φ0 + f[2] * Ψ0
     else
         n = N
-        fn = PseudoBlockArray(f, [2n+1 for i=1:2])
+        fn = PseudoBlockArray(f[Block(n+1)], [2n+1 for i=1:2])
         γ2ϕ = view(fn, Block(1))'
         γ2ψ = view(fn, Block(2))'
         n = N - 1
-        fn = PseudoBlockArray(f, [2n+1 for i=1:2])
-        M1 = S.DT[N] * (S.B[N] - clenshawG(S, n, pt))
+        fn = PseudoBlockArray(f[Block(n+1)], [2n+1 for i=1:2])
+        M1 = S.DT[n+1] * (S.B[n+1] - clenshawG(S, n, pt))
         γ1ϕ = view(fn, Block(1))' - γ2ϕ * M1
-        γ1ψ = view(fn, Block(1))' - γ2ψ * M1
+        γ1ψ = view(fn, Block(2))' - γ2ψ * M1
         for n = N-2:-1:0
-            fn = PseudoBlockArray(f, [2n+1 for i=1:2])
+            fn = PseudoBlockArray(f[Block(n+1)], [2n+1 for i=1:2])
             M1 = S.DT[n+1] * (S.B[n+1] - clenshawG(S, n, pt))
             M2 = S.DT[n+2] * S.C[n+2]
             γϕ = view(fn, Block(1))' - γ1ϕ * M1 - γ2ϕ * M2
@@ -194,8 +186,9 @@ function clenshaw(cfs::AbstractVector{T}, S::SphericalCapTangentSpace, pt) where
             γ1ϕ = copy(γϕ)
             γ1ψ = copy(γψ)
         end
-        γ1ϕ * Φ0 + γ1ψ * Ψ0
+        ret = γ1ϕ[1] * Φ0 + γ1ψ[1] * Ψ0
     end
+    ret
 end
 evaluate(cfs::AbstractVector, S::SphericalCapTangentSpace, z) = clenshaw(cfs, S, z)
 
@@ -217,8 +210,8 @@ function convertcoeffsvecorder(S::SphericalCapTangentSpace, cfs::AbstractVector;
         for k = 0:N
             for n = k:N
                 for i = 0:min(1, k) # This catches the k == 0 case
-                    f[getopindex(S, n, k, i, 1; bydegree=true)] = cfs[indc]
-                    f[getopindex(S, n, k, i, 2; bydegree=true)] = cfs[indc + 1]
+                    f[getopindex(S, n, k, i, 0; bydegree=true)] = cfs[indc]
+                    f[getopindex(S, n, k, i, 1; bydegree=true)] = cfs[indc + 1]
                     indc += 2
                 end
             end
@@ -230,8 +223,8 @@ function convertcoeffsvecorder(S::SphericalCapTangentSpace, cfs::AbstractVector;
         for k = 0:N
             for n = k:N
                 for i = 0:min(1, k) # This catches the k == 0 case
-                    f[indf] = cfs[getopindex(S, n, k, i, 1; bydegree=true)]
-                    f[indf + 1] = cfs[getopindex(S, n, k, i, 2; bydegree=true)]
+                    f[indf] = cfs[getopindex(S, n, k, i, 0; bydegree=true)]
+                    f[indf + 1] = cfs[getopindex(S, n, k, i, 1; bydegree=true)]
                     indf += 2
                 end
             end
@@ -272,53 +265,60 @@ function getblockindextangent(S::SphericalCapTangentSpace, n::Int, k::Int,
 end
 
 # Divergence operator (ρ²∇.)
-function getrho2divval(S::SphericalCapTangentSpace, ptsr, rhoptsr2,
-                        rhodxrhoptsr, wr, n::Int, m::Int, k::Int, i::Int, j::Int)
+function getrhodivminusgradrhodotval(S::SphericalCapTangentSpace, ptsr,
+                                        rhoptsr2, rhodxrhoptsr, wr, n::Int,
+                                        m::Int, k::Int, i::Int, j::Int)
     S0 = getSCSpace(S)
     S1 = differentiatespacephi(S0)
     if j == 0
         ret = getpartialphival(S0, ptsr, rhoptsr2, rhodxrhoptsr, wr, n, m, k)
     elseif j == 1
-        R0 = getRspace(S0, 0); R1 = getRspace(S1, 0)
-        ret = inner2(R1, getptsevalforop(R0, n-k) .* rhoptsr2.^k,
-                        getptsevalforop(R1, m-k), wr)
-        ret *= k * (-1)^(i+1)
+        ret = (gettransformparamsval(S0, S1, rhoptsr2, wr, n, m, k)
+                * getpartialthetaval(S0, k, i))
     else
         error("invalid param j")
     end
     ret
 end
-function rho2divoperator(S::SphericalCapTangentSpace{<:Any, B, T, <:Any}, N) where {B,T}
+function rhodivminusgradrhodotoperator(S::SphericalCapTangentSpace{<:Any, B, T, <:Any}, N) where {B,T}
     # Operator acts on coeffs in the 𝕋 basis, and results in coeffs in the ℚ^{1}
     # basis.
+
+    # NOTE this operator acts on F̲ expanded in 𝕋 to result in "ρ∇̇.F̲ - ∇ρ.F̲"
+    # expanded in the ℚ^{1} basis which, when F̲ = ρu̲, means that this operator
+    # outputs the result of ρ^2 ∇.u̲
+
     S0 = getSCSpace(S)
     S1 = differentiatespacephi(S0)
-    R0 = getRspace(S0, 0)
-    ptsr, wr = pointswithweights(B, R0, N+3)
-    rho2ptsr = S.family.ρ.(ptsr).^2
+    R1 = getRspace(S1, 0)
+    ptsr, wr = pointswithweights(B, R1, N+3)
+    rhoptsr2 = S.family.ρ.(ptsr).^2
     rhodxrhoptsr = S.family.ρ.(ptsr) .* differentiate(S.family.ρ).(ptsr)
 
     band1 = 2
     band2 = 1
+    # TODO sort out bandwidths!
     A = BandedBlockBandedMatrix(Zeros{B}((N+band2+1)^2, 2 * (N+1)^2),
                                 ([N+band2+1; 2(N+band2):-2:1], 2 * [N+1; 2N:-2:1]),
-                                (0, 0), (2band2, 2band1))
+                                (0, 0), (100, 100))
     for k = 0:N
         if k % 100 == 0
-            @show "rho2div", k
+            @show "rhodivminusgradrhodot", k
         end
         R0 = getRspace(S0, k); R1 = getRspace(S1, k)
         getopptseval(R0, N-k, ptsr); getopptseval(R1, N-k+band2, ptsr)
+        getderivopptseval(R0, N-k, ptsr)
         for n = k:N, m = max(0, n-band1):n+band2 # min(n+band2, N)
             if k ≤ m
                 for i = 0:min(1,k), j = 0:1
                     # TODO check indexing here
-                    val = getrho2divval(S, ptsr, rhoptsr2, rhodxrhoptsr, wr, n, m, k, i, j)
-                    view(A, Block(k+1, k+1))[getblockindex(S1, m, k, i), getblockindextangent(S, n, k, abs(i-j), j)] = val
+                    j == 1 && (m < n - 1 || m > n || k == 0) && continue
+                    val = getrhodivminusgradrhodotval(S, ptsr, rhoptsr2, rhodxrhoptsr, wr, n, m, k, i, j)
+                    view(A, Block(k+1, k+1))[getblockindex(S1, m, k, abs(i-j)), getblockindextangent(S, n, k, i, j)] = val
                 end
             end
         end
-        resetopptseval(R)
+        resetopptseval(R0); resetopptseval(R1); resetderivopptseval(R0)
     end
     A
 end
@@ -339,7 +339,7 @@ function coriolisoperator(S::SphericalCapTangentSpace{<:Any, B, T, <:Any}, N) wh
    band2 = 1
    A = BandedBlockBandedMatrix(Zeros{B}(2 * (N+band2+1)^2, 2 * (N+1)^2),
                                (2 * [N+band2+1; 2(N+band2):-2:1], 2 * [N+1; 2N:-2:1]),
-                               (0, 0), (2band2, 2band1))
+                               (0, 0), (200, 200))
    for k = 0:N
        if k % 100 == 0
            @show "coriolis", k
@@ -348,10 +348,33 @@ function coriolisoperator(S::SphericalCapTangentSpace{<:Any, B, T, <:Any}, N) wh
            if k ≤ m
                c = 2 * Ω * recγ(B, S0, m, k, n-m+2)
                for i = 0:min(1,k), j = 0:1
-                   view(A, Block(k+1, k+1))[getblockindextangent(S, m, k, i, abs(j-1)), getblockindextangent(S, n, k, i, j)] = c * (-1)^j
+                   view(A, Block(k+1, k+1))[getblockindextangent(S, m, k, i, abs(j-1)), getblockindextangent(S, n, k, i, j)] = c * (-1)^(j+1)
                end
            end
        end
    end
    A
+end
+
+
+#===#
+# "Coeffs degree increaser" operator matrix
+
+function increasedegreeoperator(S::SphericalCapTangentSpace{<:Any, B, T, <:Any},
+                                N, Nto; weighted=false) where {B,T}
+    # This operator acts on the coeffs vector of a Fun in the space S to just
+    # reorganise the coeffs so that the length is increased from deg N to
+    # deg Nto, with all coeffs representing the extra degrees being zero.
+
+    # TODO weighted=true
+    C = BandedBlockBandedMatrix(Zeros{B}(2(Nto+1)^2, 2(N+1)^2),
+                                (2 * [Nto+1; 2(Nto):-2:1], 2 * [N+1; 2N:-2:1]),
+                                (0, 0), (0, 0))
+    @show "tangent incr deg", N, Nto, weighted
+    for k = 0:N, n = k:N
+        for i = 0:min(1,k), j = 0:1
+            view(C, Block(k+1, k+1))[getblockindextangent(S, n, k, i, j), getblockindextangent(S, n, k, i, j)] = 1.0
+        end
+    end
+    C
 end
