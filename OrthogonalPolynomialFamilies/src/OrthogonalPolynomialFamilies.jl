@@ -105,11 +105,13 @@ function getweightfun(S::OrthogonalPolynomialSpace)
     if length(S.weight) == 0
         # @show "getweightfun() for OPSpace", S.params
         resize!(S.weight, 1)
+        d = domain(S.family.factors[1])
         if length(S.params) == 1
-            S.weight[1] = (S.family.factors.^(S.params))[1]
+            w = Fun(x->S.family.factors[1](x)^S.params[1], d)
         else
-            S.weight[1] = prod(S.family.factors.^(S.params))
+            w = Fun(x->prod([S.family.factors[i](x)^S.params[i] for i=1:length(S.params)]), d)
         end
+        S.weight[1] = w
     end
     S.weight[1]
 end
