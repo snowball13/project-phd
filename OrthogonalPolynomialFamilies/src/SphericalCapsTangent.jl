@@ -291,6 +291,10 @@ function rhodivminusgradrhodotoperator(S::SphericalCapTangentSpace{<:Any, B, T, 
     S0 = getSCSpace(S)
     S1 = differentiatespacephi(S0)
     R1 = getRspace(S1, 0)
+
+    resizedataonedimops!(S1, N+1)
+    resizedataonedimops!(S0, N+1)
+
     ptsr, wr = pointswithweights(B, R1, N+3)
     rhoptsr2 = S.family.ρ.(ptsr).^2
     rhodxrhoptsr = S.family.ρ.(ptsr) .* differentiate(S.family.ρ).(ptsr)
@@ -300,7 +304,7 @@ function rhodivminusgradrhodotoperator(S::SphericalCapTangentSpace{<:Any, B, T, 
     # TODO sort out bandwidths!
     A = BandedBlockBandedMatrix(Zeros{B}((N+band2+1)^2, 2 * (N+1)^2),
                                 ([N+band2+1; 2(N+band2):-2:1], 2 * [N+1; 2N:-2:1]),
-                                (0, 0), (100, 100))
+                                (0, 0), (2band2, 2N+band1+1))
     for k = 0:N
         if k % 100 == 0
             @show "rhodivminusgradrhodot", k
@@ -339,7 +343,7 @@ function coriolisoperator(S::SphericalCapTangentSpace{<:Any, B, T, <:Any}, N) wh
    band2 = 1
    A = BandedBlockBandedMatrix(Zeros{B}(2 * (N+band2+1)^2, 2 * (N+1)^2),
                                (2 * [N+band2+1; 2(N+band2):-2:1], 2 * [N+1; 2N:-2:1]),
-                               (0, 0), (200, 200))
+                               (0, 0), (4band2+1, 4band1+1))
    for k = 0:N
        if k % 100 == 0
            @show "coriolis", k
