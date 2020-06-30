@@ -1291,10 +1291,13 @@ function rho2operator(S::SphericalCapSpace{<:Any, B, T, <:Any},
     # This operator can also convert the param spaces, by inputing valid entry
     # and tangent spaces and weihgtedin/out keywords
     (!weightedin && weightedout) && error("invalid weighted keywords")
+
     band1 = band2 = 2
     P = BandedBlockBandedMatrix(Zeros{B}((N+band2+1)^2, (N+1)^2),
                                 ([N+band2+1; 2(N+band2):-2:1], [N+1; 2N:-2:1]),
                                 (0, 0), (2band2, 2band1))
+
+    resizedataonedimops!(S, N+band2)
 
     # Get the operator for mult by ρ²
     ptsr, wr = pointswithweights(B, getRspace(S, 0), N+2)

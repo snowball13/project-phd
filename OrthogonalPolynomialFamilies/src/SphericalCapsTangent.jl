@@ -332,7 +332,7 @@ function coriolisoperator(S::SphericalCapTangentSpace{<:Any, B, T, <:Any}, N) wh
     # We output the operator that results in coefficients {u\^Φ, u\^Φ}, for
     # expansion in the 𝕋 basis
 
-    Ω = B(72921) / 1e9 # TODO make this a global definition somehow (maybe a
+    Ω = 1.0 # B(72921) / 1e9 # TODO make this a global definition somehow (maybe a
                        # member of the class struct)
 
    # resizedataonedimops! for the SCSpace
@@ -352,7 +352,7 @@ function coriolisoperator(S::SphericalCapTangentSpace{<:Any, B, T, <:Any}, N) wh
            if k ≤ m
                c = 2 * Ω * recγ(B, S0, m, k, n-m+2)
                for i = 0:min(1,k), j = 0:1
-                   view(A, Block(k+1, k+1))[getblockindextangent(S, m, k, i, abs(j-1)), getblockindextangent(S, n, k, i, j)] = c * (-1)^(j+1)
+                   view(A, Block(k+1, k+1))[getblockindextangent(S, m, k, i, abs(j-1)), getblockindextangent(S, n, k, i, j)] = c * (-1)^(j)
                end
            end
        end

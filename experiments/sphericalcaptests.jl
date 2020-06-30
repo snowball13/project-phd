@@ -16,7 +16,9 @@ import OrthogonalPolynomialFamilies: points, pointswithweights, getopptseval,
                     diffoperatorphi, diffoperatortheta, diffoperatortheta2,
                     differentiatespacephi, increasedegreeoperator,
                     getptsevalforop, getderivptsevalforop, laplacianoperator,
-                    rholaplacianoperator
+                    rho2laplacianoperator, gettangentspace,
+                    rhogradoperator, coriolisoperator, rho2operator,
+                    rhodivminusgradrhodotoperator
 using JLD
 
 
@@ -32,18 +34,93 @@ DSF = DiskSliceFamily(B, T, α, 1.0, -1.0, 1.0)
 SCF = SphericalCapFamily(B, T, B(α * 1000) / 1000)
 a = 1.0
 S = SCF(a, 0.0); S2 = DSF(a, a); S0 = SCF(0.0, 0.0)
+ST = gettangentspace(SCF)
 
 y, z = B(-234)/1000, B(643)/1000; x = sqrt(1 - z^2 - y^2); p = [x; y; z]; isindomain(p, SCF)
 θ = atan(y / x)
-resizedata!(S, 100)
-resizedata!(S0, 100)
+resizedata!(S, 20)
+resizedata!(S0, 20)
+
+function gettangentspacecoeffsvec(f::Fun, g::Fun)
+    fc = f.coefficients; gc = g.coefficients
+    m = length(fc)
+    @assert m == length(gc) "Coeffs must be same length"
+    ret = zeros(2m)
+    it = 1
+    for j = 1:m
+        ret[it] = fc[j]; ret[it+1] = gc[j]
+        it += 2
+    end
+    ret
+end
 
 
+# Test of tangent clenshaw
+basisvecs = [cos(θ) * z; sin(θ) * z; - rhoval(z)], [-sin(θ); cos(θ); 0]
+N = 5
+for n=0:N, k=0:n, i=0:min(1,k), j=0:1
+    cfs = zeros(getopindex(ST, N, N, 1, 1)); cfs[getopindex(ST, n, k, i, j; bydegree=false, N=N)] = 1; cfs
+    ret = OrthogonalPolynomialFamilies.clenshaw(cfs, ST, p)
+    cfs0 = zeros(getopindex(S, N, N, 1)); cfs0[getopindex(S, n, k, i; bydegree=false, N=N)] = 1; cfs0
+    retactual = Fun(S0, cfs0)(p) * basisvecs[j+1]
+    res = maximum(abs, ret - retactual)
+    if res > 1e-10
+        @show n,k,i,j,res
+    end
+    @test ret ≈ retactual
+end
 
-N = 10
-n, k, i = 6, 3, 1
-cfs = zeros(B, (N+1)^2); cfs[getopindex(S, n, k, i)] = 1.0
-q = Fun(S, convertcoeffsvecorder(S, cfs))
+
+# Linear SWE operator tests
+basisvecs = [cos(θ) * z; sin(θ) * z; - rhoval(z)], [-sin(θ); cos(θ); 0]
+inds = [4, 3, 5]; N = sum(inds)
+f = Fun((x,y,z)->x^inds[1] * y^inds[2] * z^inds[3], S, 2(N+1)^2)
+dϕf = (x,y,z)->((inds[1] + inds[2]) * z^2 - inds[3] * S.family.ρ(z)^2) * x^inds[1] * y^inds[2] * z^(inds[3]-1) # ρ*∂f/∂ϕ, deg = degf + 1
+dθf = (x,y,z)->z^inds[3] * y^(inds[2] - 1) * x^(inds[1] - 1) * (inds[2] * x^2 - inds[1] * y^2) # ∂f/∂θ
+indsϕ = [2, 7, 5]; Nϕ = sum(indsϕ)
+indsθ = [2, 3, 5]; Nθ = sum(indsθ); Nt = max(Nϕ, Nθ)
+Fϕ = Fun((x,y,z)->x^indsϕ[1] * y^indsϕ[2] * z^indsϕ[3], S0, 2(Nt+1)^2); Fϕ.coefficients
+Fθ = Fun((x,y,z)->x^indsθ[1] * y^indsθ[2] * z^indsθ[3], S0, 2(Nt+1)^2); Fθ.coefficients
+dϕFϕ = (x,y,z)->((indsϕ[1] + indsϕ[2]) * z^2 - indsϕ[3] * S.family.ρ(z)^2) * x^indsϕ[1] * y^indsϕ[2] * z^(indsϕ[3]-1) # ρ*∂f/∂ϕ, deg = degf + 1
+dθFθ = (x,y,z)->z^indsθ[3] * y^(indsθ[2] - 1) * x^(indsθ[1] - 1) * (indsθ[2] * x^2 - indsθ[1] * y^2) # ∂f/∂θ
+# G
+G = rhogradoperator(S, N)
+cfs0 = G * f.coefficients
+ret = OrthogonalPolynomialFamilies.clenshaw(cfs0, ST, p)
+retactual = ((weight(S, p) * dϕf(p...) - f(p) * S.family.ρ(z)^2) * basisvecs[1]
+                + weight(S, p) * dθf(p...) * basisvecs[2])
+@test ret ≈ retactual
+# D
+D = rhodivminusgradrhodotoperator(ST, Nt)
+Fϕ = Fun((x,y,z)->0.0, S0, 2(Nt+1)^2); Fθ.coefficients
+Fθ = Fun((x,y,z)->z^indsθ[3], S0, 2(Nt+1)^2); Fθ.coefficients
+cfs0 = gettangentspacecoeffsvec(Fϕ, Fθ)
+cfs = D * cfs0
+ret = Fun(S, cfs)(p)
+retactual = 0.0
+@test ret ≈ retactual atol=1e-13
+# F
+F = coriolisoperator(ST, Nt)
+cfs0 = gettangentspacecoeffsvec(Fϕ, Fθ)
+cfs = F * cfs0
+ret = OrthogonalPolynomialFamilies.clenshaw(cfs, ST, p)
+Ω = B(72921) / 1e9
+retactual = OrthogonalPolynomialFamilies.clenshaw(gettangentspacecoeffsvec(-Fθ, Fϕ) * 2 * z, ST, p)
+@test ret ≈ retactual
+# P
+N = 100
+P = rho2operator(S, S, N)
+cfs = P * f.coefficients
+ret = Fun(S, cfs)(p)
+retactual = f(p) * weight(S, p) * S.family.ρ(z)^2
+@test ret ≈ retactual
+f = Fun((x,y,z)->x^inds[1] * y^inds[2] * z^inds[3], S, 2(N+4)^2)
+Pm1 = sparse(pinv(Array(P))) # TODO make explicit?!?!? # NOTE takes ℚ^{1}->𝕎^{1}
+cfs = Pm1 * f.coefficients
+ret = Fun(S, cfs)(p) * weight(S, p)
+retactual = f(p) / rhoval(p[3])^2
+@test ret ≈ retactual
+
 
 
 # Laplacian tests
@@ -286,6 +363,7 @@ u1norms = [norm(u1cfs[Block(n+1)]) for n=0:N]
 # Useful functions for testing
 function converttopseudo(S::SphericalCapSpace, cfs; converttobydegree=true)
     N = getnki(S, length(cfs))[1]
+    @assert (length(cfs) == (N+1)^2) "Invalid coeffs length"
     if converttobydegree
         PseudoBlockArray(convertcoeffsvecorder(S, cfs), [2n+1 for n=0:N])
     else
