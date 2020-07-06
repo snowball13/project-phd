@@ -18,7 +18,7 @@ import OrthogonalPolynomialFamilies: points, pointswithweights, getopptseval,
                     getptsevalforop, getderivptsevalforop, laplacianoperator,
                     rho2laplacianoperator, gettangentspace,
                     rhogradoperator, coriolisoperator, rho2operator,
-                    rhodivminusgradrhodotoperator
+                    rhodivminusgradrhodotoperator, gradrhooperator
 using Makie
 using GeometryTypes
 # using PyPlot
@@ -56,29 +56,27 @@ ST = gettangentspace(SCF)
 
 N = 30
 
-# Operators
-F = coriolisoperator(ST, N+2)
-D = rhodivminusgradrhodotoperator(ST, N+2)
-G = rhogradoperator(S, N)
-P = rho2operator(S, S, N)
-Pf = factorize(sparse(P))
-L = rho2laplacianoperator(S, S, N)
-Lf = factorize(sparse(L))
-Δ = laplacianoperator(S, N)
+# Operators (h coeffs are deg N; ρu coeffs are deg N+2)
+Gw = rhogradoperator(S, N-1; weighted=true)
+P = transformparamsoperator(ST, N+3; paramincrease=2) * rho2operator(ST, N+1)
+P2 = transformparamsoperator(ST, N+4; paramincrease=2) * rho2operator(ST, N+2)
+F = coriolisoperator(ST, N+1; square=false)
+D = rhodivminusgradrhodotoperator(ST, N+1)
+G = rhogradoperator(S, N+2; weighted=false)
+R = gradrhooperator(S, N+2)
+Ps = rho2operator(S, S, N-1)
+di = increasedegreeoperator(ST, N+3, N+4)
+
 
 # ICs
 ũ = 2π / 12; H = 1.0; Ω̃ = 1.0 #B(72921) / 1e9
-dt = 0.01
-u0ϕ = Fun((x,y,z) -> 0.0, S0, 2(N+3)^2); u0ϕ.coefficients
+u0ϕ = Fun((x,y,z) -> 0.0, S0, 2(N+2)^2); u0ϕ.coefficients
 u0θ = Fun((x,y,z) -> - (ũ * (1 - z^2)
                       * ((2z^2 - 1) * weight(S, x, y, z) - (1 - z^2) * z / 2)
-                      ), S0, 2(N+3)^2); u0θ.coefficients
+                      ), S0, 2(N+2)^2); u0θ.coefficients
 u0 = Fun(ST, gettangentspacecoeffsvec(u0ϕ, u0θ))
-h0 = Fun((x,y,z) -> ũ * Ω̃ * (1 - z^2) * z^2, S, 2(N+1)^2); h0.coefficients
+h0 = Fun((x,y,z) -> ũ * Ω̃ * (1 - z^2) * z^2, S, 2(N)^2); h0.coefficients
 
-# Other params needed
-tfinal=0.1; makeplot=true
-filename = "experiments/saved/sphericalcap/swe-N=$N-H=$H-dt=$dt-tfinal=$tfinal.mp4"
 
 # NOTE The recording of the plotting only seems to work when this stuff is
 #      outside a function
@@ -93,28 +91,47 @@ n = 20
 θt = [(0:2n-2) * 2 / (2n-1); 2]
 
 u0c = u0.coefficients
-    h0c = h0.coefficients
-    scene = Scene()
-    center!(scene)
-    plot_on_domain_scalar!(scene, S, h0, ϕ, θ)
-    center!(scene)
-    wdth, hght = 40, 600
-    cl = colorlegend(scene[end], raw=true, camera=campixel!, width=(wdth,hght))
-    vs = vbox(scene, cl)
-    nsteps = Int(ceil(tfinal / dt)) # Number of time steps
-    # NOTE functions are underneath
-    uc, hc = linearswe(vs, scene, u0c, h0c, dt, nsteps)
+h0c = h0.coefficients
+scene = Scene()
+center!(scene)
+plot_on_domain_scalar!(scene, S, h0, ϕ, θ)
+center!(scene)
+wdth, hght = 40, 600
+cl = colorlegend(scene[end], raw=true, camera=campixel!, width=(wdth,hght))
+vs = vbox(scene, cl)
+# Other params needed
+tfinal=0.1; makeplot=true
+dt = 0.001
+filename = "experiments/saved/sphericalcap/swe-N=$N-H=$H-dt=$dt-tfinal=$tfinal.mp4"
+nsteps = Int(ceil(tfinal / dt)) # Number of time steps
+# NOTE functions are underneath
+A = (dt * (P2 * F)
+        + dt^2 * H * di * (G * D)
+        - 2dt^2 * H * di * (R * D)
+        + di * P) # * increasedegreeoperator(ST, N+2, N+3)
+Af = factorize(sparse(A))
+Psf = factorize(sparse(Ps))
+uc, hc = linearswe(vs, scene, u0c, h0c, dt, nsteps; method="backwardeuler")
+# NOTE WHY DOES IT BLOW UP STILL!!!!!!!!!!!!!
 
-function linearswe(vs, scene, uc, hc, dt, nsteps)
+
+
+
+
+function linearswe(vs, scene, uc, hc, dt, nsteps; method="backwardeuler")
     u0c = copy(uc); h0c = copy(hc)
     record(vs, filename) do io
         recordframe!(io)
         for it = 1:nsteps
-            @show it, maximum(abs, u0c - uc), maximum(abs, h0c)
-            # RK4 timestep
-            u1c, h1c = RK4(Feval, u0c, h0c, dt)
-            # u1c = Af \ (u0c + dt * G * h0c)
-            # h1c = h0c - H * Pm1 * sparse(D * u1c)
+            @show it, maximum(abs, u0c - uc), maximum(abs, h0c - hc)
+            if method == "backwardeuler"
+                u1c, h1c = backwardeuler(u0c, h0c, dt)
+            elseif method == "RK4"
+                u1c, h1c = RK4(Feval, u0c, h0c, dt)
+            else
+                error("invalid method")
+                return
+            end
             u = Fun(ST, u1c)
             h = Fun(S, h1c)
             plot_on_domain_scalar!(scene, S, h, ϕ, θ)
@@ -128,6 +145,12 @@ function linearswe(vs, scene, uc, hc, dt, nsteps)
         end
     end
     u0c, h0c
+end
+
+function backwardeuler(un, hn, dt)
+    u = Af \ (di * P * un + dt * di * P * Gw * hn)
+    h = Psf \ (Ps * hn - dt * H * D * u)
+    u, h
 end
 
 function RK4(F, un, hn, dt)

@@ -41,11 +41,11 @@ y, z = B(-234)/1000, B(643)/1000; x = sqrt(1 - z^2 - y^2); p = [x; y; z]; isindo
 resizedata!(S, 20)
 resizedata!(S0, 20)
 
-function gettangentspacecoeffsvec(f::Fun, g::Fun)
-    fc = f.coefficients; gc = g.coefficients
+function gettangentspacecoeffsvec(S::SphericalCapSpace, fc::AbstractVector{T},
+                                    gc::AbstractVector{T}) where T
     m = length(fc)
     @assert m == length(gc) "Coeffs must be same length"
-    ret = zeros(2m)
+    ret = zeros(T, 2m)
     it = 1
     for j = 1:m
         ret[it] = fc[j]; ret[it+1] = gc[j]
@@ -53,6 +53,19 @@ function gettangentspacecoeffsvec(f::Fun, g::Fun)
     end
     ret
 end
+gettangentspacecoeffsvec(f::Fun, g::Fun) =
+    gettangentspacecoeffsvec(f.space, f.coefficients, g.coefficients)
+function getscspacecoeffsvecs(ST::SphericalCapTangentSpace, Fc::AbstractVector{T}) where T
+    m = Int(length(Fc) / 2)
+    u, v = zeros(T, m), zeros(T, m)
+    it = 1
+    for j = 1:m
+        u[j] = Fc[it]; v[j] = Fc[it+1]
+        it += 2
+    end
+    u, v
+end
+getscspacecoeffsvecs(F::Fun) = getscspacecoeffsvecs(F.space, F.coefficients)
 
 
 # Test of tangent clenshaw
@@ -84,46 +97,62 @@ Fθ = Fun((x,y,z)->x^indsθ[1] * y^indsθ[2] * z^indsθ[3], S0, 2(Nt+1)^2); Fθ.
 dϕFϕ = (x,y,z)->((indsϕ[1] + indsϕ[2]) * z^2 - indsϕ[3] * S.family.ρ(z)^2) * x^indsϕ[1] * y^indsϕ[2] * z^(indsϕ[3]-1) # ρ*∂f/∂ϕ, deg = degf + 1
 dθFθ = (x,y,z)->z^indsθ[3] * y^(indsθ[2] - 1) * x^(indsθ[1] - 1) * (indsθ[2] * x^2 - indsθ[1] * y^2) # ∂f/∂θ
 # G
-G = rhogradoperator(S, N)
-cfs0 = G * f.coefficients
-ret = OrthogonalPolynomialFamilies.clenshaw(cfs0, ST, p)
+Gw = rhogradoperator(S, N)
+cfs0 = Gw * f.coefficients
+ret = Fun(ST, cfs0)(p)
 retactual = ((weight(S, p) * dϕf(p...) - f(p) * S.family.ρ(z)^2) * basisvecs[1]
                 + weight(S, p) * dθf(p...) * basisvecs[2])
 @test ret ≈ retactual
+G = rhogradoperator(S, N; weighted=false)
+cfs2 = G * f.coefficients
+S2 = S.family(2.0, 0.0)
+cfs2ϕ = [cfs2[2i - 1] for i = 1:(N+2)^2]
+cfs2θ = [cfs2[2i] for i = 1:(N+2)^2]
+@test Fun(S2, cfs2ϕ)(p) ≈ dϕf(p...)
+@test Fun(S2, cfs2θ)(p) ≈ dθf(p...)
 # D
 D = rhodivminusgradrhodotoperator(ST, Nt)
-Fϕ = Fun((x,y,z)->0.0, S0, 2(Nt+1)^2); Fθ.coefficients
-Fθ = Fun((x,y,z)->z^indsθ[3], S0, 2(Nt+1)^2); Fθ.coefficients
 cfs0 = gettangentspacecoeffsvec(Fϕ, Fθ)
 cfs = D * cfs0
 ret = Fun(S, cfs)(p)
-retactual = 0.0
-@test ret ≈ retactual atol=1e-13
+retactual = dϕFϕ(p...) + dθFθ(p...)
+@test ret ≈ retactual
 # F
-F = coriolisoperator(ST, Nt)
+F = coriolisoperator(ST, Nt; square=false)
 cfs0 = gettangentspacecoeffsvec(Fϕ, Fθ)
 cfs = F * cfs0
-ret = OrthogonalPolynomialFamilies.clenshaw(cfs, ST, p)
-Ω = B(72921) / 1e9
-retactual = OrthogonalPolynomialFamilies.clenshaw(gettangentspacecoeffsvec(-Fθ, Fϕ) * 2 * z, ST, p)
+ret = Fun(ST, cfs)(p)
+Ω = 1.0# B(72921) / 1e9
+retactual = Fun(ST, gettangentspacecoeffsvec(-Fθ, Fϕ) * 2 * Ω)(p) * p[3]
 @test ret ≈ retactual
-# P
-N = 100
-P = rho2operator(S, S, N)
-cfs = P * f.coefficients
+# P (scalar and tangent space)
+Ps = rho2operator(S, S, N)
+cfs = Ps * f.coefficients
 ret = Fun(S, cfs)(p)
 retactual = f(p) * weight(S, p) * S.family.ρ(z)^2
+ret - retactual
 @test ret ≈ retactual
-f = Fun((x,y,z)->x^inds[1] * y^inds[2] * z^inds[3], S, 2(N+4)^2)
-Pm1 = sparse(pinv(Array(P))) # TODO make explicit?!?!? # NOTE takes ℚ^{1}->𝕎^{1}
-cfs = Pm1 * f.coefficients
-ret = Fun(S, cfs)(p) * weight(S, p)
-retactual = f(p) / rhoval(p[3])^2
-@test ret ≈ retactual
+P = rho2operator(ST, Nt)
+cfs0 = gettangentspacecoeffsvec(Fϕ, Fθ)
+cfs = P * cfs0
+fϕ, fθ = getscspacecoeffsvecs(ST, cfs)
+@test Fϕ(p) * S.family.ρ(z)^2 ≈ Fun(S0, fϕ)(p) atol=1e-13
+@test Fθ(p) * S.family.ρ(z)^2 ≈ Fun(S0, fθ)(p) atol=1e-13
+cfs = transformparamsoperator(ST, Nt+2) * P * cfs0
+fϕ, fθ = getscspacecoeffsvecs(ST, cfs)
+@test Fϕ(p) * S.family.ρ(z)^2 ≈ Fun(S2, fϕ)(p) atol=1e-13
+@test Fθ(p) * S.family.ρ(z)^2 ≈ Fun(S2, fθ)(p) atol=1e-13
+# R (mult by ∇ρ to scalar fun)
+R = gradrhooperator(S, N)
+cfs0 = R * f.coefficients
+cfs, shouldbezero = getscspacecoeffsvecs(ST, cfs0)
+@test maximum(abs, shouldbezero) == 0
+@test Fun(S2, cfs)(p) ≈ f(p) * p[3]
 
 
-
+#===#
 # Laplacian tests
+
 # 1) u = constant
 N = 10
 L = laplacianoperator(S, N)
@@ -303,6 +332,8 @@ v = Fun((x,y,z)->(1 - (3(x-0.2)^2 + 5y^2)), S, 30); v.coefficients
 V = operatorclenshaw(v, S, N)
 vf = Fun(S, V * f.coefficients)
 @test vf(p) ≈ v(p) * f(p)
+
+#====#
 
 
 

@@ -328,36 +328,44 @@ function rhodivminusgradrhodotoperator(S::SphericalCapTangentSpace{<:Any, B, T, 
 end
 
 # Coriolis operator (2Ωz r̲̂ ×)
-function coriolisoperator(S::SphericalCapTangentSpace{<:Any, B, T, <:Any}, N) where {B,T}
+function coriolisoperator(S::SphericalCapTangentSpace{<:Any, B, T, <:Any}, N;
+                            square=true) where {B,T}
     # We output the operator that results in coefficients {u\^Φ, u\^Φ}, for
     # expansion in the 𝕋 basis
 
     Ω = 1.0 # B(72921) / 1e9 # TODO make this a global definition somehow (maybe a
                        # member of the class struct)
 
-   # resizedataonedimops! for the SCSpace
-   S0 = getSCSpace(S)
-   resizedataonedimops!(S0, N+1)
+    # resizedataonedimops! for the SCSpace
+    S0 = getSCSpace(S)
+    resizedataonedimops!(S0, N+1)
 
-   band1 = 1
-   band2 = 1
-   A = BandedBlockBandedMatrix(Zeros{B}(2 * (N+band2+1)^2, 2 * (N+1)^2),
-                               (2 * [N+band2+1; 2(N+band2):-2:1], 2 * [N+1; 2N:-2:1]),
-                               (0, 0), (4band2+1, 4band1+1))
-   for k = 0:N
-       if k % 100 == 0
+    band1 = 1
+    band2 = 1
+    A = BandedBlockBandedMatrix(Zeros{B}(2 * (N+band2+1)^2, 2 * (N+1)^2),
+                                (2 * [N+band2+1; 2(N+band2):-2:1], 2 * [N+1; 2N:-2:1]),
+                                (0, 0), (4band2+1, 4band1+1))
+    for k = 0:N
+        if k % 100 == 0
            @show "coriolis", k
-       end
-       for n = k:N, m = max(0, n-band1):n+band2 # min(n+band2, N)
-           if k ≤ m
-               c = 2 * Ω * recγ(B, S0, m, k, n-m+2)
-               for i = 0:min(1,k), j = 0:1
-                   view(A, Block(k+1, k+1))[getblockindextangent(S, m, k, i, abs(j-1)), getblockindextangent(S, n, k, i, j)] = c * (-1)^(j)
-               end
-           end
-       end
-   end
-   A
+        end
+        for n = k:N, m = max(0, n-band1):n+band2 # min(n+band2, N)
+            if k ≤ m
+                c = 2 * Ω * recγ(B, S0, m, k, n-m+2)
+                for i = 0:min(1,k), j = 0:1
+                    view(A, Block(k+1, k+1))[getblockindextangent(S, m, k, i, abs(j-1)), getblockindextangent(S, n, k, i, j)] = c * (-1)^(j)
+                end
+            end
+        end
+    end
+    A
+    if square
+        F = BandedBlockBandedMatrix(A[1:getopindex(S, N, N, 1, 1), 1:getopindex(S, N, N, 1, 1)],
+                                      (2 * [N+1; 2N:-2:1], 2 * [N+1; 2N:-2:1]),
+                                      (0, 0), (4band2+1, 4band1+1))
+    else
+        A
+    end
 end
 
 
@@ -378,6 +386,96 @@ function increasedegreeoperator(S::SphericalCapTangentSpace{<:Any, B, T, <:Any},
     for k = 0:N, n = k:N
         for i = 0:min(1,k), j = 0:1
             view(C, Block(k+1, k+1))[getblockindextangent(S, n, k, i, j), getblockindextangent(S, n, k, i, j)] = 1.0
+        end
+    end
+    C
+end
+
+# The operator for mult by ρ^2
+function rho2operator(S::SphericalCapTangentSpace{<:Any, B, T, <:Any}, N::Int) where {B,T}
+    band1 = band2 = 2
+    P = BandedBlockBandedMatrix(Zeros{B}(2(N+band2+1)^2, 2(N+1)^2),
+                                (2 * [N+band2+1; 2(N+band2):-2:1], 2 * [N+1; 2N:-2:1]),
+                                (0, 0), (4band2, 4band1))
+
+    S0 = getSCSpace(S)
+    resizedataonedimops!(S0, N+band2)
+
+    # Get the operator for mult by ρ²
+    ptsr, wr = pointswithweights(B, getRspace(S0, 0), N+2)
+    rhoptsr2 = S.family.ρ.(ptsr).^2
+    getopnorms(S0, N+band2+1)
+    for k = 0:N
+        R = getRspace(S0, k)
+        getopptseval(R, N-k+band2, ptsr)
+        for n = k:N, m = max(0, n-band1):n+band2 # min(n+band2, N)
+            if k ≤ m
+                val = inner2(R, getptsevalforop(R, n-k), getptsevalforop(R, m-k) .* rhoptsr2.^(k+1), wr)
+                for i = 0:min(1,k), j=0:1
+                    view(P, Block(k+1, k+1))[getblockindextangent(S, m, k, i, j),
+                                             getblockindextangent(S, n, k, i, j)] = val / getopnorm(R)
+                end
+            end
+        end
+        resetopptseval(R)
+    end
+    P
+end
+
+#====#
+# Conversion operator (from 𝕋^{0} -> 𝕋^{2})
+function transformparamsoperator(S::SphericalCapTangentSpace{<:Any, B, <:Any, <:Any}, N::Int;
+                                    paramincrease::Int=2) where B
+    # St refers to the target space
+    @assert paramincrease ≥ 2 "Invalid parameter: paramincrease should be ≥ 2"
+    s = getSCSpace(S)
+    st = differentiatespacephi(s)
+    for i = 2:paramincrease
+        st = differentiatespacephi(st)
+    end
+    @show st.params
+    T = transformparamsoperator(s, st, N; weighted=false)
+    # C = BandedBlockBandedMatrix(Zeros{B}((N+band2+1)^2, (N+1)^2),
+    #                             ([N+band2+1; 2(N+band2):-2:1], [N+1; 2N:-2:1]),
+    #                             (0, 0), (2band2, 2band1))
+    band1 = 2; band2 = 0
+    C = BandedBlockBandedMatrix(Zeros{B}(2(N+1)^2, 2(N+1)^2),
+                                (2 * [N+1; 2N:-2:1], 2 * [N+1; 2N:-2:1]),
+                                (0, 0), (4band2, 4band1))
+    for k = 0:N
+        for n = k:N, m = max(0, n-band1):n+band2 # min(n+band2, N)
+            if k ≤ m
+                val = view(T, Block(k+1, k+1))[getblockindex(s, m, k, 0),
+                                               getblockindex(s, n, k, 0)]
+                for i = 0:min(1,k), j = 0:1
+                    view(C, Block(k+1, k+1))[getblockindextangent(S, m, k, i, j),
+                                             getblockindextangent(S, n, k, i, j)] = val
+                end
+            end
+        end
+    end
+    C
+end
+
+
+#===#
+# "Coeffs degree increaser" operator matrix
+
+function increasedegreeoperator(S::SphericalCapTangentSpace{<:Any, B, T, <:Any},
+                                N, Nto; weighted=false) where {B,T}
+    # This operator acts on the coeffs vector of a Fun in the space S to just
+    # reorganise the coeffs so that the length is increased from deg N to
+    # deg Nto, with all coeffs representing the extra degrees being zero.
+
+    # TODO weighted=true
+    C = BandedBlockBandedMatrix(Zeros{B}(2(Nto+1)^2, 2(N+1)^2),
+                                (2 * [Nto+1; 2(Nto):-2:1], 2 * [N+1; 2N:-2:1]),
+                                (0, 0), (0, 0))
+    @show "incr deg", N, Nto, weighted
+    for k = 0:N, n = k:N
+        for i = 0:min(1,k), j = 0:1
+            view(C, Block(k+1, k+1))[getblockindextangent(S, n, k, i, j),
+                                     getblockindextangent(S, n, k, i, j)] = 1.0
         end
     end
     C
