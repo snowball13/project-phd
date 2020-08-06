@@ -231,7 +231,9 @@
 \newcommand{\ppphi}{\frac{\partial}{\partial \phi}}
 \newcommand{\ppz}{\frac{\partial}{\partial z}}
 \newcommand{\rhoppphi}{\rho \ppphi}
+\newcommand{\rhozppphi}{\rho(z) \ppphi}
 \newcommand{\pptheta}{\frac{\partial}{\partial \theta}}
+\newcommand{\ppthetatwo}{\frac{\partial^2}{\partial \theta^2}}
 \newcommand{\bigWNi}{\mathbb{W}_N^{(1)}}
 \newcommand{\scopi}{\scop^{(1)}}
 \newcommand{\scopnkii}{\scopnki^{(1)}}
@@ -440,7 +442,7 @@ We can now define the 3D OPs for the spherical cap.
 \begin{definition}\label{def:constuction}
 Define the one-parameter 3D orthogonal polynomials via:
 \begin{align}
-	\scopnkia(x,y,z) := \genjacnmk^{(a,2k)}(x) \: \rho(x)^k \: \chki\fpr(\frac{y}{\rho(x)}), \quad (x,y) \in \Omega, 
+	\scopnkia(x,y,z) := \genjacnmk^{(a,2k)}(z) \: \rho(z)^k \: \chki\fpr(\frac{x}{\rho(z)}, \frac{y}{\rho(z)}), \quad (x,y,z) \in \Omega, 
 \end{align}
 \end{definition}
 
@@ -456,8 +458,15 @@ with
 \end{align}
 We note that the weight $\genjacw^{(a,b)}(z)$ has been used in the construction of 2D orthogonal polynomials on disk-slices and trapeziums \cite{snowball2019sparse}, where a method for obtaining recurrence coefficients and evaluating integrals was established (the weight is in fact semi-classical, and is equivalent to a generalized Jacobi weight \cite[\S5]{magnus1995painleve}). 
 
+For clarity we state here that throughout we will regularly use coordinate transformations, mainly in any integrals over the surface $\Omega$, between the cartesian $(x,y,z)$ and the spherical coordinates $(\phi, \theta)$ -- that is, for any point $(x,y,z) \in \Omega$, let $(\phi, \theta)$ denote the angles such that:
+\begin{align*}
+	z &= \cos(\phi) \\
+	x &= \sin(\phi) \: \cos(\theta) = \rho(z) \: \cos(\theta) \\
+	y &= \sin(\phi) \: \sin(\theta) = \rho(z) \: \sin(\theta)
+\end{align*}
 
-\subsection{Jacobi matrices}
+
+\subsection{Jacobi matrices}\label{subsection:jacobimats}
 
 We can express the three-term recurrences associated with $\genjac_n^{(a,b)}$ as
 \begin{align}
@@ -496,7 +505,7 @@ Define
 			\half &\text{otherwise}
 		\end{cases}
 \end{align}
-$\scopnkia(x,y,z)$ satisfy the following 3-term recurrences:
+$\scopnkia(x,y,z)$ satisfy the following recurrences:
 \begin{align*}
 	x \: \scopnkia(x,y,z) &= \alphaa_{n,k,1} \:  \scopa_{n-1, k-1, i}(x, y, z) + \alphaa_{n,k,2} \:  \scopa_{n-1, k+1, i}(x, y, z) \nonumber \\
 		& \quad \quad + \alphaa_{n,k,3} \:  \scopa_{n, k-1, i}(x, y, z) + \alphaa_{n,k,4} \:  \scopa_{n, k+1, i}(x, y, z) \nonumber \\
@@ -561,7 +570,164 @@ where again $\delta_{k, j}$ is the standard Kronecker delta function, and we hav
 
 \end{proof}
 
-Three-term recurrences lead to Jacobi operators that correspond to multiplication by $x$, $y$ and $z$. Define, for $n=0,1,2,\dots$: 
+The recurrences in Lemma \ref{lemma:Qrecurrence} lead to Jacobi operators that correspond to multiplication by $x$, $y$ and $z$. Let $N \in \N$ and define: 
+\begin{align}
+	\bigscopNka &:= 
+		\begin{pmatrix}
+			\scopa_{k,k,0}(x,y,z) \\
+			\scopa_{k,k,1}(x,y,z) \\
+			\vdots \\
+			\scopa_{N,k,0}(x,y,z) \\
+			\scopa_{N,k,1}(x,y,z)
+		\end{pmatrix} \in \R^{2(N-k+1)},  \quad k = 1,\dots,N, \label{eqn:OPdefNka} \\ 
+	\bigscopa_{N,0} &:= 
+		\begin{pmatrix}
+			\scopa_{0,0,0}(x,y,z) \\
+			\vdots \\
+			\scopa_{N,0,0}(x,y,z) \\
+		\end{pmatrix} \in \R^{N+1}, \label{eqn:OPdefN0a} \\
+	\bigscopNa &:= 
+		\begin{pmatrix}
+			\bigscopa_{N,0} \\
+			\vdots \\
+			\bigscopa_{N,N}
+		\end{pmatrix} \in \R^{(N+1)^2} \label{eqn:OPdefNa}
+\end{align}
+and set $J_x^{(a)}, J_y^{(a)}, J_z^{(a)}$ as the Jacobi matrices corresponding to
+\begin{align}
+	J_x^{(a,b,c,d)} \: \bigscopNa(x,y,z) = x \: \bigscopNa(x,y,z), \nonumber \\
+	J_y^{(a,b,c,d)} \: \bigscopNa(x,y,z) = y \: \bigscopNa(x,y,z), \label{eqn:jacobimatricesdefinition} \\
+	J_z^{(a,b,c,d)} \: \bigscopNa(x,y,z) = z \: \bigscopNa(x,y,z). \nonumber
+\end{align}
+The matrices $J_x^{(a)}, J_y^{(a)}, J_z^{(a)}$ act on the coefficients vector of a function's expansion in the $\{\scopnkia\}$ basis. For example, let $a$ be a general parameter and let a function $f(x,y,z)$ defined on $\Omega$ be approximated up to order $N \in \N$ by its expansion $f(x,y,z) = \bigscopNa(x,y,z)^\top \mathbf{f}$. Then $x \: f(x,y,z)$ is approximated by $\bigscopNa(x,y,z)^\top {J_x^{(a)\top}} \mathbf{f}$. In other words, ${J_x^{(a,b,c,d)\top}} \mathbf{f}$ is the coefficients vector for the expansion of the function $(x,y,z) \mapsto x \: f(x,y,z)$ in the  $\{\scopnkia\}$ basis. Note that $J_x^{(a)}, J_y^{(a)}, J_z^{(a)}$ are banded-block-banded matrices:
+
+\begin{definition}
+A block matrix $A$ with blocks $A_{i,j}$ has block-bandwidths $(L,U)$ if $A_{i,j} = 0$ for $- L \leq j-i \leq U$, and sub-block-bandwidths $(\lambda, \mu)$ if all blocks $A_{i,j}$ are banded with bandwidths $(\lambda,\mu)$. A matrix where the block-bandwidths and sub-block-bandwidths are small compared to the dimensions is referred to as a banded-block-banded matrix. 
+\end{definition}
+
+For example, $J_x^{(a)}, J_y^{(a)}, J_z^{(a)}$ are block-tridiagonal (block-bandwidths $(1,1)$):
+\begin{align*}
+	J_{x/y/z}^{(a)} &= 
+		\begin{pmatrix}
+			B^{(a)}_{x/y/z, 0} & A^{(a)}_{x/y/z, 0} & & & & \\
+			C^{(a)}_{x/y/z, 1} & B^{(a)}_{x/y/z, 1} & A^{(a)}_{x/y/z, 1} & & & \\
+			& C^{(a)}_{x/y/z, 2} & B^{(a)}_{x/y/z, 2} & A^{(a)}_{x/y/z, 2} & & & \\
+			& & C^{(a)}_{x/y/z, 3} & \ddots & \ddots & \\
+			& & & \ddots & \ddots & \ddots \\
+		\end{pmatrix}
+\end{align*}
+
+For $J_x^{(a)}$, the sub-blocks $A^{(a)}_{x, k}, C^{(a)}_{x, k}$ have sub-block-bandwidths $(2,2)$ while the sub-blocks $B^{(a)}_{x,k}$ are zero matrices: \bstodo{fix bandwidths}
+\begin{align*}
+	B^{(a)}_{x,0} &= 0 \in \R^{(N+1)\times2N}, \quad B^{(a)}_{x,k} = 0 \in \R^{2(N-k+1)\times2(N-k)} \text{ for } k = 1,2,\dots,N \\
+	A^{(a)}_{x,k} &:= 
+		\begin{pmatrix}
+			A^{(a)}_{k,k,6} & & & \\
+			A^{(a)}_{k+1,k,4} & \ddots & & \\
+			A^{(a)}_{k+2,k,2} & \ddots & \ddots & \\
+			& \ddots & \ddots & A^{(a)}_{N-1,k,6} \\
+			& & A^{(a)}_{N,k,2} & A^{(a)}_{N,k,4}
+		\end{pmatrix}, \quad k = 0,1,2,\dots,N \\
+	A^{(a)}_{x,0} &\in \R^{(N+1)\times2N}, \quad A^{(a)}_{x,k} \in \R^{2(N-k+1)\times2(N-k)} \text{ for } k = 1,2,\dots,N \\
+	C^{(a)}_{x,k} &:= 
+		\begin{pmatrix}
+			A^{(a)}_{k,k,1} & A^{(a)}_{k,k,3} & A^{(a)}_{k,k,5} & & \\
+			& \ddots & \ddots & \ddots \\
+			& & \ddots & \ddots & A^{(a)}_{N-1,k,5} \\
+			& & & A^{(a)}_{N,k,1} & A^{(a)}_{N,k,3}
+		\end{pmatrix} \in \R^{2(N-k+1)\times2(N-k+2)}, \quad k = 1,2,\dots \\
+	C^{(a)}_{x,1} &\in \R^{2N\times(N+1)}, \quad C^{(a)}_{x,k} \in \R^{2(N-k+1)\times2(N-k+3)} \text{ for } k = 2,3,\dots,N
+\end{align*}
+where for $k = 1,\dots,N, \: n = k,\dots,N$
+\begin{align*}
+	A^{(a)}_{n,k,j} &:= 
+		\begin{pmatrix}
+			\alphaa_{n,k,j} & 0 \\
+			0 & \alphaa_{n,k,j}
+		\end{pmatrix} \in \R^{2\times2}, (k \ne 1 \text { for } j \text{ odd}) \\
+	A^{(a)}_{n,0,j} &:=
+		\begin{pmatrix}
+			\alphaa_{n,0,j} & 0
+		\end{pmatrix} \in \R^{1\times2}, j \text{ odd} \\
+	A^{(a)}_{n,1,j} &:=
+		\begin{pmatrix}
+			\alphaa_{n,1,j} \\
+			0
+		\end{pmatrix} \in \R^{2\times1}, j \text{ odd} \\
+\end{align*}
+
+For $J_y^{(a)}$, the sub-blocks have sub-block-bandwidths $(3,3)$ while the sub-blocks $B^{(a)}_{y,k}$ are zero matrices:
+\begin{align*}
+	B^{(a)}_{y,0} &= 0 \in \R^{(N+1)\times2N}, \quad B^{(a)}_{y,k} = 0 \in \R^{2(N-k+1)\times2(N-k)} \text{ for } k = 1,2,\dots,N \\
+	A^{(a)}_{y,k} &:= 
+		\begin{pmatrix}
+			B^{(a)}_{k,k,6} & & & \\
+			B^{(a)}_{k+1,k,4} & \ddots & & \\
+			B^{(a)}_{k+2,k,2} & \ddots & \ddots & \\
+			& \ddots & \ddots & B^{(a)}_{N-1,k,6} \\
+			& & B^{(a)}_{N,k,2} & B^{(a)}_{N,k,4}
+		\end{pmatrix}, \quad k = 0,1,2,\dots,N \\
+	A^{(a)}_{y,0} &\in \R^{(N+1)\times2N}, \quad A^{(a)}_{y,k} \in \R^{2(N-k+1)\times2(N-k)} \text{ for } k = 1,2,\dots,N \\
+	C^{(a)}_{y,k} &:= 
+		\begin{pmatrix}
+			B^{(a)}_{k,k,1} & B^{(a)}_{k,k,3} & B^{(a)}_{k,k,5} & & \\
+			& \ddots & \ddots & \ddots \\
+			& & \ddots & \ddots & B^{(a)}_{N-1,k,5} \\
+			& & & B^{(a)}_{N,k,1} & B^{(a)}_{N,k,3}
+		\end{pmatrix} \in \R^{2(N-k+1)\times2(N-k+2)}, \quad k = 1,2,\dots \\
+	C^{(a)}_{y,1} &\in \R^{2N\times(N+1)}, \quad C^{(a)}_{y,k} \in \R^{2(N-k+1)\times2(N-k+3)} \text{ for } k = 2,3,\dots,N
+\end{align*}
+where for $k = 1,\dots,N, \: n = k,\dots,N$
+\begin{align*}
+	B^{(a)}_{n,k,j} &:= 
+		\begin{pmatrix}
+			0 & \betaa_{n,k,0,j} \\
+			\betaa_{n,k,1,j} & 0
+		\end{pmatrix} \in \R^{2\times2}, (k \ne 1 \text { for } j \text{ odd}) \\
+	B^{(a)}_{n,0,j} &:=
+		\begin{pmatrix}
+			0 & \betaa_{n,0,0,j}
+		\end{pmatrix} \in \R^{1\times2}, j \text{ odd} \\
+	B^{(a)}_{n,1,j} &:=
+		\begin{pmatrix}
+			0 \\
+			\betaa_{n,1,1,j}
+		\end{pmatrix}\in \R^{2\times1}, j \text{ odd} \\
+\end{align*}
+
+For $J_z^{(a)}$, the sub-blocks $B^{(a)}_{z,k}$ have sub-block-bandwidths $(3,3)$, while the sub-blocks $A^{(a)}_{z,k}, \: C^{(a)}_{z,k}$ are zero matrices:
+\begin{align*}
+	A^{(a)}_{z,0} &= 0 \in \R^{(N+1)\times2N}, \quad A^{(a)}_{z,k} = 0 \in \R^{2(N-k+1)\times2(N-k)} \text{ for } k = 1,2,\dots,N \\
+	C^{(a)}_{z,1} &= 0 \in \R^{2N\times(N+1)}, \quad C^{(a)}_{z,k} = 0 \in \R^{2(N-k+1)\times2(N-k+3)} \text{ for } k = 2,3,\dots,N \\
+	B^{(a)}_{z,k} &:= 
+		\begin{pmatrix}
+			\Gamma^{(a)}_{k,k,2} & \Gamma^{(a)}_{k,k,3} & \\
+			\Gamma^{(a)}_{k+1,k,1} & \ddots & \ddots & \\
+			& \ddots & \ddots & \Gamma^{(a)}_{N-1,k,3} \\
+			& & \Gamma^{(a)}_{N,k,1} & \Gamma^{(a)}_{N,k,2}
+		\end{pmatrix} \in \R^{(2n+1)\times(2n+1)}  \quad n = 0,1,2,\dots \\
+	B^{(a)}_{z,0} &\in \R^{(N+1)\times(N+1)}, \quad B^{(a)}_{z,k} \in \R^{2(N-k+1)\times2(N-k+1)} \text{ for } k = 1,2,\dots,N
+\end{align*}
+where for $k = 1,\dots,N, \: n = k,\dots,N$
+\begin{align*}
+	\Gamma^{(a)}_{n,k,j} &:= 
+		\begin{pmatrix}
+			\gamma_{n,k,j} & 0 \\
+			0 & \gamma_{n,k,j}
+		\end{pmatrix} \in \R^{2\times2}, \\
+	\Gamma^{(a)}_{n,0,j} &:= \gammaa_{n,0,j}.
+\end{align*}
+
+Note that the sparsity of the Jacobi matrices (in particular the sparsity of the sub-blocks) comes from the natural sparsity of the three-term recurrences of the 1D OPs and the circular harmonics, meaning that the sparsity is not limited to the specific spherical cap, and would extend to the spherical band.
+
+
+
+
+\subsection{Building the OPs} 
+
+In this section, we introduce new notation for a different ordering of the OP vector, in order to demonstrate how we can obtain a recurrence for the OPs in matrix-vector form, and derive the associated 'Clenshaw matrices'. While in Section \ref{subsection:jacobimats} the ordering used is convenient for the application of Jacobi and differential operators to the vector of coefficients of a given function's expansion, the ordering we will use in this section is convenient for building the OPs and more importantly obtaining the 'Clenshaw matrices' necessary for efficient function evaluation using the Clenshaw algorithm. In practice, it is simply a matter of converting coefficients between the two orderings.
+
+Define, for $n=0,1,2,\dots$: 
 \begin{align*}
 	\bigscoptna := 
 		\begin{pmatrix}
@@ -581,157 +747,145 @@ Three-term recurrences lead to Jacobi operators that correspond to multiplicatio
 			\vdots \\
 		\end{pmatrix}
 \end{align*}
-and set $J_x^{(a)}, J_y^{(a)}, J_z^{(a)}$ as the Jacobi matrices corresponding to
+and set $\tilde J_x^{(a)}, \tilde J_y^{(a)}, \tilde J_z^{(a)}$ as the Jacobi matrices corresponding to
 \begin{align}
-	J_x^{(a,b,c,d)} \: \bigscopta(x,y,z) = x \: \bigscopta(x,y,z), \nonumber \\
-	J_y^{(a,b,c,d)} \: \bigscopta(x,y,z) = y \: \bigscopta(x,y,z), \label{eqn:jacobimatricesdefinition} \\
-	J_z^{(a,b,c,d)} \: \bigscopta(x,y,z) = z \: \bigscopta(x,y,z). \nonumber
+	\tilde J_x^{(a,b,c,d)} \: \bigscopta(x,y,z) = x \: \bigscopta(x,y,z), \nonumber \\
+	\tilde J_y^{(a,b,c,d)} \: \bigscopta(x,y,z) = y \: \bigscopta(x,y,z), \label{eqn:jacobimatricesdefinitionalt} \\
+	\tilde J_z^{(a,b,c,d)} \: \bigscopta(x,y,z) = z \: \bigscopta(x,y,z). \nonumber
 \end{align}
-%The matrices $J_x^{(a)}, J_y^{(a)}, J_z^{(a)}$ act on the coefficients vector of a function's expansion in the $\{\scopnkia\}$ basis. For example, let $a$ be a general parameter and let a function $f(x,y,z)$ defined on $\Omega$ be approximated by its expansion $f(x,y,z) = \bigscopta(x,y,z)^\top \mathbf{f}$. Then $x \: f(x,y,z)$ is approximated by $\bigscopta(x,y,z)^\top {J_x^{(a)\top}} \mathbf{f}$. In other words, ${J_x^{(a,b,c,d)\top}} \mathbf{f}$ is the coefficients vector for the expansion of the function $(x,y,z) \mapsto x \: f(x,y,z)$ in the  $\{\scopnkia\}$ basis. 
-We will note here that we present these definitions of $\bigscoptna$, $\bigscopta$ and the Jacobi matrices in order to explain how we can derive the relationship for building the OPs themselves, i.e. gather a relationship \bstodoinline{is Q the right way to go or shall i derive the clenshaw matrices in Fourier mode k order?}
-Note that $J_x^{(a)}, J_y^{(a)}, J_z^{(a)}$ are banded-block-banded matrices:
-\begin{definition}
-A block matrix $A$ with blocks $A_{i,j}$ has block-bandwidths $(L,U)$ if $A_{i,j} = 0$ for $- L \leq j-i \leq U$, and sub-block-bandwidths $(\lambda, \mu)$ if all blocks $A_{i,j}$ are banded with bandwidths $(\lambda,\mu)$. A matrix where the block-bandwidths and sub-block-bandwidths are small compared to the dimensions is referred to as a banded-block-banded matrix. 
-\end{definition}
-For example, $J_x^{(a)}, J_y^{(a)}, J_z^{(a)}$ are block-tridiagonal (block-bandwidths $(1,1)$):
+where
 \begin{align*}
-	J_{x/y/z}^{(a)} &= 
+	\tilde J_{x/y/z}^{(a)} &= 
 		\begin{pmatrix}
-			B^{(a)}_{x/y/z, 0} & A^{(a)}_{x/y/z, 0} & & & & \\
-			C^{(a)}_{x/y/z, 1} & B^{(a)}_{x/y/z, 1} & A^{(a)}_{x/y/z, 1} & & & \\
-			& C^{(a)}_{x/y/z, 2} & B^{(a)}_{x/y/z, 2} & A^{(a)}_{x/y/z, 2} & & & \\
-			& & C^{(a)}_{x/y/z, 3} & \ddots & \ddots & \\
+			\tilde B^{(a)}_{x/y/z, 0} & \tilde A^{(a)}_{x/y/z, 0} & & & & \\
+			\tilde C^{(a)}_{x/y/z, 1} & \tilde B^{(a)}_{x/y/z, 1} & \tilde A^{(a)}_{x/y/z, 1} & & & \\
+			& \tilde C^{(a)}_{x/y/z, 2} & \tilde B^{(a)}_{x/y/z, 2} & \tilde A^{(a)}_{x/y/z, 2} & & & \\
+			& & \tilde C^{(a)}_{x/y/z, 3} & \ddots & \ddots & \\
 			& & & \ddots & \ddots & \ddots \\
-		\end{pmatrix}
+		\end{pmatrix}.
 \end{align*}
-For $J_x^{(a)}$, the sub-blocks have sub-block-bandwidths $(2,2)$:
+These matrices are then block-tridiagonal (block-bandwidths $(1,1)$).
+
+For $\tilde J_x^{(a)}$, the sub-blocks have sub-block-bandwidths $(2,2)$:
 \begin{align*}
-	A^{(a)}_{x,n} &:= 
+	\tilde A^{(a)}_{x,n} &:= 
 		\begin{pmatrix}
-			0 & A^{(a)}_{n,0,6} & 0 & & \\
-			A^{(a)}_{n,1,5} & \ddots & \ddots & & \\
+			0 & \tilde A^{(a)}_{n,0,6} & 0 & & \\
+			\tilde A^{(a)}_{n,1,5} & \ddots & \ddots & & \\
 			& \ddots & \ddots & \ddots & \\
-			& & A^{(a)}_{n,n,5} & 0 & A^{(a)}_{n,n,6} \\
+			& & \tilde A^{(a)}_{n,n,5} & 0 & \tilde A^{(a)}_{n,n,6} \\
 		\end{pmatrix} \in \R^{(2n+1)\times(2n+3)}, \quad n = 0,1,2,\dots \\
-	B^{(a)}_{x,n} &:= 
+	\tilde B^{(a)}_{x,n} &:= 
 		\begin{pmatrix}
-			0 & A^{(a)}_{n,0,4} & & \\
-			A^{(a)}_{n,1,3} & \ddots & \ddots & \\
-			& \ddots & \ddots & A^{(a)}_{n,n-1,4} \\
-			& & A^{(a)}_{n,n,3} & 0
+			0 & \tilde A^{(a)}_{n,0,4} & & \\
+			\tilde A^{(a)}_{n,1,3} & \ddots & \ddots & \\
+			& \ddots & \ddots & \tilde A^{(a)}_{n,n-1,4} \\
+			& & \tilde A^{(a)}_{n,n,3} & 0
 		\end{pmatrix} \in \R^{(2n+1)\times(2n+1)}  \quad n = 0,1,2,\dots \\
-	C^{(a)}_{x,n} &:= 
+	\tilde C^{(a)}_{x,n} &:= 
 		\begin{pmatrix}
-			0 & A^{(a)}_{n,0,2} & & \\
-			A^{(a)}_{n,1,1} & \ddots & \ddots & \\
+			0 & \tilde A^{(a)}_{n,0,2} & & \\
+			\tilde A^{(a)}_{n,1,1} & \ddots & \ddots & \\
 			& \ddots & \ddots &A^{(a)}_{n,n-2,2} \\
 			& & \ddots & 0 \\
-			& & & A^{(a)}_{n,n,1} \\
+			& & & \tilde A^{(a)}_{n,n,1} \\
 		\end{pmatrix} \in \R^{(2n+1)\times(2n-1)}, \quad n = 1,2,\dots
 \end{align*}
 where
 \begin{align*}
-	A^{(a)}_{n,k,j} &:= 
+	\tilde A^{(a)}_{n,k,j} &:= 
 		\begin{pmatrix}
 			\alphaa_{n,k,j} & 0 \\
 			0 & \alphaa_{n,k,j}
 		\end{pmatrix} \in \R^{2\times2}, \quad k = 1,\dots,n \: (j \text{ even}), \quad k = 2,\dots,n \: (j \text{ odd}) \\
-	A^{(a)}_{n,0,j} &:=
+	\tilde A^{(a)}_{n,0,j} &:=
 		\begin{pmatrix}
 			\alphaa_{n,0,j} & 0
 		\end{pmatrix} \in \R^{1\times2}, \quad j \text{ even} \\
-	A^{(a)}_{n,1,j} &:=
+	\tilde A^{(a)}_{n,1,j} &:=
 		\begin{pmatrix}
 			\alphaa_{n,1,j} \\
 			0
 		\end{pmatrix} \in \R^{2\times1}, \quad j \text{ odd} \\
 \end{align*}
-For $J_y^{(a)}$, the sub-blocks have sub-block-bandwidths $(3,3)$:
+For $\tilde J_y^{(a)}$, the sub-blocks have sub-block-bandwidths $(3,3)$:
 \begin{align*}
-	A^{(a)}_{y,n} &:= 
+	\tilde A^{(a)}_{y,n} &:= 
 		\begin{pmatrix}
-			0 & B^{(a)}_{n,0,6} & 0 & & \\
-			B^{(a)}_{n,1,5} & \ddots & \ddots & & \\
+			0 & \tilde B^{(a)}_{n,0,6} & 0 & & \\
+			\tilde B^{(a)}_{n,1,5} & \ddots & \ddots & & \\
 			& \ddots & \ddots & \ddots & \\
-			& & B^{(a)}_{n,n,5} & 0 & B^{(a)}_{n,n,6} \\
+			& & \tilde B^{(a)}_{n,n,5} & 0 & \tilde B^{(a)}_{n,n,6} \\
 		\end{pmatrix} \in \R^{(2n+1)\times(2n+3)}, \quad n = 0,1,2,\dots \\
-	B^{(a)}_{y,n} &:= 
+	\tilde B^{(a)}_{y,n} &:= 
 		\begin{pmatrix}
-			0 & B^{(a)}_{n,0,4} & & \\
-			B^{(a)}_{n,1,3} & \ddots & \ddots & \\
-			& \ddots & \ddots & B^{(a)}_{n,n-1,4} \\
-			& & B^{(a)}_{n,n,3} & 0
+			0 & \tilde B^{(a)}_{n,0,4} & & \\
+			\tilde B^{(a)}_{n,1,3} & \ddots & \ddots & \\
+			& \ddots & \ddots & \tilde B^{(a)}_{n,n-1,4} \\
+			& & \tilde B^{(a)}_{n,n,3} & 0
 		\end{pmatrix} \in \R^{(2n+1)\times(2n+1)}  \quad n = 0,1,2,\dots \\
-	C^{(a)}_{y,n} &:= 
+	\tilde C^{(a)}_{y,n} &:= 
 		\begin{pmatrix}
-			0 & B^{(a)}_{n,0,2} & & \\
-			B^{(a)}_{n,1,1} & \ddots & \ddots & \\
-			& \ddots & \ddots & B^{(a)}_{n,n-2,2} \\
+			0 & \tilde B^{(a)}_{n,0,2} & & \\
+			\tilde B^{(a)}_{n,1,1} & \ddots & \ddots & \\
+			& \ddots & \ddots & \tilde B^{(a)}_{n,n-2,2} \\
 			& & \ddots & 0 \\
-			& & & B^{(a)}_{n,n,1} \\
+			& & & \tilde B^{(a)}_{n,n,1} \\
 		\end{pmatrix} \in \R^{(2n+1)\times(2n-1)}, \quad n = 1,2,\dots
 \end{align*}
 where
 \begin{align*}
-	B^{(a)}_{n,k,j} &:= 
+	\tilde B^{(a)}_{n,k,j} &:= 
 		\begin{pmatrix}
-			0 & \betaa_{n,k,j} \\
-			\betaa_{n,k,j} & 0
+			0 & \betaa_{n,k,0,j} \\
+			\betaa_{n,k,1,j} & 0
 		\end{pmatrix} \in \R^{2\times2}, \quad k = 1,\dots,n \: (j \text{ even}), \quad k = 2,\dots,n \: (j \text{ odd}) \\
-	B^{(a)}_{n,0,j} &:=
+	\tilde B^{(a)}_{n,0,j} &:=
 		\begin{pmatrix}
-			0 & \betaa_{n,0,j}
+			0 & \betaa_{n,0,0,j}
 		\end{pmatrix} \in \R^{1\times2}, \quad j \text{ even} \\
-	B^{(a)}_{n,1,j} &:=
+	\tilde B^{(a)}_{n,1,j} &:=
 		\begin{pmatrix}
 			0 \\
-			\betaa_{n,1,j}
+			\betaa_{n,1,1,j}
 		\end{pmatrix} \in \R^{2\times1}, \quad j \text{ odd} \\
 \end{align*}
-For $J_z^{(a)}$, the sub-blocks are diagonal, i.e. have sub-block-bandwidths $(0,0)$:
+For $\tilde J_z^{(a)}$, the sub-blocks are diagonal, i.e. have sub-block-bandwidths $(0,0)$:
 \begin{align*}
-	A^{(a)}_{z,n} &:= 
+	\tilde A^{(a)}_{z,n} &:= 
 		\begin{pmatrix}
-			\Gamma^{(a)}_{n,0,3} & 0 & \\
+			\tilde \Gamma^{(a)}_{n,0,3} & 0 & \\
 			0 & \ddots & \ddots & & \\
 			& \ddots & \ddots & \ddots & \\
-			& & 0 & \Gamma^{(a)}_{n,0,3} & 0 \\
+			& & 0 & \tilde \Gamma^{(a)}_{n,0,3} & 0 \\
 		\end{pmatrix} \in \R^{(2n+1)\times(2n+3)}, \quad n = 0,1,2,\dots \\
-	B^{(a)}_{z,n} &:= 
+	\tilde B^{(a)}_{z,n} &:= 
 		\begin{pmatrix}
-			\Gamma^{(a)}_{n,0,2} & \\
+			\tilde \Gamma^{(a)}_{n,0,2} & \\
 			& \ddots & & \\
 			& & \ddots & \\
-			& & & \Gamma^{(a)}_{n,0,2}
+			& & & \tilde \Gamma^{(a)}_{n,0,2}
 		\end{pmatrix} \in \R^{(2n+1)\times(2n+1)}  \quad n = 0,1,2,\dots \\
-	C^{(a)}_{z,n} &:= 
+	\tilde C^{(a)}_{z,n} &:= 
 		\begin{pmatrix}
-			\Gamma^{(a)}_{n,0,1} & 0 & & \\
+			\tilde \Gamma^{(a)}_{n,0,1} & 0 & & \\
 			0 & \ddots & \ddots & \\
 			& \ddots & \ddots & 0 \\
-			& & \ddots & \Gamma^{(a)}_{n,n,1} \\
+			& & \ddots & \tilde \Gamma^{(a)}_{n,n,1} \\
 			& & & 0 \\
 		\end{pmatrix} \in \R^{(2n+1)\times(2n-1)}, \quad n = 1,2,\dots
 \end{align*}
 where
 \begin{align*}
-	\Gamma^{(a)}_{n,k,j} &:= 
+	\tilde \Gamma^{(a)}_{n,k,j} &:= 
 		\begin{pmatrix}
 			\gamma_{n,k,j} & 0 \\
 			0 & \gamma_{n,k,j}
 		\end{pmatrix} \in \R^{2\times2}, \quad k = 1,\dots,n \\
-	\Gamma^{(a)}_{n,0,j} &:= \gammaa_{n,0,j}
+	\tilde \Gamma^{(a)}_{n,0,j} &:= \gammaa_{n,0,j}
 \end{align*}
 
-Note that the sparsity of the Jacobi matrices (in particular the sparsity of the sub-blocks) comes from the natural sparsity of the three-term recurrences of the 1D OPs and the circular harmonics, meaning that the sparsity is not limited to the specific spherical cap, and would extend to the spherical band.
-
-
-
-
-\subsection{Building the OPs} 
-
-We can combine each system in (\ref{eqn:jacobimatricesdefinition}) into a block-tridiagonal system, for any $(x,y,z) \in \Omega$:
-
+We can combine each system in (\ref{eqn:jacobimatricesdefinitionalt}) into a block-tridiagonal system, for any $(x,y,z) \in \Omega$:
 \begin{align*}
 	\renewcommand\arraystretch{1.3}
 	\begin{pmatrix}
@@ -746,7 +900,7 @@ We can combine each system in (\ref{eqn:jacobimatricesdefinition}) into a block-
 	 		\scopa_0 \\ 0 \\ 0 \\ 0 \\ \vdots  \\
 		\end{pmatrix},
 \end{align*}
-where we note $\scopa_{0,0,0}(x,y,z) =: \scopa_0 \equiv \genjac_0^{(a,0)} \: \ch_0$, and for each $n = 0,1,2\dots$,
+where we note $\scopa_0 := \scopa_{0,0,0}(x,y,z) \equiv \genjac_0^{(a,0)} \: \ch_0$, and for each $n = 0,1,2\dots$,
 \begin{align*}
 	A_n &:= 
 		\begin{pmatrix}
@@ -829,57 +983,18 @@ where $\eta = \frac{- \: \alphaa_{1,1,5}}{\alphaa_{1,1,6} \: \gammaa_{1, 0, 3}}$
 
 It follows that we can apply $\Dnt$ in $O(n)$ complexity, and thereby calculate $\bigscopta_{0}(x,y)$  through $\bigscopta_{n}(x,y)$ in optimal $O(n^2)$ complexity. \bstodo{correct for this case}
 
+\begin{definition}\label{def:clenshawmats}
+The Clenshaw matrices associated with the OPs $\{\scopnkia\}$ given by the matrices $A_n, B_n, C_n, \Dnt$ for $n = 0,1,2,\dots$ defined above.
+\end{definition}
+
 
 
 
 %
 \section{Sparse partial differential operators}\label{Section:PDOs}
 
-\begin{figure} 
-\center
-\begin{tikzpicture} 
-% Box/square (4x4)
-\draw[black,solid,ultra thin] (0,0)--(0,4);
-\draw[black,solid,ultra thin] (0,0)--(4,0);
-\draw[black,solid,ultra thin] (4,0)--(4,4);
-\draw[black,solid,ultra thin] (0,4)--(4,4);
-% Dots
-\draw[black,fill=black] (0,0) circle (.5ex);
-\draw[black,fill=black] (2,2) circle (.5ex);
-\draw[black,fill=black] (4,4) circle (.5ex);
-\draw[black,fill=black] (0,2) circle (.5ex);
-\draw[black,fill=black] (0,4) circle (.5ex);
-% Arrows
-\draw[black,thick,->] (0.2,0.2)--(1.8,1.8);
-\draw[black,thick,->] (2.2,2.2)--(3.8,3.8);
-\draw[black,thick,->] (0,0.2)--(0,1.8);
-\draw[black,thick,->] (0,2.2)--(0,3.8);
-\draw [black,thick,->] (0.2,4.2) to [out=20,in=160] (3.8,4.2);
-% Node (parameter) labels
-\draw[] (0,0) node[anchor=east] {$(0,0,0)$};
-\draw[] (0,4) node[anchor=east] {$(0,0,2)$};
-\draw[] (4,0) node[anchor=west] {$(2,2,0)$};
-\draw[] (4,4) node[anchor=west] {$(2,2,2)$};
-% Arrow labels
-\draw[] (1,1) node[anchor=north] {$\tfrac{\partial}{\partial x}$};
-\draw[] (3,3) node[anchor=north] {$\tfrac{\partial}{\partial x}$};
-\draw[] (0,1) node[anchor=west] {$\tfrac{\partial}{\partial y}$};
-\draw[] (0,3) node[anchor=west] {$\tfrac{\partial}{\partial y}$};
-% The key and headings
-\draw[black,thick,->] (-2.5,3.4)--(-2.5,4);
-\draw[black,thick,->] (-2.5,3.4)--(-1.9,3.4);
-\draw[] (-2.3,3.2) node[anchor=west] {$(a,b)$};
-\draw[] (-2.7,3.6) node[anchor=south] {$c$};
-\draw[] (2,4.6) node[anchor=south] {basis conversion};
-\end{tikzpicture} 
-\caption{The Laplace operator acting on vectors of $\smash{\hdopnk^{(0,0,0)}}$ coefficients has a sparse matrix representation if the range is represented as vectors of $\smash{\hdopnk^{(2,2,2)}}$ coefficients. Here, the arrows indicate that the corresponding operation has a sparse matrix representation when the domain is $\smash{\hdopnkabc}$ coefficients, where $(a,b,c)$ is at the tail of the arrow, and the range is $\smash{\hdopnk^{(\tilde{a},\tilde{b},\tilde{c})}}$ coefficients, where $(\tilde{a},\tilde{b},\tilde{c})$ is at the head of the arrow. %For example, $\smash{\frac{\partial}{\partial x}}$ has a sparse matrix representation when the domain is represented in $\smash{\hdop_{n,k}^{(0,0,0)}}$ (resp.~$\smash{\hdop_{n,k}^{(1,0,1)}}$) and the range in $\smash{\hdop_{n,k}^{(1,0,1)}}$ (resp.~$\smash{\hdop_{n,k}^{(2,0,2)}}$).
-}
-\label{fig:Laplace} 
-\end{figure}
-
-
-In this section, we will derive the entries that form spherical partial differential operators, demonstrating their sparsity. To this end, we will use a different ordering of the OPs and coefficients of a function's expansion, in order to exploit the orthogonality the circular harmonics will bring and thus the operators will be block-diagonal. Let $N \in \N$ and define: 
-\begin{align}
+In this section, we will derive the entries that form spherical partial differential operators, demonstrating their sparsity. To this end, we will use a different ordering of the OPs and coefficients of a function's expansion, in order to exploit the orthogonality the circular harmonics will bring and thus the operators will be block-diagonal. Let $N \in \N$ and recall from equations (\ref{eqn:OPdefNka}, \ref{eqn:OPdefN0a}, \ref{eqn:OPdefNa}) that: 
+\begin{align*}
 	\bigscopNka &:= 
 		\begin{pmatrix}
 			\scopa_{k,k,0}(x,y,z) \\
@@ -887,20 +1002,20 @@ In this section, we will derive the entries that form spherical partial differen
 			\vdots \\
 			\scopa_{N,k,0}(x,y,z) \\
 			\scopa_{N,k,1}(x,y,z)
-		\end{pmatrix} \in \R^{2(N-k+1)},  \quad k = 1,\dots,N, \label{eqn:OPdefNka} \\ 
+		\end{pmatrix} \in \R^{2(N-k+1)},  \quad k = 1,\dots,N, \\ 
 	\bigscopa_{N,0} &:= 
 		\begin{pmatrix}
 			\scopa_{0,0,0}(x,y,z) \\
 			\vdots \\
 			\scopa_{N,0,0}(x,y,z) \\
-		\end{pmatrix} \in \R^{N+1}, \label{eqn:OPdefN0a} \\
+		\end{pmatrix} \in \R^{N+1}, \\
 	\bigscopNa &:= 
 		\begin{pmatrix}
 			\bigscopa_{N,0} \\
 			\vdots \\
 			\bigscopa_{N,N}
-		\end{pmatrix} \in \R^{(N+1)^2} \label{eqn:OPdefNa}
-\end{align}
+		\end{pmatrix} \in \R^{(N+1)^2}
+\end{align*}
 
 We further denote the weighted set of OPs on $\Omega$ by 
 \begin{align*}
@@ -914,11 +1029,12 @@ Define the operator matrices $D_\phi^{(a)}, \: W_\phi^{(a)}, \: D_\theta, \: \De
 	\rho {\partial f \over \partial \phi}(x,y,z)&= \bigscop_N^{(a+1)}(x,y,z)^\top \: D_\phi^{(a)} \: \mathbf{f}, \\
 	\rho {\partial \over \partial \phi}[\genjacw^{(a,0)}(z) \: f(x,y,z)] &= \bigW_N^{(a-1)}(x,y)^\top \: W_\phi^{(a)}\: \mathbf{f}, \\
 	{\partial f \over \partial \theta}(x,y,z) &= \bigscopNa(x,y,z)^\top \: D_\theta \: \mathbf{f}, \\
-	\nabla^2_s \big( \genjacw^{(a,0)}(z) \: f(x,y,z) \big) &= \bigscopNa(x,y,z)^\top \: \Delta^{(1)}_W \: \mathbf{f}, \quad \text{ for } a = 1 \text{ only}.
+	\nabla^2_s \big( \genjacw^{(1,0)}(z) \: f(x,y,z) \big) &= \bigscopN^{(1)}(x,y,z)^\top \: \Delta^{(1)}_W \: \mathbf{f}, \quad \text{ (for } a = 1 \text{ only)}
 \end{align*}
+where $\nabla^2_s$ is the surface Laplacian, given by $\nabla^2_s = \frac{1}{\rho(z)} \ppphi \big( \rhozppphi \big) + \frac{1}{\rho(z)^2} \ppthetatwo$.
 \end{definition}
 
-The incrementing and decrementing of parameters as seen here is analogous to other well known orthogonal polynomial families' derivatives, for example the Jacobi polynomials on the interval, as seen in the DLMF \cite[(18.9.3)]{DLMF}, on the triangle \cite{olver2018recurrence}, and on the disk-slice \cite{snowball2019sparse}. The operators we define here are for partial derivatives with respect to the spherical coordinates $(\phi, \theta)$, so that we can more easily apply the operators to PDEs on the surface of a sphere (for example, surface Laplacian operator in the Poisson equation). 
+The incrementing and decrementing of parameters as seen here is analogous to other well known orthogonal polynomial families' derivatives, for example the Jacobi polynomials on the interval, as seen in the DLMF \cite[(18.9.3)]{DLMF}, on the triangle \cite{olver2018recurrence}, and on the disk-slice \cite{snowball2019sparse}. The operators we define here are for partial derivatives with respect to the spherical coordinates $(\phi, \theta)$, so that we can more easily apply the operators to PDEs on the surface of a sphere (for example, surface Laplacian operator in the Poisson equation). With the OP ordering by Fourier mode $k$ defined in equations (\ref{eqn:OPdefNka}, \ref{eqn:OPdefN0a}, \ref{eqn:OPdefNa}) these rotationally invariant operators are block-diagonal, meaning simple and parallelisable practical application.
 
 \begin{theorem}\label{theorem:sparsityofdifferentialoperators}
 The operator matrices $D_\phi^{(a)}, \: W_\phi^{(a)}, \: D_\theta, \: \Delta^{(1)}_W$ from Definition \ref{def:differentialoperators} are sparse, with banded-block-banded structure. More specifically:
@@ -930,7 +1046,7 @@ The operator matrices $D_\phi^{(a)}, \: W_\phi^{(a)}, \: D_\theta, \: \Delta^{(1
 \end{itemize}
 \end{theorem}
 
-These operators are be rotationally invariant, and hence with the ordering we have for the OPs in $\bigscopNa$, obtaining and applying the operators can be done in parallel since each block need not talk to each other (they are block diagonal). In order to show the last part of Theorem \ref{theorem:sparsityofdifferentialoperators}, we require the following short Lemma.
+In order to show the last part of Theorem \ref{theorem:sparsityofdifferentialoperators}, we require the following short Lemma.
 
 \begin{lemma}\label{lemma:Rsecondderivative}
 For any general parameter $a$ and any $n = 0,1,\dots$, $k = 0,\dots,n$ we have that
@@ -1112,10 +1228,11 @@ where $V^{(a)}$ is an operator corresponding to multiplication by the scalar pol
 
 
 
+
 %
 \section{Computational aspects}\label{Section:Computation}
 
-In this section we discuss how to take advantage of the proposed basis and sparsity structure in partial differential operators in practical computational applications.
+In this section we discuss how to expand and evaluate functions in our proposed basis, and take advantage of the sparsity structure in partial differential operators in practical computational applications.
 
 
 \subsection{Constructing $\genjac_n^{(a,b)}(x)$}
@@ -1249,11 +1366,12 @@ where $M = M_1 M_2$ and $2M_1 - 1 \ge N, 2M_2 - 1 \ge N$.
 
 Fix $a \in \R$. Then for any function $f : \Omega \to \R$ we can express $f$ by
 \begin{align*}
-	f(x,y,z) \approx \sum_{k=0}^N \bigscopNka(x,y,z)^\top \: \mathbf{f}_k
+	f(x,y,z) \approx \sum_{k=0}^N \bigscopNka(x,y,z)^\top \: \bm{f}_k = \bigscopNa(x,y,z)^\top \: \bm{f}
 \end{align*}
-for N sufficiently large, where $\bigscopNka$ is defined in equation \label{eqn:OPdefNka} and where
+for N sufficiently large, where $\bigscopNka, \bigscopNa$ is defined in equations (\ref{eqn:OPdefNka}, \ref{eqn:OPdefN0a}, \ref{eqn:OPdefNa}) and where
+
 \begin{align*}
-	\mathbf{f}_k &:= 
+	\bm{f}_k &:= 
 		\begin{pmatrix}
 			f_{k,k,0} \\
 			f_{k,k,1} \\
@@ -1261,22 +1379,57 @@ for N sufficiently large, where $\bigscopNka$ is defined in equation \label{eqn:
 			f_{N,k,0} \\
 			f_{N,k,1}
 		\end{pmatrix} \in \R^{2(N-k+1)} \quad \text{for } n = 1,2,\dots,N, \quad
-	\mathbf{f}_0 := 
+	\bm{f}_0 := 
 		\begin{pmatrix}
 			f_{0,0,0} \\
 			\vdots \\
 			f_{N,0,0}
-		\end{pmatrix} \in \R^{2(N+1)},
+		\end{pmatrix} \in \R^{N+1}, \\
+	\bm{f} &:= 
+		\begin{pmatrix}
+			\bm{f}_0 \\
+			\vdots \\
+			\bm{f}_N
+		\end{pmatrix} \in \R^{2(N+1)^2}, \quad \quad
+	f_{n,k,i} := \ip< f, \: \scopnkia>_{\scopa} \: \norm{\scopnkia}^{-2}_{\scopa}.
 \end{align*}
-\begin{align*}
-	f_{n,k,i} &:= \ip< f, \: \scopnkia>_{\scopa} \: \norm{\scopnkia}^{-2}_{\scopa}.
-\end{align*}
-Recall from (\ref{eqn:OPnorm}) that $\norm{\scopnkia}^2_{\scopa} = \normgenjac^{(a,2k)} \: \pi$. Using the quadrature rule detailed in Section \ref{subsection:quadrule} for the inner product, we can calculate the coefficients $f_{n,k,i}$ for each $n = 0,\dots,N$, $k = 0,\dots,n$, $i = 0,1$: 
+Recall from equation (\ref{eqn:normscop}) that $\norm{\scopnkia}^2_{\scopa} = \normgenjac^{(a,2k)} \: \pi$. Using the quadrature rule detailed in Section \ref{subsection:quadrule} for the inner product, we can calculate the coefficients $f_{n,k,i}$ for each $n = 0,\dots,N$, $k = 0,\dots,n$, $i = 0,1$: 
 \begin{align*}
 	f_{n,k,i} &= \frac{1}{2 \: \normgenjac^{(a,2k)} \: \pi} \sum_{j=1}^{M} w_j \big[ f(x_j, y_j, z_j) \scopnkia(x_j, y_j, z_j) +f(-x_j, -y_j, z_j) \scopnkia(-x_j, -y_j, z_j) \big] \\
 	&= \frac{1}{M_2 \: \normgenjac^{(a,2k)}} \sum_{j=1}^{M} \big[ f(x_j, y_j, z_j) \scopnkia(x_j, y_j, z_j) +f(-x_j, -y_j, z_j) \scopnkia(-x_j, -y_j, z_j) \big]
 \end{align*}
 where the quadrature nodes and weights are those from Theorem \ref{Theorem:quadrule}, and $M = M_1 M_2$ with $2M_1 - 1 \ge N, M_2 - 1 \ge N$ (i.e. we can choose $M_2 := N + 1$ and $M_1 := \ceil{\frac{N+1}{2}}$).
+
+
+
+\subsection{Function evaluation}\label{subsection:functionevaluation}
+
+For a function $f$, with coefficients vector $\bm{f}$ for expansion in the $\{\scopnki\}$ basis as determined via the method in Section \ref{subsection:expandingfunctions} up to order $N$, we can use the Clenshaw algorithm to evaluate the function at a point $(x,y,z) \in \Omega$ as follows. Let $A_n, B_n, \Dnt, C_n$ be the Clenshaw matrices from Definition \ref{def:clenshawmats}, and define the rearranged coefficients vector $\tilde{\bm{f}}$ via
+\begin{align*}
+	\tilde{\bm{f}}_n &:= 
+		\begin{pmatrix}
+			f_{n,0,0} \\
+			f_{n,1,0} \\
+			f_{n,1,1} \\
+			\vdots \\
+			f_{n,n,0} \\
+			f_{n,n,1}
+		\end{pmatrix} \in \R^{2(N+1)} \quad \text{for } n = 1,2,\dots,N, \quad
+	\tilde{\bm{f}}_0 = f_{0,0,0} \in \R, \\
+	\tilde{\bm{f}} &:= 
+		\begin{pmatrix}
+			\tilde{\bm{f}}_0 \\
+			\vdots \\
+			\tilde{\bm{f}}_N
+		\end{pmatrix} \in \R^{(N+1)^2}.
+\end{align*}
+The Clenshaw algorithm is then \cite{}\bstodo{Reference for Clenshaw in >1 dimensions???} 
+\begin{align*}
+	\quad &\text{1) } \text{Set } \bm{\xi}_{N+2} = \bold{0}, \: \bm{\xi}_{N+2} = \bold{0}. \\
+	\quad &\text{2) } \text{For } n = N:-1:0 \\
+	\quad & \quad \quad \quad \text{set } \bm{\xi}_{n}^T = {\tilde{\bm{f}}_n}^T - \bm{\xi}_{n+1}^T D^T_n (B_n - G_n(x,y,z)) -  \bm{\xi}_{n+2}^T D^T_{n+1}C_{n+1} \\
+	\quad &\text{3) } \text{Output: } f(x,y,z) \approx \bm{\xi}_{0} \: \bigscopta_{0}  = \xi_{0} \: \scopa_0
+\end{align*}
 
 
 \subsection{Calculating non-zero entries of the operator matrices}\label{subsection:Computation-operatormatrices}
@@ -1286,7 +1439,20 @@ The proofs of Theorem \ref{theorem:sparsityofdifferentialoperators} and Lemma \r
 
 \subsection{Obtaining operator matrices for variable coefficients}\label{subsection:operatorclenshaw}
 
-Hey
+The Clenshaw algorithm outlined in Section \ref{subsection:functionevaluation} can also be used with Jacobi matrices $J^{(a)}_x, J^{(a)}_y, J^{(a)}_z$ replacing the point $(x,y,z)$. Let $v : \Omega \to \R$ be the function that we wish to obtain an operator matrix $V$ for, so that
+\begin{align*}
+	v(x,y,z) \: f(x,y,z) = v(x,y,z) \: \bm{f}^\top \: \bigscopNa(x,y,z) = (V \bm{f})^\top \: \bigscopNa(x,y,z),
+\end{align*}
+i.e. $V \bm{f}$ is the coefficients vector for the function $v(x,y,z) \: f(x,y,z)$. 
+
+To this end, let $\tilde{\bm{v}}$ be the coefficients for expansion up to order $N$ in the $\{\scopnki\}$ basis of $v$ (rearranged as in Section \ref{subsection:functionevaluation} so that $v(x,y,z) = \tilde{\bm{v}}^\top \: \bigscopta(x,y,z)$). The operator $V$ is then the result of the following:
+\begin{align*}
+	\quad &\text{1) } \text{Set } \bm{\xi}_{N+2} = \bold{0}, \: \bm{\xi}_{N+2} = \bold{0}. \\
+	\quad &\text{2) } \text{For } n = N:-1:0 \\
+	\quad & \quad \quad \quad \text{set } \bm{\xi}_{n}^T = {\tilde{\bm{v}}_n}^T - \bm{\xi}_{n+1}^T D^T_n \big(B_n - G_n(J^{(a)}_x, J^{(a)}_y, J^{(a)}_z)\big) -  \bm{\xi}_{n+2}^T D^T_{n+1}C_{n+1} \\
+	\quad &\text{3) } \text{Output: } V(x,y,z) \approx \bm{\xi}_{0} \: \bigscopta_{0}  = \xi_{0} \: \scopa_0
+\end{align*}
+where at each iteration, $\bm{\xi}_n$ is a vector of matrices.
 
 
 
@@ -1708,7 +1874,7 @@ We can combine each system in (\ref{eqn:jacobimatricestangentdefinition}) into a
 	 \tsopi_0^\top \\ \tsopii_0^\top \\ 0 \\ 0 \\ \vdots  \\
 \end{pmatrix},
 \end{align*}
-where we note $\scopa_{0,0,0}(x,y,z) =: \scopa_0 \equiv \genjac_0^{(a,0)} \: \ch_0$, and for each $n = 0,1,2\dots$,
+where we note $\scopa_0 := \scopa_{0,0,0}(x,y,z) \equiv \genjac_0^{(a,0)} \: \ch_0$, and for each $n = 0,1,2\dots$,
 \begin{align*}
 A_n &:= \begin{pmatrix}
 		A_{x,n} \\
