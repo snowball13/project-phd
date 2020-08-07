@@ -18,7 +18,7 @@ import OrthogonalPolynomialFamilies: points, pointswithweights, getopptseval,
                     getptsevalforop, getderivptsevalforop, laplacianoperator,
                     rho2laplacianoperator, gettangentspace,
                     rhogradoperator, coriolisoperator, rho2operator,
-                    rhodivminusgradrhodotoperator
+                    rhodivminusgradrhodotoperator, gradrhooperator, weightoperator
 using JLD
 
 
@@ -67,14 +67,50 @@ function getscspacecoeffsvecs(ST::SphericalCapTangentSpace, Fc::AbstractVector{T
 end
 getscspacecoeffsvecs(F::Fun) = getscspacecoeffsvecs(F.space, F.coefficients)
 
+# Useful functions for testing
+function converttopseudo(S::SphericalCapSpace, cfs; converttobydegree=true)
+    N = getnki(S, length(cfs))[1]
+    @assert (length(cfs) == (N+1)^2) "Invalid coeffs length"
+    if converttobydegree
+        PseudoBlockArray(convertcoeffsvecorder(S, cfs), [2n+1 for n=0:N])
+    else
+        PseudoBlockArray(cfs, [2n+1 for n=0:N])
+    end
+end
+
+# Solve `A x = b` for `x` using iterative improvement
+# (for BigFloat sparse matrix and vector)
+function iterimprove(A::SparseMatrixCSC{T}, b::Vector{T};
+                        iters=5, verbose=true) where T
+    if eps(T) ≥ eps(Float64)
+        # throw(ArgumentError("wrong implementation"))
+        return A \ b
+    end
+    A0 = SparseMatrixCSC{Float64}(A)
+    F = factorize(A0)
+    x = zeros(T, size(A)[2]) # x = zeros(T, length(b))
+    r = copy(b)
+    for iter = 1:iters
+        y = F \ Vector{Float64}(r)
+        for i in eachindex(x)
+            x[i] += y[i]
+        end
+        r = b - A * x
+        if verbose
+            @show "at iter %d resnorm = %.3g\n" iter norm(r)
+        end
+    end
+    x
+end
+
 
 # Test of tangent clenshaw
 basisvecs = [cos(θ) * z; sin(θ) * z; - rhoval(z)], [-sin(θ); cos(θ); 0]
 N = 5
 for n=0:N, k=0:n, i=0:min(1,k), j=0:1
-    cfs = zeros(getopindex(ST, N, N, 1, 1)); cfs[getopindex(ST, n, k, i, j; bydegree=false, N=N)] = 1; cfs
+    cfs = zeros(B, getopindex(ST, N, N, 1, 1)); cfs[getopindex(ST, n, k, i, j; bydegree=false, N=N)] = 1; cfs
     ret = OrthogonalPolynomialFamilies.clenshaw(cfs, ST, p)
-    cfs0 = zeros(getopindex(S, N, N, 1)); cfs0[getopindex(S, n, k, i; bydegree=false, N=N)] = 1; cfs0
+    cfs0 = zeros(B, getopindex(S, N, N, 1)); cfs0[getopindex(S, n, k, i; bydegree=false, N=N)] = 1; cfs0
     retactual = Fun(S0, cfs0)(p) * basisvecs[j+1]
     res = maximum(abs, ret - retactual)
     if res > 1e-10
@@ -86,12 +122,12 @@ end
 
 # Linear SWE operator tests
 basisvecs = [cos(θ) * z; sin(θ) * z; - rhoval(z)], [-sin(θ); cos(θ); 0]
-inds = [4, 3, 5]; N = sum(inds)
+inds = [10, 3, 7]; N = sum(inds)
 f = Fun((x,y,z)->x^inds[1] * y^inds[2] * z^inds[3], S, 2(N+1)^2)
 dϕf = (x,y,z)->((inds[1] + inds[2]) * z^2 - inds[3] * S.family.ρ(z)^2) * x^inds[1] * y^inds[2] * z^(inds[3]-1) # ρ*∂f/∂ϕ, deg = degf + 1
 dθf = (x,y,z)->z^inds[3] * y^(inds[2] - 1) * x^(inds[1] - 1) * (inds[2] * x^2 - inds[1] * y^2) # ∂f/∂θ
-indsϕ = [2, 7, 5]; Nϕ = sum(indsϕ)
-indsθ = [2, 3, 5]; Nθ = sum(indsθ); Nt = max(Nϕ, Nθ)
+indsϕ = [10, 7, 7]; Nϕ = sum(indsϕ)
+indsθ = [10, 3, 7]; Nθ = sum(indsθ); Nt = max(Nϕ, Nθ)
 Fϕ = Fun((x,y,z)->x^indsϕ[1] * y^indsϕ[2] * z^indsϕ[3], S0, 2(Nt+1)^2); Fϕ.coefficients
 Fθ = Fun((x,y,z)->x^indsθ[1] * y^indsθ[2] * z^indsθ[3], S0, 2(Nt+1)^2); Fθ.coefficients
 dϕFϕ = (x,y,z)->((indsϕ[1] + indsϕ[2]) * z^2 - indsϕ[3] * S.family.ρ(z)^2) * x^indsϕ[1] * y^indsϕ[2] * z^(indsϕ[3]-1) # ρ*∂f/∂ϕ, deg = degf + 1
@@ -102,13 +138,16 @@ cfs0 = Gw * f.coefficients
 ret = Fun(ST, cfs0)(p)
 retactual = ((weight(S, p) * dϕf(p...) - f(p) * S.family.ρ(z)^2) * basisvecs[1]
                 + weight(S, p) * dθf(p...) * basisvecs[2])
+maximum(abs, ret - retactual)
 @test ret ≈ retactual
 G = rhogradoperator(S, N; weighted=false)
 cfs2 = G * f.coefficients
 S2 = S.family(2.0, 0.0)
 cfs2ϕ = [cfs2[2i - 1] for i = 1:(N+2)^2]
 cfs2θ = [cfs2[2i] for i = 1:(N+2)^2]
+Fun(S2, cfs2ϕ)(p) - dϕf(p...)
 @test Fun(S2, cfs2ϕ)(p) ≈ dϕf(p...)
+Fun(S2, cfs2θ)(p) - dθf(p...)
 @test Fun(S2, cfs2θ)(p) ≈ dθf(p...)
 # D
 D = rhodivminusgradrhodotoperator(ST, Nt)
@@ -116,14 +155,16 @@ cfs0 = gettangentspacecoeffsvec(Fϕ, Fθ)
 cfs = D * cfs0
 ret = Fun(S, cfs)(p)
 retactual = dϕFϕ(p...) + dθFθ(p...)
+ret - retactual
 @test ret ≈ retactual
 # F
 F = coriolisoperator(ST, Nt; square=false)
 cfs0 = gettangentspacecoeffsvec(Fϕ, Fθ)
 cfs = F * cfs0
 ret = Fun(ST, cfs)(p)
-Ω = 1.0# B(72921) / 1e9
+Ω = B(1)# B(72921) / 1e9
 retactual = Fun(ST, gettangentspacecoeffsvec(-Fθ, Fϕ) * 2 * Ω)(p) * p[3]
+maximum(abs, ret - retactual)
 @test ret ≈ retactual
 # P (scalar and tangent space)
 Ps = rho2operator(S, S, N)
@@ -136,18 +177,36 @@ P = rho2operator(ST, Nt)
 cfs0 = gettangentspacecoeffsvec(Fϕ, Fθ)
 cfs = P * cfs0
 fϕ, fθ = getscspacecoeffsvecs(ST, cfs)
-@test Fϕ(p) * S.family.ρ(z)^2 ≈ Fun(S0, fϕ)(p) atol=1e-13
-@test Fθ(p) * S.family.ρ(z)^2 ≈ Fun(S0, fθ)(p) atol=1e-13
+@test Fϕ(p) * S.family.ρ(z)^2 ≈ Fun(S0, fϕ)(p)
+Fϕ(p) * S.family.ρ(z)^2 - Fun(S0, fϕ)(p)
+@test Fθ(p) * S.family.ρ(z)^2 ≈ Fun(S0, fθ)(p)
 cfs = transformparamsoperator(ST, Nt+2) * P * cfs0
 fϕ, fθ = getscspacecoeffsvecs(ST, cfs)
-@test Fϕ(p) * S.family.ρ(z)^2 ≈ Fun(S2, fϕ)(p) atol=1e-13
-@test Fθ(p) * S.family.ρ(z)^2 ≈ Fun(S2, fθ)(p) atol=1e-13
+@test Fϕ(p) * S.family.ρ(z)^2 ≈ Fun(S2, fϕ)(p)
+Fϕ(p) * S.family.ρ(z)^2 - Fun(S2, fϕ)(p)
+@test Fθ(p) * S.family.ρ(z)^2 ≈ Fun(S2, fθ)(p)
 # R (mult by ∇ρ to scalar fun)
 R = gradrhooperator(S, N)
 cfs0 = R * f.coefficients
 cfs, shouldbezero = getscspacecoeffsvecs(ST, cfs0)
 @test maximum(abs, shouldbezero) == 0
 @test Fun(S2, cfs)(p) ≈ f(p) * p[3]
+Fun(S2, cfs)(p) - f(p) * p[3]
+# W (weight operator)
+aa, bb = 2, 1
+W = weightoperator(ST, aa, bb, Nt)
+cfs0 = gettangentspacecoeffsvec(Fϕ, Fθ)
+ret = Fun(ST, W * cfs0)(p)
+retactual = Fun(ST, cfs0)(p) * (p[3] - S.family.α)^aa * (1 - p[3]^2)^bb
+maximum(abs, ret - retactual)
+@test ret ≈ retactual
+# V (mult scalar by ϕ̲̂)
+V = OrthogonalPolynomialFamilies.unitvecphioperator(S0, Nt)
+ret = Fun(ST, V * Fϕ.coefficients)(p)
+retactual = Fϕ(p) * basisvecs[1]
+maximum(abs, ret - retactual)
+@test ret ≈ retactual
+
 
 
 #===#
@@ -195,7 +254,7 @@ end
 #===#
 
 # Test transform
-n = B == T ? 400 : 200
+n = B == T ? 400 : 1000
 f = (x,y,z)->cos(y)
 pts, w = pointswithweights(S, n)
 vals = [f(pt...) for pt in pts]
@@ -206,10 +265,12 @@ F = Fun(S, cfs)
 F(p)
 f(p...)
 T(F(p) - f(p...))
-@test T(F(p)) ≈ T(f(p...))
-vals2 = itransform(S, cfs); pts2 = points(S, length(vals2)/2); @test T.(vals2) ≈ T.([f(pt...) for pt in pts2])
-F = Fun(f, S, 200); F.coefficients
-@test T(F(p)) ≈ T(f(p...))
+@test F(p) ≈ f(p...)
+vals2 = itransform(S, cfs); pts2 = points(S, length(vals2)/2)
+@test T.(vals2) ≈ T.([f(pt...) for pt in pts2])
+F = Fun(f, S, 500); F.coefficients
+F(p) - f(p...)
+@test F(p) ≈ f(p...)
 
 # ∂/∂θ operator
 f = (x,y,z)->x^2 + y^4 # (cos2t + sin4t*ρ2(z))ρ2(z)
@@ -288,7 +349,7 @@ Fi = Fun(S, t * F.coefficients); Fi.coefficients
 # Laplacian tests
 # 1) u = constant
 N = 10
-Δ = laplaceoperator(S, S, N)
+Δ = laplacianoperator(S, N)
 c = 2.0
 u = (x,y,z)->c
 rho2f = (x,y,z)->-c * 2 * z * (1-z^2) # 2 * ρ * ρ' * ρ^2
@@ -391,42 +452,7 @@ u1norms = [norm(u1cfs[Block(n+1)]) for n=0:N]
 
 #====#
 
-# Useful functions for testing
-function converttopseudo(S::SphericalCapSpace, cfs; converttobydegree=true)
-    N = getnki(S, length(cfs))[1]
-    @assert (length(cfs) == (N+1)^2) "Invalid coeffs length"
-    if converttobydegree
-        PseudoBlockArray(convertcoeffsvecorder(S, cfs), [2n+1 for n=0:N])
-    else
-        PseudoBlockArray(cfs, [2n+1 for n=0:N])
-    end
-end
-isindomain(pt, D::SphericalCapFamily) = D.α ≤ pt[3] ≤ D.β && norm(pt) == 1.0
-isindomain(pt, S::SphericalCapSpace) = isindomain(pt, S.family)
-# Solve `A x = b` for `x` using iterative improvement
-# (for BigFloat sparse matrix and vector)
-function iterimprove(A::SparseMatrixCSC{T}, b::Vector{T};
-                        iters=5, verbose=true) where T
-    if eps(T) ≥ eps(Float64)
-        # throw(ArgumentError("wrong implementation"))
-        return A \ b
-    end
-    A0 = SparseMatrixCSC{Float64}(A)
-    F = factorize(A0)
-    x = zeros(T, size(A)[2]) # x = zeros(T, length(b))
-    r = copy(b)
-    for iter = 1:iters
-        y = F \ Vector{Float64}(r)
-        for i in eachindex(x)
-            x[i] += y[i]
-        end
-        r = b - A * x
-        if verbose
-            @show "at iter %d resnorm = %.3g\n" iter norm(r)
-        end
-    end
-    x
-end
+
 
 # The Poisson/Laplacian test methods for Q^{1}
 rhoval(z) = sqrt(1 - z^2)
@@ -489,7 +515,7 @@ end
 # Saving to disk
 
 # Clenshaw mats
-this
-sb = load("experiments/saved/sphericalcap/sphericalcap-alpha=0.2-clenshawmats-B-BF.jld", "B"); resize!(S.B, length(sb)); S.B[:] = sb[:]
-sc = load("experiments/saved/sphericalcap/sphericalcap-alpha=0.2-clenshawmats-C-BF.jld", "C", S.C); resize!(S.C, length(sc)); S.C[:] = sc[:]
-sdt = load("experiments/saved/sphericalcap/sphericalcap-alpha=0.2-clenshawmats-DT-BF.jld", "DT", S.DT); resize!(S.DT, length(sdt)); S.DT[:] = sdt[:]
+# this
+# sb = load("experiments/saved/sphericalcap/sphericalcap-alpha=0.2-clenshawmats-B-BF.jld", "B"); resize!(S.B, length(sb)); S.B[:] = sb[:]
+# sc = load("experiments/saved/sphericalcap/sphericalcap-alpha=0.2-clenshawmats-C-BF.jld", "C", S.C); resize!(S.C, length(sc)); S.C[:] = sc[:]
+# sdt = load("experiments/saved/sphericalcap/sphericalcap-alpha=0.2-clenshawmats-DT-BF.jld", "DT", S.DT); resize!(S.DT, length(sdt)); S.DT[:] = sdt[:]
