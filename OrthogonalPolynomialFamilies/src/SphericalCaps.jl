@@ -415,7 +415,7 @@ function pointswithweights(S::SphericalCapSpace{<:Any, B, T, <:Any}, n;
     # Need to maunally call the method to get R coeffs here
     m = isodd(M1) ? Int((M1 + 1) / 2) : Int((M1 + 2) / 2); m -= Int(S.params[end])
     getreccoeffsR!(S, m; maxk=0)
-    t, wt = pointswithweights(B, getRspace(S, 0), M1) # Quad for w_R^{(a,2b+1)}
+    t, wt = pointswithweights(B, getRspace(S, 0), M1) # Quad for w_R^{(a,2b)}
     s = [(cospi(B(2 * (it - 1)) / M2), sinpi(B(2 * (it - 1)) / M2)) for it=1:M2]
     ws = ones(B, M2) / M2  # Quad for circumference of unit circle
     if !nofactor
@@ -992,10 +992,15 @@ function operatorclenshaw(cfs::AbstractVector{T}, S::SphericalCapSpace, M) where
     f = PseudoBlockArray(f, [2n+1 for n=0:N])
 
     @show "getting Jacobi matrices"
+    # TODO Cange the Jacobi operators and id to BandedBlockBandedMatrix objects
+    # (not Sparse matrices!)
     Jx = jacobix(S, M)
     Jy = jacobiy(S, M)
     Jz = jacobiz(S, M)
     id = sparse(I, size(Jx))
+    # id = BandedBlockBandedMatrix(I, size(Jx),
+    #                                 ([M+1; 2M:-2:1], [M+1; 2M:-2:1]),
+    #                                 (0,0), (0,0))
 
     P0 = getdegzeropteval(T, S)
     if N == 0
@@ -1300,7 +1305,7 @@ function rho2operator(S::SphericalCapSpace{<:Any, B, T, <:Any},
     resizedataonedimops!(S, N+band2)
 
     # Get the operator for mult by ρ²
-    ptsr, wr = pointswithweights(B, getRspace(S, 0), N+2)
+    ptsr, wr = pointswithweights(B, getRspace(S, 0), N+3)
     rhoptsr2 = S.family.ρ.(ptsr).^2
     getopnorms(St, N+band2+1)
     for k = 0:N
@@ -1385,10 +1390,10 @@ function getlaplacianval(S::SphericalCapSpace{<:Any, B, T, <:Any},
 end
 # The operator for Δ
 function laplacianoperator(S::SphericalCapSpace{<:Any, B, T, <:Any}, N::Int;
-                            weighted=true) where {B,T}
+                            weighted=true, square=false) where {B,T}
     # (1/ρ^2)*∂/∂θ + (1/ρ)*∂/∂ϕ(ρ*∂/∂ϕ) = Δ operator
     # Takes the space:
-    #   w_R^{(1,0)} Q^{1} -> Q^{1,b}
+    #   w_R^{(1,0)} Q^{1} -> Q^{1}
 
     # NOTE a, the param, must be 1 for the maths to work
     @assert (Int(S.params[1]) == 1) "Invalid parameter for SphericalCapSpace"
@@ -1407,8 +1412,9 @@ function laplacianoperator(S::SphericalCapSpace{<:Any, B, T, <:Any}, N::Int;
 
     band1 = 1
     band2 = 1
-    A = BandedBlockBandedMatrix(Zeros{B}((N+band2+1)^2, (N+1)^2),
-                                ([N+band2+1; 2(N+band2):-2:1], [N+1; 2N:-2:1]),
+    bandm = square ? 0 : band2
+    A = BandedBlockBandedMatrix(Zeros{B}((N+bandm+1)^2, (N+1)^2),
+                                ([N+bandm+1; 2(N+bandm):-2:1], [N+1; 2N:-2:1]),
                                 (0, 0), (2band2, 2band1))
     for k = 0:N
         if k % 20 == 0
@@ -1416,7 +1422,7 @@ function laplacianoperator(S::SphericalCapSpace{<:Any, B, T, <:Any}, N::Int;
         end
         R = getRspace(S, k)
         getopptseval(R, N-k+band2, ptsr); getderivopptseval(R, N-k+band2, ptsr)
-        for n = k:N, m = max(0, n-band1):n+band2 # min(n+band2, N)
+        for n = k:N, m = max(0, n-band1):min(n+band2, N+bandm)
             if k ≤ m
                 val = getlaplacianval(S, ptsr, wr, rhoptsr2, w10ptsr, n, m, k)
                 for i = 0:min(1,k)
@@ -1431,30 +1437,67 @@ end
 
 # The operator for ρ²Δ
 function rho2laplacianoperator(S::SphericalCapSpace, St::SphericalCapSpace, N::Int;
-                                weightedin=true, weightedout=false, square=false)
+                                weighted=true, square=false)
     # Outputs the sum(1:N+1) × sum(1:N+1) matrix operator if square=true
     # TODO fix the square=true cases
     D = S.family
-    if weightedin && !weightedout
-        A = diffoperatorphi(differentiatespacephi(S; weighted=true), N+2)
-        @show "laplaceoperator", "1 of 6 done"
-        B = diffoperatorphi(S, N; weighted=true)
-        @show "laplaceoperator", "2 of 6 done"
-        C = transformparamsoperator(differentiatespacephi(S; weighted=true), S, N+1)
-        @show "laplaceoperator", "3 of 6 done"
-        E = transformparamsoperator(S, differentiatespacephi(S; weighted=true), N; weighted=true)
-        @show "laplaceoperator", "4 of 6 done"
-        F = diffoperatortheta2(S, N)
-        @show "laplaceoperator", "5 of 6 done"
-        G = increasedegreeoperator(S, N+1, N+3)
-        @show "laplaceoperator", "6 of 6 done"
-        L = A * B + G * C * E * F
-        if square
-            m = (N+1)^2
-            Δ = BandedBlockBandedMatrix(L[1:m, 1:m], ([N+1; 2N:-2:1], [N+1; 2N:-2:1]),
-                                        (L.l, L.u), (L.λ, L.μ))
+    paramin = Int(S.params[1]); paramout = Int(St.params[1])
+    if weighted
+        if paramin == paramout
+            A = diffoperatorphi(differentiatespacephi(S; weighted=true), N+2)
+            @show "laplaceoperator", "1 of 6 done"
+            B = diffoperatorphi(S, N; weighted=true)
+            @show "laplaceoperator", "2 of 6 done"
+            C = transformparamsoperator(differentiatespacephi(S; weighted=true), S, N+1)
+            @show "laplaceoperator", "3 of 6 done"
+            E = transformparamsoperator(S, differentiatespacephi(S; weighted=true), N; weighted=true)
+            @show "laplaceoperator", "4 of 6 done"
+            F = diffoperatortheta2(S, N)
+            @show "laplaceoperator", "5 of 6 done"
+            G = increasedegreeoperator(S, N+1, N+3)
+            @show "laplaceoperator", "6 of 6 done"
+            L = A * B + G * C * E * F
+            if square
+                m = (N+1)^2
+                Δ = BandedBlockBandedMatrix(L[1:m, 1:m], ([N+1; 2N:-2:1], [N+1; 2N:-2:1]),
+                                            (L.l, L.u), (L.λ, L.μ))
+            else
+                L
+            end
+        elseif  paramin - 2 == paramout
+            A = diffoperatorphi(differentiatespacephi(S; weighted=true), N+2; weighted=true)
+            B = diffoperatorphi(S, N; weighted=true)
+            C = transformparamsoperator(S, St, N; weighted=true)
+            E = diffoperatortheta2(S, N)
+            F = increasedegreeoperator(S, N+2, N+4)
+            L = A * B + F * C * E
+            if square
+                m = (N+1)^2
+                Δ = BandedBlockBandedMatrix(L[1:m, 1:m], ([N+1; 2N:-2:1], [N+1; 2N:-2:1]),
+                                            (L.l, L.u), (L.λ, L.μ))
+            else
+                L
+            end
         else
-            L
+            error("Invalid spaces for weighted keyword")
+        end
+    else
+        if paramin + 2 == paramout
+            A = diffoperatorphi(differentiatespacephi(S; weighted=false), N+1; weighted=false)
+            B = diffoperatorphi(S, N; weighted=false)
+            C = transformparamsoperator(S, St, N; weighted=false)
+            E = diffoperatortheta2(S, N)
+            F = increasedegreeoperator(S, N, N+2)
+            L = A * B + F * C * E
+            if square
+                m = (N+1)^2
+                Δ = BandedBlockBandedMatrix(L[1:m, 1:m], ([N+1; 2N:-2:1], [N+1; 2N:-2:1]),
+                                            (L.l, L.u), (L.λ, L.μ))
+            else
+                L
+            end
+        else
+            error("Invalid spaces for weighted keyword")
         end
     end
 end
@@ -1549,7 +1592,7 @@ function rhogradoperator(S::SphericalCapSpace{<:Any, B, T, <:Any}, N;
     end
     A = BandedBlockBandedMatrix(Zeros{B}(2 * (N+band2+1)^2, (N+1)^2),
                                 (2 * [N+band2+1; 2(N+band2):-2:1], [N+1; 2N:-2:1]),
-                                (0, 0), (2N + 4band2 + 1, 2band1))
+                                (0, 0), (2N + 4band2, 2band1))
     for k = 0:N
         if k % 100 == 0
             @show "rhograd", k
@@ -1564,8 +1607,9 @@ function rhogradoperator(S::SphericalCapSpace{<:Any, B, T, <:Any}, N;
                             && continue)
                     val = getrhogradval(S, ptsr, rhoptsr2, rhodxrhoptsr, wr10,
                                         wr, n, m, k, i, j; weighted=weighted)
-                    view(A, Block(k+1, k+1))[getblockindextangent(St, m, k, abs(i-j), j),
-                                             getblockindex(S, n, k, i)] = val
+                    ind1 = getblockindextangent(St, m, k, abs(i-j), j)
+                    ind2 = getblockindex(S, n, k, i)
+                    view(A, Block(k+1, k+1))[ind1, ind2] = val
                 end
             end
         end
@@ -1620,6 +1664,28 @@ end
 
 
 #===#
+# Uselful for SWE
+function unitvecphioperator(S::SphericalCapSpace{<:Any, B, T, <:Any}, N) where {B,T}
+    # Assume S is S0
+    @assert Int(S.params[1]) == 0 "Invalid SCSpace"
+
+    # TODO weighted=true
+    V = BandedBlockBandedMatrix(Zeros{B}(2(N+1)^2, (N+1)^2),
+                                (2 * [N+1; 2N:-2:1], [N+1; 2N:-2:1]),
+                                (0, 0), (2N - 1, 0))
+    j = 0
+    for k = 0:N, n = k:N
+        for i = 0:min(1,k)
+            view(V, Block(k+1, k+1))[getblockindextangent(S, n, k, i, j),
+                                     getblockindex(S, n, k, i)] = B(1)
+        end
+    end
+    V
+end
+
+
+
+#===#
 # inner product
 
 function inner(::Type{T}, S::SphericalCapSpace, fpts, gpts, w) where T
@@ -1663,7 +1729,10 @@ function jacobix(S::SphericalCapSpace{<:Any, B, T, <:Any}, N) where {B,T}
         ind = getopindex(S, n, k, i; bydegree=false, N=N)
         Jout[ind, :] = convertcoeffsvecorder(S, J[row, :]; todegree=false)
     end
-    Jout
+    bandn = bandk = 1; bandi = 0
+    BandedBlockBandedMatrix(Jout, ([N+1; 2N:-2:1], [N+1; 2N:-2:1]),
+                            (bandk, bandk),
+                            (2bandn+2bandk+bandi, 2bandn+2bandk+bandi))
 end
 function jacobiy(S::SphericalCapSpace{<:Any, B, T, <:Any}, N) where {B,T}
     # Transposed operator, so acts directly on coeffs vec
@@ -1694,11 +1763,15 @@ function jacobiy(S::SphericalCapSpace{<:Any, B, T, <:Any}, N) where {B,T}
         ind = getopindex(S, n, k, i; bydegree=false, N=N)
         Jout[ind, :] = convertcoeffsvecorder(S, J[row, :]; todegree=false)
     end
-    Jout
+    bandn = bandk = bandi = 1
+    BandedBlockBandedMatrix(Jout, ([N+1; 2N:-2:1], [N+1; 2N:-2:1]),
+                            (bandk, bandk),
+                            (2bandn+2bandk+bandi, 2bandn+2bandk+bandi))
 end
 function jacobiz(S::SphericalCapSpace{<:Any, B, T, <:Any}, N) where {B,T}
     # Transposed operator, so acts directly on coeffs vec
     resizedata!(S, N)
+    getAs!(S, N+1, length(S.A))
     J = BandedBlockBandedMatrix(Zeros{B}((N+1)^2, (N+1)^2),
                                 (1:2:2N+1, 1:2:2N+1), (1, 1), (0, 0))
     # Assign by column
@@ -1725,7 +1798,10 @@ function jacobiz(S::SphericalCapSpace{<:Any, B, T, <:Any}, N) where {B,T}
         ind = getopindex(S, n, k, i; bydegree=false, N=N)
         Jout[ind, :] = convertcoeffsvecorder(S, J[row, :]; todegree=false)
     end
-    Jout
+    bandn = 1; bandk = bandi = 0
+    BandedBlockBandedMatrix(Jout, ([N+1; 2N:-2:1], [N+1; 2N:-2:1]),
+                            (bandk, bandk),
+                            (2bandn+2bandk+bandi, 2bandn+2bandk+bandi))
 end
 
 
