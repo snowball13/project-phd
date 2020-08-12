@@ -982,6 +982,9 @@ function operatorclenshaw(cfs::AbstractVector{T}, S::SphericalCapSpace, M) where
     # Outputs the operator MxM-blocked matrix operator corresponding to the
     # function f given by its coefficients of its expansion in the space S
 
+    # TODO Make more efficient - this takes exponentially too long a time for
+    #      any N > 50!!!!!!!!!
+
     @show "Operator Clenshaw"
     # Convert the cfs vector from ordered by Fourier mode k, to by degree n
     f = convertcoeffsvecorder(S, cfs)
@@ -992,11 +995,11 @@ function operatorclenshaw(cfs::AbstractVector{T}, S::SphericalCapSpace, M) where
     f = PseudoBlockArray(f, [2n+1 for n=0:N])
 
     @show "getting Jacobi matrices"
-    # TODO Cange the Jacobi operators and id to BandedBlockBandedMatrix objects
+    # TODO Change the Jacobi operators and id to BandedBlockBandedMatrix objects
     # (not Sparse matrices!)
-    Jx = jacobix(S, M)
-    Jy = jacobiy(S, M)
-    Jz = jacobiz(S, M)
+    Jx = jacobix(S, M); @show "Jx done"
+    Jy = jacobiy(S, M); @show "Jy done"
+    Jz = jacobiz(S, M); @show "Jz done"
     id = sparse(I, size(Jx))
     # id = BandedBlockBandedMatrix(I, size(Jx),
     #                                 ([M+1; 2M:-2:1], [M+1; 2M:-2:1]),
@@ -1026,6 +1029,49 @@ operatorclenshaw(f::Fun, S::SphericalCapSpace) =
 operatorclenshaw(f::Fun, S::SphericalCapSpace, N) =
     operatorclenshaw(f.coefficients, S, N)
 
+function operatorclenshaw2(cfs::AbstractVector{T}, S::SphericalCapSpace, M) where T
+    # Outputs the operator MxM-blocked matrix operator corresponding to the
+    # function f given by its coefficients of its expansion in the space S
+
+    # TODO Make more efficient - this takes exponentially too long a time for
+    #      any N > 50!!!!!!!!!
+
+    @show "Operator Clenshaw"
+    # Convert the cfs vector from ordered by Fourier mode k, to by degree n
+    f = convertcoeffsvecorder(S, cfs)
+
+    m = length(f)
+    N = Int(sqrt(m)) - 1 # Degree of function
+    resizedata!(S, N+1)
+    f = PseudoBlockArray(f, [2n+1 for n=0:N])
+
+    @show "getting Jacobi matrices"
+    # TODO Change the Jacobi operators and id to BandedBlockBandedMatrix objects
+    # (not Sparse matrices!)
+    Jx = jacobix(S, M); @show "Jx done"
+    Jy = jacobiy(S, M); @show "Jy done"
+    Jz = jacobiz(S, M); @show "Jz done"
+    id = BandedBlockBandedMatrix(I, ([M+1; 2M:-2:1], [M+1; 2M:-2:1]), (0,0), (0,0))
+
+    P0 = getdegzeropteval(T, S)
+    if N == 0
+        return f[1] * P0 * id
+    end
+    γ2 = operatorclenshawvector(S, view(f, Block(N+1)), id)
+    γ1 = (operatorclenshawvector(S, view(f, Block(N)), id)
+            - (γ2 * operatorclenshawmatrixDT(S, S.DT[N], id)
+                  * operatorclenshawmatrixBmG(S, S.B[N], id, Jx, Jy, Jz)))
+    for n = N-2:-1:0
+        @show "Operator Clenshaw", M, N, n
+        γ = (operatorclenshawvector(S, view(f, Block(n+1)), id)
+             - (γ1 * operatorclenshawmatrixDT(S, S.DT[n+1], id)
+                   * operatorclenshawmatrixBmG(S, S.B[n+1], id, Jx, Jy, Jz))
+             - γ2 * operatorclenshawmatrixDT(S, S.DT[n+2] * S.C[n+2], id))
+        γ2 = copy(γ1)
+        γ1 = copy(γ)
+    end
+    (γ1 * P0)[1]
+end
 
 #===#
 # Resizing/Reordering coeffs vectors
@@ -1699,6 +1745,166 @@ inner(S::SphericalCapSpace, fpts, gpts, w::AbstractVector{T}) where T =
 #===#
 # Jacobi operators methods for mult by x, y, z
 
+function getjacobisubblockx!(S::SphericalCapSpace{<:Any, T, <:Any, <:Any}, mat,
+                                n::Int; subblock::String="A") where T
+    @assert subblock in ("A", "B", "C") "Invalid subblock given"
+    if subblock == "A"
+        u, l = 6, 5
+        if n == 0
+            k = 0; i = 0
+            mat[1, 2] = recα(T, S, n, k, u)
+            return mat
+        end
+        maxk = n
+    elseif subblock == "B"
+        u, l = 4, 3
+        if n == 0
+            return mat
+        elseif n == 1
+            k = 0
+            mat[1, 2] = recα(T, S, n, k, u)
+            k = 1
+            i = 0
+            mat[2k+i, 2(k-1)+i] = recα(T, S, n, k, l)
+            i = 1
+            mat[2k+i, 2(k+1)+i] = recα(T, S, n, k, u)
+            return mat
+        end
+        maxk = n - 1
+        k = n
+        for i = 0:1
+            mat[2k+i, 2(k-1)+i] = recα(T, S, n, k, i, l)
+        end
+    else
+        u, l = 2, 1
+        @assert n > 0 "Invalid n with subblock C requested"
+        if n == 1
+            mat[2, 1] = recα(T, S, 1, 1, l)
+            return mat
+        end
+        maxk = n - 2
+        for k = n-1:n
+            for i = 0:1
+                mat[2k+i, 2(k-1)+i] = recα(T, S, n, k, l)
+            end
+        end
+    end
+    k = 0; i = 0
+    mat[1, 2] = recα(T, S, n, k, u)
+    k = 1
+    au, al = recα(T, S, n, k, u), recα(T, S, n, k, l)
+    i = 0
+    mat[2k+i, 1] = al
+    mat[2k+i, 2(k+1)+i] = au
+    i = 1
+    mat[2k+i, 2(k+1)+i] = au
+    for k = 2:maxk
+        au, al = recα(T, S, n, k, u), recα(T, S, n, k, l)
+        for i = 0:1
+            mat[2k+i, 2(k-1)+i] = al
+            mat[2k+i, 2(k+1)+i] = au
+        end
+    end
+    mat
+end
+function getjacobisubblocky!(S::SphericalCapSpace{<:Any, T, <:Any, <:Any}, mat,
+                                n::Int; subblock::String="A") where T
+    @assert subblock in ("A", "B", "C") "Invalid subblock given"
+    if subblock == "A"
+        u, l = 6, 5
+        if n == 0
+            k = 0; i = 0
+            mat[1, 3] = recβ(T, S, n, k, i, u)
+            return mat
+        end
+        maxk = n
+    elseif subblock == "B"
+        u, l = 4, 3
+        if n == 0
+            return mat
+        elseif n == 1
+            k = 0
+            mat[1, 3] = recβ(T, S, n, k, i, u)
+            k = 1
+            i = 0
+            mat[2k+i, 2(k+1)+abs(i-1)] = recβ(T, S, n, k, i, u)
+            i = 1
+            mat[2k+i, 1] = recβ(T, S, n, k, i, l)
+            return mat
+        end
+        maxk = n - 1
+        k = n
+        for i = 0:1
+            mat[2k+i, 2(k-1)+abs(i-1)] = recβ(T, S, n, k, i, l)
+        end
+    else
+        u, l = 2, 1
+        @assert n > 0 "Invalid n with subblock C requested"
+        if n == 1
+            mat[3, 1] = recβ(T, S, 1, 1, 1, l)
+            return mat
+        end
+        maxk = n - 2
+        for k = n-1:n
+            for i = 0:1
+                mat[2k+i, 2(k-1)+abs(i-1)] = recβ(T, S, n, k, i, l)
+            end
+        end
+    end
+    k = 0; i = 0
+    mat[1, 3] = recβ(T, S, n, k, i, u)
+    k = 1
+    i = 0
+    mat[2k+i, 2(k+1)+abs(i-1)] = recβ(T, S, n, k, i, u)
+    i = 1
+    mat[2k+i, 1] = recβ(T, S, n, k, i, l)
+    mat[2k+i, 2(k+1)+abs(i-1)] = recβ(T, S, n, k, i, u)
+    for k = 2:maxk
+        for i = 0:1
+            mat[2k+i, 2(k-1)+abs(i-1)] = recβ(T, S, n, k, i, l)
+            mat[2k+i, 2(k+1)+abs(i-1)] = recβ(T, S, n, k, i, u)
+        end
+    end
+    mat
+end
+function getjacobisubblockz!(S::SphericalCapSpace{<:Any, T, <:Any, <:Any}, mat,
+                                n::Int; subblock::String="A") where T
+    @assert subblock in ("A", "B", "C") "Invalid subblock given"
+    if subblock == "A"
+        j = 3
+        maxk = n
+    elseif subblock == "B"
+        j = 2
+        maxk = n
+    else
+        j = 1
+        maxk = n - 1
+    end
+    ind = 1
+    for k = 0:maxk
+        c = recγ(T, S, n, k, j)
+        for i = 0:min(1,k)
+            mat[ind, ind] = c
+            ind += 1
+        end
+    end
+    mat
+end
+
+function jacobiz2(S::SphericalCapSpace{<:Any, B, T, <:Any}, N) where {B,T}
+    resizedata!(S, N)
+    J = BandedBlockBandedMatrix(Zeros{B}((N+1)^2, (N+1)^2),
+                                (1:2:2N+1, 1:2:2N+1), (1, 1), (2, 2))
+    n = 0
+    getjacobisubblockz!(S, view(J, Block(n+1, n+1)), n; subblock="B")
+    for n = 1:N
+        getjacobisubblockz!(S, view(J, Block(n, n+1)), n-1; subblock="A") # A_{n-1}
+        getjacobisubblockz!(S, view(J, Block(n+1, n+1)), n; subblock="B") # B_n
+        getjacobisubblockz!(S, view(J, Block(n+1, n)), n; subblock="C") # C_n
+    end
+    J
+end
+
 function jacobix(S::SphericalCapSpace{<:Any, B, T, <:Any}, N) where {B,T}
     # Transposed operator, so acts directly on coeffs vec
     resizedata!(S, N)
@@ -1721,7 +1927,7 @@ function jacobix(S::SphericalCapSpace{<:Any, B, T, <:Any}, N) where {B,T}
     view(J, Block(n, n+1)) .= S.C[n+1][inds, :]'
     view(J, Block(n+1, n+1)) .= S.B[n+1][inds, :]'
     J
-    # The following converts the operator from bydegree to byfouriermade ordering
+    # The following converts the operator from bydegree to byfouriermode ordering
     # TODO improve this
     Jout = spzeros(B, (N+1)^2, (N+1)^2)
     for row = 1:(N+1)^2
@@ -1790,18 +1996,18 @@ function jacobiz(S::SphericalCapSpace{<:Any, B, T, <:Any}, N) where {B,T}
     view(J, Block(n, n+1)) .= S.C[n+1][inds, :]'
     view(J, Block(n+1, n+1)) .= S.B[n+1][inds, :]'
     J
-    # The following converts the operator from bydegree to byfouriermade ordering
-    # TODO improve this
-    Jout = spzeros(B, (N+1)^2, (N+1)^2)
-    for row = 1:(N+1)^2
-        n, k, i = getnki(S, row)
-        ind = getopindex(S, n, k, i; bydegree=false, N=N)
-        Jout[ind, :] = convertcoeffsvecorder(S, J[row, :]; todegree=false)
-    end
-    bandn = 1; bandk = bandi = 0
-    BandedBlockBandedMatrix(Jout, ([N+1; 2N:-2:1], [N+1; 2N:-2:1]),
-                            (bandk, bandk),
-                            (2bandn+2bandk+bandi, 2bandn+2bandk+bandi))
+    # # The following converts the operator from bydegree to byfouriermade ordering
+    # # TODO improve this
+    # Jout = spzeros(B, (N+1)^2, (N+1)^2)
+    # for row = 1:(N+1)^2
+    #     n, k, i = getnki(S, row)
+    #     ind = getopindex(S, n, k, i; bydegree=false, N=N)
+    #     Jout[ind, :] = convertcoeffsvecorder(S, J[row, :]; todegree=false)
+    # end
+    # bandn = 1; bandk = bandi = 0
+    # BandedBlockBandedMatrix(Jout, ([N+1; 2N:-2:1], [N+1; 2N:-2:1]),
+    #                         (bandk, bandk),
+    #                         (2bandn+2bandk+bandi, 2bandn+2bandk+bandi))
 end
 
 
