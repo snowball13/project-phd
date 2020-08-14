@@ -48,10 +48,13 @@ struct SphericalCapSpace{DF, B, T, N} <: Space{SphericalCap{B,T}, T}
     params::NTuple{N,B} # Parameters
     opnorms::Vector{B} # squared norms
     opptseval::Vector{Vector{B}} # Store the ops evaluated at the transform pts
-    A::Vector{SparseMatrixCSC{B}}
-    B::Vector{SparseMatrixCSC{B}}
-    C::Vector{SparseMatrixCSC{B}}
-    DT::Vector{SparseMatrixCSC{B}}
+
+    # These store the "Clenshaw" matrices. Each subvector contains the x,y,z
+    # submatrices
+    A::Vector{Vector{BandedBlockBandedMatrix{B}}}
+    B::Vector{Vector{BandedBlockBandedMatrix{B}}}
+    C::Vector{Vector{BandedBlockBandedMatrix{B}}}
+    DT::Vector{Vector{BandedBlockBandedMatrix{B}}}
 end
 
 struct SphericalCapTangentSpace{DF, B, T, N} <: Space{SphericalCap{B,T}, T}
@@ -62,8 +65,8 @@ end
 function SphericalCapSpace(fam::SphericalFamily{B,T,N}, params::NTuple{N,B}) where {B,T,N}
     SphericalCapSpace{typeof(fam), B, T, N}(
         fam, params, Vector{B}(), Vector{Vector{B}}(),
-        Vector{SparseMatrixCSC{B}}(), Vector{SparseMatrixCSC{B}}(),
-        Vector{SparseMatrixCSC{B}}(), Vector{SparseMatrixCSC{B}}())
+        Vector{Vector{BandedBlockBandedMatrix{B}}}(), Vector{Vector{BandedBlockBandedMatrix{B}}}(),
+        Vector{Vector{BandedBlockBandedMatrix{B}}}(), Vector{Vector{BandedBlockBandedMatrix{B}}}())
 end
 
 spacescompatible(A::SphericalCapSpace, B::SphericalCapSpace) = (A.params == B.params)
@@ -499,8 +502,9 @@ function opevalatpts(S::SphericalCapSpace{<:Any, B, T, <:Any}, j, pts) where {B,
         if n == 1
             nm1 = getopindex(S, n-1, 0, 0)
             for r = 1:length(pts)
+                x, y, z = pts[r]
                 P1 = [opevalatpts(S, nm1+it, pts)[r] for it = 0:2(n-1)]
-                P = - S.DT[n] * (S.B[n] - clenshawG(S, n-1, pts[r])) * P1
+                P = - clenshawDTBmG(S, n-1, P1, x, y, z; clenshawalg=false)
                 for k = 0:2n
                     S.opptseval[jj+k][r] = P[k+1]
                 end
@@ -509,10 +513,11 @@ function opevalatpts(S::SphericalCapSpace{<:Any, B, T, <:Any}, j, pts) where {B,
             nm1 = getopindex(S, n-1, 0, 0)
             nm2 = getopindex(S, n-2, 0, 0)
             for r = 1:length(pts)
+                x, y, z = pts[r]
                 P1 = [opevalatpts(S, nm1+it, pts)[r] for it = 0:2(n-1)]
                 P2 = [opevalatpts(S, nm2+it, pts)[r] for it = 0:2(n-2)]
-                P = (- S.DT[n] * (S.B[n] - clenshawG(S, n-1, pts[r])) * P1
-                     - S.DT[n] * S.C[n] * P2)
+                P = - (clenshawDTBmG(S, n-1, P1, x, y, z; clenshawalg=false)
+                        + clenshawDTC(S, n-1, P2; clenshawalg=false))
                 for k = 0:2n
                     S.opptseval[jj+k][r] = P[k+1]
                 end
@@ -656,235 +661,298 @@ OR since constructing/storing these takes a looong time, we do the clenshaw alg
 when needed *not* using the clenshaw matrices.
 =#
 
+function getclenshawsubblockx(S::SphericalCapSpace{<:Any, T, <:Any, <:Any},
+                                n::Int; subblock::String="A") where T
+    @assert subblock in ("A", "B", "C") "Invalid subblock given"
+    @assert n ≥ 0 "Invalid n - should be non-negative integer"
+    if subblock == "A"
+        u, l = 6, 5
+        maxk = n
+        bandn = 1
+    elseif subblock == "B"
+        u, l = 4, 3
+        maxk = n
+        bandn = 0
+    else
+        u, l = 2, 1
+        maxk = n - 1
+        bandn = -1
+        n == 0 && error("n needs to be > 0 when Clenshaw mat C requested")
+    end
+    mat = BandedBlockBandedMatrix(Zeros{T}(2n+1, 2(n+bandn)+1),
+                                    ([1; [2 for k=1:n]], [1; [2 for k=1:(n+bandn)]]),
+                                    (1, 1), (0, 0))
+    id = [1 0; 0 1]
+    # Handle the "extra bits" and special cases here
+    if subblock == "A"
+        if n == 0
+            view(mat, Block(1, 2)) .= [recα(T, S, n, 0, u) 0]
+            return mat
+        else
+            k = n
+            a = recα(T, S, n, k, u)
+            view(mat, Block(k+1, k+2)) .= a * id
+        end
+    elseif subblock == "C"
+        if n == 1
+            view(mat, Block(2, 1)) .= [recα(T, S, n, 1, l); 0]
+            return mat
+        else
+            k = n
+            a = recα(T, S, n, k, l)
+            view(mat, Block(k+1, k)) .= a * id
+        end
+        n == 2 && return mat
+    end
+    n == 0 && subblock == "B" && return mat
+    # Now iterate over k
+    k = 1
+    al, au = recα(T, S, n, k, l), recα(T, S, n, k-1, u)
+    view(mat, Block(k, k+1)) .= [au 0]
+    view(mat, Block(k+1, k)) .= [al; 0]
+    al, au = recα(T, S, n, k, l), recα(T, S, n, k-1, u)
+    for k = 2:maxk
+        view(mat, Block(k, k+1)) .= au * id
+        view(mat, Block(k+1, k)) .= al * id
+    end
+    mat
+end
+function getclenshawsubblocky(S::SphericalCapSpace{<:Any, T, <:Any, <:Any},
+                                n::Int; subblock::String="A") where T
+    @assert subblock in ("A", "B", "C") "Invalid subblock given"
+    @assert n ≥ 0 "Invalid n - should be non-negative integer"
+    if subblock == "A"
+        u, l = 6, 5
+        maxk = n
+        bandn = 1
+    elseif subblock == "B"
+        u, l = 4, 3
+        maxk = n
+        bandn = 0
+    else
+        u, l = 2, 1
+        maxk = n - 1
+        bandn = -1
+        n == 0 && error("n needs to be > 0 when Clenshaw mat C requested")
+    end
+    mat = BandedBlockBandedMatrix(Zeros{T}(2n+1, 2(n+bandn)+1),
+                                    ([1; [2 for k=1:n]], [1; [2 for k=1:(n+bandn)]]),
+                                    (1, 1), (1, 1))
+    # Handle the "extra bits" and special cases here
+    if subblock == "A"
+        if n == 0
+            view(mat, Block(1, 2)) .= [0 recβ(T, S, n, 0, 0, u)]
+            return mat
+        else
+            k = n
+            view(mat, Block(k+1, k+2)) .= [0 recβ(T, S, n, k, 0, u);
+                                           recβ(T, S, n, k, 1, u) 0]
+        end
+    elseif subblock == "C"
+        if n == 1
+            view(mat, Block(2, 1)) .= [0; recβ(T, S, n, 1, 1, l)]
+            return mat
+        else
+            k = n
+            view(mat, Block(k+1, k)) .= [0 recβ(T, S, n, k, 0, l);
+                                         recβ(T, S, n, k, 1, l) 0]
+        end
+    end
+    n == 0 && subblock == "B" && return mat
+    # Now iterate over k
+    k = 1
+    view(mat, Block(k, k+1)) .= [0 recβ(T, S, n, k-1, 0, u)]
+    view(mat, Block(k+1, k)) .= [0; recβ(T, S, n, k, 1, l)]
+    for k = 2:maxk
+        view(mat, Block(k, k+1)) .= [0 recβ(T, S, n, k-1, 0, u);
+                                       recβ(T, S, n, k-1, 1, u) 0]
+        view(mat, Block(k+1, k)) .= [0 recβ(T, S, n, k, 0, l);
+                                       recβ(T, S, n, k, 1, l) 0]
+    end
+    mat
+end
+function getclenshawsubblockz(S::SphericalCapSpace{<:Any, T, <:Any, <:Any},
+                                n::Int; subblock::String="A") where T
+    @assert subblock in ("A", "B", "C") "Invalid subblock given"
+    if subblock == "A"
+        bandn = 1
+        j = 3
+        maxk = n
+    elseif subblock == "B"
+        bandn = 0
+        j = 2
+        maxk = n
+    else
+        bandn = -1
+        j = 1
+        maxk = n - 1
+    end
+    mat = BandedBlockBandedMatrix(Zeros{T}(2n+1, 2(n+bandn)+1),
+                                    ([1; [2 for k=1:n]], [1; [2 for k=1:(n+bandn)]]),
+                                    (0, 0), (0, 0))
+    k = 0
+    view(mat, Block(k+1, k+1)) .= [recγ(T, S, n, k, j)]
+    id = [1 0; 0 1]
+    for k = 1:maxk
+        c = recγ(T, S, n, k, j)
+        view(mat, Block(k+1, k+1)) .= c * id
+    end
+    mat
+end
+
 function getBs!(S::SphericalCapSpace{<:Any, T, <:Any, <:Any}, N, N₀) where T
     m = N₀
     resize!(S.B, N + 1)
-    if m == 0
-        S.B[1] = sparse([0; 0; recγ(T, S, 0, 0, 2)])
-        m += 1
-    end
-    if m == 1
-        n = 1
-        S.B[n+1] = sparse(zeros(T, 3*(2n+1), 2n+1))
-
-        k = 0; i = 0
-        S.B[n+1][1, 2] = recα(T, S, n, k, 4)
-        S.B[n+1][2n+1+1, 3] = recβ(T, S, n, k, i, 4)
-        S.B[n+1][2*(2n+1)+1, 1] = recγ(T, S, n, k, 2)
-
-        k = 1
-        c2 = recγ(T, S, n, k, 2)
-        i = 0
-        S.B[n+1][2k+i, 1] = recα(T, S, n, k, 3)
-        S.B[n+1][2*(2n+1)+2k+i, 2k+i] = c2
-        i = 1
-        S.B[n+1][2n+1+2k+i, 1] = recβ(T, S, n, k, i, 3)
-        S.B[n+1][2*(2n+1)+2k+i, 2k+i] = c2
-        m += 1
-    end
+    subblock = "B"
     for n = N:-1:m
-        @show "getBs", m, n
-        S.B[n+1] = sparse(zeros(T, 3*(2n+1), 2n+1))
-
-        k = 0; i = 0
-        S.B[n+1][1, 2] = recα(T, S, n, k, 4)
-        S.B[n+1][2n+1+1, 3] = recβ(T, S, n, k, i, 4)
-        S.B[n+1][2*(2n+1)+1, 1] = recγ(T, S, n, k, 2)
-
-        k = 1
-        a3, a4 = recα(T, S, n, k, 3), recα(T, S, n, k, 4)
-        c2 = recγ(T, S, n, k, 2)
-        i = 0
-        S.B[n+1][2k+i, 1] = a3
-        S.B[n+1][2k+i, 2(k+1)+i] = a4
-        S.B[n+1][2n+1+2k+i, 2(k+1)+i+1] = recβ(T, S, n, k, i, 4)
-        S.B[n+1][2*(2n+1)+2k+i, 2k+i] = c2
-        i = 1
-        S.B[n+1][2k+i, 2(k+1)+i] = a4
-        S.B[n+1][2n+1+2k+i, 1] = recβ(T, S, n, k, i, 3)
-        S.B[n+1][2n+1+2k+i, 2(k+1)+i-1] = recβ(T, S, n, k, i, 4)
-        S.B[n+1][2*(2n+1)+2k+i, 2k+i] = c2
-
-        for k = 2:n-1
-            a3, a4 = recα(T, S, n, k, 3), recα(T, S, n, k, 4)
-            c2 = recγ(T, S, n, k, 2)
-            i = 0
-            S.B[n+1][2k+i, 2(k-1)+i] = a3
-            S.B[n+1][2k+i, 2(k+1)+i] = a4
-            S.B[n+1][2n+1+2k+i, 2(k-1)+i+1] = recβ(T, S, n, k, i, 3)
-            S.B[n+1][2n+1+2k+i, 2(k+1)+i+1] = recβ(T, S, n, k, i, 4)
-            S.B[n+1][2*(2n+1)+2k+i, 2k+i] = c2
-            i = 1
-            S.B[n+1][2k+i, 2(k-1)+i] = a3
-            S.B[n+1][2k+i, 2(k+1)+i] = a4
-            S.B[n+1][2n+1+2k+i, 2(k-1)+i-1] = recβ(T, S, n, k, i, 3)
-            S.B[n+1][2n+1+2k+i, 2(k+1)+i-1] = recβ(T, S, n, k, i, 4)
-            S.B[n+1][2*(2n+1)+2k+i, 2k+i] = c2
-        end
-
-        k = n
-        a3 = recα(T, S, n, k, 3)
-        c2 = recγ(T, S, n, k, 2)
-        i = 0
-        S.B[n+1][2k+i, 2(k-1)+i] = a3
-        S.B[n+1][2n+1+2k+i, 2(k-1)+i+1] = recβ(T, S, n, k, i, 3)
-        S.B[n+1][2*(2n+1)+2k+i, 2k+i] = c2
-        i = 1
-        S.B[n+1][2k+i, 2(k-1)+i] = a3
-        S.B[n+1][2n+1+2k+i, 2(k-1)+i-1] = recβ(T, S, n, k, i, 3)
-        S.B[n+1][2*(2n+1)+2k+i, 2k+i] = c2
+        S.B[n+1] = Vector{BandedBlockBandedMatrix{T}}(undef, 3)
+        resize!(S.B[n+1], 3)
+        S.B[n+1][1] = getclenshawsubblockx(S, n; subblock=subblock)
+        S.B[n+1][2] = getclenshawsubblocky(S, n; subblock=subblock)
+        S.B[n+1][3] = getclenshawsubblockz(S, n; subblock=subblock)
     end
     S
 end
 function getCs!(S::SphericalCapSpace{<:Any, T, <:Any, <:Any}, N, N₀) where T
     m = N₀
     resize!(S.C, N + 1)
+    subblock = "C"
     if N₀ == 0
-        # C_0 does not exist
-        m += 1
-    end
-    if m == 1
-        n = 1
-        S.C[n+1] = sparse(zeros(T, 3*(2n+1), 2n-1))
-        k = 0; i = 0
-        S.C[n+1][2, 1] = recα(T, S, n, k+1, 1)
-        S.C[n+1][2n+1+3, 1] = recβ(T, S, n, k+1, i+1, 1)
-        S.C[n+1][2*(2n+1)+1, 1] = recγ(T, S, n, k, 1)
-        m += 1
+        m += 1 # C_0 does not exist
     end
     for n = N:-1:m
-        # We iterate over columns, not rows, for the C matrices
-
-        S.C[n+1] = sparse(zeros(T, 3*(2n+1), 2n-1))
-
-        k = 0; i = 0
-        S.C[n+1][2, 1] = recα(T, S, n, k+1, 1)
-        S.C[n+1][2n+1+3, 1] = recβ(T, S, n, k+1, i+1, 1)
-        S.C[n+1][2*(2n+1)+1, 1] = recγ(T, S, n, k, 1)
-
-        k = 1
-        a1, a2 = recα(T, S, n, k+1, 1), recα(T, S, n, k-1, 2)
-        c1 = recγ(T, S, n, k, 1)
-        i = 0
-        S.C[n+1][1, 2k+i] = a2
-        S.C[n+1][2(k+1)+i, 2k+i] = a1
-        S.C[n+1][2n+1+2(k+1)+i+1, 2k+i] = recβ(T, S, n, k+1, i+1, 1)
-        S.C[n+1][2*(2n+1)+2k+i, 2k+i] = c1
-        i = 1
-        S.C[n+1][2(k+1)+i, 2k+i] = a1
-        S.C[n+1][2n+1+1, 2k+i] = recβ(T, S, n, k-1, i-1, 2)
-        S.C[n+1][2n+1+2(k+1)+i-1, 2k+i] = recβ(T, S, n, k+1, i-1, 1)
-        S.C[n+1][2*(2n+1)+2k+i, 2k+i] = c1
-
-        for k = 2:n-1
-            a1, a2 = recα(T, S, n, k+1, 1), recα(T, S, n, k-1, 2)
-            c1 = recγ(T, S, n, k, 1)
-            i = 0
-            S.C[n+1][2(k-1)+i, 2k+i] = a2
-            S.C[n+1][2(k+1)+i, 2k+i] = a1
-            S.C[n+1][2n+1+2(k-1)+i+1, 2k+i] = recβ(T, S, n, k-1, i+1, 2)
-            S.C[n+1][2n+1+2(k+1)+i+1, 2k+i] = recβ(T, S, n, k+1, i+1, 1)
-            S.C[n+1][2*(2n+1)+2k+i, 2k+i] = c1
-            i = 1
-            S.C[n+1][2(k-1)+i, 2k+i] = a2
-            S.C[n+1][2(k+1)+i, 2k+i] = a1
-            S.C[n+1][2n+1+2(k-1)+i-1, 2k+i] = recβ(T, S, n, k-1, i-1, 2)
-            S.C[n+1][2n+1+2(k+1)+i-1, 2k+i] = recβ(T, S, n, k+1, i-1, 1)
-            S.C[n+1][2*(2n+1)+2k+i, 2k+i] = c1
-        end
-    end
-    S
-end
-function getDTs!(S::SphericalCapSpace{<:Any, T, <:Any, <:Any}, N, N₀) where T
-    m = N₀
-    resize!(S.DT, N + 1)
-    if m == 0
-        S.DT[1] = sparse([0 0 (1 / recγ(T, S, 0, 0, 3));
-                          (1 / recα(T, S, 0, 0, 6)) 0 0;
-                          0 (1 / recβ(T, S, 0, 0, 0, 6)) 0])
-        m += 1
-    end
-    if m == 1
-        n = 1
-        S.DT[n+1] = sparse(zeros(T, 2n+3, 3*(2n+1)))
-        k = 0; S.DT[n+1][k+1, 2*(2n+1)+k+1] = 1 / recγ(T, S, n, k, 3)
-        for k = 1:n, i = 0:1
-            S.DT[n+1][2k+i, 2*(2n+1)+2k+i] = 1 / recγ(T, S, n, k, 3)
-        end
-        η1 = 1 / recα(T, S, n, n, 6)
-        η3 = 1 / recβ(T, S, n, n, 0, 6)
-        η2 = - η1 * recα(T, S, n, n, 5) / recγ(T, S, n, n-1, 3)
-        S.DT[n+1][2n+2, 2n] = η1
-        S.DT[n+1][2n+2, 3*(2n+1)-2] = η2
-        S.DT[n+1][2n+3, (2n+1)+2] = η3
-        m += 1
-    end
-    for n = N:-1:m
-        S.DT[n+1] = sparse(zeros(T, 2n+3, 3*(2n+1)))
-        k = 0; S.DT[n+1][k+1, 2*(2n+1)+k+1] = 1 / recγ(T, S, n, k, 3)
-        for k = 1:n, i = 0:1
-            S.DT[n+1][2k+i, 2*(2n+1)+2k+i] = 1 / recγ(T, S, n, k, 3)
-        end
-        η1 = 1 / recα(T, S, n, n, 6)
-        η2 = - η1 * recα(T, S, n, n, 5) / recγ(T, S, n, n-1, 3)
-        for j = 0:1
-            S.DT[n+1][2n+2+j, 2n+j] = η1
-            S.DT[n+1][2n+2+j, 3*(2n+1)-3+j] = η2
-        end
+        S.C[n+1] = Vector{BandedBlockBandedMatrix{T}}(undef, 3)
+        resize!(S.C[n+1], 3)
+        S.C[n+1][1] = getclenshawsubblockx(S, n; subblock=subblock)
+        S.C[n+1][2] = getclenshawsubblocky(S, n; subblock=subblock)
+        S.C[n+1][3] = getclenshawsubblockz(S, n; subblock=subblock)
     end
     S
 end
 function getAs!(S::SphericalCapSpace{<:Any, T, <:Any, <:Any}, N, N₀) where T
     m = N₀
     resize!(S.A, N + 1)
-    if N₀ == 0
-        S.A[1] = sparse([0 recα(T, S, 0, 0, 6) 0;
-                         0 0 recβ(T, S, 0, 0, 0, 6);
-                         recγ(T, S, 0, 0, 3) 0 0])
+    subblock = "A"
+    for n = N:-1:m
+        S.A[n+1] = Vector{BandedBlockBandedMatrix{T}}(undef, 3)
+        resize!(S.A[n+1], 3)
+        S.A[n+1][1] = getclenshawsubblockx(S, n; subblock=subblock)
+        S.A[n+1][2] = getclenshawsubblocky(S, n; subblock=subblock)
+        S.A[n+1][3] = getclenshawsubblockz(S, n; subblock=subblock)
+    end
+    S
+end
+function getDTs!(S::SphericalCapSpace{<:Any, T, <:Any, <:Any}, N, N₀) where T
+    # Need to store these as BandedBlockBandedMatrices for each subblock
+    # corresponding to x,y,z.
+    # i.e. We store [DT_{x,n}, DT_{y,n}, DT_{z,n}] where
+    #    I = DTn*An = DT_{x,n}*A_{x,n} + DT_{y,n}*A_{y,n} + DT_{z,n}*A_{z,n}
+
+    m = N₀
+    resize!(S.DT, N + 1)
+    if m == 0
+        n = 0
+        S.DT[n+1] = Vector{BandedBlockBandedMatrix{T}}(undef, 3)
+        resize!(S.DT[n+1], 3)
+        S.DT[n+1][1] = BandedBlockBandedMatrix(Zeros{T}(2n+3, 2n+1),
+                                    ([1; [2 for k=1:(n+1)]], [1; [2 for k=1:n]]),
+                                    (1, -1), (0, 0))
+        S.DT[n+1][2] = BandedBlockBandedMatrix(Zeros{T}(2n+3, 2n+1),
+                                    ([1; [2 for k=1:(n+1)]], [1; [2 for k=1:n]]),
+                                    (1, -1), (1, -1))
+        S.DT[n+1][3] = BandedBlockBandedMatrix(Zeros{T}(2n+3, 2n+1),
+                                    ([1; [2 for k=1:(n+1)]], [1; [2 for k=1:n]]),
+                                    (0, 0), (0, 0))
+        S.DT[n+1][1][2, 1] = 1 / recα(T, S, 0, 0, 6)
+        S.DT[n+1][2][3, 1] = 1 / recβ(T, S, 0, 0, 0, 6)
+        S.DT[n+1][3][1, 1] = 1 / recγ(T, S, 0, 0, 3)
         m += 1
     end
     for n = N:-1:m
-        # We iterate over rows, not cols, for the A matrices
+        S.DT[n+1] = Vector{BandedBlockBandedMatrix{T}}(undef, 3)
+        resize!(S.DT[n+1], 3)
+        # Define
+        S.DT[n+1][1] = BandedBlockBandedMatrix(Zeros{T}(2n+3, 2n+1),
+                                    ([1; [2 for k=1:(n+1)]], [1; [2 for k=1:n]]),
+                                    (1, -1), (0, 0))
+        Dx = S.DT[n+1][1]
+        S.DT[n+1][2] = BandedBlockBandedMatrix(Zeros{T}(2n+3, 2n+1),
+                                    ([1; [2 for k=1:(n+1)]], [1; [2 for k=1:n]]),
+                                    (1, -1), (-1, 1))
+        Dy = S.DT[n+1][2]
+        S.DT[n+1][3] = BandedBlockBandedMatrix(Zeros{T}(2n+3, 2n+1),
+                                    ([1; [2 for k=1:(n+1)]], [1; [2 for k=1:n]]),
+                                    (2, 0), (0, 0))
+        Dz = S.DT[n+1][3]
 
-        S.A[n+1] = sparse(zeros(T, 3*(2n+1), 2n+3))
-
-        k = 0; i = 0
-        S.A[n+1][1, 2] = recα(T, S, n, k, 6)
-        S.A[n+1][2n+1+1, 3] = recβ(T, S, n, k, i, 6)
-        S.A[n+1][2*(2n+1)+1, 1] = recγ(T, S, n, k, 3)
-
-        k = 1
-        a5, a6 = recα(T, S, n, k, 5), recα(T, S, n, k, 6)
-        c3 = recγ(T, S, n, k, 3)
-        i = 0
-        S.A[n+1][2k+i, 1] = a5
-        S.A[n+1][2k+i, 2(k+1)+i] = a6
-        S.A[n+1][2n+1+2k+i, 2(k+1)+i+1] = recβ(T, S, n, k, i, 6)
-        S.A[n+1][2*(2n+1)+2k+i, 2k+i] = c3
-        i = 1
-        S.A[n+1][2k+i, 2(k+1)+i] = a6
-        S.A[n+1][2n+1+2k+i, 1] = recβ(T, S, n, k, i, 5)
-        S.A[n+1][2n+1+2k+i, 2(k+1)+i-1] = recβ(T, S, n, k, i, 6)
-        S.A[n+1][2*(2n+1)+2k+i, 2k+i] = c3
-
-        for k = 2:n
-            a5, a6 = recα(T, S, n, k, 5), recα(T, S, n, k, 6)
-            c3 = recγ(T, S, n, k, 3)
-            i = 0
-            S.A[n+1][2k+i, 2(k-1)+i] = a5
-            S.A[n+1][2k+i, 2(k+1)+i] = a6
-            S.A[n+1][2n+1+2k+i, 2(k-1)+i+1] = recβ(T, S, n, k, i, 5)
-            S.A[n+1][2n+1+2k+i, 2(k+1)+i+1] = recβ(T, S, n, k, i, 6)
-            S.A[n+1][2*(2n+1)+2k+i, 2k+i] = c3
-            i = 1
-            S.A[n+1][2k+i, 2(k-1)+i] = a5
-            S.A[n+1][2k+i, 2(k+1)+i] = a6
-            S.A[n+1][2n+1+2k+i, 2(k-1)+i-1] = recβ(T, S, n, k, i, 5)
-            S.A[n+1][2n+1+2k+i, 2(k+1)+i-1] = recβ(T, S, n, k, i, 6)
-            S.A[n+1][2*(2n+1)+2k+i, 2k+i] = c3
+        # Put in nonzeros
+        # z
+        k = 0; Dz[k+1, k+1] = 1 / recγ(T, S, n, k, 3)
+        for k = 1:n, i = 0:1
+            view(Dz, Block(k+1, k+1))[i+1, i+1] = 1 / recγ(T, S, n, k, 3)
+        end
+        η00 = 1 / recβ(T, S, n, n, 1, 6)
+        η10 = 1 / recα(T, S, n, n, 6)
+        η01 = - η00 * recβ(T, S, n, n, 1, 5) / recγ(T, S, n, n-1, 3)
+        view(Dx, Block(n+2, n+1))[2, 2] = η10
+        view(Dy, Block(n+2, n+1))[1, 2] = η00
+        view(Dz, Block(n+2, n))[1, 1] = η01
+        if n > 1
+            η11 = - η10 * recβ(T, S, n, n, 0, 5) / recγ(T, S, n, n-1, 3)
+            view(Dz, Block(n+2, n))[2, 2] = η11
         end
     end
     S
+
+    # for n = N:-1:m
+    #     resize!(S.DT[n+1], 3)
+    #     S.DT[n+1][1] = BandedBlockBandedMatrix(Zeros{T}(2n+3, 2n+1),
+    #                                 ([1; [2 for k=1:(n+1)]], [1; [2 for k=1:n]]),
+    #                                 (1, -1), (0, 0))
+    #     S.DT[n+1][3] = BandedBlockBandedMatrix(Zeros{T}(2n+3, 2n+1),
+    #                                 ([1; [2 for k=1:(n+1)]], [1; [2 for k=1:n]]),
+    #                                 (2, 0), (0, 0))
+    # end
+    # S
+    #
+    #
+    # m = N₀
+    # resize!(S.DT, N + 1)
+    # if m == 0
+    #     S.DT[1] = sparse([0 0 (1 / recγ(T, S, 0, 0, 3));
+    #                       (1 / recα(T, S, 0, 0, 6)) 0 0;
+    #                       0 (1 / recβ(T, S, 0, 0, 0, 6)) 0])
+    #     m += 1
+    # end
+    # if m == 1
+    #     n = 1
+    #     S.DT[n+1] = sparse(zeros(T, 2n+3, 3*(2n+1)))
+    #     k = 0; S.DT[n+1][k+1, 2*(2n+1)+k+1] = 1 / recγ(T, S, n, k, 3)
+    #     for k = 1:n, i = 0:1
+    #         S.DT[n+1][2k+i, 2*(2n+1)+2k+i] = 1 / recγ(T, S, n, k, 3)
+    #     end
+    #     η1 = 1 / recα(T, S, n, n, 6)
+    #     η3 = 1 / recβ(T, S, n, n, 0, 6)
+    #     η2 = - η1 * recα(T, S, n, n, 5) / recγ(T, S, n, n-1, 3)
+    #     S.DT[n+1][2n+2, 2n] = η1
+    #     S.DT[n+1][2n+2, 3*(2n+1)-2] = η2
+    #     S.DT[n+1][2n+3, (2n+1)+2] = η3
+    #     m += 1
+    # end
+    # for n = N:-1:m
+    #     S.DT[n+1] = sparse(zeros(T, 2n+3, 3*(2n+1)))
+    #     k = 0; S.DT[n+1][k+1, 2*(2n+1)+k+1] = 1 / recγ(T, S, n, k, 3)
+    #     for k = 1:n, i = 0:1
+    #         S.DT[n+1][2k+i, 2*(2n+1)+2k+i] = 1 / recγ(T, S, n, k, 3)
+    #     end
+    #     η1 = 1 / recα(T, S, n, n, 6)
+    #     η2 = - η1 * recα(T, S, n, n, 5) / recγ(T, S, n, n-1, 3)
+    #     for j = 0:1
+    #         S.DT[n+1][2n+2+j, 2n+j] = η1
+    #         S.DT[n+1][2n+2+j, 3*(2n+1)-3+j] = η2
+    #     end
+    # end
+    # S
 end
 
 function resizedata!(S::SphericalCapSpace, N)
@@ -907,11 +975,197 @@ function resizedata!(S::SphericalCapSpace, N)
     S
 end
 
-function clenshawG(::SphericalCapSpace, n, z)
-    sp = sparse(I, 2n+1, 2n+1)
-    [z[1] * sp; z[2] * sp; z[3] * sp]
+# function clenshawDTBmG(S::SphericalCapSpace, n::Int, pt)
+#     id = BandedBlockBandedMatrix(I, ([1; [2 for k=1:n]], [1; [2 for k=1:n]]),
+#                                     (0, 0), (0, 0))
+#     ret = sum([S.DT[n+1][i] * (S.B[n+1][i] - pt[i] * id) for i=1:3])
+#     ret
+# end
+# function clenshawDTC(S::SphericalCapSpace, n::Int)
+#     ret = sum([S.DT[n+1][i] * S.C[n+1][i] for i=1:3])
+#     ret
+# end
+# function clenshawG(::SphericalCapSpace, n, z)
+#     sp = sparse(I, 2n+1, 2n+1)
+#     [z[1] * sp; z[2] * sp; z[3] * sp]
+# end
+
+function clenshawDTBmG(S::SphericalCapSpace{<:Any, T, <:Any, <:Any}, n::Int,
+                        ξ::AbstractArray{R}, X::R, Y::R, Z::R;
+                        clenshawalg=true, operator=false) where {T,R}
+    # Returns:
+    #   ξ * DTn * (Bn - Gn(x,y,z)) if clenshawalg
+    #   DTn * (Bn - Gn(x,y,z)) * ξ if !clenshawalg
+    # where ξ is appropriatly sized vector
+
+    # If operator then X, Y, Z are Jacobi matrices
+
+    # NOTE R here is either T (scalar) or BandedBlockBandedMatrix{T} (operator)
+
+    # TODO obtain from the indices of the clenshaw mats OR! store these coeffs
+    # as vectors, and only do clenshaw like this!
+
+    if n > 0
+        η00 = 1 / recβ(T, S, n, n, 1, 6)
+        η10 = 1 / recα(T, S, n, n, 6)
+        η01 = - η00 * recβ(T, S, n, n, 1, 5) / recγ(T, S, n, n-1, 3)
+        η11 = n == 1 ? 0 : - η10 * recα(T, S, n, n, 5) / recγ(T, S, n, n-1, 3)
+    end
+
+    if clenshawalg
+
+        ret = Array{R}(undef, (1, 2n+1))
+
+        if n == 0
+            # Special case
+            if operator
+                ret[1,1] = - (ξ[1,1] * (Z - recγ(T, S, 0, 0, 2) * I) / recγ(T, S, 0, 0, 3)
+                                + ξ[1,2] * X / recα(T, S, 0, 0, 6)
+                                + ξ[1,3] * Y / recβ(T, S, 0, 0, 0, 6))
+            else
+                ret[1,1] = - (ξ[1,1] * (Z - recγ(T, S, 0, 0, 2)) / recγ(T, S, 0, 0, 3)
+                                + ξ[1,2] * X / recα(T, S, 0, 0, 6)
+                                + ξ[1,3] * Y / recβ(T, S, 0, 0, 0, 6))
+            end
+            return ret
+        end
+
+        # z
+        ind = 1
+        if operator
+            for k = 0:n, i = 0:min(1,k)
+                ret[1,ind] = - ξ[1,ind] * (Z - recγ(T, S, n, k, 2) * I) / recγ(T, S, n, k, 3)
+                ind += 1
+            end
+        else
+            for k = 0:n, i = 0:min(1,k)
+                ret[1,ind] = - ξ[1,ind] * (Z - recγ(T, S, n, k, 2)) / recγ(T, S, n, k, 3)
+                ind += 1
+            end
+        end
+        ind = 2
+        k = n - 1
+        ind = n == 1 ? 2 : 3
+        if operator
+            ret[1,end-ind] -= ξ[1,end-1] * (Z - recγ(T, S, n, k, 2) * I) * η01
+        else
+            ret[1,end-ind] -= ξ[1,end-1] * (Z - recγ(T, S, n, k, 2)) * η01
+        end
+        # x
+        ret[1,end] -= η10 * ξ[1,end] * X # + as already defined in z loop
+        # y
+        ret[1,end-ind] += recβ(T, S, n, n, 1, 3) * η00 * ξ[1,end-1]
+        ret[1,end] -= η00 * ξ[1,end-1] * Y
+        if n > 1
+            if operator
+                ret[1,end-2] -= ξ[1,end] * (Z - recγ(T, S, n, k, 2) * I) * η11
+            else
+                ret[1,end-2] -= ξ[1,end] * (Z - recγ(T, S, n, k, 2)) * η11
+            end
+            ret[1,end-2] += recα(T, S, n, n, 3) * η10 * ξ[1,end]
+        end
+
+        ret
+
+    else
+        @assert length(ξ) == 2n+1 "Invalid ξ vector"
+        ret = zeros(R, 2n+3)
+
+        if n == 0
+            # Special case
+            ret[1] = - ξ[1] * (Z - recγ(T, S, 0, 0, 2)) / recγ(T, S, 0, 0, 3)
+            ret[2] = - ξ[1] * X / recα(T, S, 0, 0, 6)
+            ret[3] = - ξ[1] * Y / recβ(T, S, 0, 0, 0, 6)
+            return ret
+        end
+
+        # z
+        ind = 1
+        for k = 0:n, i = 0:min(1,k)
+            ret[ind] = - ξ[ind] * (Z - recγ(T, S, n, k, 2)) / recγ(T, S, n, k, 3)
+            ind += 1
+        end
+        ind = n == 1 ? 2 : 3
+        ret[end-1] = - ξ[end-ind] * (Z - recγ(T, S, n, n-1, 2)) * η01
+        # y
+        ret[end-1] += ξ[end-ind] * recβ(T, S, n, n, 1, 3) * η00 - ξ[end] * Y * η00
+        # x
+        ret[end] = - ξ[end] * X * η10
+        if n > 1
+            ret[end] -= ξ[end-2] * (Z - recγ(T, S, n, n-1, 2)) * η11
+            ret[end] += ξ[end-2] * recα(T, S, n, n, 3) * η10
+        end
+        ret
+    end
 end
-function clenshaw(cfs::AbstractVector{T}, S::SphericalCapSpace, z) where T
+function clenshawDTC(S::SphericalCapSpace{<:Any, T, <:Any, <:Any}, n::Int,
+                        ξ::AbstractArray{R}; clenshawalg=true) where {T,R}
+
+    # Returns:
+    #   ξ * DTn * (Bn - Gn(x,y,z)) if clenshawalg
+    #   DTn * (Bn - Gn(x,y,z)) * ξ if !clenshawalg
+    # where ξ is appropriatly sized vector
+    # NOTE R here is either T (scalar) or BandedBlockBandedMatrix{T} (operator)
+
+    # TODO obtain from the indices of the clenshaw mats OR! store these coeffs
+    # as vectors, and only do clenshaw like this!
+
+    @assert n > 0 "Invalid n"
+
+    η00 = 1 / recβ(T, S, n, n, 1, 6)
+    η10 = 1 / recα(T, S, n, n, 6)
+    η01 = - η00 * recβ(T, S, n, n, 1, 5) / recγ(T, S, n, n-1, 3)
+    η11 = n == 1 ? 0 : - η10 * recα(T, S, n, n, 5) / recγ(T, S, n, n-1, 3)
+
+    if clenshawalg
+        ret = Array{R}(undef, (1, 2n-1))
+
+        if n == 1
+            # Special Case
+            k = n - 1
+            ret[1] = (ξ[1, 4] * recβ(T, S, n, n, 1, 1) * η00 + recγ(T, S, n, k, 1) * η01
+                        + ξ[1, 1] * recγ(T, S, n, k, 1) / recγ(T, S, n, k, 3))
+            return ret
+        end
+
+        # z
+        ind = 1
+        for k = 0:n-1, i = 0:min(1,k)
+            ret[1,ind] = recγ(T, S, n, k, 1) * ξ[1,ind] / recγ(T, S, n, k, 3)
+            ind += 1
+        end
+        ret[1,end-1] += recγ(T, S, n, n-1, 1) * η01 * ξ[1,end-1] # + as already defined
+        ret[1,end] += recγ(T, S, n, n-1, 1) * η11 * ξ[1,end]
+        # x
+        ret[1,end] += recα(T, S, n, n, 1) * η10 * ξ[1,end]
+        # y
+        ret[1,end-1] += recβ(T, S, n, n, 1, 1) * η00 * ξ[1,end-1]
+        ret
+    else
+        @assert length(ξ) == 2n - 1 "Invalid ξ vector"
+        ret = zeros(R, 2n+3)
+        # TODO: n == 1 case!!!
+        if n == 1
+            ret[1] = recγ(T, S, n, n-1, 1) / recγ(T, S, n, n-1, 3)
+            ret[4] = recβ(T, S, n, n, 1, 1) * η00 + η01 * recγ(T, S, n, n-1, 1)
+            return ξ[1] * ret
+        end
+        # z
+        ind = 1
+        for k = 0:n-1, i = 0:min(1,k)
+            ret[ind] = recγ(T, S, n, k, 1) * ξ[ind] / recγ(T, S, n, k, 3)
+            ind += 1
+        end
+        ret[end-1] = recγ(T, S, n, n-1, 1) * η01 * ξ[end-1]
+        ret[end] = recγ(T, S, n, n-1, 1) * η11 * ξ[end]
+        # x
+        ret[end] += recα(T, S, n, n, 1) * η10 * ξ[end] # + as already defined
+        # y
+        ret[end-1] += recβ(T, S, n, n, 1, 1) * η00 * ξ[end-1]
+        ret
+    end
+end
+function clenshaw(cfs::AbstractVector{T}, S::SphericalCapSpace, x::R, y::R, z::R) where {T,R}
     # TODO: Implement clenshaw for the spherical cap, without using the clenshaw
     #       mats (i.e. dont build the mats, just implement the arithmetic)
 
@@ -929,55 +1183,60 @@ function clenshaw(cfs::AbstractVector{T}, S::SphericalCapSpace, z) where T
     if N == 0
         return f[1] * P0
     end
-    γ2 = view(f, Block(N+1))'
-    γ1 = view(f, Block(N))' - γ2 * S.DT[N] * (S.B[N] - clenshawG(S, N-1, z))
+    ξ2 = view(f, Block(N+1))'
+    ξ1 = view(f, Block(N))' - clenshawDTBmG(S, N-1, ξ2, x, y, z)
     for n = N-2:-1:0
-        γ = (view(f, Block(n+1))'
-             - γ1 * S.DT[n+1] * (S.B[n+1] - clenshawG(S, n, z))
-             - γ2 * S.DT[n+2] * S.C[n+2])
-        γ2 = copy(γ1)
-        γ1 = copy(γ)
+        ξ = (view(f, Block(n+1))'
+                - clenshawDTBmG(S, n, ξ1, x, y, z)
+                - clenshawDTC(S, n+1, ξ2))
+        ξ2 = copy(ξ1)
+        ξ1 = copy(ξ)
     end
-    (γ1 * P0)[1]
+    (ξ1 * P0)[1]
 end
+clenshaw(cfs::AbstractVector, S::SphericalCapSpace, z) =
+    clenshaw(cfs, S, z[1], z[2], z[3])
 evaluate(cfs::AbstractVector, S::SphericalCapSpace, z) = clenshaw(cfs, S, z)
-
+evaluate(cfs::AbstractVector, S::SphericalCapSpace, x, y, z) =
+    clenshaw(cfs, S, x, y, z)
 
 #===#
 # Operator Clenshaw
 
-# Operator Clenshaw
-function operatorclenshawvector(S::SphericalCapSpace{<:Any, T, <:Any, <:Any}, v, id) where T
-    s = size(v)[1]
-    B = Array{SparseMatrixCSC{T}}(undef, (1, s))
-    for i = 1:s
-        B[1,i] = id * v[i]
-    end
-    B
-end
-function operatorclenshawmatrixDT(S::SphericalCapSpace{<:Any, T, <:Any, <:Any}, A, id) where T
-    B = Array{SparseMatrixCSC{T}}(undef, size(A))
-    for ij = 1:length(A)
-        B[ij] = id * A[ij]
-    end
-    B
-end
-function operatorclenshawmatrixBmG(S::SphericalCapSpace{<:Any, T, <:Any, <:Any}, A, id, Jx, Jy, Jz) where T
-    ii, jj = size(A)
-    B = Array{SparseMatrixCSC{T}}(undef, (ii, jj))
-    for i = 1:jj, j = 1:jj
-        if i == j
-            B[i, j] = (id * A[i, j]) - Jx
-            B[i+jj, j] = (id * A[i+jj, j]) - Jy
-            B[i+2jj, j] = (id * A[i+2jj, j]) - Jz
-        else
-            B[i,j] = id * A[i, j]
-            B[i+jj, j] = id * A[i+jj, j]
-            B[i+2jj, j] = id * A[i+2jj, j]
-        end
-    end
-    B
-end
+# # Operator Clenshaw
+# function operatorclenshawvector(S::SphericalCapSpace{<:Any, T, <:Any, <:Any}, v,
+#                                 id::BandedBlockBandedMatrix{T}) where T
+#     s = size(v)[1]
+#     # B = Array{SparseMatrixCSC{T}}(undef, (1, s))
+#     B = Array{BandedBlockBandedMatrix{T}}(undef, (1, s))
+#     for i = 1:s
+#         B[1,i] = id * v[i]
+#     end
+#     B
+# end
+# function operatorclenshawmatrixDT(S::SphericalCapSpace{<:Any, T, <:Any, <:Any}, A, id) where T
+#     B = Array{SparseMatrixCSC{T}}(undef, size(A))
+#     for ij = 1:length(A)
+#         B[ij] = id * A[ij]
+#     end
+#     B
+# end
+# function operatorclenshawmatrixBmG(S::SphericalCapSpace{<:Any, T, <:Any, <:Any}, A, id, Jx, Jy, Jz) where T
+#     ii, jj = size(A)
+#     B = Array{SparseMatrixCSC{T}}(undef, (ii, jj))
+#     for i = 1:jj, j = 1:jj
+#         if i == j
+#             B[i, j] = (id * A[i, j]) - Jx
+#             B[i+jj, j] = (id * A[i+jj, j]) - Jy
+#             B[i+2jj, j] = (id * A[i+2jj, j]) - Jz
+#         else
+#             B[i,j] = id * A[i, j]
+#             B[i+jj, j] = id * A[i+jj, j]
+#             B[i+2jj, j] = id * A[i+2jj, j]
+#         end
+#     end
+#     B
+# end
 function operatorclenshaw(cfs::AbstractVector{T}, S::SphericalCapSpace, M) where T
     # Outputs the operator MxM-blocked matrix operator corresponding to the
     # function f given by its coefficients of its expansion in the space S
@@ -1000,29 +1259,26 @@ function operatorclenshaw(cfs::AbstractVector{T}, S::SphericalCapSpace, M) where
     Jx = jacobix(S, M); @show "Jx done"
     Jy = jacobiy(S, M); @show "Jy done"
     Jz = jacobiz(S, M); @show "Jz done"
-    id = sparse(I, size(Jx))
-    # id = BandedBlockBandedMatrix(I, size(Jx),
-    #                                 ([M+1; 2M:-2:1], [M+1; 2M:-2:1]),
-    #                                 (0,0), (0,0))
-
+    id = BandedBlockBandedMatrix(I, size(Jx),
+                                    ([M+1; 2M:-2:1], [M+1; 2M:-2:1]),
+                                    (0,0), (0,0))
+    # Begin alg
     P0 = getdegzeropteval(T, S)
     if N == 0
         return f[1] * P0 * id
     end
-    γ2 = operatorclenshawvector(S, view(f, Block(N+1)), id)
-    γ1 = (operatorclenshawvector(S, view(f, Block(N)), id)
-            - (γ2 * operatorclenshawmatrixDT(S, S.DT[N], id)
-                  * operatorclenshawmatrixBmG(S, S.B[N], id, Jx, Jy, Jz)))
+    ξ2 = operatorclenshawvector(S, view(f, Block(N+1)), id)
+    ξ1 = (- clenshawDTBmG(S, N, ξ2, Jx, Jy, Jz; operator=true)
+            + operatorclenshawvector(S, view(f, Block(N)), id))
     for n = N-2:-1:0
         @show "Operator Clenshaw", M, N, n
-        γ = (operatorclenshawvector(S, view(f, Block(n+1)), id)
-             - (γ1 * operatorclenshawmatrixDT(S, S.DT[n+1], id)
-                   * operatorclenshawmatrixBmG(S, S.B[n+1], id, Jx, Jy, Jz))
-             - γ2 * operatorclenshawmatrixDT(S, S.DT[n+2] * S.C[n+2], id))
-        γ2 = copy(γ1)
-        γ1 = copy(γ)
+        ξ = (operatorclenshawvector(S, view(f, Block(n+1)), id)
+             - clenshawDTBmG(S, n, ξ1, Jx, Jy, Jz; operator=true)
+             - clenshawDTC(S, n, ξ2))
+        ξ2 = copy(ξ1)
+        ξ1 = copy(ξ)
     end
-    (γ1 * P0)[1]
+    (ξ1 * P0)[1]
 end
 operatorclenshaw(f::Fun, S::SphericalCapSpace) =
     operatorclenshaw(f.coefficients, S, getnki(S, ncoefficients(f))[1])
@@ -1745,270 +2001,153 @@ inner(S::SphericalCapSpace, fpts, gpts, w::AbstractVector{T}) where T =
 #===#
 # Jacobi operators methods for mult by x, y, z
 
-function getjacobisubblockx!(S::SphericalCapSpace{<:Any, T, <:Any, <:Any}, mat,
-                                n::Int; subblock::String="A") where T
-    @assert subblock in ("A", "B", "C") "Invalid subblock given"
-    if subblock == "A"
-        u, l = 6, 5
-        if n == 0
-            k = 0; i = 0
-            mat[1, 2] = recα(T, S, n, k, u)
-            return mat
-        end
-        maxk = n
-    elseif subblock == "B"
-        u, l = 4, 3
-        if n == 0
-            return mat
-        elseif n == 1
-            k = 0
-            mat[1, 2] = recα(T, S, n, k, u)
-            k = 1
-            i = 0
-            mat[2k+i, 2(k-1)+i] = recα(T, S, n, k, l)
-            i = 1
-            mat[2k+i, 2(k+1)+i] = recα(T, S, n, k, u)
-            return mat
-        end
-        maxk = n - 1
-        k = n
-        for i = 0:1
-            mat[2k+i, 2(k-1)+i] = recα(T, S, n, k, i, l)
-        end
-    else
-        u, l = 2, 1
-        @assert n > 0 "Invalid n with subblock C requested"
-        if n == 1
-            mat[2, 1] = recα(T, S, 1, 1, l)
-            return mat
-        end
-        maxk = n - 2
-        for k = n-1:n
-            for i = 0:1
-                mat[2k+i, 2(k-1)+i] = recα(T, S, n, k, l)
-            end
-        end
-    end
-    k = 0; i = 0
-    mat[1, 2] = recα(T, S, n, k, u)
-    k = 1
-    au, al = recα(T, S, n, k, u), recα(T, S, n, k, l)
-    i = 0
-    mat[2k+i, 1] = al
-    mat[2k+i, 2(k+1)+i] = au
-    i = 1
-    mat[2k+i, 2(k+1)+i] = au
-    for k = 2:maxk
-        au, al = recα(T, S, n, k, u), recα(T, S, n, k, l)
-        for i = 0:1
-            mat[2k+i, 2(k-1)+i] = al
-            mat[2k+i, 2(k+1)+i] = au
-        end
-    end
-    mat
-end
-function getjacobisubblocky!(S::SphericalCapSpace{<:Any, T, <:Any, <:Any}, mat,
-                                n::Int; subblock::String="A") where T
-    @assert subblock in ("A", "B", "C") "Invalid subblock given"
-    if subblock == "A"
-        u, l = 6, 5
-        if n == 0
-            k = 0; i = 0
-            mat[1, 3] = recβ(T, S, n, k, i, u)
-            return mat
-        end
-        maxk = n
-    elseif subblock == "B"
-        u, l = 4, 3
-        if n == 0
-            return mat
-        elseif n == 1
-            k = 0
-            mat[1, 3] = recβ(T, S, n, k, i, u)
-            k = 1
-            i = 0
-            mat[2k+i, 2(k+1)+abs(i-1)] = recβ(T, S, n, k, i, u)
-            i = 1
-            mat[2k+i, 1] = recβ(T, S, n, k, i, l)
-            return mat
-        end
-        maxk = n - 1
-        k = n
-        for i = 0:1
-            mat[2k+i, 2(k-1)+abs(i-1)] = recβ(T, S, n, k, i, l)
-        end
-    else
-        u, l = 2, 1
-        @assert n > 0 "Invalid n with subblock C requested"
-        if n == 1
-            mat[3, 1] = recβ(T, S, 1, 1, 1, l)
-            return mat
-        end
-        maxk = n - 2
-        for k = n-1:n
-            for i = 0:1
-                mat[2k+i, 2(k-1)+abs(i-1)] = recβ(T, S, n, k, i, l)
-            end
-        end
-    end
-    k = 0; i = 0
-    mat[1, 3] = recβ(T, S, n, k, i, u)
-    k = 1
-    i = 0
-    mat[2k+i, 2(k+1)+abs(i-1)] = recβ(T, S, n, k, i, u)
-    i = 1
-    mat[2k+i, 1] = recβ(T, S, n, k, i, l)
-    mat[2k+i, 2(k+1)+abs(i-1)] = recβ(T, S, n, k, i, u)
-    for k = 2:maxk
-        for i = 0:1
-            mat[2k+i, 2(k-1)+abs(i-1)] = recβ(T, S, n, k, i, l)
-            mat[2k+i, 2(k+1)+abs(i-1)] = recβ(T, S, n, k, i, u)
-        end
-    end
-    mat
-end
-function getjacobisubblockz!(S::SphericalCapSpace{<:Any, T, <:Any, <:Any}, mat,
-                                n::Int; subblock::String="A") where T
-    @assert subblock in ("A", "B", "C") "Invalid subblock given"
-    if subblock == "A"
-        j = 3
-        maxk = n
-    elseif subblock == "B"
-        j = 2
-        maxk = n
-    else
-        j = 1
-        maxk = n - 1
-    end
-    ind = 1
-    for k = 0:maxk
-        c = recγ(T, S, n, k, j)
-        for i = 0:min(1,k)
-            mat[ind, ind] = c
-            ind += 1
-        end
-    end
-    mat
-end
-
-function jacobiz2(S::SphericalCapSpace{<:Any, B, T, <:Any}, N) where {B,T}
-    resizedata!(S, N)
-    J = BandedBlockBandedMatrix(Zeros{B}((N+1)^2, (N+1)^2),
-                                (1:2:2N+1, 1:2:2N+1), (1, 1), (2, 2))
-    n = 0
-    getjacobisubblockz!(S, view(J, Block(n+1, n+1)), n; subblock="B")
-    for n = 1:N
-        getjacobisubblockz!(S, view(J, Block(n, n+1)), n-1; subblock="A") # A_{n-1}
-        getjacobisubblockz!(S, view(J, Block(n+1, n+1)), n; subblock="B") # B_n
-        getjacobisubblockz!(S, view(J, Block(n+1, n)), n; subblock="C") # C_n
-    end
-    J
-end
-
 function jacobix(S::SphericalCapSpace{<:Any, B, T, <:Any}, N) where {B,T}
-    # Transposed operator, so acts directly on coeffs vec
     resizedata!(S, N)
-    getAs!(S, N+1, length(S.A))
     J = BandedBlockBandedMatrix(Zeros{B}((N+1)^2, (N+1)^2),
                                 (1:2:2N+1, 1:2:2N+1), (1, 1), (2, 2))
-    # Assign by column
+    j = 1 # x
     n = 0
-    inds = 1:2n+1
-    view(J, Block(n+1, n+1)) .= S.B[n+1][inds, :]'
-    view(J, Block(n+2, n+1)) .= S.A[n+1][inds, :]'
-    for n = 1:N-1
-        inds = 1:2n+1
-        view(J, Block(n, n+1)) .= S.C[n+1][inds, :]'
-        view(J, Block(n+1, n+1)) .= S.B[n+1][inds, :]'
-        view(J, Block(n+2, n+1)) .= S.A[n+1][inds, :]'
+    view(J, Block(n+1, n+1))[:,:] = S.B[n+1][j]
+    for n = 1:N
+        view(J, Block(n, n+1))[:,:] = S.A[n][j]
+        view(J, Block(n+1, n+1))[:,:] = S.B[n+1][j]
+        view(J, Block(n+1, n))[:,:] = S.C[n+1][j]
     end
-    n = N
-    inds = 1:2n+1
-    view(J, Block(n, n+1)) .= S.C[n+1][inds, :]'
-    view(J, Block(n+1, n+1)) .= S.B[n+1][inds, :]'
     J
-    # The following converts the operator from bydegree to byfouriermode ordering
-    # TODO improve this
-    Jout = spzeros(B, (N+1)^2, (N+1)^2)
-    for row = 1:(N+1)^2
-        n, k, i = getnki(S, row)
-        ind = getopindex(S, n, k, i; bydegree=false, N=N)
-        Jout[ind, :] = convertcoeffsvecorder(S, J[row, :]; todegree=false)
-    end
-    bandn = bandk = 1; bandi = 0
-    BandedBlockBandedMatrix(Jout, ([N+1; 2N:-2:1], [N+1; 2N:-2:1]),
-                            (bandk, bandk),
-                            (2bandn+2bandk+bandi, 2bandn+2bandk+bandi))
 end
 function jacobiy(S::SphericalCapSpace{<:Any, B, T, <:Any}, N) where {B,T}
-    # Transposed operator, so acts directly on coeffs vec
     resizedata!(S, N)
     J = BandedBlockBandedMatrix(Zeros{B}((N+1)^2, (N+1)^2),
                                 (1:2:2N+1, 1:2:2N+1), (1, 1), (3, 3))
-    # Assign by column
+    j = 2 # y
     n = 0
-    inds = 2n+2:2(2n+1)
-    view(J, Block(n+1, n+1)) .= S.B[n+1][inds, :]'
-    view(J, Block(n+2, n+1)) .= S.A[n+1][inds, :]'
-    for n = 1:N-1
-        inds = 2n+2:2(2n+1)
-        view(J, Block(n, n+1)) .= S.C[n+1][inds, :]'
-        view(J, Block(n+1, n+1)) .= S.B[n+1][inds, :]'
-        view(J, Block(n+2, n+1)) .= S.A[n+1][inds, :]'
+    view(J, Block(n+1, n+1))[:,:] = S.B[n+1][j]
+    for n = 1:N
+        view(J, Block(n, n+1))[:,:] = S.A[n][j]
+        view(J, Block(n+1, n+1))[:,:] = S.B[n+1][j]
+        view(J, Block(n+1, n))[:,:] = S.C[n+1][j]
     end
-    n = N
-    inds = 2n+2:2(2n+1)
-    view(J, Block(n, n+1)) .= S.C[n+1][inds, :]'
-    view(J, Block(n+1, n+1)) .= S.B[n+1][inds, :]'
     J
-    # The following converts the operator from bydegree to byfouriermade ordering
-    # TODO improve this
-    Jout = spzeros(B, (N+1)^2, (N+1)^2)
-    for row = 1:(N+1)^2
-        n, k, i = getnki(S, row)
-        ind = getopindex(S, n, k, i; bydegree=false, N=N)
-        Jout[ind, :] = convertcoeffsvecorder(S, J[row, :]; todegree=false)
-    end
-    bandn = bandk = bandi = 1
-    BandedBlockBandedMatrix(Jout, ([N+1; 2N:-2:1], [N+1; 2N:-2:1]),
-                            (bandk, bandk),
-                            (2bandn+2bandk+bandi, 2bandn+2bandk+bandi))
 end
 function jacobiz(S::SphericalCapSpace{<:Any, B, T, <:Any}, N) where {B,T}
-    # Transposed operator, so acts directly on coeffs vec
     resizedata!(S, N)
-    getAs!(S, N+1, length(S.A))
     J = BandedBlockBandedMatrix(Zeros{B}((N+1)^2, (N+1)^2),
                                 (1:2:2N+1, 1:2:2N+1), (1, 1), (0, 0))
-    # Assign by column
+    j = 3 # z
     n = 0
-    inds = 2(2n+1)+1:3(2n+1)
-    view(J, Block(n+1, n+1)) .= S.B[n+1][inds, :]'
-    view(J, Block(n+2, n+1)) .= S.A[n+1][inds, :]'
-    for n = 1:N-1
-        inds = 2(2n+1)+1:3(2n+1)
-        view(J, Block(n, n+1)) .= S.C[n+1][inds, :]'
-        view(J, Block(n+1, n+1)) .= S.B[n+1][inds, :]'
-        view(J, Block(n+2, n+1)) .= S.A[n+1][inds, :]'
+    view(J, Block(n+1, n+1))[:,:] = S.B[n+1][j]
+    for n = 1:N
+        view(J, Block(n, n+1))[:,:] = S.A[n][j]
+        view(J, Block(n+1, n+1))[:,:] = S.B[n+1][j]
+        view(J, Block(n+1, n))[:,:] = S.C[n+1][j]
     end
-    n = N
-    inds = 2(2n+1)+1:3(2n+1)
-    view(J, Block(n, n+1)) .= S.C[n+1][inds, :]'
-    view(J, Block(n+1, n+1)) .= S.B[n+1][inds, :]'
     J
-    # # The following converts the operator from bydegree to byfouriermade ordering
-    # # TODO improve this
-    # Jout = spzeros(B, (N+1)^2, (N+1)^2)
-    # for row = 1:(N+1)^2
-    #     n, k, i = getnki(S, row)
-    #     ind = getopindex(S, n, k, i; bydegree=false, N=N)
-    #     Jout[ind, :] = convertcoeffsvecorder(S, J[row, :]; todegree=false)
-    # end
-    # bandn = 1; bandk = bandi = 0
-    # BandedBlockBandedMatrix(Jout, ([N+1; 2N:-2:1], [N+1; 2N:-2:1]),
-    #                         (bandk, bandk),
-    #                         (2bandn+2bandk+bandi, 2bandn+2bandk+bandi))
 end
+
+# function jacobix(S::SphericalCapSpace{<:Any, B, T, <:Any}, N) where {B,T}
+#     # Transposed operator, so acts directly on coeffs vec
+#     resizedata!(S, N)
+#     getAs!(S, N+1, length(S.A))
+#     J = BandedBlockBandedMatrix(Zeros{B}((N+1)^2, (N+1)^2),
+#                                 (1:2:2N+1, 1:2:2N+1), (1, 1), (2, 2))
+#     # Assign by column
+#     n = 0
+#     inds = 1:2n+1
+#     view(J, Block(n+1, n+1)) .= S.B[n+1][inds, :]'
+#     view(J, Block(n+2, n+1)) .= S.A[n+1][inds, :]'
+#     for n = 1:N-1
+#         inds = 1:2n+1
+#         view(J, Block(n, n+1)) .= S.C[n+1][inds, :]'
+#         view(J, Block(n+1, n+1)) .= S.B[n+1][inds, :]'
+#         view(J, Block(n+2, n+1)) .= S.A[n+1][inds, :]'
+#     end
+#     n = N
+#     inds = 1:2n+1
+#     view(J, Block(n, n+1)) .= S.C[n+1][inds, :]'
+#     view(J, Block(n+1, n+1)) .= S.B[n+1][inds, :]'
+#     J
+#     # The following converts the operator from bydegree to byfouriermode ordering
+#     # TODO improve this
+#     Jout = spzeros(B, (N+1)^2, (N+1)^2)
+#     for row = 1:(N+1)^2
+#         n, k, i = getnki(S, row)
+#         ind = getopindex(S, n, k, i; bydegree=false, N=N)
+#         Jout[ind, :] = convertcoeffsvecorder(S, J[row, :]; todegree=false)
+#     end
+#     bandn = bandk = 1; bandi = 0
+#     BandedBlockBandedMatrix(Jout, ([N+1; 2N:-2:1], [N+1; 2N:-2:1]),
+#                             (bandk, bandk),
+#                             (2bandn+2bandk+bandi, 2bandn+2bandk+bandi))
+# end
+# function jacobiy(S::SphericalCapSpace{<:Any, B, T, <:Any}, N) where {B,T}
+#     # Transposed operator, so acts directly on coeffs vec
+#     resizedata!(S, N)
+#     J = BandedBlockBandedMatrix(Zeros{B}((N+1)^2, (N+1)^2),
+#                                 (1:2:2N+1, 1:2:2N+1), (1, 1), (3, 3))
+#     # Assign by column
+#     n = 0
+#     inds = 2n+2:2(2n+1)
+#     view(J, Block(n+1, n+1)) .= S.B[n+1][inds, :]'
+#     view(J, Block(n+2, n+1)) .= S.A[n+1][inds, :]'
+#     for n = 1:N-1
+#         inds = 2n+2:2(2n+1)
+#         view(J, Block(n, n+1)) .= S.C[n+1][inds, :]'
+#         view(J, Block(n+1, n+1)) .= S.B[n+1][inds, :]'
+#         view(J, Block(n+2, n+1)) .= S.A[n+1][inds, :]'
+#     end
+#     n = N
+#     inds = 2n+2:2(2n+1)
+#     view(J, Block(n, n+1)) .= S.C[n+1][inds, :]'
+#     view(J, Block(n+1, n+1)) .= S.B[n+1][inds, :]'
+#     J
+#     # The following converts the operator from bydegree to byfouriermade ordering
+#     # TODO improve this
+#     Jout = spzeros(B, (N+1)^2, (N+1)^2)
+#     for row = 1:(N+1)^2
+#         n, k, i = getnki(S, row)
+#         ind = getopindex(S, n, k, i; bydegree=false, N=N)
+#         Jout[ind, :] = convertcoeffsvecorder(S, J[row, :]; todegree=false)
+#     end
+#     bandn = bandk = bandi = 1
+#     BandedBlockBandedMatrix(Jout, ([N+1; 2N:-2:1], [N+1; 2N:-2:1]),
+#                             (bandk, bandk),
+#                             (2bandn+2bandk+bandi, 2bandn+2bandk+bandi))
+# end
+# function jacobiz(S::SphericalCapSpace{<:Any, B, T, <:Any}, N) where {B,T}
+#     # Transposed operator, so acts directly on coeffs vec
+#     resizedata!(S, N)
+#     getAs!(S, N+1, length(S.A))
+#     J = BandedBlockBandedMatrix(Zeros{B}((N+1)^2, (N+1)^2),
+#                                 (1:2:2N+1, 1:2:2N+1), (1, 1), (0, 0))
+#     # Assign by column
+#     n = 0
+#     inds = 2(2n+1)+1:3(2n+1)
+#     view(J, Block(n+1, n+1)) .= S.B[n+1][inds, :]'
+#     view(J, Block(n+2, n+1)) .= S.A[n+1][inds, :]'
+#     for n = 1:N-1
+#         inds = 2(2n+1)+1:3(2n+1)
+#         view(J, Block(n, n+1)) .= S.C[n+1][inds, :]'
+#         view(J, Block(n+1, n+1)) .= S.B[n+1][inds, :]'
+#         view(J, Block(n+2, n+1)) .= S.A[n+1][inds, :]'
+#     end
+#     n = N
+#     inds = 2(2n+1)+1:3(2n+1)
+#     view(J, Block(n, n+1)) .= S.C[n+1][inds, :]'
+#     view(J, Block(n+1, n+1)) .= S.B[n+1][inds, :]'
+#     J
+#     # # The following converts the operator from bydegree to byfouriermade ordering
+#     # # TODO improve this
+#     # Jout = spzeros(B, (N+1)^2, (N+1)^2)
+#     # for row = 1:(N+1)^2
+#     #     n, k, i = getnki(S, row)
+#     #     ind = getopindex(S, n, k, i; bydegree=false, N=N)
+#     #     Jout[ind, :] = convertcoeffsvecorder(S, J[row, :]; todegree=false)
+#     # end
+#     # bandn = 1; bandk = bandi = 0
+#     # BandedBlockBandedMatrix(Jout, ([N+1; 2N:-2:1], [N+1; 2N:-2:1]),
+#     #                         (bandk, bandk),
+#     #                         (2bandn+2bandk+bandi, 2bandn+2bandk+bandi))
+# end
 
 
 #===#
