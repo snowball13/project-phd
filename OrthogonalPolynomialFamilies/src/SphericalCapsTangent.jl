@@ -303,7 +303,7 @@ function rhodivminusgradrhodotoperator(S::SphericalCapTangentSpace{<:Any, B, T, 
     band2 = 1
     # TODO sort out bandwidths!
     A = BandedBlockBandedMatrix(Zeros{B}((N+band2+1)^2, 2 * (N+1)^2),
-                                ([N+band2+1; 2(N+band2):-2:1], 2 * [N+1; 2N:-2:1]),
+                                [N+band2+1; 2(N+band2):-2:1], 2 * [N+1; 2N:-2:1],
                                 (0, 0), (2band2, 2N+band1+1))
     for k = 0:N
         if k % 100 == 0
@@ -343,7 +343,7 @@ function coriolisoperator(S::SphericalCapTangentSpace{<:Any, B, T, <:Any}, N;
     band1 = 1
     band2 = 1
     A = BandedBlockBandedMatrix(Zeros{B}(2 * (N+band2+1)^2, 2 * (N+1)^2),
-                                (2 * [N+band2+1; 2(N+band2):-2:1], 2 * [N+1; 2N:-2:1]),
+                                2 * [N+band2+1; 2(N+band2):-2:1], 2 * [N+1; 2N:-2:1],
                                 (0, 0), (4band2+1, 4band1+1))
     for k = 0:N
         if k % 100 == 0
@@ -361,7 +361,7 @@ function coriolisoperator(S::SphericalCapTangentSpace{<:Any, B, T, <:Any}, N;
     A
     if square
         F = BandedBlockBandedMatrix(A[1:getopindex(S, N, N, 1, 1), 1:getopindex(S, N, N, 1, 1)],
-                                      (2 * [N+1; 2N:-2:1], 2 * [N+1; 2N:-2:1]),
+                                      2 * [N+1; 2N:-2:1], 2 * [N+1; 2N:-2:1],
                                       (0, 0), (4band2+1, 4band1+1))
     else
         A
@@ -388,7 +388,7 @@ function transformparamsoperator(S::SphericalCapTangentSpace{<:Any, B, <:Any, <:
     #                             (0, 0), (2band2, 2band1))
     band1 = 2; band2 = 0
     C = BandedBlockBandedMatrix(Zeros{B}(2(N+1)^2, 2(N+1)^2),
-                                (2 * [N+1; 2N:-2:1], 2 * [N+1; 2N:-2:1]),
+                                2 * [N+1; 2N:-2:1], 2 * [N+1; 2N:-2:1],
                                 (0, 0), (4band2, 4band1))
     for k = 0:N
         for n = k:N, m = max(0, n-band1):n+band2 # min(n+band2, N)
@@ -415,7 +415,7 @@ function weightoperator(S::SphericalCapTangentSpace{<:Any, B, T, <:Any}, a::B,
     # weight w_R^{(a,2b)}(z)
     band1 = band2 = Int(a + 2b) + (addfactor ? 1 : 0)
     W = BandedBlockBandedMatrix(Zeros{B}(2(N+band2+1)^2, 2(N+1)^2),
-                                (2 * [N+band2+1; 2(N+band2):-2:1], 2 * [N+1; 2N:-2:1]),
+                                2 * [N+band2+1; 2(N+band2):-2:1], 2 * [N+1; 2N:-2:1],
                                 (0, 0), (4band2, 4band1))
 
     S0 = getSCSpace(S)
@@ -470,7 +470,7 @@ function increasedegreeoperator(S::SphericalCapTangentSpace{<:Any, B, T, <:Any},
 
     # TODO weighted=true
     C = BandedBlockBandedMatrix(Zeros{B}(2(Nto+1)^2, 2(N+1)^2),
-                                (2 * [Nto+1; 2(Nto):-2:1], 2 * [N+1; 2N:-2:1]),
+                                2 * [Nto+1; 2(Nto):-2:1], 2 * [N+1; 2N:-2:1],
                                 (0, 0), (0, 0))
     @show "incr deg", N, Nto, weighted
     for k = 0:N, n = k:N
