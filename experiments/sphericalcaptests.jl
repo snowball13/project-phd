@@ -259,6 +259,7 @@ f = (x,y,z)->cos(y)
 pts, w = pointswithweights(S, n)
 vals = [f(pt...) for pt in pts]
 cfs = transform(S, vals)
+S
 N = getnki(S, length(cfs))[1]
 cfs2 = PseudoBlockArray(convertcoeffsvecorder(S, cfs), [2n+1 for n=0:N])
 F = Fun(S, cfs)
@@ -271,6 +272,7 @@ vals2 = itransform(S, cfs); pts2 = points(S, length(vals2)/2)
 F = Fun(f, S, 500); F.coefficients
 F(p) - f(p...)
 @test F(p) ≈ f(p...)
+S
 
 # ∂/∂θ operator
 f = (x,y,z)->x^2 + y^4 # (cos2t + sin4t*ρ2(z))ρ2(z)
@@ -352,8 +354,8 @@ N = 10
 Δ = laplacianoperator(S, N)
 c = 2.0
 u = (x,y,z)->c
-rho2f = (x,y,z)->-c * 2 * z * (1-z^2) # 2 * ρ * ρ' * ρ^2
-F = Fun(rho2f, S, 2*(N+4)^2); F.coefficients
+rho2f = (x,y,z)->-c * 2 * z #* (1-z^2) # 2 * ρ * ρ' * ρ^2
+F = Fun(rho2f, S, 2*(N+2)^2); F.coefficients
 ucfs = iterimprove(sparse(Δ), F.coefficients)
 U = Fun(S, ucfs)
 @test U(p) ≈ u(p...)
@@ -361,13 +363,14 @@ U = Fun(S, ucfs)
 # 2) u = monomial
 inds = [2, 3, 3]; N = 50
 u = (x,y,z)->x^inds[1] * y^inds[2] * z^inds[3]
-Δ = laplaceoperator(S, S, N)
-rho2f = (x,y,z)->rholaplacian(S, u, inds, [x;y;z]) # NOTE methods at bottom of script for this
-F = Fun(rho2f, S, 2*(sum(inds)+4)^2); resizecoeffs!(S, F, N+3)
-F(p) - rho2f(p...)
+Δ = laplacianoperator(S, N)
+fff = (x,y,z)->laplaciantest(S, u, inds, [x;y;z]) # NOTE methods at bottom of script for this
+F = Fun(fff, S, 2*(sum(inds)+2)^2); resizecoeffs!(S, F, N+1)
+F(p) - fff(p...)
 ucfs = iterimprove(sparse(Δ), F.coefficients)
 U = Fun(S, ucfs)
 @test U(p) ≈ u(p...)
+
 
 # Jacobi operators
 inds = [2, 3, 3]; N = sum(inds) + 1 # +1 so that the Jacobi operator can work
@@ -376,6 +379,7 @@ F = Fun(f, S, 2*(N+1)^2); F.coefficients
 # x
 J = OrthogonalPolynomialFamilies.jacobix(S, N)
 xF = Fun(S, J * F.coefficients)
+S.opptseval
 @test xF(p) ≈ p[1] * f(p...)
 # y
 J = OrthogonalPolynomialFamilies.jacobiy(S, N)
@@ -456,7 +460,7 @@ u1norms = [norm(u1cfs[Block(n+1)]) for n=0:N]
 
 # The Poisson/Laplacian test methods for Q^{1}
 rhoval(z) = sqrt(1 - z^2)
-function rholaplacian(S::SphericalCapSpace, u, uinds, xvec)
+function laplaciantest(S::SphericalCapSpace, u, uinds, xvec)
     x, y, z = xvec
     wght = weight(S, xvec)
     rhoz = rhoval(z)
@@ -473,7 +477,7 @@ function rholaplacian(S::SphericalCapSpace, u, uinds, xvec)
     ret -= 2 * rhoz^2 * z * u(x,y,z)
     ret -= rhoz^2 * up
     ret += utt * wght
-    ret
+    ret / rhoz^2
 end
 function getuttfrommononial(inds, p)
     a, b, c = inds

@@ -18,7 +18,8 @@ import OrthogonalPolynomialFamilies: points, pointswithweights, getopptseval,
                     getptsevalforop, getderivptsevalforop, laplacianoperator,
                     rho2laplacianoperator, gettangentspace,
                     rhogradoperator, coriolisoperator, rho2operator,
-                    rhodivminusgradrhodotoperator, gradrhooperator, weightoperator
+                    rhodivminusgradrhodotoperator, gradrhooperator, weightoperator,
+                    squareoperator
 using JLD
 using Makie
 
@@ -38,8 +39,7 @@ ST = gettangentspace(SCF)
 
 y, z = B(-234)/1000, B(643)/1000; x = sqrt(1 - z^2 - y^2); p = [x; y; z]; isindomain(p, SCF)
 θ = atan(y / x)
-resizedata!(S, 20)
-resizedata!(S0, 20)
+
 
 function gettangentspacecoeffsvec(S::SphericalCapSpace, fc::AbstractVector{T},
                                     gc::AbstractVector{T}) where T
@@ -103,22 +103,7 @@ function iterimprove(A::SparseMatrixCSC{T}, b::Vector{T};
     x
 end
 
-function squareoperator(S::SphericalCapSpace, A::BandedBlockBandedMatrix, N::Int)
-    """ this is to square the given operator, by reassigning the non-zero
-        entries correctly for given N value
-    """
-    @assert (N < nblocks(A)[1] - 1 && N == nblocks(A)[2] - 1) "Invalid size of A or incorrect N val"
-    C = BandedBlockBandedMatrix(Zeros{B}((N+1)^2, (N+1)^2),
-                                ([N+1; 2N:-2:1], [N+1; 2N:-2:1]),
-                                (A.l, A.u), (A.λ, A.μ))
-    for k = 1:N
-        inds = 1:2(N-k+1)
-        view(C, Block(k+1, k+1)) .= view(A, Block(k+1, k+1))[inds, inds]
-    end
-    k = 0
-    view(C, Block(k+1, k+1)) .= view(A, Block(k+1, k+1))[1:N+1, 1:N+1]
-    C
-end
+
 
 #===#
 # Plotting functions
@@ -135,6 +120,55 @@ function plot_on_domain_scalar!(scene, S, u, ϕ, θ; weighted=true)
     s = Makie.surface!(scene, x, y, z, color = upts, colormap = :viridis)#, colorrange = (-1.0, 1.0))
     scene, s
 end
+
+
+#====#
+
+#=
+Sparsity of Operators
+=#
+using Plots
+function getspymat(A)
+    B = sparse(A)
+    m1, m2 = size(A)
+    for i = 1:m1, j = 1:m2
+        B[i, j] = A[m1-i+1, m2-j+1]
+    end
+    B
+end
+maxm = sum(1:20+1)
+N = 30
+
+# Laplacian
+Δw = squareoperator(S, laplacianoperator(S, N), N)
+    Plots.spy(sparse(getspymat(Δw)), marker = (:square, 1), legend=nothing)
+    Plots.savefig("experiments/saved/sphericalcap/images/sparsity-of-laplacian.png")
+
+# Biharmonic
+Lw = squareoperator(S, rho2laplacianoperator(S2, S0, N; weighted=true), N)
+    L = squareoperator(S, rho2laplacianoperator(S0, S2, N; weighted=false), N)
+    Jz = OrthogonalPolynomialFamilies.jacobiz(S2, N)
+    t = transformparamsoperator(S, S2, N; weighted=false)
+    Dϕ = squareoperator(S, diffoperatorphi(S0, N), N)
+    t2 = transformparamsoperator(S0, S2, N; weighted=false)
+    v = Fun((x,y,z)->2z^2 - 2S.family.ρ(z)^2 + 3z, S2, 20)
+    V = operatorclenshaw(v.coefficients, S2, N)
+    Bw = sparse(L * Lw - Jz * t * Dϕ * Lw) - V * sparse(t2 * Lw)
+Plots.spy(sparse(getspymat(Bw)), marker = (:square, 1), legend=nothing)
+    Plots.savefig("experiments/saved/sphericalcap/images/sparsity-of-biharmonic.png")
+
+# Helmholtz
+k = 20
+    z1 = S.family.α; x1 = 0.7; vpt = [x1; sqrt(1 - x1^2 - z1^2); z1]
+    v = (x,y,z) -> 1 - (3(x - vpt[1])^2 + 5(y - vpt[2])^2 + 2(z - vpt[3])^2)
+    V = operatorclenshaw(Fun(v, S, 100), S, N)
+    Δw = squareoperator(S, laplacianoperator(S, N), N)
+    tw = transformparamsoperator(S, S0, N; weighted=true)
+    t = transformparamsoperator(S0, S, N+1; weighted=false)
+    A = Δw + k^2 * V * squareoperator(S, t * tw, N)
+Plots.spy(sparse(getspymat(A)), marker = (:square, 1), legend=nothing)
+Plots.savefig("experiments/saved/sphericalcap/images/sparsity-of-helmholtz.png")
+
 
 
 #=======#
@@ -174,10 +208,10 @@ V = operatorclenshaw(Fun(v, S, 100), S, N)
 Δw = laplacianoperator(S, N; square=true)
 tw = transformparamsoperator(S, S0, N; weighted=true)
 t = transformparamsoperator(S0, S, N+1; weighted=false)
-A = sparse(Δw) + k^2 * V * sparse(squareoperator(S, t * tw, N))
+A = Δw + k^2 * V * squareoperator(S, t * tw, N)
 f = (x,y,z) -> y * weight(S, x, y, z) * exp(x)
 F = Fun(f, S, 2(N+1)^2); F.coefficients
-F(p) - f(p...)
+@test v(p...) * f(p...) ≈ Fun(S, V * F.coefficients)(p)
 ucfs = A \ F.coefficients
 u = Fun(S, ucfs)
 u(p)
@@ -225,3 +259,118 @@ wdth, hght = 40, 700
 cl = colorlegend(scene[end], raw=true, camera=campixel!, width=(wdth,hght))
 vs = vbox(scene, cl)
 Makie.save("experiments/saved/sphericalcap/images/biharmonic-f=erf-N=$N-n=$n.png", vs)
+
+
+
+#=====#
+#=
+Plotting the norms of each block of coeffs for solutions for different RHSs
+=#
+function getsolutionblocknorms(N::Int, S::SphericalCapSpace, A, f1, f2, f3, f4)
+    u1 = Fun(S, A \ f1)
+    @show "1"
+    u2 = Fun(S, A \ f2)
+    @show "2"
+    u3 = Fun(S, A \ f3)
+    @show "3"
+    u4 = Fun(S, A \ f4)
+    u1coeffs = converttopseudo(S, u1.coefficients; converttobydegree=true)
+    u2coeffs = converttopseudo(S, u2.coefficients; converttobydegree=true)
+    u3coeffs = converttopseudo(S, u3.coefficients; converttobydegree=true)
+    u4coeffs = converttopseudo(S, u4.coefficients; converttobydegree=true)
+    u1norms = zeros(N+1)
+    u2norms = zeros(N+1)
+    u3norms = zeros(N+1)
+    u4norms = zeros(N+1)
+    for i = 1:N+1
+        u1norms[i] = norm(view(u1coeffs, Block(i)))
+        u2norms[i] = norm(view(u2coeffs, Block(i)))
+        u3norms[i] = norm(view(u3coeffs, Block(i)))
+        u4norms[i] = norm(view(u4coeffs, Block(i)))
+    end
+    u1norms, u2norms, u3norms, u4norms
+end
+
+# solutionblocknorms - Poisson
+N = 100
+Δw = squareoperator(S, laplacianoperator(S, N), N)
+z1 = S.family.α; x1 = 0.7; vpt = [x1; sqrt(1 - x1^2 - z1^2); z1]
+f1 = Fun((x,y,z)->1.0, S, 10); f1.coefficients
+f2 = Fun((x,y,z)->weight(S, x, y, z)^2, S, 100); f2.coefficients
+f3 = Fun((x,y,z)->weight(S, x, y, z) * S.family.ρ(z)^2, S, 300); f3.coefficients
+f4anon = (x,y,z) -> exp(-100((x-vpt[1])^2 + (y-vpt[2])^2 + (z-vpt[3])^2))
+f4 = Fun(f4anon, S, 40000); f4.coefficients
+resize!(S.reccoeffsa, 0)
+using JLD
+save("experiments/saved/sphericalcap/jld/f4cfs-a=1-N=200.jld", "f4cfs", f4.coefficients)
+f4cfs = load("experiments/saved/sphericalcap/jld/f4cfs-a=1-N=200.jld", "f4cfs")
+f4 = Fun(S, f4cfs)
+f4(p)
+f4anon(p...)
+f4(p) - f4anon(p...)
+u1norms, u2norms, u3norms, u4norms = getsolutionblocknorms(N, S, Δw, resizecoeffs!(S, f1, N),
+                resizecoeffs!(S, f2, N), resizecoeffs!(S, f3, N), resizecoeffs!(S, f4, N))
+using Plots
+Plots.plot(u1norms, line=(3, :solid), label="f(x,y,z) = 1", xscale=:log10, yscale=:log10, legend=:bottomleft)
+Plots.plot!(u2norms, line=(3, :dash), label="f(x,y,z) = W{(1)}^2")
+Plots.plot!(u3norms, line=(3, :dashdot), label="f(x,y,z) = (1-z^2) * W{(1)}")
+Plots.plot!(u4norms, line=(3, :dot), label = "f(x,y,z) = exp(-100(||x-p||^2))")
+Plots.xlabel!("Block")
+Plots.ylabel!("Norm")
+Plots.savefig("experiments/saved/sphericalcap/images/solutionblocknorms-poisson-N=$N.pdf")
+
+# Helmholtz
+N = 100
+k = 20
+    z1 = S.family.α; x1 = 0.7; vpt = [x1; sqrt(1 - x1^2 - z1^2); z1]
+    v = (x,y,z) -> 1 - (3(x - vpt[1])^2 + 5(y - vpt[2])^2 + 2(z - vpt[3])^2)
+    V = operatorclenshaw(Fun(v, S, 100), S, N)
+    Δw = squareoperator(S, laplacianoperator(S, N), N)
+    tw = transformparamsoperator(S, S0, N; weighted=true)
+    t = transformparamsoperator(S0, S, N+1; weighted=false)
+    A = Δw + k^2 * V * squareoperator(S, t * tw, N)
+u1norms, u2norms, u3norms, u4norms = getsolutionblocknorms(N, S, A, resizecoeffs!(S, f1, N),
+                resizecoeffs!(S, f2, N), resizecoeffs!(S, f3, N), resizecoeffs!(S, f4, N))
+using Plots
+Plots.plot(u1norms, line=(3, :solid), label="f(x,y,z) = 1", xscale=:log10, yscale=:log10, legend=:bottomleft)
+Plots.plot!(u2norms, line=(3, :dash), label="f(x,y,z) = W{(1)}^2")
+Plots.plot!(u3norms, line=(3, :dashdot), label="f(x,y,z) = (1-z^2) * W{(1)}")
+Plots.plot!(u4norms, line=(3, :dot), label = "f(x,y,z) = exp(-100(||x-p||^2))")
+Plots.xlabel!("Block")
+Plots.ylabel!("Norm")
+Plots.savefig("experiments/saved/sphericalcap/images/solutionblocknorms-helmholtz-N=$N.pdf")
+
+# Biharmonic
+N = 100
+Bw = biharmonicoperator(S2, N)
+z1 = S.family.α; x1 = 0.7; vpt = [x1; sqrt(1 - x1^2 - z1^2); z1]
+f1 = Fun((x,y,z)->1.0, S2, 10); f1.coefficients
+f2 = Fun((x,y,z)->weight(S, x, y, z)^2, S2, 100); f2.coefficients
+f3 = Fun((x,y,z)->weight(S, x, y, z) * S.family.ρ(z)^2, S2, 300); f3.coefficients
+f4anon = (x,y,z) -> exp(-10((x-vpt[1])^2 + (y-vpt[2])^2 + (z-vpt[3])^2))
+f4 = Fun(f4anon, S2, 3000); f4.coefficients
+f4(p)
+f4anon(p...)
+f4(p) - f4anon(p...)
+u1norms, u2norms, u3norms, u4norms = getsolutionblocknorms(N, S2, Bw,
+                    resizecoeffs!(S2, f1, N), resizecoeffs!(S2, f2, N),
+                    resizecoeffs!(S2, f3, N), resizecoeffs!(S2, f4, N))
+using Plots
+Plots.plot(u1norms, line=(3, :solid), label="f(x,y,z) = 1", xscale=:log10, yscale=:log10, legend=:bottomleft)
+Plots.plot!(u2norms, line=(3, :dash), label="f(x,y,z) = W{(1)}^2")
+Plots.plot!(u3norms, line=(3, :dashdot), label="f(x,y,z) = (1-z^2) * W{(1)}")
+Plots.plot!(u4norms, line=(3, :dot), label = "f(x,y,z) = exp(-10(||x-p||^2))")
+Plots.xlabel!("Block")
+Plots.ylabel!("Norm")
+Plots.savefig("experiments/saved/sphericalcap/images/solutionblocknorms-biharmonic-N=$N.pdf")
+
+
+#====#
+
+"""
+# TODO:
+Sort out Makie
+Work out if Biharmonic operator is correct
+    - what RHSs should I use?
+Add to paper
+"""
