@@ -14,6 +14,7 @@
 \usepackage{bbm}
 \usepackage{mleftright}
 \usepackage{todonotes}
+\usepackage{csquotes}
 
 %\bibliographystyle{apalike}
 
@@ -335,7 +336,7 @@ In recent years, sparse spectral methods for solving partial differential equati
 
 This paper develops sparse spectral methods for solving linear partial differential equations on spherical subdomains such as spherical bands and spherical caps. More precisely, we consider the solution of partial differential equations on the domain $\Omega$ given by
 \begin{align*}
-	\Omega := \{(x,y,z) \in \R^3 \quad | \quad \alpha < z < \beta, \: ||(x,y)|| = \gamma \rho(z)\}
+	\Omega := \{(x,y,z) \in \R^3 \quad | \quad \alpha < z < \beta, \: ||(x,y)|| := \sqrt{x^2 + y^2} = \gamma \rho(z)\}
 \end{align*}
 and consider the case where $\alpha \in (0,1)$ and where
 \begin{align*}
@@ -357,7 +358,7 @@ noting that $\Wa(x,y,z) = 0$ for $(x,y,z) \in \partial \; \Omega$. The correspon
 \begin{align*}
 	\scopnkia(x,y,z) = C_{n,k,i} \: x^{k - \tilde k_i} \: y^{\tilde k_i} \: z^{n-k} + (\hbox{lower order terms})
 \end{align*} \bstodo{Ordering correct?}
-where $C_{n,k,i} \neq 0$ and ``lower order terms''   includes degree $n$ polynomials of the form $x^{j - \tilde j_i} \: y^{\tilde j_i} \: z^{n-j}$ where $j < k$. The precise normalization arises from their definition in terms of one-dimensional OPs in Definition~\ref{def:OPconstruction}. 
+where $C_{n,k,i} \neq 0$ and \enquote{lower order terms} includes degree $n$ polynomials of the form $x^{j - \tilde j_i} \: y^{\tilde j_i} \: z^{n-j}$ where $j < k$. The precise normalization arises from their definition in terms of one-dimensional OPs in Definition~\ref{def:OPconstruction}. 
 
 Sparsity comes from expanding the domain and range of an operator using different choices of the parameter $a$. In this work, as for the disk-slice case in 2D \cite{snowball2019sparse}, we use a more general integration-by-parts argument to deduce the sparsity structure. The 3D OPs defined here involve the same non-classical (in fact, semi-classical) 1D OPs as those outlined for the disk-slice, and so methods for calculating these 1D OP recurrence coefficients and integrals has already been outlined \cite{snowball2019sparse}. In particular, by exploiting the connection with one-dimensional orthogonal polynomials we can construct discretizations of general partial differential operators of size $p(p-1)/2 \times p(p-1)/2$ in $O(p^3)$ operations, where $p$ is the total polynomial degree. This compares favourably to $O(p^6)$ operations if one proceeds na\"ively. Furthermore, we use this framework to derive sparse $p$-finite element methods that are analogous to those of Beuchler and Sch\"oberl on tetrahedra \cite{beuchler2006new}, see also work by Li and Shen \cite{li2010optimal}. \bstodo{reword to avoid plagiarising self}
 
@@ -462,7 +463,7 @@ For clarity we state here that throughout we will regularly use coordinate trans
 \begin{align*}
 	z &= \cos(\phi) \\
 	x &= \sin(\phi) \: \cos(\theta) = \rho(z) \: \cos(\theta) \\
-	y &= \sin(\phi) \: \sin(\theta) = \rho(z) \: \sin(\theta)
+	y &= \sin(\phi) \: \sin(\theta) = \rho(z) \: \sin(\theta).
 \end{align*}
 
 
@@ -498,7 +499,7 @@ Each follows from the definitions of $\ch_{k,i}$ and $\ch_0$, as well as the rel
 \begin{lemma}\label{lemma:Qrecurrence} 
 Define
 \begin{align}
-	\gamma_{k} :=
+	\eta_{k} :=
 		\begin{cases}
 			0 &\text{if } k < 0 \\
 			\ch_0 &\text{if } k = 0 \\
@@ -517,12 +518,12 @@ $\scopnkia(x,y,z)$ satisfy the following recurrences:
 \end{align*}
 for $(x,y,z) \in \Omega$, where
 \begin{align*}
-	\alphaa_{n,k,1} &:= \gamma_{k-1} \: \ip<\genjacnmk^{(a, 2k)}, \: \genjacnmk^{(a, 2(k-1))}>_{\genjacw^{(a, 2k)}} \\
-	\alphaa_{n,k,2} &:= \gamma_{k} \: \ip<\genjacnmk^{(a, 2k)}, \genjac_{n-k-2}^{(a, 2(k+1))}>_{\genjacw^{(a, 2(k+1))}} \\
-	\alphaa_{n,k,3} &:=\gamma_{k-1} \: \ip<\genjacnmk^{(a, 2k)}, \: \genjac_{n-k+1}^{(a, 2(k-1))}>_{\genjacw^{(a, 2k)}} \\
-	\alphaa_{n,k,4} &:= \gamma_{k} \: \ip<\genjacnmk^{(a, 2k)}, \genjac_{n-k-1}^{(a, 2(k+1))}>_{\genjacw^{(a, 2(k+1))}} \\
-	\alphaa_{n,k,5} &:= \gamma_{k-1} \: \ip<\genjacnmk^{(a, 2k)}, \: \genjac_{n-k+2}^{(a, 2(k-1))}>_{\genjacw^{(a, 2k)}} \\
-	\alphaa_{n,k,6} &:=\gamma_{k} \: \ip<\genjacnmk^{(a, 2k)}, \genjacnmk^{(a, 2(k+1))}>_{\genjacw^{(a, 2(k+1))}} \\
+	\alphaa_{n,k,1} &:= \eta_{k-1} \: \ip<\genjacnmk^{(a, 2k)}, \: \genjacnmk^{(a, 2(k-1))}>_{\genjacw^{(a, 2k)}} \\
+	\alphaa_{n,k,2} &:= \eta_{k} \: \ip<\genjacnmk^{(a, 2k)}, \genjac_{n-k-2}^{(a, 2(k+1))}>_{\genjacw^{(a, 2(k+1))}} \\
+	\alphaa_{n,k,3} &:=\eta_{k-1} \: \ip<\genjacnmk^{(a, 2k)}, \: \genjac_{n-k+1}^{(a, 2(k-1))}>_{\genjacw^{(a, 2k)}} \\
+	\alphaa_{n,k,4} &:= \eta_{k} \: \ip<\genjacnmk^{(a, 2k)}, \genjac_{n-k-1}^{(a, 2(k+1))}>_{\genjacw^{(a, 2(k+1))}} \\
+	\alphaa_{n,k,5} &:= \eta_{k-1} \: \ip<\genjacnmk^{(a, 2k)}, \: \genjac_{n-k+2}^{(a, 2(k-1))}>_{\genjacw^{(a, 2k)}} \\
+	\alphaa_{n,k,6} &:=\eta_{k} \: \ip<\genjacnmk^{(a, 2k)}, \genjacnmk^{(a, 2(k+1))}>_{\genjacw^{(a, 2(k+1))}} \\
 	\betaa_{n,k,i,j} &:= 
 		\begin{cases}
 			- \alphaa_{n,k,j} \quad &\text{if }(i = 0 \text{ and } j \text{ is odd}) \text{ or }(i = 1 \text{ and } j \text{ is even}) \\
@@ -534,9 +535,9 @@ for $(x,y,z) \in \Omega$, where
 
 \begin{proof}
 The 3-term recurrence for multiplication by $z$ follows from (\ref{eqn:Rrecurrence}). For the recurrence for multiplication by $x$, since $\{\scopmjha\}$ for $m = 0,\dots,n+1$, $j = 0,\dots,m$, $h = 0,1$ is an orthogonal basis for any degree $n+1$ polynomial on $\Omega$, we can expand 
-$$
-x \: \scopnkia(x,y,z) = \sum_{m=0}^{n+1} \sum_{j=0}^m \sum_{h=0}^1 c_{m,j} \: \scopmjha(x,y,z).
-$$
+\begin{align*}
+	x \: \scopnkia(x,y,z) = \sum_{m=0}^{n+1} \sum_{j=0}^m \sum_{h=0}^1 c_{m,j} \: \scopmjha(x,y,z).
+\end{align*}
 These coefficients are given by
 \begin{align*}
 	c_{m,j} = {\ip< x \: \scopnkia, \scopmjha >_{\scopa}}{\norm{\scopmjha}^{-2}_{\scopa}}
@@ -548,7 +549,7 @@ Recall from equation (\ref{eqn:normscop}) that $\norm{\scopmjha}_{\scopa}^2 = \p
 	&= \int_\Omega \scopnkia(\xvec,z) \: \scopmjha(\xvec,z) \: x \: \genjacw^{(a,0)}(z) \: \D\sigma(\xvec, z) \\
 	&= \Big( \int^1_\alpha \genjacnmk^{(a, 2k)}(z) \: \genjacmmj^{(a, 2j)}(z) \: \rho(z)^{k+j+1} \: \genjacw^{(a, 0)}(z) \: \D z \Big) \cdot \: \Big( \int_0^{2\pi} \chki(\theta) \: \chjh(\theta) \: \cos(\theta) \: \D \theta \Big) \\
 	&= \Big( \int^1_\alpha \genjacnmk^{(a, 2k)}(z) \: \genjacmmj^{(a, 2j)}(z) \: \genjacw^{(a, k + j + 1)}(z) \: \D z \Big) \cdot \: \Big( \int_0^{2\pi} \chki(\theta) \: \chjh(\theta) \: \cos(\theta) \: \D \theta \Big) \\
-	&= \half \: \pi \: \delta_{i,h} \: (\gamma_{k-1} \: \delta_{k-1, j} + \gamma_{k} \: \delta_{k+1, j})  \int^1_\alpha \genjacnmk^{(a, 2k)}(z) \: \genjacmmj^{(a, 2j)}(z) \: \genjacw^{(a, k + j + 1)}(z) \: \D z.
+	&= \half \: \pi \: \delta_{i,h} \: (\eta_{k-1} \: \delta_{k-1, j} + \eta_{k} \: \delta_{k+1, j})  \int^1_\alpha \genjacnmk^{(a, 2k)}(z) \: \genjacmmj^{(a, 2j)}(z) \: \genjacw^{(a, k + j + 1)}(z) \: \D z.
 \end{align*}
 where $\delta_{k, j}$ is the standard Kronecker delta function, using Lemma \ref{lemma:Yrecurrence}. Similarly, for the recurrence for multiplication by $y$, we can expand 
 \begin{align*}
@@ -564,7 +565,7 @@ where we show the non-zero coefficients that result are the $\betaa_{n,k,1},\dot
 	&= \int_\Omega \scopnkia(\xvec,z) \: \scopmjha(\xvec,z) \: y \: \genjacw^{(a,0)}(z) \: \D\sigma(\xvec, z) \\
 	&= \Big( \int^1_\alpha \genjacnmk^{(a, 2k)}(z) \: \genjacmmj^{(a, 2j)}(z) \: \rho(z)^{k+j+1} \: \genjacw^{(a, 0)}(z) \: \D z \Big) \cdot \: \Big( \int_0^{2\pi} \chki(\theta) \: \chjh(\theta) \: \sin(\theta) \: \D \theta \Big) \\
 	&= \Big( \int^1_\alpha \genjacnmk^{(a, 2k)}(z) \: \genjacmmj^{(a, 2j)}(z) \: \genjacw^{(a, k + j + 1)}(z) \: \D z \Big) \cdot \: \Big( \int_0^{2\pi} \chki(\theta) \: \chjh(\theta) \: \sin(\theta) \: \D \theta \Big) \\
-	&= \half \: \pi \: \delta_{|i-1|,h} \: ((-1)^{i+1} \: \gamma_{k-1} \: \delta_{k-1, j} + (-1)^i \: \gamma_{k} \: \delta_{k+1, j})  \int^1_\alpha \genjacnmk^{(a, 2k)}(z) \: \genjacmmj^{(a, 2j)}(z) \: \genjacw^{(a, k + j + 1)}(z) \: \D z.
+	&= \half \: \pi \: \delta_{|i-1|,h} \: \big[(-1)^{i+1} \: \eta_{k-1} \: \delta_{k-1, j} + (-1)^i \: \eta_{k} \: \delta_{k+1, j}\big] \int^1_\alpha \genjacnmk^{(a, 2k)}(z) \: \genjacmmj^{(a, 2j)}(z) \: \genjacw^{(a, k + j + 1)}(z) \: \D z.
 \end{align*}
 where again $\delta_{k, j}$ is the standard Kronecker delta function, and we have used Lemma \ref{lemma:Yrecurrence}.
 
@@ -605,7 +606,7 @@ The matrices $J_x^{(a)}, J_y^{(a)}, J_z^{(a)}$ act on the coefficients vector of
 A block matrix $A$ with blocks $A_{i,j}$ has block-bandwidths $(L,U)$ if $A_{i,j} = 0$ for $- L \leq j-i \leq U$, and sub-block-bandwidths $(\lambda, \mu)$ if all blocks $A_{i,j}$ are banded with bandwidths $(\lambda,\mu)$. A matrix where the block-bandwidths and sub-block-bandwidths are small compared to the dimensions is referred to as a banded-block-banded matrix. 
 \end{definition}
 
-For example, $J_x^{(a)}, J_y^{(a)}, J_z^{(a)}$ are block-tridiagonal (block-bandwidths $(1,1)$):
+For example, $J_x^{(a)}, J_y^{(a)}$ are block-tridiagonal (block-bandwidths $(1,1)$) while $J_z^{(a)}$ is block-diagonal (block-bandwidths $(0,0)$):
 \begin{align*}
 	J_{x/y/z}^{(a)} &= 
 		\begin{pmatrix}
@@ -617,7 +618,7 @@ For example, $J_x^{(a)}, J_y^{(a)}, J_z^{(a)}$ are block-tridiagonal (block-band
 		\end{pmatrix}
 \end{align*}
 
-For $J_x^{(a)}$, the sub-blocks $A^{(a)}_{x, k}, C^{(a)}_{x, k}$ have sub-block-bandwidths $(2,2)$ while the sub-blocks $B^{(a)}_{x,k}$ are zero matrices: \bstodo{fix bandwidths}
+For $J_x^{(a)}$, the sub-blocks $A^{(a)}_{x, k}, C^{(a)}_{x, k}$ have sub-block-bandwidths $(4,4)$ while the sub-blocks $B^{(a)}_{x,k}$ are zero matrices:
 \begin{align*}
 	B^{(a)}_{x,0} &= 0 \in \R^{(N+1)\times2N}, \quad B^{(a)}_{x,k} = 0 \in \R^{2(N-k+1)\times2(N-k)} \text{ for } k = 1,2,\dots,N \\
 	A^{(a)}_{x,k} &:= 
@@ -639,24 +640,24 @@ For $J_x^{(a)}$, the sub-blocks $A^{(a)}_{x, k}, C^{(a)}_{x, k}$ have sub-block-
 	C^{(a)}_{x,1} &\in \R^{2N\times(N+1)}, \quad C^{(a)}_{x,k} \in \R^{2(N-k+1)\times2(N-k+3)} \text{ for } k = 2,3,\dots,N
 \end{align*}
 where for $k = 1,\dots,N, \: n = k,\dots,N$
-\begin{align*}
+\begin{align}
 	A^{(a)}_{n,k,j} &:= 
 		\begin{pmatrix}
 			\alphaa_{n,k,j} & 0 \\
 			0 & \alphaa_{n,k,j}
-		\end{pmatrix} \in \R^{2\times2}, (k \ne 1 \text { for } j \text{ odd}) \\
+		\end{pmatrix} \in \R^{2\times2}, (k \ne 1 \text { for } j \text{ odd}) \label{eqn:jacobisubblocksA1} \\
 	A^{(a)}_{n,0,j} &:=
 		\begin{pmatrix}
 			\alphaa_{n,0,j} & 0
-		\end{pmatrix} \in \R^{1\times2}, j \text{ odd} \\
+		\end{pmatrix} \in \R^{1\times2}, j \text{ odd} \label{eqn:jacobisubblocksA2} \\
 	A^{(a)}_{n,1,j} &:=
 		\begin{pmatrix}
 			\alphaa_{n,1,j} \\
 			0
-		\end{pmatrix} \in \R^{2\times1}, j \text{ odd} \\
-\end{align*}
+		\end{pmatrix} \in \R^{2\times1}, j \text{ odd} \label{eqn:jacobisubblocksA3} \\
+\end{align}
 
-For $J_y^{(a)}$, the sub-blocks have sub-block-bandwidths $(3,3)$ while the sub-blocks $B^{(a)}_{y,k}$ are zero matrices:
+For $J_y^{(a)}$, the sub-blocks have sub-block-bandwidths $(5,5)$ while the sub-blocks $B^{(a)}_{y,k}$ are zero matrices:
 \begin{align*}
 	B^{(a)}_{y,0} &= 0 \in \R^{(N+1)\times2N}, \quad B^{(a)}_{y,k} = 0 \in \R^{2(N-k+1)\times2(N-k)} \text{ for } k = 1,2,\dots,N \\
 	A^{(a)}_{y,k} &:= 
@@ -678,24 +679,24 @@ For $J_y^{(a)}$, the sub-blocks have sub-block-bandwidths $(3,3)$ while the sub-
 	C^{(a)}_{y,1} &\in \R^{2N\times(N+1)}, \quad C^{(a)}_{y,k} \in \R^{2(N-k+1)\times2(N-k+3)} \text{ for } k = 2,3,\dots,N
 \end{align*}
 where for $k = 1,\dots,N, \: n = k,\dots,N$
-\begin{align*}
+\begin{align}
 	B^{(a)}_{n,k,j} &:= 
 		\begin{pmatrix}
 			0 & \betaa_{n,k,0,j} \\
 			\betaa_{n,k,1,j} & 0
-		\end{pmatrix} \in \R^{2\times2}, (k \ne 1 \text { for } j \text{ odd}) \\
+		\end{pmatrix} \in \R^{2\times2}, (k \ne 1 \text { for } j \text{ odd}) \label{eqn:jacobisubblocksB1} \\
 	B^{(a)}_{n,0,j} &:=
 		\begin{pmatrix}
 			0 & \betaa_{n,0,0,j}
-		\end{pmatrix} \in \R^{1\times2}, j \text{ odd} \\
+		\end{pmatrix} \in \R^{1\times2}, j \text{ odd}  \label{eqn:jacobisubblocksB2} \\
 	B^{(a)}_{n,1,j} &:=
 		\begin{pmatrix}
 			0 \\
 			\betaa_{n,1,1,j}
-		\end{pmatrix}\in \R^{2\times1}, j \text{ odd} \\
-\end{align*}
+		\end{pmatrix}\in \R^{2\times1}, j \text{ odd}  \label{eqn:jacobisubblocksB3} \\
+\end{align}
 
-For $J_z^{(a)}$, the sub-blocks $B^{(a)}_{z,k}$ have sub-block-bandwidths $(3,3)$, while the sub-blocks $A^{(a)}_{z,k}, \: C^{(a)}_{z,k}$ are zero matrices:
+For $J_z^{(a)}$, the sub-blocks $B^{(a)}_{z,k}$ have sub-block-bandwidths $(2,2)$, while the sub-blocks $A^{(a)}_{z,k}, \: C^{(a)}_{z,k}$ are zero matrices:
 \begin{align*}
 	A^{(a)}_{z,0} &= 0 \in \R^{(N+1)\times2N}, \quad A^{(a)}_{z,k} = 0 \in \R^{2(N-k+1)\times2(N-k)} \text{ for } k = 1,2,\dots,N \\
 	C^{(a)}_{z,1} &= 0 \in \R^{2N\times(N+1)}, \quad C^{(a)}_{z,k} = 0 \in \R^{2(N-k+1)\times2(N-k+3)} \text{ for } k = 2,3,\dots,N \\
@@ -709,14 +710,14 @@ For $J_z^{(a)}$, the sub-blocks $B^{(a)}_{z,k}$ have sub-block-bandwidths $(3,3)
 	B^{(a)}_{z,0} &\in \R^{(N+1)\times(N+1)}, \quad B^{(a)}_{z,k} \in \R^{2(N-k+1)\times2(N-k+1)} \text{ for } k = 1,2,\dots,N
 \end{align*}
 where for $k = 1,\dots,N, \: n = k,\dots,N$
-\begin{align*}
+\begin{align}
 	\Gamma^{(a)}_{n,k,j} &:= 
 		\begin{pmatrix}
 			\gamma_{n,k,j} & 0 \\
 			0 & \gamma_{n,k,j}
-		\end{pmatrix} \in \R^{2\times2}, \\
-	\Gamma^{(a)}_{n,0,j} &:= \gammaa_{n,0,j}.
-\end{align*}
+		\end{pmatrix} \in \R^{2\times2}, \label{eqn:jacobisubblocksGamma1} \\
+	\Gamma^{(a)}_{n,0,j} &:= \gammaa_{n,0,j}. \label{eqn:jacobisubblocksGamma2}
+\end{align}
 
 Note that the sparsity of the Jacobi matrices (in particular the sparsity of the sub-blocks) comes from the natural sparsity of the three-term recurrences of the 1D OPs and the circular harmonics, meaning that the sparsity is not limited to the specific spherical cap, and would extend to the spherical band.
 
@@ -725,7 +726,7 @@ Note that the sparsity of the Jacobi matrices (in particular the sparsity of the
 
 \subsection{Building the OPs} 
 
-In this section, we introduce new notation for a different ordering of the OP vector, in order to demonstrate how we can obtain a recurrence for the OPs in matrix-vector form, and derive the associated 'Clenshaw matrices'. While in Section \ref{subsection:jacobimats} the ordering used is convenient for the application of Jacobi and differential operators to the vector of coefficients of a given function's expansion, the ordering we will use in this section is convenient for building the OPs and more importantly obtaining the 'Clenshaw matrices' necessary for efficient function evaluation using the Clenshaw algorithm. In practice, it is simply a matter of converting coefficients between the two orderings.
+In this section, we introduce new notation for a different ordering of the OP vector, in order to demonstrate how we can obtain a recurrence for the OPs in matrix-vector form, and derive the associated \enquote{Clenshaw matrices}. While in Section \ref{subsection:jacobimats} the ordering used is convenient for the application of Jacobi and differential operators to the vector of coefficients of a given function's expansion, the ordering we will use in this section is convenient for building the OPs and more importantly obtaining the \enquote{Clenshaw matrices} necessary for efficient function evaluation using the Clenshaw algorithm. In practice, it is simply a matter of converting coefficients between the two orderings.
 
 Define, for $n=0,1,2,\dots$: 
 \begin{align*}
@@ -770,120 +771,78 @@ For $\tilde J_x^{(a)}$, the sub-blocks have sub-block-bandwidths $(2,2)$:
 \begin{align*}
 	\tilde A^{(a)}_{x,n} &:= 
 		\begin{pmatrix}
-			0 & \tilde A^{(a)}_{n,0,6} & 0 & & \\
-			\tilde A^{(a)}_{n,1,5} & \ddots & \ddots & & \\
+			0 & A^{(a)}_{n,0,6} & 0 & & \\
+			A^{(a)}_{n,1,5} & \ddots & \ddots & & \\
 			& \ddots & \ddots & \ddots & \\
-			& & \tilde A^{(a)}_{n,n,5} & 0 & \tilde A^{(a)}_{n,n,6} \\
+			& & A^{(a)}_{n,n,5} & 0 & A^{(a)}_{n,n,6} \\
 		\end{pmatrix} \in \R^{(2n+1)\times(2n+3)}, \quad n = 0,1,2,\dots \\
 	\tilde B^{(a)}_{x,n} &:= 
 		\begin{pmatrix}
-			0 & \tilde A^{(a)}_{n,0,4} & & \\
-			\tilde A^{(a)}_{n,1,3} & \ddots & \ddots & \\
+			0 & A^{(a)}_{n,0,4} & & \\
+			A^{(a)}_{n,1,3} & \ddots & \ddots & \\
 			& \ddots & \ddots & \tilde A^{(a)}_{n,n-1,4} \\
-			& & \tilde A^{(a)}_{n,n,3} & 0
+			& & A^{(a)}_{n,n,3} & 0
 		\end{pmatrix} \in \R^{(2n+1)\times(2n+1)}  \quad n = 0,1,2,\dots \\
 	\tilde C^{(a)}_{x,n} &:= 
 		\begin{pmatrix}
-			0 & \tilde A^{(a)}_{n,0,2} & & \\
-			\tilde A^{(a)}_{n,1,1} & \ddots & \ddots & \\
+			0 & A^{(a)}_{n,0,2} & & \\
+			A^{(a)}_{n,1,1} & \ddots & \ddots & \\
 			& \ddots & \ddots &A^{(a)}_{n,n-2,2} \\
 			& & \ddots & 0 \\
-			& & & \tilde A^{(a)}_{n,n,1} \\
+			& & & A^{(a)}_{n,n,1} \\
 		\end{pmatrix} \in \R^{(2n+1)\times(2n-1)}, \quad n = 1,2,\dots
 \end{align*}
-where
-\begin{align*}
-	\tilde A^{(a)}_{n,k,j} &:= 
-		\begin{pmatrix}
-			\alphaa_{n,k,j} & 0 \\
-			0 & \alphaa_{n,k,j}
-		\end{pmatrix} \in \R^{2\times2}, \quad k = 1,\dots,n \: (j \text{ even}), \quad k = 2,\dots,n \: (j \text{ odd}) \\
-	\tilde A^{(a)}_{n,0,j} &:=
-		\begin{pmatrix}
-			\alphaa_{n,0,j} & 0
-		\end{pmatrix} \in \R^{1\times2}, \quad j \text{ even} \\
-	\tilde A^{(a)}_{n,1,j} &:=
-		\begin{pmatrix}
-			\alphaa_{n,1,j} \\
-			0
-		\end{pmatrix} \in \R^{2\times1}, \quad j \text{ odd} \\
-\end{align*}
-For $\tilde J_y^{(a)}$, the sub-blocks have sub-block-bandwidths $(3,3)$:
+where $A^{(a)}_{n,k,j}$ are defined in equations (\ref{eqn:jacobisubblocksA1}, \ref{eqn:jacobisubblocksA2}, \ref{eqn:jacobisubblocksA3}). For $\tilde J_y^{(a)}$, the sub-blocks have sub-block-bandwidths $(3,3)$:
 \begin{align*}
 	\tilde A^{(a)}_{y,n} &:= 
 		\begin{pmatrix}
-			0 & \tilde B^{(a)}_{n,0,6} & 0 & & \\
-			\tilde B^{(a)}_{n,1,5} & \ddots & \ddots & & \\
+			0 & B^{(a)}_{n,0,6} & 0 & & \\
+			B^{(a)}_{n,1,5} & \ddots & \ddots & & \\
 			& \ddots & \ddots & \ddots & \\
-			& & \tilde B^{(a)}_{n,n,5} & 0 & \tilde B^{(a)}_{n,n,6} \\
+			& & B^{(a)}_{n,n,5} & 0 & B^{(a)}_{n,n,6} \\
 		\end{pmatrix} \in \R^{(2n+1)\times(2n+3)}, \quad n = 0,1,2,\dots \\
 	\tilde B^{(a)}_{y,n} &:= 
 		\begin{pmatrix}
-			0 & \tilde B^{(a)}_{n,0,4} & & \\
-			\tilde B^{(a)}_{n,1,3} & \ddots & \ddots & \\
-			& \ddots & \ddots & \tilde B^{(a)}_{n,n-1,4} \\
-			& & \tilde B^{(a)}_{n,n,3} & 0
+			0 & B^{(a)}_{n,0,4} & & \\
+			B^{(a)}_{n,1,3} & \ddots & \ddots & \\
+			& \ddots & \ddots & B^{(a)}_{n,n-1,4} \\
+			& & B^{(a)}_{n,n,3} & 0
 		\end{pmatrix} \in \R^{(2n+1)\times(2n+1)}  \quad n = 0,1,2,\dots \\
 	\tilde C^{(a)}_{y,n} &:= 
 		\begin{pmatrix}
-			0 & \tilde B^{(a)}_{n,0,2} & & \\
-			\tilde B^{(a)}_{n,1,1} & \ddots & \ddots & \\
-			& \ddots & \ddots & \tilde B^{(a)}_{n,n-2,2} \\
+			0 & B^{(a)}_{n,0,2} & & \\
+			B^{(a)}_{n,1,1} & \ddots & \ddots & \\
+			& \ddots & \ddots & B^{(a)}_{n,n-2,2} \\
 			& & \ddots & 0 \\
-			& & & \tilde B^{(a)}_{n,n,1} \\
+			& & & B^{(a)}_{n,n,1} \\
 		\end{pmatrix} \in \R^{(2n+1)\times(2n-1)}, \quad n = 1,2,\dots
 \end{align*}
-where
-\begin{align*}
-	\tilde B^{(a)}_{n,k,j} &:= 
-		\begin{pmatrix}
-			0 & \betaa_{n,k,0,j} \\
-			\betaa_{n,k,1,j} & 0
-		\end{pmatrix} \in \R^{2\times2}, \quad k = 1,\dots,n \: (j \text{ even}), \quad k = 2,\dots,n \: (j \text{ odd}) \\
-	\tilde B^{(a)}_{n,0,j} &:=
-		\begin{pmatrix}
-			0 & \betaa_{n,0,0,j}
-		\end{pmatrix} \in \R^{1\times2}, \quad j \text{ even} \\
-	\tilde B^{(a)}_{n,1,j} &:=
-		\begin{pmatrix}
-			0 \\
-			\betaa_{n,1,1,j}
-		\end{pmatrix} \in \R^{2\times1}, \quad j \text{ odd} \\
-\end{align*}
-For $\tilde J_z^{(a)}$, the sub-blocks are diagonal, i.e. have sub-block-bandwidths $(0,0)$:
+where $B^{(a)}_{n,k,j}$ are defined equations (\ref{eqn:jacobisubblocksB1}, \ref{eqn:jacobisubblocksB2}, \ref{eqn:jacobisubblocksB3}). For $\tilde J_z^{(a)}$, the sub-blocks are diagonal, i.e. have sub-block-bandwidths $(0,0)$:
 \begin{align*}
 	\tilde A^{(a)}_{z,n} &:= 
 		\begin{pmatrix}
-			\tilde \Gamma^{(a)}_{n,0,3} & 0 & \\
+			\Gamma^{(a)}_{n,0,3} & 0 & \\
 			0 & \ddots & \ddots & & \\
 			& \ddots & \ddots & \ddots & \\
-			& & 0 & \tilde \Gamma^{(a)}_{n,0,3} & 0 \\
+			& & 0 & \Gamma^{(a)}_{n,n,3} & 0 \\
 		\end{pmatrix} \in \R^{(2n+1)\times(2n+3)}, \quad n = 0,1,2,\dots \\
 	\tilde B^{(a)}_{z,n} &:= 
 		\begin{pmatrix}
-			\tilde \Gamma^{(a)}_{n,0,2} & \\
+			\Gamma^{(a)}_{n,0,2} & \\
 			& \ddots & & \\
 			& & \ddots & \\
-			& & & \tilde \Gamma^{(a)}_{n,0,2}
+			& & & \Gamma^{(a)}_{n,n,2}
 		\end{pmatrix} \in \R^{(2n+1)\times(2n+1)}  \quad n = 0,1,2,\dots \\
 	\tilde C^{(a)}_{z,n} &:= 
 		\begin{pmatrix}
-			\tilde \Gamma^{(a)}_{n,0,1} & 0 & & \\
+			\Gamma^{(a)}_{n,0,1} & 0 & & \\
 			0 & \ddots & \ddots & \\
 			& \ddots & \ddots & 0 \\
-			& & \ddots & \tilde \Gamma^{(a)}_{n,n,1} \\
+			& & \ddots & \Gamma^{(a)}_{n,n-1,1} \\
 			& & & 0 \\
 		\end{pmatrix} \in \R^{(2n+1)\times(2n-1)}, \quad n = 1,2,\dots
 \end{align*}
-where
-\begin{align*}
-	\tilde \Gamma^{(a)}_{n,k,j} &:= 
-		\begin{pmatrix}
-			\gamma_{n,k,j} & 0 \\
-			0 & \gamma_{n,k,j}
-		\end{pmatrix} \in \R^{2\times2}, \quad k = 1,\dots,n \\
-	\tilde \Gamma^{(a)}_{n,0,j} &:= \gammaa_{n,0,j}
-\end{align*}
+where $\Gamma^{(a)}_{n,k,j}$ are defined in equations (\ref{eqn:jacobisubblocksGamma1}, \ref{eqn:jacobisubblocksGamma2}). 
 
 We can combine each system in (\ref{eqn:jacobimatricesdefinitionalt}) into a block-tridiagonal system, for any $(x,y,z) \in \Omega$:
 \begin{align*}
@@ -944,42 +903,34 @@ Note that we can define an explicit \(\Dnt\) as follows:
 			0 & & & 0 & & & 1 / \gammaa_{n,0,3} & & \\
 			& \ddots & & & \ddots & & & \ddots \\
 			& & 0 & & & 0 & & & 1 / \gammaa_{n,n,3}  \\
-			& & & & & \bm{\eta}^\top_{1} & & & \\
-			& & & & & \bm{\eta}^\top_{0} & & &
+			& & & & & \bm{\eta}^\top_{0} & & & \\
+			& & & & & \bm{\eta}^\top_{1} & & &
 		\end{pmatrix} \in \R^{(2n+3)\times3(2n+1)},
 \end{align*}
-for $n = 2, 3, \dots$ where $\bm{\eta}_{0}, \bm{\eta}_{1} \in \R^{3(2n+1)}$ with entries given by 
+for $n = 1, 2, \dots$ where $\bm{\eta}_{0}, \bm{\eta}_{1} \in \R^{3(2n+1)}$ with entries given by 
 \begin{align*}
 	\big(\bm{\eta}_{0}\big)_j &= 
 		\begin{cases}
-			\frac{1}{\alphaa_{n,n,6}} & j = 2n+1 \\
-			\frac{- \: \alphaa_{n,n,5}}{\alphaa_{n,n,6} \: \gammaa_{n, n-1, 3}} & j = 3(2n+1) - 2 \\
+			\frac{1}{\betaa_{n,n,1,6}} & j = 2(2n+1) \\
+			\frac{- \: \betaa_{n,n,1,5}}{\betaa_{n,n,1,6} \: \gammaa_{n, n-1, 3}} & j = 3(2n+1) - 3 \\
 			0 & o/w
 		\end{cases} \\
 	\big(\bm{\eta}_{1}\big)_j &= 
 		\begin{cases}
-			\big(\bm{\eta}_{0}\big)_{j+1} & j = 2n, 3(2n+1) - 3 \\
+			\frac{1}{\alphaa_{n,n,6}} & j = 2n+1 \\
+			\frac{- \: \alphaa_{n,n,5}}{\alphaa_{n,n,6} \: \gammaa_{n, n-1, 3}} & j = 3(2n+1) - 2  \text{ and } n > 1 \\
 			0 & o/w
 		\end{cases}
 \end{align*}
-For $n=0, 1$, we can simply take
+For $n=0$, we can simply take
 \begin{align*}
 	D^\top_0 &:= 
 		\begin{pmatrix}
 			0 & 0 & \frac{1}{\gammaa_{0,0,3}} \\
 			\frac{1}{\alphaa_{0,0,6}} & 0 & 0 \\
 			0 & \frac{1}{\betaa_{0,0,6}} & 0
-		\end{pmatrix} \in \R^{3\times3}, \\
-	D^\top_1 &:= 
-		\begin{pmatrix}
-			0 & 0 & 0 & 0 & 0 & 0 & 1 / \gammaa_{1,0,3} & & \\
-			0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 / \gammaa_{1,1,3} \\
-			0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 / \gammaa_{1,1,3}  \\
-			0 & 1 / \alphaa_{1,1,6} & 0 & 0 & 0 & 0 & \eta & 0 & 0 \\
-			0 & 0 & 1 / \alphaa_{1,1,6} & 0 & 0 & 0 & 0 & 0 & 0
-		\end{pmatrix} \in \R^{5\times9},
+		\end{pmatrix} \in \R^{3\times3}.
 \end{align*}
-where $\eta = \frac{- \: \alphaa_{1,1,5}}{\alphaa_{1,1,6} \: \gammaa_{1, 0, 3}}$.
 
 It follows that we can apply $\Dnt$ in $O(n)$ complexity, and thereby calculate $\bigscopta_{0}(x,y)$  through $\bigscopta_{n}(x,y)$ in optimal $O(n^2)$ complexity. \bstodo{correct for this case}
 
@@ -1007,14 +958,14 @@ In this section, we will derive the entries that form spherical partial differen
 		\begin{pmatrix}
 			\scopa_{0,0,0}(x,y,z) \\
 			\vdots \\
-			\scopa_{N,0,0}(x,y,z) \\
+			\scopa_{N,0,0}(x,y,z)
 		\end{pmatrix} \in \R^{N+1}, \\
 	\bigscopNa &:= 
 		\begin{pmatrix}
 			\bigscopa_{N,0} \\
 			\vdots \\
 			\bigscopa_{N,N}
-		\end{pmatrix} \in \R^{(N+1)^2}
+		\end{pmatrix} \in \R^{(N+1)^2}.
 \end{align*}
 
 We further denote the weighted set of OPs on $\Omega$ by 
@@ -1185,28 +1136,38 @@ which is zero for $n > m + \tilde a \iff m < n - \tilde a$. The sparsity argumen
 \end{proof}
 
 \begin{figure}[t]
-	\begin{subfigure}{0.32\textwidth}
-	\includegraphics[scale=0.35]{sparsityoflaplacian-w11-diskslice-alpha=0p2-beta=0p8}
-        \centering
-	\end{subfigure}
-	\begin{subfigure}{0.32\textwidth}
-	\includegraphics[scale=0.35]{sparsityofhelmholtz-diskslice-alpha=0p2-beta=0p8}
-        \centering
-	\end{subfigure}
-	\begin{subfigure}{0.32\textwidth}
-	\includegraphics[scale=0.35]{sparsityofbiharmonic-diskslice-alpha=0p2-beta=0p8}
-        \centering
-	\end{subfigure}
-    	\caption{"Spy" plots of (differential) operator matrices, showing their sparsity. Left: the Laplace operator $\laplacewiii$. Centre: the weighted variable coefficient Helmholtz operator $\laplacewiii + k^2 \: T^{(0,0,0)\to(1,1,1)} \: V({J_x^{(0,0,0)}}^\top, {J_y^{(0,0,0)}}^\top) \: T_W^{(1,1,1)\to(0,0,0)}$ for $v(x,y) = 1 - (3(x-1)^2 + 5y^2)$ and $k = 200$. Right: the biharmonic operator $\biharmonictwo$.}
-        \label{fig:sparsity}
-        \centering
+	\centering % <-- added
+	\begin{subfigure}{0.45\textwidth}
+		\includegraphics[scale=0.3]{sparsity-of-laplacian}
+		\centering
+		\caption{The Laplace operator $\Delta^{(1)}_W$}
+	\end{subfigure}\hfil % <-- added
+	\begin{subfigure}{0.45\textwidth}
+		\includegraphics[scale=0.3]{sparsity-of-rho2laplacian}
+		\centering
+		\caption{The $\rho^2$-factored Laplacian $L_W^{(1)}$}
+	\end{subfigure}\hfil % <-- added
+
+	\medskip
+	\begin{subfigure}{0.45\textwidth}
+		\includegraphics[scale=0.3]{sparsity-of-helmholtz}
+		\centering
+		\caption{A variable coefficient Helmholtz operator}
+	\end{subfigure}\hfil % <-- added
+	\begin{subfigure}{0.45\textwidth}
+		\includegraphics[scale=0.3]{sparsity-of-biharmonic}
+		\centering
+		\caption{The Biharmonic operator $B_W^{(2)}$}
+	\end{subfigure}\hfil % <-- added
+	\caption{\enquote{Spy} plots of (differential) operator matrices, showing their sparsity. For (c), the the weighted variable coefficient Helmholtz operator is $\Delta^{(1)}_W + k^2 \: T^{(0)\to(1)} \: V({J_x^{(0)}}^\top, {J_y^{(0)}}^\top, {J_z^{(0)}}^\top) \: T_W^{(1)\to(0)}$ for $v(x,y,z) = 1 - (3(x-x_0)^2 + 5(y-y_0)^2 + 2(z-z_0)^2)$ where $(x_0, z_0) := (0.7, 0.2)$, $y_0 := \sqrt{(x_0^2 + z_0^2)}$ and $k = 200$.}
+	\label{fig:images}
 \end{figure}
 
 General linear partial differential operators with polynomial variable coefficients can be constructed by composing the sparse representations for partial derivatives, conversion between bases, and Jacobi operators. As a canonical example, we can obtain the matrix operator for the $\rho^2$-factored surface Laplacian $\rho(z)^2 \: \nabla^2_s$, that will take us from coefficients for expansion in the weighted space $\bigW_N^{(1)}(x,y,z) = \genjacw^{(1,0)}(z) \: \bigscopN^{(1)}(x,y,z)$ to coefficients in the non-weighted space $\bigscopN^{(1)}(x,y,z)$. Note that this construction will ensure the imposition of the Dirichlet zero boundary conditions on $\Omega$, similar to how the Dirichlet zero boundary conditions would be imposed for the operator $\Delta^{(1)}_W$ in Definition \ref{def:differentialoperators}. The matrix operator for this $\rho^2$-factored Laplacian we denote $\mathcal{L}_W^{(1)}$ acting on the coefficients vector is then given by
 \begin{align*}
     \mathcal{L}_W^{(1)} := D_\phi^{(0)} \: W_\phi^{(1)} + T^{(0)\to(1)} \: T_W^{(1)\to(0)} \: (D_\theta)^2.
 \end{align*}
-Importantly, this operator will have banded-block-banded structure, and hence will be sparse, as seen in Figure \ref{fig:sparsity}.
+Importantly, this operator will have banded-block-banded structure, and hence will be sparse, as seen in Figure \ref{fig:sparsity}. \bstodo{Add this fig}
 
 Another desirable operator is the Biharmonic operator $\Delta^2_s$ (defined by $\Delta^2_s f = \nabla^2_s (\nabla^2_s f)$), for which we assume zero Dirichlet and Neumann conditions. To construct a matrix operator, we first note that we can obtain the matrix operator for the $\rho^2$-factored Laplacian $\rho(z)^2 \: \nabla^2_s$ that will take us from coefficients for expansion in the space $\bigscopN^{(0)}(x,y,z)$ to coefficients in the space $\bigscopN^{(2)}(x,y,z)$. We denote this matrix operator that acts on the coefficients vector as $\mathcal{L}^{(0) \to (2)}$, and it is given by
 \begin{align*}
@@ -1439,7 +1400,7 @@ The proofs of Theorem \ref{theorem:sparsityofdifferentialoperators} and Lemma \r
 
 \subsection{Obtaining operator matrices for variable coefficients}\label{subsection:operatorclenshaw}
 
-The Clenshaw algorithm outlined in Section \ref{subsection:functionevaluation} can also be used with Jacobi matrices $J^{(a)}_x, J^{(a)}_y, J^{(a)}_z$ replacing the point $(x,y,z)$. Let $v : \Omega \to \R$ be the function that we wish to obtain an operator matrix $V$ for, so that
+The Clenshaw algorithm outlined in Section \ref{subsection:functionevaluation} can also be used with Jacobi matrices $J^{(a)}_x, J^{(a)}_y, J^{(a)}_z$ replacing the point $(x,y,z)$. Let $v : \Omega \to \R$ be the function that we wish to obtain an operator matrix $V$ for $v$, so that
 \begin{align*}
 	v(x,y,z) \: f(x,y,z) = v(x,y,z) \: \bm{f}^\top \: \bigscopNa(x,y,z) = (V \bm{f})^\top \: \bigscopNa(x,y,z),
 \end{align*}
@@ -1465,80 +1426,80 @@ We now demonstrate how the sparse linear systems constructed as above can be use
 
 % FIGURES
 \begin{figure}[t]
-	\begin{subfigure}{0.3\textwidth}
-	\includegraphics[scale=0.3]{solution-poisson-diskslice-alpha=0p2-beta=0p8}
+	\begin{subfigure}{0.5\textwidth}
+	\includegraphics[scale=0.17]{poisson-u=wyexpx-N=60}
 	\centering
 	%\label{fig:solution-poisson}
 	\end{subfigure}
 	\begin{subfigure}{0.5\textwidth}
 	\centering
-	\includegraphics[scale=0.5]{solutionblocknorms-poisson-diskslice-alpha=0p2-beta=0p8-N=200}
+	\includegraphics[scale=0.3]{solutionblocknorms-poisson-N=100}
         	%\label{fig:solutionblocknorms-poisson}
 	\end{subfigure}
-	\caption{Left: The computed solution to $\Delta u = f$ with zero boundary conditions with $f(x,y) = 1 + \text{erf}(5(1 - 10((x - 0.5)^2 + y^2)))$. Right: The norms of each block of the computed solution of the Poisson equation with the given right hand side functions. This demonstrates algebraic convergence with the rate dictated by the decay at the corners, with spectral convergence observed when the right-hand side vanishes to all orders.}
+	\caption{Left: The computed solution to $\Delta u = f$ with zero boundary conditions with $f(x,y,z) = - 2 e^x y z (2+x) + \genjacw^{(1,0)}(z) e^x (y^3 + z^2 y - 4xy - 2y)$. Right: The norms of each block of the computed solution of the Poisson equation with the given right hand side functions (here, $\bf{p}$ is simply a point on the spherical cap surface away from the pole and boundary). This demonstrates spectral convergence observed.}
 	\centering
 	\label{fig:poisson}
 \end{figure}
+%
+%\begin{figure}[t]
+%	\begin{subfigure}{0.3\textwidth}
+%	\includegraphics[scale=0.3]{solution-exact-poisson-diskslice-alpha=0p2-beta=0p8-u=y3expx}
+%	\centering
+%	\end{subfigure}
+%	\begin{subfigure}{0.3\textwidth}
+%	\centering
+%	\includegraphics[scale=0.3]{solution-exact-poisson-diskslice-alpha=0p2-beta=0p8-u=y3expx-actual}
+%	\centering
+%	\end{subfigure}
+%	\begin{subfigure}{0.3\textwidth}
+%	\includegraphics[scale=0.3]{solution-exact-poisson-diskslice-alpha=0p2-beta=0p8-u=y3expx-compare}
+%	\centering
+%	\end{subfigure}
+%	\centering
+%	\caption{The computed solution to $\Delta u = f$ with zero boundary conditions compared with the exact solution $u(x,y) = \Wiii (x,y) y^3 \exp(x)$. Left: Computed. Centre: Exact. Right: Plot of the error (colourbar is shown to demonstrate magnitude of the error is of the order $10^{-17}$)}
+%	\centering
+%	\label{fig:poissonexact}
+%\end{figure}
 
 \begin{figure}[t]
-	\begin{subfigure}{0.3\textwidth}
-	\includegraphics[scale=0.3]{solution-exact-poisson-diskslice-alpha=0p2-beta=0p8-u=y3expx}
+	\begin{subfigure}{0.5\textwidth}
+	\includegraphics[scale=0.17]{helmholtz-f=wyexpx-N=60-n=300}
 	\centering
-	\end{subfigure}
-	\begin{subfigure}{0.3\textwidth}
-	\centering
-	\includegraphics[scale=0.3]{solution-exact-poisson-diskslice-alpha=0p2-beta=0p8-u=y3expx-actual}
-	\centering
-	\end{subfigure}
-	\begin{subfigure}{0.3\textwidth}
-	\includegraphics[scale=0.3]{solution-exact-poisson-diskslice-alpha=0p2-beta=0p8-u=y3expx-compare}
-	\centering
-	\end{subfigure}
-	\centering
-	\caption{The computed solution to $\Delta u = f$ with zero boundary conditions compared with the exact solution $u(x,y) = \Wiii (x,y) y^3 \exp(x)$. Left: Computed. Centre: Exact. Right: Plot of the error (colourbar is shown to demonstrate magnitude of the error is of the order $10^{-17}$)}
-	\centering
-	\label{fig:poissonexact}
-\end{figure}
-
-\begin{figure}[t]
-	\begin{subfigure}{0.3\textwidth}
-	\centering
-	\includegraphics[scale=0.3]{solution-helmholtz-diskslice-alpha=0p2-beta=0p8-k=100-n=300}
-	%\label{fig:solution-helmholtz}
+	%\label{fig:solution-poisson}
 	\end{subfigure}
 	\begin{subfigure}{0.5\textwidth}
-	\includegraphics[scale=0.5]{solutionblocknorms-helmholtz-diskslice-alpha=0p2-beta=0p8-N=196-k=20}
 	\centering
-        	%\label{fig:solutionblocknorms-helmholtz}
+	\includegraphics[scale=0.3]{solutionblocknorms-helmholtz-N=100}
+        	%\label{fig:solutionblocknorms-poisson}
 	\end{subfigure}
-	\caption{Left: The computed solution to $\Delta u + k^2 \: v \: u = f$ with zero boundary conditions with $f(x,y) = x(1-x^2-y^2)e^x$, $v(x,y) = 1 - (3(x-1)^2 + 5y^2)$ and $k = 100$. Right: The norms of each block of the computed solution of the Helmholtz equation with the given right hand side functions, with $k=20$ and $v(x,y) = 1 - (3(x-1)^2 + 5y^2)$.}
+	\caption{Left: The computed solution to $\Delta u + k^2 \: v \: u = f$ with zero boundary conditions with $f(x,y,z) = y e^x \genjacw^{(1,0)}(z)$, $v(x,y,z) = 1 - (3(x-x_0)^2 + 5(y-y_0)^2 + 2(z-z_0)^2)$ where $(x_0, z_0) := (0.7, 0.2)$, $y_0 := \sqrt{(x_0^2 + z_0^2)}$ and $k = 100$. Right: The norms of each block of the computed solution of the Helmholtz equation with the given right hand side functions, with $k=20$ and the same function $v$ (again, $\bf{p}$ is simply a point on the spherical cap surface away from the pole and boundary). This demonstrates spectral convergence observed.}
 	\centering
 	\label{fig:helmholtz}
 \end{figure}
 
 \begin{figure}[t]
-	\begin{subfigure}{0.3\textwidth}
+	\begin{subfigure}{0.5\textwidth}
+	\includegraphics[scale=0.17]{biharmonic-f=erf-N=80-n=50}
 	\centering
-	\includegraphics[scale=0.3]{solution-biharmonic-diskslice-alpha=0p2-beta=0p8}
 	%\label{fig:solution-biharmonic}
 	\end{subfigure}
 	\begin{subfigure}{0.5\textwidth}
-	\includegraphics[scale=0.5]{solutionblocknorms-biharmonic-diskslice-alpha=0p2-beta=0p8-N=200}
+	\includegraphics[scale=0.3]{solutionblocknorms-biharmonic-N=100}
 	\centering
         	%\label{fig:solutionblocknorms-biharmonic}
 	\end{subfigure}
-	\caption{Left: The computed solution to $\Delta^2 u = f$ with zero Dirichlet and Neumann boundary conditions with $f(x,y) = 1 + \text{erf}(5(1 - 10((x - 0.5)^2 + y^2)))$. Right: The norms of each block of the computed solution of the biharmonic equation with the given right hand side functions.}
+	\caption{Left: The computed solution to $\Delta^2 u = f$ with zero Dirichlet and Neumann boundary conditions with $f(x,y,z) = (1 + \text{erf}(5(1 - 10((x - 0.5)^2 + y^2)))) \rho(z)^2$. Right: The norms of each block of the computed solution of the biharmonic equation with the given right hand side functions (again, $\bf{p}$ is simply a point on the spherical cap surface away from the pole and boundary). This demonstrates spectral convergence observed.}
 	\centering
 	\label{fig:biharmonic}
 \end{figure}
 % END FIGURES
 
-The Poisson equation is the classic problem of finding \(u(x,y)\) given a function \(f(x,y)\) such that:
+The Poisson equation is the classic problem of finding $u(x,y)$ given a function $f(x,y)$ such that:
 \begin{align}
 	\begin{cases}
     		\nabla^2 u(x,y,z) = f(x,y,z) &\quad \text{in } \Omega \\
 		u(x,y,z) = 0& \quad \text{on } \partial \Omega
-	\end{cases}.
+	\end{cases}
 	\label{eqn:poisson}
 \end{align}
 noting the imposition of zero Dirichlet boundary conditions on $u$.
@@ -1548,14 +1509,14 @@ We can tackle the problem as follows. Choose an $N \in \N$ large enough for the 
     \Delta_W^{(1)} \mathbf{u} = \mathbf{f}
 \end{align*}
 which can be solved to find $\mathbf{u}$.
-In Figure \ref{fig:poisson} we see the solution to the Poisson equation with zero boundary conditions given in (\ref{eqn:poisson}) in the disk-slice $\Omega$. In Figure \ref{fig:poisson} we also show the norms of each block of calculated coefficients of the approximation for four right-hand sides of the Poisson equation with N = 200, that is, 20,301 unknowns. The rate of decay in the coefficients is a proxy for the rate of convergence of the computed solution: as typical of spectral methods, we expect the numerical scheme to converge at the same rate as the coefficients decay. We see that we achieve algebraic convergence for the first three examples, noting that for right hand-sides that vanish at the corners of our disk-slice ($x\in\{\alpha,\beta\}, \: y = \pm \rho(x)$) we observe faster convergence. \bstodo{get figs and update the comments here}
+In Figure \ref{fig:poisson} we see the solution to the Poisson equation with zero boundary conditions given in (\ref{eqn:poisson}) in the disk-slice $\Omega$. In Figure \ref{fig:poisson} we also show the norms of each block of calculated coefficients of the approximation for four right-hand sides of the Poisson equation with $N = 100$, that is, $(N+1)^2 = 10,201$ unknowns. In the plot, a "block" is simply the group of coefficients corresponding to OPs of the same degree, and so the plot shows how the norms of these blocks decay as the degree of the expansion increases. Thus, the rate of decay in the coefficients is a proxy for the rate of convergence of the computed solution: as typical of spectral methods, we expect the numerical scheme to converge at the same rate as the coefficients decay. We see that we achieve spectral convergence \bstodo{Add to the comments here}
 
-In Figure \ref{fig:poissonexact} we see an example where the solution calculated to the Poisson equation is shown together with a plot of the exact solution and the error. The example was chosen so that the exact solution was $u(x,y,z) = \genjacw^{(1,0)}(z) y^3 \exp(x)$, and thus the RHS function $f$ would be $f(x,y,z) = \Delta \big[\genjacw^{(1,0)}(z) y^3 \exp(x)\big]$. We see that the computed solution is almost exact. 
+\bstodoinline{Are there more suitable RHSs for the block norms plot that will demonstrate further properties? Or as there are no corners, we are pretty limited?}
 
 
 \subsection{Inhomogeneous variable-coefficient Helmholtz}
 
-Find \(u(x,y)\) given functions $v$, $f : \Omega \to \R$ such that:
+Find $u(x,y)$ given functions $v$, $f : \Omega \to \R$ such that:
 \begin{align}
 	\begin{cases}
     		\nabla^2 u(x,y,z) + k^2 \: v(x,y,z) \; u(x,y,z) = f(x,y,z) &\quad \text{in } \Omega \\
@@ -1569,7 +1530,7 @@ We can tackle the problem as follows. Denote the coefficient vector for expansio
 \begin{align*}
     (\Delta_W^{(1)} + k^2 \:T^{(0)\to(1)} \: V \: T_W^{(1)\to(0)}) \: \mathbf{u} = \mathbf{f}
 \end{align*}
-which can be solved to find $\mathbf{u}$. We can see the sparsity and structure of this matrix system in Figure \ref{fig:sparsity} with $v(x,y,z) = zxy^2$ as an example. In Figure \ref{fig:helmholtz} we see the solution to the inhomogeneous variable-coefficient Helmholtz equation with zero boundary conditions given in (\ref{eqn:helmholtz}) in the half-disk $\Omega$, with $k=100$, $v(x,y,z) = 1 - (3(x-1)^2 + 5y^2)$ and $f(x,y,z) = x(1-x^2-y^2)e^x$. In Figure \ref{fig:helmholtz} we also show the norms of each block of calculated coefficients of the approximation for four right-hand sides of the inhomogeneous variable-coefficient Helmholtz equation with $k=20$ and $v(x,y,z) = 1 - (3(x-1)^2 + 5y^2)$ using N = 200, that is, 20,301 unknowns. The rate of decay in the coefficients is a proxy for the rate of convergence of the computed solution. We see that we achieve algebraic convergence for the first three examples, noting that for right hand sides that vanish at the corners of our disk-slice ($x\in\{\alpha,\beta\}, \: y = \pm \rho(x)$) we see faster convergence. \bstodo{get figs and update the comments here}
+which can be solved to find $\mathbf{u}$. We can see the sparsity and structure of this matrix system in Figure \ref{fig:sparsity} with $v(x,y,z) = zxy^2$ as an example. In Figure \ref{fig:helmholtz} we see the solution to the inhomogeneous variable-coefficient Helmholtz equation with zero boundary conditions given in (\ref{eqn:helmholtz}) in the spherical cap $\Omega$, with $f(x,y,z) = y e^x \genjacw^{(1,0)}(z)$, $v(x,y,z) = 1 - (3(x-x_0)^2 + 5(y-y_0)^2 + 2(z-z_0)^2)$ where $(x_0, z_0) := (0.7, 0.2)$, $y_0 := \sqrt{(x_0^2 + z_0^2)}$ and $k = 100$. In Figure \ref{fig:helmholtz} we also show the norms of each block of calculated coefficients of the approximation for four right-hand sides of the inhomogeneous variable-coefficient Helmholtz equation with $k=20$ using $N = 100$, that is, $(N+1)^2 = 10,201$ unknowns. Once again, the rate of decay in the coefficients is a proxy for the rate of convergence of the computed solution, and we see that we achieve spectral convergence. \bstodo{Add to the comments here}
 
 % For the final Gaussian bump example, we see that we achieve spectral convergence.
 
@@ -1600,393 +1561,7 @@ Find $u(x,y,z)$ given a function $f(x,y,z)$ such that:
 	\end{cases}
 	\label{eqn:biharmonic}
 \end{align}
-where $\Delta^2$ is the Biharmonic operator, noting the imposition of zero Dirichlet and Neumann boundary conditions on $u$. In Figure \ref{fig:biharmonic} we see the solution to the Biharmonic equation (\ref{eqn:biharmonic}) in the disk-slice $\Omega$. In Figure \ref{fig:biharmonic} we also show the norms of each block of calculated coefficients of the approximation for four right-hand sides of the biharmonic equation with N = 200, that is, 20,301 unknowns.  We see that we achieve algebraic convergence for the first three examples, noting that for right hand sides that vanish at the corners of our disk-slice ($x\in\{\alpha,\beta\}, \: y = \pm \rho(x)$) we see faster convergence. \bstodo{get figs and update the comments here}
-
-% For the final Gaussian bump example, we see that we achieve spectral convergence.
-
-
-%
-\section{Tangent space (vector-valued functions)}\label{Section:tangentspace}
-
-We can extend the methodology detailed here to the tangent space of the spherical cap $\Omega$. By creating a basis of orthogonal vector-valued functions (OVFs) for the spherical cap $\Omega$, we can expand vector-valued functions that lie in tangent space we call $\tangentspace$ in this basis. Such functions that are useful for the sphere are gradients and perpendicular-gradients of scalar functions. In this section we will define the OVFs, outline the Clenshaw matrices and how to build the OVFs, function evaluation as well as differential operators for gradient, curl and divergence that take us to and from coefficients in either of the OVF or scalar OP expansions.
-
-Any function in the tangent space of $\Omega$ can be written as $\nabla f + \rvec \times \nabla g$ for some scalar functions $f, g$ on $\Omega$. Let $f$ be a scalar function on $\Omega$ that satisfies zero boundary conditions. Then there exist coefficients $\bm{f}$ such that $f$ can be expanded in the OP basis $\bigW_N^{(1)}$ for large enough N, i.e. $f = \genjacw^{(1,0)} \: \sum_{n,k,i} f_{n,k,i} \: \scopnki^{(1)}$. The gradient and perpendicular gradient of $f$ are then
-\begin{align*}
-	\nabla f &= \sum_{n,k,i} f_{n,k,i} \: \nabla \Big( \genjacw^{(1,0)} \: \scopnki^{(1)} \Big) \\
-	\rvec \times \nabla f &= \sum_{n,k,i} f_{n,k,i} \: \rvec \times \nabla \Big( \genjacw^{(1,0)} \: \scopnki^{(1)} \Big).
-\end{align*}
-The game is to find an orthogonal basis such that we can sparsely expand $\nabla \Big( \genjacw^{(1,0)} \: \scopnki^{(1)} \Big)$ and $\rvec \times \nabla \Big( \genjacw^{(1,0)} \: \scopnki^{(1)} \Big)$ for each $n,k,i$ trio.
-
-Define the OVFs as follows:
-\begin{align}
-	\tsopinki(x,y,z) &:= \phivec \: \frac{1}{\rho(z)} \: \scopnki^{(0)}(x,y,z) \\
-	\tsopiinki(x,y,z) &:= \thetavec \: \frac{1}{\rho(z)} \: \scopnki^{(0)}(x,y,z)
-\end{align}
-where
-\begin{align}
-	\phivec &:= 
-		\begin{pmatrix}
-			\cos(\theta) \: \cos(\phi) \\
-			\sin(\theta) \: \cos(\phi) \\
-			- \sin(\phi)
-		\end{pmatrix}
-		=
-		\begin{pmatrix}
-			x z / \rho(z) \\
-			y z / \rho(z) \\
-			- \rho(z)
-		\end{pmatrix} \\
-	\thetavec &:= 
-		\begin{pmatrix}
-			-\sin(\theta) \\
-			\cos(\theta) \\
-			0
-		\end{pmatrix}
-		=
-		\begin{pmatrix}
-			-y / \rho(z) \\
-			x / \rho(z) \\
-			0
-		\end{pmatrix}
-\end{align}
-These are orthogonal with respect to the inner product $\ip<\bm{A}, \bm{B}>_\tangentspace := \int_\Omega \bm{A} \cdot \bm{B} \: \rho(z)^2 \:\D \Omega$:
-\begin{align*}
-	\ip<\tsopinki, \tsopi_{m,j,h}>_\tangentspace &= \int_\Omega \tsopinki \cdot \tsopi_{m,j,h} \: \rho(z)^2 \:\D \Omega \\
-	&= \int_\Omega \scopnki^{(0)} \: \scopmjh^{(0)} \: \D \Omega \\
-	&= \pi \: \normgenjac^{(0, 2k)} \: \delta_{n,m} \: \delta_{k,j} \: \delta_{i,h}, \\
-	\ip<\tsopiinki, \tsopii_{m,j,h}>_\tangentspace &= \int_\Omega \tsopiinki \cdot \tsopii_{m,j,h} \: \rho(z)^2 \:\D \Omega \\
-	&= \int_\Omega \scopnki^{(0)} \: \scopmjh^{(0)} \: \D \Omega \\
-	&= \pi \: \normgenjac^{(0, 2k)} \: \delta_{n,m} \: \delta_{k,j} \: \delta_{i,h}, \\
-	\ip<\tsopinki, \tsopii_{m,j,h}>_\tangentspace &\equiv 0.
-\end{align*}
-To show that these span the tangent space $\tangentspace$, we merely require that we can sparsely expand $\nabla \Big( \genjacw^{(1,0)} \: \scopnki^{(1)} \Big), \: \rvec \times \nabla \Big( \genjacw^{(1,0)} \: \scopnki^{(1)} \Big)$ with the vectors $\tsopi_{m,j,h}, \tsopii_{m,j,h}$.  First, note that
-\begin{align*}
-	\nabla \Big( \genjacw^{(1,0)} \: \scopnki^{(1)} \Big) &= \phivec \: \ppphi \Big( \genjacw^{(1,0)} \: \scopnki^{(1)} \Big) + \thetavec \: \frac{1}{\rho(z)} \: \pptheta \Big( \genjacw^{(1,0)} \: \scopnki^{(1)} \Big) \\
-	&= \phivec \: \Big[k \: z \: \genjacw^{(1,0)}(z) \: \genjacnmk^{(1,2k)}(z) -  \big(\genjacw^{(1,0)}(z) \: \genjacnmk^{(1,2k)}(z) \big)' \rho(z)^2 \Big] \: \rho(z)^{k-1} \: \chki(\theta) \\
-	&\quad \quad + \thetavec \: (-1)^{i+1} \: k \: \genjacw^{(1,0)}(z) \: \genjacnmk^{(1,2k)}(z) \: \rho(z)^{k-1} \: \ch_{k,|i-1|}(\theta).
-\end{align*}
-Then,
-\begin{align*}
-	&\ip<\nabla \Big( \genjacw^{(1,0)} \: \scopnki^{(1)} \Big), \tsopi_{m,j,h}>_\tangentspace \\
-	&\quad \quad = \int_\Omega \nabla \Big( \genjacw^{(1,0)} \: \scopnki^{(1)} \Big) \cdot \tsopi_{m,j,h} \: \rho(z)^2 \:\D \Omega \\
-	&\quad \quad = \pi \: \delta_{k,j} \: \delta_{i,h} \: \int_\alpha^1 \Big[k \: z \: \genjacw^{(1,0)} \: \genjacnmk^{(1,2k)} -  (\genjacw^{(1,0)} \: \genjacnmk^{(1,2k)})' \rho^2 \Big] \: \rho^{k-1} \: \genjac_{m-k}^{(0,2k)} \: \rho^{k-1} \: \rho^2 \:\D z \\
-	&\quad \quad = \pi \: \delta_{k,j} \: \delta_{i,h} \: \int_\alpha^1 \Big[k \: z \: \genjacw^{(1,0)} \: \genjacnmk^{(1,2k)} -  (\genjacw^{(1,0)} \: \genjacnmk^{(1,2k)})' \rho^2 \Big] \: \genjac_{m-k}^{(0,2k)} \: \rho^{2k} \:\D z \quad (\star) \\
-	&\quad \quad = \pi \: \delta_{k,j} \: \delta_{i,h} \: \int_\alpha^1 \Big( kz \: \genjacnmk^{(1,2k)} \: \genjac_{m-k}^{(0,2k)} \: \genjacw^{(1,2k)} \\
-	&\quad \quad\quad \quad\quad \quad\quad \quad\quad \quad+ \genjacw^{(1,2k)} \: \genjacnmk^{(1,2k)} \: \Big[ \genjac_{m-k}^{(0,2k) \; \prime} \: \rho^2 - (2k+2) \: z \: \genjac_{m-k}^{(0,2k)} \Big] \Big) \: \D z \\
-	&\quad \quad = \pi \: \delta_{k,j} \: \delta_{i,h} \: \int_\alpha^1 \genjacnmk^{(1,2k)} \: \Big[ - (k + 2) \: z \: \genjac_{m-k}^{(0,2k)} + \genjac_{m-k}^{(0,2k) \; \prime} \: \rho^2 \Big] \: \genjacw^{(1,2k)} \: \D z \quad (\star \star)
-\end{align*}
-where by orthogonality of the $\{\genjac_n^{(a,2b)}\}$ OPs we have that the above is zero for $m - k > n - k + 2 \iff m > n + 2$ at $(\star)$ and also for $n - k > m - k + 1 \iff m < n - 1$ at $(\star \star)$. Further, 
-\begin{align*}
-	&\ip<\nabla \Big( \genjacw^{(1,0)} \: \scopnki^{(1)} \Big), \tsopii_{m,j,h}>_\tangentspace \\
-	&\quad \quad = \int_\Omega \nabla \Big( \genjacw^{(1,0)} \: \scopnki^{(1)} \Big) \cdot \tsopii_{m,j,h} \: \rho(z)^2 \:\D \Omega \\
-	&\quad \quad = (-1)^{i+1} \: k \: \pi \: \delta_{k,j} \: \delta_{i,|h-1|} \: \int_\alpha^1 \genjacw^{(1,0)} \: \genjacnmk^{(1,2k)} \: \rho^{k-1} \: \genjac_{m-k}^{(0,2k)} \: \rho^{k-1} \: \rho^2 \:\D z \\
-	&\quad \quad = (-1)^{i+1} \: k \: \pi \: \delta_{k,j} \: \delta_{i,|h-1|} \: \int_\alpha^1 \genjacnmk^{(1,2k)}  \: \genjac_{m-k}^{(0,2k)} \: \genjacw^{(1,2k)} \: \D z
-\end{align*}
-which again by orthogonality is zero for $m - k > n - k + 1 \iff m > n + 1$ and $n - k > m - k \iff m < n$. We of course have similar results for $\rvec \times \nabla \Big( \genjacw^{(1,0)} \: \scopnki^{(1)} \Big)$ since
-\begin{align*}
-	\rvec \times \phivec = \thetavec, \quad \rvec \times \thetavec = - \phivec.
-\end{align*}
-We now have a set of orthogonal vector valued functions that span the tangent space $\tangentspace$. By construction, we have the same recurrence coefficients for multiplication by $x,y,z$ for each of the OVFs as for the OPs $\scopnki^{(0)}$. 
-
-Define
-\begin{align*}
-	\bigtsoptn := 
-		\begin{pmatrix}
-			\tsopit_{n,0,0}(x,y,z) \\
-			\tsopiit_{n,0,0}(x,y,z) \\
-			\tsopit_{n,1,0}(x,y,z) \\
-			\tsopiit_{n,1,0}(x,y,z) \\
-			\tsopit_{n,1,1}(x,y,z) \\
-			\tsopiit_{n,1,1}(x,y,z) \\
-			\vdots \\
-			\tsopit_{n,n,0}(x,y,z) \\
-			\tsopiit_{n,n,0}(x,y,z) \\
-			\tsopit_{n,n,1}(x,y,z) \\
-			\tsopiit_{n,n,1}(x,y,z)
-		\end{pmatrix} \in \R^{2(2n+1) \times 3}, 
-	\quad \quad 
-	\bigtsopt := 
-		\begin{pmatrix}
-			\bigtsopt_0 \\
-			\bigtsopt_1 \\
-			\bigtsopt_2 \\
-			\vdots \\
-		\end{pmatrix}
-\end{align*}
-and set $\jacobimattangentx, \jacobimattangenty, \jacobimattangentz$ as the Jacobi matrices corresponding to
-\begin{align}
-	\jacobimattangentx \: \bigtsopt(x,y,z) = x \: \bigtsopt(x,y,z), \nonumber \\
-	\jacobimattangenty \: \bigtsopt(x,y,z) = y \: \bigtsopt(x,y,z), \label{eqn:jacobimatricestangentdefinition} \\
-	\jacobimattangentz \: \bigtsopt(x,y,z) = z \: \bigtsopt(x,y,z), \nonumber
-\end{align}
-The matrices $\jacobimattangentx, \jacobimattangenty, \jacobimattangentz$ act on the coefficients vector of a function's expansion in the $\bigtsopt$ basis. For example, let a function $\bm{F}(x,y,z) : \Omega \to \tangentspace$ be approximated by its expansion $\bm{F}(x,y,z)^\top = \bigtsopt(x,y,z)^\top \bm{F}_c$, for some coefficients vector $\bm{F}_c$. Then $x \: \bm{F}(x,y,z)$ is approximated by $\bigtsopt(x,y,z)^\top {(\jacobimattangentx)}^\top \bm{F}_c$. In other words, ${(\jacobimattangentx)}^\top \bm{F}_c$ is the coefficients vector for the expansion of the function $(x,y,z) \mapsto x \: \bm{F}(x,y,z)$ in the  $\bigtsopt$ basis. Further, note that $\jacobimattangentx, \jacobimattangenty, \jacobimattangentz$ are banded-block-banded matrices -- they are block-tridiagonal (block-bandwidths $(1,1)$):
-\begin{align*}
-	\jacobimattangent_{x/y/z} &= 
-		\begin{pmatrix}
-			B_{x/y/z, 0} & A_{x/y/z, 0} & & & & \\
-			C_{x/y/z, 1} & B_{x/y/z, 1} & A_{x/y/z, 1} & & & \\
-			& C_{x/y/z, 2} & B_{x/y/z, 2} & A_{x/y/z, 2} & & & \\
-			& & C_{x/y/z, 3} & \ddots & \ddots & \\
-			& & & \ddots & \ddots & \ddots \\
-		\end{pmatrix}
-\end{align*}
-For $\jacobimattangentx$, the sub-blocks have sub-block-bandwidths $(?,?)$:
-\begin{align*}
-	A_{x,n} &:= 
-		\begin{pmatrix}
-			0 & A_{n,0,6} & 0 & & \\
-			A_{n,1,5} & \ddots & \ddots & & \\
-			& \ddots & \ddots & \ddots & \\
-			& & A_{n,n,5} & 0 & A_{n,n,6} \\
-		\end{pmatrix} \in \R^{2(2n+1)\times2(2n+3)}, \quad n = 0,1,2,\dots \\
-	B_{x,n} &:= 
-		\begin{pmatrix}
-			0 & A_{n,0,4} & & \\
-			A_{n,1,3} & \ddots & \ddots & \\
-			& \ddots & \ddots & A_{n,n-1,4} \\
-			& & A_{n,n,3} & 0
-		\end{pmatrix} \in \R^{2(2n+1)\times2(2n+1)}  \quad n = 0,1,2,\dots \\
-	C_{x,n} &:= 
-		\begin{pmatrix}
-			0 & A_{n,0,2} & & \\
-			A_{n,1,1} & \ddots & \ddots & \\
-			& \ddots & \ddots & A_{n,n-2,2} \\
-			& & \ddots & 0 \\
-			& & & A_{n,n,1} \\
-		\end{pmatrix} \in \R^{2(2n+1)\times2(2n-1)}, \quad n = 1,2,\dots
-\end{align*}
-where
-\begin{align*}
-	A_{n,k,j} &:= \alphaonkj \: I_{4} \in \R^{4\times4}, \quad k = 1,\dots,n \: (j \text{ even}), \quad k = 2,\dots,n \: (j \text{ odd}) \\
-	A_{n,0,j} &:=
-		\begin{pmatrix}
-			\alphao_{n,0,j} & 0 & 0 & 0 \\
-			0 & \alphao_{n,0,j} & 0 & 0
-		\end{pmatrix} \in \R^{2\times4}, \quad j \text{ even} \\
-	A_{n,1,j} &:=
-		\begin{pmatrix}
-			\alphao_{n,1,j} & 0 \\
-			0 & \alphao_{n,1,j} \\
-			0 & 0 \\
-			0 & 0
-		\end{pmatrix} \in \R^{4\times2}, \quad j \text{ odd}
-\end{align*}
-For $\jacobimattangenty$, the sub-blocks have sub-block-bandwidths $(?,?)$:
-\begin{align*}
-	A_{y,n} &:= 
-		\begin{pmatrix}
-			0 & B_{n,0,6} & 0 & & \\
-			B_{n,1,5} & \ddots & \ddots & & \\
-			& \ddots & \ddots & \ddots & \\
-			& & B_{n,n,5} & 0 & B_{n,n,6} \\
-		\end{pmatrix} \in \R^{2(2n+1)\times2(2n+3)}, \quad n = 0,1,2,\dots \\
-	B_{y,n} &:= 
-		\begin{pmatrix}
-			0 & B_{n,0,4} & & \\
-			B_{n,1,3} & \ddots & \ddots & \\
-			& \ddots & \ddots & B_{n,n-1,4} \\
-			& & B_{n,n,3} & 0
-		\end{pmatrix} \in \R^{2(2n+1)\times2(2n+1)}  \quad n = 0,1,2,\dots \\
-	C_{y,n} &:= 
-		\begin{pmatrix}
-			0 & B_{n,0,2} & & \\
-			B_{n,1,1} & \ddots & \ddots & \\
-			& \ddots & \ddots & B_{n,n-2,2} \\
-			& & \ddots & 0 \\
-			& & & B_{n,n,1} \\
-		\end{pmatrix} \in \R^{2(2n+1)\times2(2n-1)}, \quad n = 1,2,\dots
-\end{align*}
-where
-\begin{align*}
-	B_{n,k,j} &:= 
-		\begin{pmatrix}
-			0 & 0 & \betaonkj & 0 \\
-			0 & 0 & 0 & \betaonkj \\
-			\betaonkj & 0 & 0 & 0 \\
-			0 & \betaonkj & 0 & 0
-		\end{pmatrix} \in \R^{4\times4}, \quad k = 1,\dots,n \: (j \text{ even}), \quad k = 2,\dots,n \: (j \text{ odd}) \\
-	B_{n,0,j} &:=
-		\begin{pmatrix}
-			0 & 0 & \betao_{n,0,j} & 0 \\
-			0 & 0 & 0 & \betao_{n,0,j}
-		\end{pmatrix} \in \R^{2\times4}, \quad j \text{ even} \\
-	B_{n,1,j} &:=
-		\begin{pmatrix}
-			0 & 0 \\
-			0 & 0 \\
-			\betao_{n,1,j} & 0 \\
-			0 & \betao_{n,1,j}
-		\end{pmatrix} \in \R^{4\times2}, \quad j \text{ odd}
-\end{align*}
-For $\jacobimattangentz$, the sub-blocks have sub-block-bandwidths $(?,?)$:
-\begin{align*}
-	A_{z,n} &:= 
-		\begin{pmatrix}
-			\Gamma_{n,0,3} & 0 & 0 & & \\
-			0 & \ddots & \ddots & & \\
-			& \ddots & \ddots & \ddots & \\
-			& & 0 & \Gamma_{n,n,3} & 0 \\
-		\end{pmatrix} \in \R^{2(2n+1)\times2(2n+3)}, \quad n = 0,1,2,\dots \\
-	B_{z,n} &:= 
-		\begin{pmatrix}
-			\Gamma_{n,0,2} & 0 & & \\
-			0 & \ddots & \ddots & \\
-			& \ddots & \ddots & 0 \\
-			& & 0 & \Gamma_{n,n,2}
-		\end{pmatrix} \in \R^{2(2n+1)\times2(2n+1)}  \quad n = 0,1,2,\dots \\
-	C_{z,n} &:= 
-		\begin{pmatrix}
-			\Gamma_{n,0,1} & 0 & & \\
-			0 & \ddots & \ddots & \\
-			& \ddots & \ddots & 0 \\
-			& & \ddots &  \Gamma_{n,n-1,1} \\
-			& & & 0 \\
-		\end{pmatrix} \in \R^{2(2n+1)\times2(2n-1)}, \quad n = 1,2,\dots
-\end{align*}
-where
-\begin{align*}
-	\Gamma_{n,k,j} &:= \gammaonkj \: I_{4} \in \R^{4\times4}, \quad k = 1,\dots,n \\
-	\Gamma_{n,0,j} &:=
-		\begin{pmatrix}
-			\gammao_{n,0,j} & 0 \\
-			0 & \gammao_{n,0,j}
-		\end{pmatrix} \in \R^{2\times2}.
-\end{align*}
-Note that the sparsity of the Jacobi matrices (in particular the sparsity of the sub-blocks) comes from the natural sparsity of the three-term recurrences of the 1D OPs and the circular harmonics, meaning that the sparsity is not limited to the specific spherical cap, and would extend to the spherical band.
-
-
-\subsection{Building the OPs} 
-
-We can combine each system in (\ref{eqn:jacobimatricestangentdefinition}) into a block-tridiagonal system, for any $(x,y,z) \in \Omega$:
-
-\begin{align*}
-\renewcommand\arraystretch{1.3}
-\begin{pmatrix}
-		I_2 & & & \\
-		B_0-G_0(x,y,z) & A_0 & & \\
-		C_1 & B_1-G_1(x,y,z) & \quad A_1 \quad & \\
-		& C_2 & B_2 - G_2(x,y,z)  & \ddots \\
-		& & \ddots &\ddots
-\end{pmatrix}
-\bigtsopt(x,y,z)
-=
-\begin{pmatrix}
-	 \tsopi_0^\top \\ \tsopii_0^\top \\ 0 \\ 0 \\ \vdots  \\
-\end{pmatrix},
-\end{align*}
-where we note $\scopa_0 := \scopa_{0,0,0}(x,y,z) \equiv \genjac_0^{(a,0)} \: \ch_0$, and for each $n = 0,1,2\dots$,
-\begin{align*}
-A_n &:= \begin{pmatrix}
-		A_{x,n} \\
-		A_{y,n} \\
-		A_{z,n}
-	    \end{pmatrix} \in \R^{6(2n+1)\times2(2n+3)}, \quad
-C_n := \begin{pmatrix}
-		C_{x,n} \\
-		C_{y,n} \\
-		C_{z,n}
-	    \end{pmatrix} \in \R^{6(2n+1)\times2(2n-1)} \quad (n \ne 0), \nonumber \\
-B_n &:= \begin{pmatrix}
-		B_{x,n} \\
-		B_{y,n} \\
-		B_{z,n}
-	    \end{pmatrix} \in \R^{6(2n+1)\times2(2n+1)}, \quad
-G_n(x,y,z) := \begin{pmatrix}
-		xI_{2(2n+1)} \\
-		yI_{2(2n+1)} \\
-		zI_{2(2n+1)}
-	    \end{pmatrix} \in \R^{6(2n+1)\times2(n+1)}.
-\end{align*}
- 
-For each $n = 0,1,2\dots$ let $\Dnt$ be any matrix that is a left inverse of $A_n$, i.e. such that $\Dnt A_n = I_{2(2n+3)}$. Multiplying our system by the preconditioner matrix that is given by the block diagonal matrix of the $\Dnt$'s, we obtain a lower triangular system \cite[p78]{dunkl2014orthogonal}, which can be expanded to obtain the recurrence:
-\begin{align*}
-	\begin{cases}
-		\bigtsopt_{-1}(x,y,z) := 0 \\
-		\bigtsopt_{0}(x,y,z) = 
-			\begin{pmatrix} 
-				\tsopi_0^\top \\ 
-				\tsopii_0^\top
-			\end{pmatrix} :=
-			\begin{pmatrix} 
-				\tsopi_{0,0,0}^\top \\
-				\tsopi_{0,0,0}^\top
-			\end{pmatrix} \\
-		\bigtsopt_{n+1}(x,y,z) = -\Dnt (B_n-G_n(x,y,z)) \bigtsoptn(x,y,z) - \Dnt C_n  \, \bigtsopt_{n-1}(x,y,z), \quad n = 0,1,2,\dots.
-	\end{cases}
-\end{align*}
-
-Note that we can define an explicit \(\Dnt\) as follows: \bstodo{type up DnT for tangent space}
-\begin{align*}
-\Dnt := \begin{pmatrix}
-		0 & & & 0 & & & 1 / \gammaa_{n,0,3} & & \\
-		& \ddots & & & \ddots & & & \ddots \\
-		& & 0 & & & 0 & & & 1 / \gammaa_{n,n,3}  \\
-		& & & & & \bm{\eta}^\top_{1} & & & \\
-		& & & & & \bm{\eta}^\top_{0} & & &
-	    \end{pmatrix} \in \R^{(2n+3)\times3(2n+1)},
-\end{align*}
-for $n = 2, 3, \dots$ where $\bm{\eta}_{0}, \bm{\eta}_{1} \in \R^{3(2n+1)}$ with entries given by 
-\begin{align*}
-	\big(\bm{\eta}_{0}\big)_j &= 
-		\begin{cases}
-			\frac{1}{\alphaa_{n,n,6}} & j = 2n+1 \\
-			\frac{- \: \alphaa_{n,n,5}}{\alphaa_{n,n,6} \: \gammaa_{n, n-1, 3}} & j = 3(2n+1) - 2 \\
-			0 & o/w
-		\end{cases} \\
-	\big(\bm{\eta}_{1}\big)_j &= 
-		\begin{cases}
-			\big(\bm{\eta}_{0}\big)_{j+1} & j = 2n, 3(2n+1) - 3 \\
-			0 & o/w
-		\end{cases}
-\end{align*}
-For $n=0, 1$, we can simply take
-\begin{align*}
-D^\top_0 &:= \begin{pmatrix}
-		0 & 0 & \frac{1}{\gammaa_{0,0,3}} \\
-		\frac{1}{\alphaa_{0,0,6}} & 0 & 0 \\
-		0 & \frac{1}{\betaa_{0,0,6}} & 0
-	    \end{pmatrix} \in \R^{3\times3}, \\
-D^\top_1 &:= \begin{pmatrix}
-		0 & 0 & 0 & 0 & 0 & 0 & 1 / \gammaa_{1,0,3} & & \\
-		0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 / \gammaa_{1,1,3} \\
-		0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 / \gammaa_{1,1,3}  \\
-		0 & 1 / \alphaa_{1,1,6} & 0 & 0 & 0 & 0 & \eta & 0 & 0 \\
-		0 & 0 & 1 / \alphaa_{1,1,6} & 0 & 0 & 0 & 0 & 0 & 0
-	    \end{pmatrix} \in \R^{5\times9},
-\end{align*}
-where $\eta = \frac{- \: \alphaa_{1,1,5}}{\alphaa_{1,1,6} \: \gammaa_{1, 0, 3}}$.
-
-It follows that we can apply $\Dnt$ in $O(n)$ complexity, and thereby calculate $\bigtsopt_0(x,y,z)$  through $\bigtsoptn(x,y,z)$ in optimal $O(n^2)$ complexity. \bstodo{correct for this case}
-
-\subsection{Operators}
-
-Gradient operator on a scalar function is pretty much outlined above. Divergence would either be worked out by knowing what $f,g$ are for a function $\bm{F} = \nabla f + \rvec \times \nabla g$, so that $\nabla \cdot \bm{F} = \nabla^2 f$. Alternatively, we have expressions for $\rhoppphi \scopnkia$ and $\pptheta \scopnkia$ so that we can calculate an operator for $\rho^2 \nabla \cdot$, i.e. 
-\begin{align*}
-	\rho^2 \nabla \cdot \bm{F} &= \rho^2 \: \frac{1}{\rho} \ppphi (\rho F^\phi) + \rho^2 \: \frac{1}{\rho} \pptheta F^\theta \\
-	&= \sum_{n,k,i} F^\phi_{n,k,i} \: \rhoppphi \scopnki^{(0)} + F^\theta_{n,k,i} \: \pptheta \scopnki^{(0)}.
-\end{align*}
-
-\bstodoinline{My main concern is whether this vector function basis is correct/valid. I have found it difficult to come up with something that gives orthogonal vectors while still maintaining a sparse expansion for the gradient of a function. I am also confused about what the rho factors "mean".}
-
-\subsection{Linear SWE}
-
-\begin{align*}
-	\uvec_t &= - f \rvec \times \uvec + \grad h \\
-	h_t &= -\href \divergence \uvec
-\end{align*}
-$\implies$
-\begin{align*}
-	\uvecnpi &= \uvecn - \Delta t \: f \rvec \times \uvecnpi +\Delta t \: \grad h_{n+1} \\
-	h_{n+1} &= h_n - \Delta t \: \href \divergence \uvecnpi
-\end{align*}
-$\implies$
-\begin{align*}
-	\uvecnpic &= \uvecnc - \Delta t \: F \uvecnpic +\Delta t \: G \hvecnpic \\
-	P \hvecnpic &= P \hvecnc - \Delta t \: \href D \uvecnpic
-\end{align*}
-where $F : \bigtsop \to \bigtsop$ is the operator for $f \rvec \times$, $D : \bigtsop \to \bigscop^{(1)}$ is the operator for $\rho^2 \divergence$, $G : \bigW^{(1)} \to \bigtsop$ is the operator for $\grad$, and $P : \bigW^{(1)} \to \bigscop^{(1)}$ is the operator for multiplication by $\rho(z)^2$.
-
-
+where $\Delta^2$ is the Biharmonic operator, noting the imposition of zero Dirichlet and Neumann boundary conditions on $u$. In Figure \ref{fig:biharmonic} we see the solution to the Biharmonic equation (\ref{eqn:biharmonic}) in the spherical cap $\Omega$. In Figure \ref{fig:biharmonic} we also show the norms of each block of calculated coefficients of the approximation for four right-hand sides of the biharmonic equation with $N = 100$, that is, $(N+1)^2 = 10,201$ unknowns.  \bstodo{Add to the comments here}
 
 
 
@@ -2008,27 +1583,29 @@ The next stage of this work is to develop an orthogonal basis for the tangent sp
 %
 \section{P-finite element methods using sparse operators}\label{Appendix:PFEM}
 
-\begin{figure}[t]
-	\begin{subfigure}{0.3\textwidth}
-	\includegraphics[scale=0.28]{solution-pfem-poisson-diskslice-alpha=0p2-beta=0p8-f=Wycosx}
-        	%\label{fig:solutionblocknorms-poisson}
-	\centering
-	\end{subfigure}
-	\begin{subfigure}{0.3\textwidth}
-	\includegraphics[scale=0.3]{solution-poisson}
-	\centering
-	%\label{fig:solution-poisson}
-	\end{subfigure}
-	\begin{subfigure}{0.3\textwidth}
-	\includegraphics[scale=0.3]{solution-trapezium-helmholtz-k=100-n=1500}
-	%\label{fig:solution-poisson}
-	\centering
-	\end{subfigure}
-	\centering
-	\caption{Left: The computed solution to $\Delta u = f$ with zero boundary conditions with $f(x,y) = \Wiii(x,y) y \cos(x)$ in the disk-slice using the $p$-FEM approach with a single element. Centre: The computed solution to $\Delta u = f$ with zero boundary conditions with $f(x,y) = 1 + \text{erf}(5(1 - 10((x - 0.5)^2 + y^2)))$ in the half-disk. Right: The computed solution to $\Delta u + k^2 \: v \: u = f$ with zero boundary conditions with $f(x,y) = (1-x) \: x \: y \: (1- \half x - y) \: e^x$, $v(x,y) = 1 - (3(x-1)^2 + 5y^2)$ and $k = 100$. in the trapezium.}
-	\centering
-	\label{fig:appendixfigs}
-\end{figure}
+\bstodoinline{Is this worth including?}
+
+%\begin{figure}[t]
+%	\begin{subfigure}{0.3\textwidth}
+%	\includegraphics[scale=0.28]{solution-pfem-poisson-diskslice-alpha=0p2-beta=0p8-f=Wycosx}
+%        	%\label{fig:solutionblocknorms-poisson}
+%	\centering
+%	\end{subfigure}
+%	\begin{subfigure}{0.3\textwidth}
+%	\includegraphics[scale=0.3]{solution-poisson}
+%	\centering
+%	%\label{fig:solution-poisson}
+%	\end{subfigure}
+%	\begin{subfigure}{0.3\textwidth}
+%	\includegraphics[scale=0.3]{solution-trapezium-helmholtz-k=100-n=1500}
+%	%\label{fig:solution-poisson}
+%	\centering
+%	\end{subfigure}
+%	\centering
+%	\caption{Left: The computed solution to $\Delta u = f$ with zero boundary conditions with $f(x,y) = \Wiii(x,y) y \cos(x)$ in the disk-slice using the $p$-FEM approach with a single element. Centre: The computed solution to $\Delta u = f$ with zero boundary conditions with $f(x,y) = 1 + \text{erf}(5(1 - 10((x - 0.5)^2 + y^2)))$ in the half-disk. Right: The computed solution to $\Delta u + k^2 \: v \: u = f$ with zero boundary conditions with $f(x,y) = (1-x) \: x \: y \: (1- \half x - y) \: e^x$, $v(x,y) = 1 - (3(x-1)^2 + 5y^2)$ and $k = 100$. in the trapezium.}
+%	\centering
+%	\label{fig:appendixfigs}
+%\end{figure}
 
 We follow the method of \cite{beuchler2006new} to construct a sparse $p$-finite element method in terms of the operators constructed above, with the benefit of ensuring that the resulting discretisation is symmetric. Consider the 3D Dirichlet problem on a domain $\Omega$:
 \begin{align*}
@@ -2092,12 +1669,6 @@ Note that since we have sparse operator matrices for partial derivatives and bas
 
 
 \end{document}
-
-
-
-
-
-
 
 
 
