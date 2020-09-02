@@ -229,7 +229,7 @@
 \newcommand{\gammaa}{\gamma^{(a)}}
 \newcommand{\Wa}{W^{(a)}}
 \newcommand{\bigWNa}{\mathbb{W}_N^{(a)}}
-\newcommand{\ppphi}{\frac{\partial}{\partial \phi}}
+\newcommand{\ppphi}{\frac{\partial}{\partial \varphi}}
 \newcommand{\ppz}{\frac{\partial}{\partial z}}
 \newcommand{\rhoppphi}{\rho \ppphi}
 \newcommand{\rhozppphi}{\rho(z) \ppphi}
@@ -250,7 +250,7 @@
 
 % Tangent space
 \newcommand{\tangentspace}{{\Omega_T}}
-\newcommand{\phivec}{\hat{\bm{\phi}}}
+\newcommand{\phivec}{\hat{\bm{\varphi}}}
 \newcommand{\thetavec}{\hat{\bm{\theta}}}
 \newcommand{\bigtsop}{\mathbb{T}}
 \newcommand{\bigtsopt}{\tilde{\bigtsop}}
@@ -295,7 +295,7 @@
 \newcommand{\grad}{\nabla}
 
 
-
+\def\DeltaS{\Delta_{\rm S}}
 
 
 \usepackage{amsthm}
@@ -318,7 +318,7 @@
 
 
 
-\title{Sparse spectral and $p$-finite element methods for partial differential equations on spherical caps}
+\title{Sparse spectral methods for partial differential equations on spherical caps and bands}
 \author{Ben Snowball, Sheehan Olver\thanks{Department of Mathematics, Imperial College, London, England}}
 %\date{}							% Activate to display a given date or no date
 
@@ -327,41 +327,53 @@
 \maketitle
 
 \begin{abstract}
-In recent years, sparse spectral methods for solving partial differential equations have been derived using hierarchies of classical orthogonal polynomials on intervals, disks, and triangles. In this work we extend the methodology on disk-slices developed in \cite{snowball2019sparse} to a hierarchy of non-classical orthogonal polynomials on spherical caps. This builds on the observation that sparsity is guaranteed due to the boundary being defined by an algebraic curve, and that the entries of partial differential operators can be determined using formulae in terms of (non-classical) univariate orthogonal polynomials. 
+In recent years, sparse spectral methods for solving partial differential equations have been derived using hierarchies of classical orthogonal polynomials on intervals, disks, and triangles. In this work we extend the methodology to a hierarchy of non-classical multivariate orthogonal polynomials on spherical caps and bands. The entries of discretisations of partial differential operators can be effectively computed using formulae in terms of (non-classical) univariate orthogonal polynomials. We demonstrate the results on partial differential equations involving the spherical Laplacian and Biharmonic operators, showing spectral convergence. 
 \end{abstract}
 
 
 %
 \section{Introduction}
 
-This paper develops sparse spectral methods for solving linear partial differential equations on spherical subdomains such as spherical bands and spherical caps. More precisely, we consider the solution of partial differential equations on the domain $\Omega$ given by
+This paper develops sparse spectral methods for solving linear partial differential equations on certain subsets of the sphere: spherical bands and spherical caps. More precisely, we consider the solution of partial differential equations on the domain $\Omega$ given by
 \begin{align*}
-	\Omega := \{(x,y,z) \in \R^3 \quad | \quad \alpha < z < \beta, \: ||(x,y)|| := \sqrt{x^2 + y^2} = \gamma \rho(z)\}
+	\Omega := \{(x,y,z) \in \R^3 \quad | \quad \alpha < z < \beta, \: ||(x,y)|| := \sqrt{x^2 + y^2} =  \rho(z)\}
 \end{align*}
-and consider the case where $\alpha \in (0,1)$ and where
-\begin{align*}
-	 \rho(z) &:= \sqrt{1-z^2} \\
-	 \beta &:= 1 \\
-	 \gamma &:= 1.
-\end{align*}
+and consider the case where \sotodo{Why is $\alpha$ restricted to be positive?} $\alpha \in (0,1)$ and where
+$ \rho(z) := \sqrt{1-z^2}$,  $\beta := 1$ \sotodo{Don't we need $\beta \neq 1$ to get a band?}.
 This framework then yields that $\Omega$ is a spherical cap (the region of the surface of a sphere where the $z$-coordinate ranges from $\alpha$ to $1$), i.e.
 \begin{align*}
 	\Omega := \{(x,y,z) \in \R^3 \quad | \quad \alpha < z < 1, \: x^2 + y^2 + z^2 = 1\}
 \end{align*}
 Of course, there is a simple extension to a spherical band by taking $\beta \in (\alpha,1)$. However for simplicity we focus on the spherical cap in this paper.
 
-As in the work in two dimensions on the show that partial differential equations become sparse linear systems when viewed as acting on expansions involving a family of orthogonal polynomials (OPs) that are defined in such a way that mirrors the approach on quadratic curves \cite{olver2020orthogonal}. On the spherical cap, the family of weights we consider are of the form
+
+We advocate using a basis that is polynomial in cartesian coordinates, that is, polynomial in $x$, $y$, and $z$, and orthogonal with respect to a prescribed weight: that is, multivariate orthogonal polynomials, whose construction was considered in \cite{olver2020orthogonal}. Equivalently, we can think of these as polynomials modulo the vanishing ideal $\{ x^2 + y^2 + z^2 = 1 \}$, or simply as a linear recombination of spherical harmonics that are orthogonalised on a subset of the sphere.    This is in contrast to more standard approaches based on mapping the geometry to a simpler one (e.g., a rectangle or disk) and using orthogonal polynomials in the mapped coordinates (e.g., a basis that is polynomial in the spherical coordinates $\varphi$ and $\theta$). The benefit of the new approach is that we do not need to resolve Jacobians, and thereby we can achieve sparse discretisations for partial differential operators, including those with polynomial variable coefficients.   On the spherical cap, the family of weights we consider are of the form
 \begin{align*}
 	\Wa(x,y,z) := (z - \alpha)^a, \qfor (x,y,z) \in \Omega,
 \end{align*}
-noting that $\Wa(x,y,z) = 0$ for $(x,y,z) \in \partial \; \Omega$. The corresponding OPs denoted $\scopnkia(x,y,z)$, where $n$ denotes the polynomial degree, $0 \le k \le n$ and $i \in \{0, \min(1,k)\}$. We define these to be orthogonalised lexicographically, that is,
+noting that $\Wa(x,y,z) = 0$ for $(x,y,z) \in \partial \; \Omega$. The corresponding OPs denoted $\scopnkia(x,y,z)$, where $n$ denotes the polynomial degree, $0 \le k \le n$ and $i \in \{0, \min(1,k)\}$. We define these to be orthogonalised lexicographically, that is, \sotodo{I don't understand this ordering. Shouldn't it either be $x^k y^j z^{n-k-j}$ or $x^k y^{j-k} z^{n-j}$?  PS I prefer $j$ to $i$ }
 \begin{align*}
 	\scopnkia(x,y,z) = C_{n,k,i} \: x^{k - \tilde k_i} \: y^{\tilde k_i} \: z^{n-k} + (\hbox{lower order terms})
 \end{align*} \bstodoinline{How can I write down what the ordering is? Is this necessary?}
 where $C_{n,k,i} \neq 0$ and \enquote{lower order terms} includes degree $n$ polynomials of the form $x^{j - \tilde j_i} \: y^{\tilde j_i} \: z^{n-j}$ where $j < k$. The precise normalization arises from their definition in terms of one-dimensional OPs in Definition~\ref{def:OPconstruction}. 
 
-Sparsity comes from expanding the domain and range of an operator using different choices of the parameter $a$. In this work, as for the disk-slice case in 2D \cite{snowball2019sparse}, we use a more general integration-by-parts argument to deduce the sparsity structure. The three-dimensional orthogonal polynomials defined here involve the same non-classical (in fact, semi-classical) 1D OPs as those outlined for the disk-slice, and so methods for calculating these 1D OP recurrence coefficients and integrals has already been outlined \cite{snowball2019sparse}. In particular, by exploiting the connection with these 1D OPs we can construct discretizations of general partial differential operators of size $(p+1)^2 \times (p+1)^2$ in $O(p^3)$ operations, where $p$ is the total polynomial degree. This clearly compares favourably to proceeding in a na\"ive approach where one would require $O(p^6)$ operations \bstodoinline{Presumably this is correct to say?}. Furthermore, we can use this framework to derive sparse $p$-finite element methods, which we introduce as an Appendix here. The methods are analogous to those of Beuchler and Sch\"oberl on tetrahedra \cite{beuchler2006new}, see also work by Li and Shen \cite{li2010optimal}.
 
+We consider partial differential operators involving the spherical Laplacian (the Laplace--Beltrami operator): in spherical coordinates 
+\begin{align*}
+	z &= \cos\varphi, \\
+	x &= \sin\varphi \cos\theta = \rho(z) \cos\theta, \\
+	y &= \sin\varphi \sin\theta = \rho(z) \sin\theta.
+\end{align*}
+we have \sotodo{Double check}
+\begin{align*}
+\DeltaS &= {1 \over \sin \varphi} {\partial \over \partial \varphi} \sin \varphi {\partial \over \partial \varphi} + {1 \over \sin^2 \varphi} {\partial^2 \over \partial \theta^2}  = {1 \over \rho} {\partial \over \partial \varphi} \rho {\partial \over \partial \varphi} + {1 \over \rho^2} {\partial^2 \over \partial \theta^2} \\
+\end{align*}
+We do so by considering the component operators $\rho {\partial \over \partial \varphi}$ and ${\partial \over \partial \theta}$ applied to OPs with a specific choices of weight so that their discretisation is sparse, see Theorem~\ref{theorem:sparsityofdifferentialoperators}.  Sparsity comes from expanding the domain and range of an operator using different choices of the parameter $a$, a la the ultraspherical spectral method for intervals \cite{olver2013fast}, triangles \cite{olver2019triangle} and disk-slices and trapeziums \cite{snowball2019sparse}, and the related work on sparse discretisations on disks \cite{vasil2016tensor} and spheres \cite{vasil2019tensor,lecoanet2019tensor}.  As in the  disk-slice case in 2D \cite{snowball2019sparse}, we use an integration-by-parts argument to deduce the sparsity structure.
+
+ The three-dimensional orthogonal polynomials defined here involve the same non-classical (in fact, semi-classical\sotodo{Add citation}) 1D OPs as those outlined for the disk-slice, and so methods for calculating these 1D OP recurrence coefficients and integrals has already been outlined \cite{snowball2019sparse}. In particular, by exploiting the connection with these 1D OPs we can construct discretizations of general partial differential operators of size $(p+1)^2 \times (p+1)^2$ in $O(p^3)$ operations, where $p$ is the total polynomial degree. This clearly compares favourably to proceeding in a na\"ive approach where one would require $O(p^6)$ operations. Furthermore, we can use this framework to derive sparse $p$-finite element methods, which we introduce as an Appendix here. The methods are analogous to those of Beuchler and Sch\"oberl on tetrahedra \cite{beuchler2006new}, see also work by Li and Shen \cite{li2010optimal}.
+ 
+ 
+Note that we consider partial differential operators that are not necessarily rotational invariant:  for example, one can use these techniques for  Schr\"odinger operators $\DeltaS + V(x,y,z)$ where $V$ is first approximated by a polynomial. A nice feature though is that if the partial differential operator is invariant with respect to rotation around the $z$ axes (e.g., a Schr\"odinger operator with potential $V(z)$) the discretisation decouples, and can be reordered as a block-diagonal matrix. This improves the complexity further to an optimal $O(p^2$). \sotodo{Adding a complexity plot showing this would be great}
 
 An overview of the paper is as follows:  
 
@@ -376,27 +388,29 @@ An overview of the paper is as follows:
 \noindent\appref{PFEM}: We outline how our framework can allow us to construct sparse $hp$-finite element method on the sphere, using spherical band and cap elements that would capture spherical geometry precisely. We lay the groundwork by simply presenting a sparse $p$-finite element method using a single spherical cap element. 
 
 
-\section{Orthogonal polynomials on the disk-slice and the trapezium}\label{Section:OPs}
+\section{Orthogonal polynomials on spherical caps}\label{Section:OPs}
 
-In this section we outline the construction and some basic properties of $\scopnkia(x,y)$.
+In this section we outline the construction and some basic properties of $\scopnkia(x,y,z)$.
 
 \subsection{Explicit construction}
 
-We can construct the 3D orthogonal polynomials on $\Omega$ from 1D orthogonal polynomials on the interval \([\alpha,\beta]\), and from Chebyshev polynomials. 
+We can construct the 3D orthogonal polynomials on $\Omega$ from 1D orthogonal polynomials on the interval \([\alpha,\beta]\), and from Chebyshev polynomials. We do so in terms of Fourier series, which, following \cite{olver2020orthogonal}, we write here as orthogonal polynomials in $x$ and $y$:
 
 \begin{definition}
-Define the unit circle $\omega := \{ \mathbf{x} = (x,y) \in \R^2 \: | \: x^2 + y^2 = 1\}$, and define the parameter $\theta$ for each $(x,y) \in \omega$ by $x = \cos(\theta)$, $y = \sin(\theta)$. Define the polynomials $\{\chki\}$ for $k = 0, 1, \dots$, $i = 0, 1$ on $(x,y) \in \omega$ by
+Define the unit circle $\omega := \{ \mathbf{x} = (x,y) \in \R^2 \: | \: x^2 + y^2 = 1\}$, and define the parameter $\theta$ for each $(x,y) \in \omega$ by $x = \cos\theta$, $y = \sin\theta$. Define the polynomials $\{\chki\}$ for $k = 0, 1, \dots$, $i = 0, 1$ on $(x,y) \in \omega$ by
 \begin{align}
 	\ch_{0,0}(\xvec) \equiv \ch_{0,0}(x, y) &:= \ch_{0} =: \ch_{0,0}(\theta) \nonumber \\
-	\ch_{k,0}(\xvec) \equiv \ch_{k,0}(x, y) \ &:= T_k(x) = \cos(k \theta) =: \ch_{k,0}(\theta), \quad k = 1,2,3,\dots\label{eqn:chebyshev} \\
-	\ch_{k,1}(\xvec) \equiv \ch_{k,1}(x, y) &:= y \: U_{k-1}(x) = \sin(k \theta) =: \ch_{k,1}(\theta), \quad k = 1,2,3,\dots \nonumber
+	\ch_{k,0}(\xvec) \equiv \ch_{k,0}(x, y) \ &:= T_k(x) = \cos k \theta =: \ch_{k,0}(\theta), \quad k = 1,2,3,\dots\label{eqn:chebyshev} \\
+	\ch_{k,1}(\xvec) \equiv \ch_{k,1}(x, y) &:= y \: U_{k-1}(x) = \sin k \theta =: \ch_{k,1}(\theta), \quad k = 1,2,3,\dots \nonumber
 \end{align}
-where $\ch_{0} := \frac{\sqrt{2}}{2}$ and $T_k$, $U_{k-1}$ are the standard Chebyshev polynomials on the interval $[-1,1]$. The $\{Y_{k,i}\}$ are orthonormal with respect to the inner product
+where $\ch_{0} := \frac{\sqrt{2}}{2}$ and $T_k$, $U_{k-1}$ are the standard Chebyshev polynomials on the interval $[-1,1]$. The $\{Y_{k,i}\}$ are orthonormal with respect to the inner product\sotodo{The $\sigma$ notation needs explanation}
 \begin{align}
 	\ip< p, \: q >_{\ch} &:= \frac{1}{\pi} \: \int_{||\xvec|| = 1} p(\xvec) \: q(\xvec) \: \D \sigma(\xvec) = \frac{1}{\pi} \: \int_0^{2\pi} p(\xvec(\theta)) \: q(\xvec(\theta)) \: \D \theta. \label{eqn:ipcircularharmonics}
 \end{align}
 \end{definition}
 Note that we have defined $\ch_0$ so as to ensure orthonormality. 
+
+\sotodoinline{Isn't the following from \cite{olver2020orthogonal}? We then don't need to repeat the proof}
 
 \begin{proposition}\label{prop:construction}
 Let $w : (\alpha,\beta) \: \to \R$ be a weight function. $\forall$, $n = 0,1,2,\dots, $ let $\{r_{n,k}\}$ be polynomials orthogonal with respect to the weight $\rho(x)^{2k} w(x)$ where $0 \le k \le n$. Then the 3D polynomials defined on $\Omega$
@@ -406,7 +420,7 @@ Let $w : (\alpha,\beta) \: \to \R$ be a weight function. $\forall$, $n = 0,1,2,\
 for $i \in {0,1}, \: 0 \le k \le n, \: n = 0,1,2,\dots$ are orthogonal polynomials with respect to the inner product
 \begin{align*}
 	\ip< p, \: q > &:= \int_\Omega p(\xvec, z) \: q(\xvec, z) \: w(z) \: \D \sigma(\xvec, z) \\
-	&= \int_\alpha^1 \int_0^{2\pi} p(\rho(z) \cos(\theta), \rho(z) \sin(\theta), z) \: q(\rho(z) \cos(\theta), \rho(z) \sin(\theta), z) \: \D \theta \: w(z) \: \D z
+	&= \int_\alpha^1 \int_0^{2\pi} p(\rho(z) \cos\theta, \rho(z) \sin\theta, z) \: q(\rho(z) \cos\theta, \rho(z) \sin\theta, z) \: \D \theta \: w(z) \: \D z
 \end{align*}
 on $\Omega$. 
 \end{proposition}
@@ -450,7 +464,7 @@ Define the one-parameter 3D orthogonal polynomials via:
 By construction, $\{\scopnkia\}$ are orthogonal with respect to the inner product
 \begin{align}
 	\ip< p, \: q >_{\scopa} &:= \int_\Omega p(\xvec, z) \: q(\xvec, z) \: \genjacw^{(a,0)}(z) \: \D \sigma(\xvec, z) \\
-	&= \int_\alpha^1 \int_0^{2\pi} p(\rho(z) \cos(\theta), \rho(z) \sin(\theta), z) \: q(\rho(z) \cos(\theta), \rho(z) \sin(\theta), z) \: \D \theta \: \genjacw^{(a,0)}(z) \: \D z,
+	&= \int_\alpha^1 \int_0^{2\pi} p(\rho(z) \cos\theta, \rho(z) \sin\theta, z) \: q(\rho(z) \cos\theta, \rho(z) \sin\theta, z) \: \D \theta \: \genjacw^{(a,0)}(z) \: \D z,
 \end{align}
 with
 \begin{align}
@@ -458,12 +472,6 @@ with
 \end{align}
 We note that the weight $\genjacw^{(a,b)}(z)$ has been used in the construction of 2D orthogonal polynomials on disk-slices and trapeziums \cite{snowball2019sparse}, where a method for obtaining recurrence coefficients and evaluating integrals was established (the weight is in fact semi-classical, and is equivalent to a generalized Jacobi weight \cite[\S5]{magnus1995painleve}). 
 
-For clarity we state here that throughout we will regularly use coordinate transformations, mainly in any integrals over the surface $\Omega$, between the cartesian $(x,y,z)$ and the spherical coordinates $(\phi, \theta)$ -- that is, for any point $(x,y,z) \in \Omega$, let $(\phi, \theta)$ denote the angles such that:
-\begin{align*}
-	z &= \cos(\phi) \\
-	x &= \sin(\phi) \cos(\theta) = \rho(z) \cos(\theta) \\
-	y &= \sin(\phi) \sin(\theta) = \rho(z) \sin(\theta).
-\end{align*}
 
 
 \subsection{Jacobi matrices}\label{subsection:jacobimats}
@@ -477,21 +485,21 @@ where the coefficients are calculatable (see \cite{snowball2019sparse}). We can 
 \begin{lemma}\label{lemma:Yrecurrence} 
 The following identities hold for $k = 2,3,\dots$, $j = 0,1,\dots$ and $i, h \in \{0,1\}$:
 \begin{align*}
-	&1) \quad \int_0^{2\pi} \ch_0 \: \chjh(\theta) \: \cos(\theta) \: \D \theta = \ch_0 \: \pi \: \delta_{0,h} \: \delta_{1,j} \\
-	&2) \quad \int_0^{2\pi} \ch_0 \: \chjh(\theta) \: \sin(\theta) \: \D \theta = \ch_0 \: \pi \: \delta_{1,h} \: \delta_{1,j} \\
-	&3) \quad \int_0^{2\pi} \ch_{1,i}(\theta) \: \chjh(\theta) \: \cos(\theta) \: \D \theta = \pi \: \delta_{i,h} \: (\ch_0 \: \delta_{0,j} + \half \delta_{2,j}) \\
-	&4) \quad \int_0^{2\pi} \ch_{1,i}(\theta) \: \chjh(\theta) \: \sin(\theta) \: \D \theta = \pi \:  \delta_{|i-1|,h} \: ((-1)^{i+1} \: \ch_0 \: \delta_{0,j} + (-1)^i \: \half \: \delta_{2,j}) \\
-	&5) \quad \int_0^{2\pi} \chki(\theta) \: \chjh(\theta) \: \cos(\theta) \: \D \theta = \half \: \pi \: \delta_{i,h} \: (\delta_{k-1,j} + \delta_{k+1,j}) \\
-	&6) \quad \int_0^{2\pi} \chki(\theta) \: \chjh(\theta) \: \sin(\theta) \: \D \theta = \half \: \pi \: \delta_{|i-1|,h} \: ((-1)^{i+1} \: \delta_{k-1,j} + (-1)^i \: \delta_{k+1,j}).
+	&1) \quad \int_0^{2\pi} \ch_0 \: \chjh(\theta) \: \cos\theta \: \D \theta = \ch_0 \: \pi \: \delta_{0,h} \: \delta_{1,j} \\
+	&2) \quad \int_0^{2\pi} \ch_0 \: \chjh(\theta) \: \sin\theta \: \D \theta = \ch_0 \: \pi \: \delta_{1,h} \: \delta_{1,j} \\
+	&3) \quad \int_0^{2\pi} \ch_{1,i}(\theta) \: \chjh(\theta) \: \cos\theta \: \D \theta = \pi \: \delta_{i,h} \: (\ch_0 \: \delta_{0,j} + \half \delta_{2,j}) \\
+	&4) \quad \int_0^{2\pi} \ch_{1,i}(\theta) \: \chjh(\theta) \: \sin\theta \: \D \theta = \pi \:  \delta_{|i-1|,h} \: ((-1)^{i+1} \: \ch_0 \: \delta_{0,j} + (-1)^i \: \half \: \delta_{2,j}) \\
+	&5) \quad \int_0^{2\pi} \chki(\theta) \: \chjh(\theta) \: \cos\theta \: \D \theta = \half \: \pi \: \delta_{i,h} \: (\delta_{k-1,j} + \delta_{k+1,j}) \\
+	&6) \quad \int_0^{2\pi} \chki(\theta) \: \chjh(\theta) \: \sin\theta \: \D \theta = \half \: \pi \: \delta_{|i-1|,h} \: ((-1)^{i+1} \: \delta_{k-1,j} + (-1)^i \: \delta_{k+1,j}).
 \end{align*}
 \end{lemma}
 \begin{proof}
 Each follows from the definitions of $\ch_{k,i}$ and $\ch_0$, as well as the relationships:
 \begin{align*}
-	2 \cos(k \theta) \cos(\theta) &= \cos((k-1)\theta) + \cos((k+1)\theta) \\
-	2 \sin(k \theta) \cos(\theta) &= \sin((k-1)\theta) + \sin((k+1)\theta) \\
-	2 \cos(k \theta) \sin(\theta) &= - \sin((k-1)\theta) + \sin((k+1)\theta) \\
-	2 \sin(k \theta) \sin(\theta) &= \cos((k-1)\theta) - \cos((k+1)\theta).
+	2 \cos k \theta \cos\theta &= \cos (k-1)\theta + \cos(k+1)\theta \\
+	2 \sin k \theta \cos\theta &= \sin (k-1)\theta + \sin(k+1)\theta \\
+	2 \cos k \theta \sin\theta &= - \sin (k-1)\theta + \sin(k+1)\theta \\
+	2 \sin k \theta \sin\theta &= \cos (k-1)\theta - \cos(k+1)\theta.
 \end{align*}
 \end{proof}
 
@@ -542,12 +550,12 @@ These coefficients are given by
 	c_{m,j} = {\ip< x \: \scopnkia, \scopmjha >_{\scopa}}{\norm{\scopmjha}^{-2}_{\scopa}}
 \end{align*}
 where we show the non-zero coefficients that result are the $\alphaa_{n,k,1},\dots,\alphaa_{n,k,6}$ in the Lemma.
-Recall from equation (\ref{eqn:normscop}) that $\norm{\scopmjha}_{\scopa}^2 = \pi \: \normgenjac^{(a,2j)}$. Then for $m = 0,\dots,n+1$, $j = 0,\dots,m$, using a change of variables $(\cos(\theta) \sin(\phi), \: \sin(\theta)\sin(\phi), \: \cos(\phi)) = (x, y, z)$:
+Recall from equation (\ref{eqn:normscop}) that $\norm{\scopmjha}_{\scopa}^2 = \pi \: \normgenjac^{(a,2j)}$. Then for $m = 0,\dots,n+1$, $j = 0,\dots,m$, using a change of variables $(\cos(\theta) \sin(\varphi), \: \sin\theta\sin(\varphi), \: \cos(\varphi)) = (x, y, z)$:
 \begin{align*}
 	&\ip<x \: \scopnkia, \scopmjha>_{\scopa} \\
 	&= \int_\Omega \scopnkia(\xvec,z) \: \scopmjha(\xvec,z) \: x \: \genjacw^{(a,0)}(z) \: \D\sigma(\xvec, z) \\
-	&= \Big( \int^1_\alpha \genjacnmk^{(a, 2k)}(z) \: \genjacmmj^{(a, 2j)}(z) \: \rho(z)^{k+j+1} \: \genjacw^{(a, 0)}(z) \: \D z \Big) \cdot \: \Big( \int_0^{2\pi} \chki(\theta) \: \chjh(\theta) \: \cos(\theta) \: \D \theta \Big) \\
-	&= \Big( \int^1_\alpha \genjacnmk^{(a, 2k)}(z) \: \genjacmmj^{(a, 2j)}(z) \: \genjacw^{(a, k + j + 1)}(z) \: \D z \Big) \cdot \: \Big( \int_0^{2\pi} \chki(\theta) \: \chjh(\theta) \: \cos(\theta) \: \D \theta \Big) \\
+	&= \Big( \int^1_\alpha \genjacnmk^{(a, 2k)}(z) \: \genjacmmj^{(a, 2j)}(z) \: \rho(z)^{k+j+1} \: \genjacw^{(a, 0)}(z) \: \D z \Big) \cdot \: \Big( \int_0^{2\pi} \chki(\theta) \: \chjh(\theta) \: \cos\theta \: \D \theta \Big) \\
+	&= \Big( \int^1_\alpha \genjacnmk^{(a, 2k)}(z) \: \genjacmmj^{(a, 2j)}(z) \: \genjacw^{(a, k + j + 1)}(z) \: \D z \Big) \cdot \: \Big( \int_0^{2\pi} \chki(\theta) \: \chjh(\theta) \: \cos\theta \: \D \theta \Big) \\
 	&= \half \: \pi \: \delta_{i,h} \: (\eta_{k-1} \: \delta_{k-1, j} + \eta_{k} \: \delta_{k+1, j})  \int^1_\alpha \genjacnmk^{(a, 2k)}(z) \: \genjacmmj^{(a, 2j)}(z) \: \genjacw^{(a, k + j + 1)}(z) \: \D z.
 \end{align*}
 where $\delta_{k, j}$ is the standard Kronecker delta function, using Lemma \ref{lemma:Yrecurrence}. Similarly, for the recurrence for multiplication by $y$, we can expand 
@@ -562,8 +570,8 @@ where we show the non-zero coefficients that result are the $\betaa_{n,k,1},\dot
 \begin{align*}
 	&\ip<y \: \scopnkia, \scopmjha>_{\scopa} \\
 	&= \int_\Omega \scopnkia(\xvec,z) \: \scopmjha(\xvec,z) \: y \: \genjacw^{(a,0)}(z) \: \D\sigma(\xvec, z) \\
-	&= \Big( \int^1_\alpha \genjacnmk^{(a, 2k)}(z) \: \genjacmmj^{(a, 2j)}(z) \: \rho(z)^{k+j+1} \: \genjacw^{(a, 0)}(z) \: \D z \Big) \cdot \: \Big( \int_0^{2\pi} \chki(\theta) \: \chjh(\theta) \: \sin(\theta) \: \D \theta \Big) \\
-	&= \Big( \int^1_\alpha \genjacnmk^{(a, 2k)}(z) \: \genjacmmj^{(a, 2j)}(z) \: \genjacw^{(a, k + j + 1)}(z) \: \D z \Big) \cdot \: \Big( \int_0^{2\pi} \chki(\theta) \: \chjh(\theta) \: \sin(\theta) \: \D \theta \Big) \\
+	&= \Big( \int^1_\alpha \genjacnmk^{(a, 2k)}(z) \: \genjacmmj^{(a, 2j)}(z) \: \rho(z)^{k+j+1} \: \genjacw^{(a, 0)}(z) \: \D z \Big) \cdot \: \Big( \int_0^{2\pi} \chki(\theta) \: \chjh(\theta) \: \sin\theta \: \D \theta \Big) \\
+	&= \Big( \int^1_\alpha \genjacnmk^{(a, 2k)}(z) \: \genjacmmj^{(a, 2j)}(z) \: \genjacw^{(a, k + j + 1)}(z) \: \D z \Big) \cdot \: \Big( \int_0^{2\pi} \chki(\theta) \: \chjh(\theta) \: \sin\theta \: \D \theta \Big) \\
 	&= \half \: \pi \: \delta_{|i-1|,h} \: \big[(-1)^{i+1} \: \eta_{k-1} \: \delta_{k-1, j} + (-1)^i \: \eta_{k} \: \delta_{k+1, j}\big] \int^1_\alpha \genjacnmk^{(a, 2k)}(z) \: \genjacmmj^{(a, 2j)}(z) \: \genjacw^{(a, k + j + 1)}(z) \: \D z.
 \end{align*}
 where again $\delta_{k, j}$ is the standard Kronecker delta function, and we have used Lemma \ref{lemma:Yrecurrence}.
@@ -725,7 +733,7 @@ Note that the sparsity of the Jacobi matrices (in particular the sparsity of the
 
 \subsection{Building the OPs} 
 
-In this section, we introduce new notation for a different ordering of the OP vector, in order to demonstrate how we can obtain a recurrence for the OPs in matrix-vector form, and derive the associated \enquote{Clenshaw matrices}. While in Section \ref{subsection:jacobimats} the ordering used is convenient for the application of Jacobi and differential operators to the vector of coefficients of a given function's expansion, the ordering we will use in this section is convenient for building the OPs and more importantly obtaining the \enquote{Clenshaw matrices} necessary for efficient function evaluation using the Clenshaw algorithm. In practice, it is simply a matter of converting coefficients between the two orderings.
+In this section, we introduce new notation for a different ordering of the OP vector, in order to demonstrate how we can obtain a recurrence for the OPs in matrix-vector form, and derive the associated\sotodo{Explain what a Clenshaw matrix is} \enquote{Clenshaw matrices}. While in Section \ref{subsection:jacobimats} the ordering used is convenient for the application of Jacobi and differential operators to the vector of coefficients of a given function's expansion, the ordering we will use in this section is convenient for building the OPs and more importantly obtaining the \enquote{Clenshaw matrices} necessary for efficient function evaluation using the Clenshaw algorithm. In practice, it is simply a matter of converting coefficients between the two orderings.
 
 Define, for $n=0,1,2,\dots$: 
 \begin{align*}
@@ -895,7 +903,7 @@ For each $n = 0,1,2\dots$ let $\Dnt$ be any matrix that is a left inverse of $A_
 	\end{cases}
 \end{align*}
 
-Note that we can define an explicit \(\Dnt\) as follows:
+Note that we can define an explicit \(\Dnt\) as follows:\sotodo{Improve following notation, say, by adding notation to the top part}
 \begin{align*}
 	\Dnt := 
 		\begin{pmatrix}
@@ -943,7 +951,7 @@ The Clenshaw matrices associated with the OPs $\{\scopnkia\}$ are given by the m
 %
 \section{Sparse partial differential operators}\label{Section:PDOs}
 
-In this section, we will derive the entries that form spherical partial differential operators, demonstrating their sparsity. To this end, we will use a different ordering of the OPs and coefficients of a function's expansion, in order to exploit the orthogonality the circular harmonics will bring and thus the operators will be block-diagonal. Let $N \in \N$ and recall from equations (\ref{eqn:OPdefNka}, \ref{eqn:OPdefN0a}, \ref{eqn:OPdefNa}) that: 
+In this section, we will derive the entries of spherical partial differential operators applied to our basis, demonstrating their sparsity in the process. To this end, we will use a different ordering\sotodo{I thought we would discuss this separately as a permutation of rows/columns?} of the OPs and coefficients of a function's expansion, in order to exploit the orthogonality the circular harmonics will bring and thus the operators will be block-diagonal. Let $N \in \N$ and recall from equations (\ref{eqn:OPdefNka}, \ref{eqn:OPdefN0a}, \ref{eqn:OPdefNa}) that: 
 \begin{align*}
 	\bigscopNka &:= 
 		\begin{pmatrix}
@@ -974,23 +982,22 @@ We further denote the weighted set of OPs on $\Omega$ by
 and recall that a function $f(x,y,z)$ defined on $\Omega$ is approximated by its expansion $f(x,y,z) = \bigscopa(x,y,z)^\top \mathbf{f}$.
 
 \begin{definition}\label{def:differentialoperators}
-Define the operator matrices $D_\phi^{(a)}, \: W_\phi^{(a)}, \: D_\theta, \: \Delta^{(1)}_W$ according to:
+Define the operator matrices $D_\varphi^{(a)}, \: W_\varphi^{(a)}, \: D_\theta, \: \Delta^{(1)}_W$ according to:
 \begin{align*}
-	\rho {\partial f \over \partial \phi}(x,y,z)&= \bigscop_N^{(a+1)}(x,y,z)^\top \: D_\phi^{(a)} \: \mathbf{f}, \\
-	\rho {\partial \over \partial \phi}[\genjacw^{(a,0)}(z) \: f(x,y,z)] &= \bigW_N^{(a-1)}(x,y)^\top \: W_\phi^{(a)}\: \mathbf{f}, \\
+	\rho {\partial f \over \partial \varphi}(x,y,z)&= \bigscop_N^{(a+1)}(x,y,z)^\top \: D_\varphi^{(a)} \: \mathbf{f}, \\
+	\rho {\partial \over \partial \varphi}[\genjacw^{(a,0)}(z) \: f(x,y,z)] &= \bigW_N^{(a-1)}(x,y)^\top \: W_\varphi^{(a)}\: \mathbf{f}, \\
 	{\partial f \over \partial \theta}(x,y,z) &= \bigscopNa(x,y,z)^\top \: D_\theta \: \mathbf{f}, \\
-	\nabla^2_s \big( \genjacw^{(1,0)}(z) \: f(x,y,z) \big) &= \bigscopN^{(1)}(x,y,z)^\top \: \Delta^{(1)}_W \: \mathbf{f}, \quad \text{ (for } a = 1 \text{ only)}
+	\DeltaS \big( \genjacw^{(1,0)}(z) \: f(x,y,z) \big) &= \bigscopN^{(1)}(x,y,z)^\top \: \Delta^{(1)}_W \: \mathbf{f}, \quad \text{ (for } a = 1 \text{ only)}
 \end{align*}
-where $\nabla^2_s$ is the surface Laplacian, given by $\nabla^2_s = \frac{1}{\rho(z)} \ppphi \big( \rhozppphi \big) + \frac{1}{\rho(z)^2} \ppthetatwo$.
 \end{definition}
 
-The incrementing and decrementing of parameters as seen here is analogous to other well known orthogonal polynomial families' derivatives, for example the Jacobi polynomials on the interval, as seen in the DLMF \cite[(18.9.3)]{DLMF}, on the triangle \cite{olver2018recurrence}, and on the disk-slice \cite{snowball2019sparse}. The operators we define here are for partial derivatives with respect to the spherical coordinates $(\phi, \theta)$, so that we can more easily apply the operators to PDEs on the surface of a sphere (for example, surface Laplacian operator in the Poisson equation). With the OP ordering by Fourier mode $k$ defined in equations (\ref{eqn:OPdefNka}, \ref{eqn:OPdefN0a}, \ref{eqn:OPdefNa}) these rotationally invariant operators are block-diagonal, meaning simple and parallelisable practical application.
+The incrementing and decrementing of parameters as seen here is analogous to other well known orthogonal polynomial families' derivatives, for example the Jacobi polynomials on the interval, as seen in the DLMF \cite[(18.9.3)]{DLMF}, on the triangle \cite{olver2018recurrence}, and on the disk-slice \cite{snowball2019sparse}. The operators we define here are for partial derivatives with respect to the spherical coordinates $(\varphi, \theta)$, so that we can more easily apply the operators to PDEs on the surface of a sphere (for example, surface Laplacian operator in the Poisson equation). With the OP ordering by Fourier mode $k$ defined in equations (\ref{eqn:OPdefNka}, \ref{eqn:OPdefN0a}, \ref{eqn:OPdefNa}) these rotationally invariant operators are block-diagonal, meaning simple and parallelisable practical application.
 
 \begin{theorem}\label{theorem:sparsityofdifferentialoperators}
-The operator matrices $D_\phi^{(a)}, \: W_\phi^{(a)}, \: D_\theta, \: \Delta^{(1)}_W$ from Definition \ref{def:differentialoperators} are sparse, with banded-block-banded structure. More specifically:
+The operator matrices $D_\varphi^{(a)}, \: W_\varphi^{(a)}, \: D_\theta, \: \Delta^{(1)}_W$ from Definition \ref{def:differentialoperators} are sparse, with banded-block-banded structure. More specifically:
 \begin{itemize}
-	\item $D_\phi^{(a)}$ has block-bandwidths $(0,0)$, and sub-block-bandwidths $(2, 4)$
-  	\item $W_\phi^{(a)}$ has block-bandwidths $(0,0)$, and sub-block-bandwidths $(4, 2)$
+	\item $D_\varphi^{(a)}$ has block-bandwidths $(0,0)$, and sub-block-bandwidths $(2, 4)$
+  	\item $W_\varphi^{(a)}$ has block-bandwidths $(0,0)$, and sub-block-bandwidths $(4, 2)$
 	\item $D_\theta$ has  block-bandwidths $(0,0)$, and sub-block-bandwidths $(1, 1)$
 	\item $\Delta^{(1)}_W$ has block-bandwidths $(0,0)$, and sub-block-bandwidths $(1, 1)$
 \end{itemize}
@@ -1031,14 +1038,14 @@ which is indeed zero for $m < n - k - 1$ by orthogonality.
 \end{proof}
 
 \begin{proof}[Proof of Theorem \ref{theorem:sparsityofdifferentialoperators}]
-First, note that:
+First, note that \sotodo{Here and elsewhere: ${\partial \over \partial z}$ is not well-defined as we are on the sphere. Though perhaps ${\rm d} \over {\rm d} z$ works as we are differentiating the formula with respect to $z$?}:
 \begin{align}
 	\genjacw^{(a,b) \: \prime}(z) &= a \: \genjacw^{(a-1,b)}(z) + c \: \rho(z) \: \rho'(z) \:\genjacw^{(a,b-2)}(z), \label{eqn:derivativeofweightgenjac} \\
 	\rho(z) \: \rho'(z) &= -z \label{eqn:rhoderivative} \\
-	{\partial \over \partial \phi} &= -\rho \: {\partial \over \partial z} \label{eqn:partialphitoz} 
+	{\partial \over \partial \varphi} &= -\rho \: {\partial \over \partial z} \label{eqn:partialphitoz} 
 \end{align}
 
-For the operator $D_\theta$ for partial differentiation by $\theta$, we simply have that
+For the operator $D_\theta$ for partial differentiation by $\theta$, we simply have that \sotodo{Would it be better as ${\rm d} \over {\rm d} \theta$?}
 \begin{align*}
 	{\partial \over \partial \theta}\scopnkia(x,y,z) &= \genjacnmk^{(a,2k)}(z) \: \rho(z)^{k} \: {\partial \over \partial \theta} \chki(\theta) \\
 	&= 
@@ -1048,7 +1055,7 @@ For the operator $D_\theta$ for partial differentiation by $\theta$, we simply h
 	\end{cases}
 \end{align*}
 
-We now proceed with the case for the operator $D_\phi^{(a)}$ for partial differentiation by $\phi$. The entries of the operator are given by the coefficients in the expansion $\rhoppphi \scopnkia = \sum_{m=0}^{n+1} \sum_{j=0}^m \sum_{h=0}^1 c_{m,j,h} \: \scopmjh^{(a+1)}$, where the coefficients are
+We now proceed with the case for the operator $D_\varphi^{(a)}$ for partial differentiation by $\varphi$. The entries of the operator are given by the coefficients in the expansion $\rhoppphi \scopnkia = \sum_{m=0}^{n+1} \sum_{j=0}^m \sum_{h=0}^1 c_{m,j,h} \: \scopmjh^{(a+1)}$, where the coefficients are
 \begin{align*}
 	c_{m,j,h} = \norm{\scopmjh^{(a+1)}}^{-2}_{\scop^{(a+1)}} \ip<\rhoppphi \scopnkia, \: \scopmjh^{(a+1)}>_{\scop^{(a+1)}}.
 \end{align*}
@@ -1063,7 +1070,7 @@ Now,
 \end{align*}
 which is zero for $j \ne k$, $h \ne i$, and $m < n - 2$ by orthogonality.
 
-Similarly for the operator $W_\phi^{(a)}$ for partial differentiation by $\phi$ on the weighted space, the entries of the operator are given by the coefficients in the expansion $\rhoppphi (\genjacw^{(a,0)} \: \scopnkia) = \sum_{m=0}^{n+2} \sum_{j=0}^m \sum_{h=0}^1 c_{m,j,h} \: \genjacw^{(a-1,0)} \: \scopmjh^{(a-1)}$, where the coefficients are
+Similarly for the operator $W_\varphi^{(a)}$ for partial differentiation by $\varphi$ on the weighted space, the entries of the operator are given by the coefficients in the expansion $\rhoppphi (\genjacw^{(a,0)} \: \scopnkia) = \sum_{m=0}^{n+2} \sum_{j=0}^m \sum_{h=0}^1 c_{m,j,h} \: \genjacw^{(a-1,0)} \: \scopmjh^{(a-1)}$, where the coefficients are
 \begin{align*}
 	c_{m,j,h} = \norm{\scopmjh^{(a-1)}}^{-2}_{\scop^{(a-1)}} \ip<\rhoppphi (\genjacw^{(a,0)} \: \scopnkia), \: \scopmjh^{(a-1)}>_{\scop^{(0)}}.
 \end{align*}
@@ -1080,17 +1087,17 @@ Now,
 \end{align*}
 which is zero for $j \ne k$, $h \ne i$, and $m < n - 1$ by orthogonality.
 
-Finally, fix $a = 1$. For the operator $\Delta^{(1)}_W$ for the Laplacian on the weighted space, the entries of the operator are given by the coefficients in the expansion $\nabla^2_s \big(\genjacw^{(1,0)} \: \scopnki^{(1)} \big) = \sum_{m=0}^{n+2} \sum_{j=0}^m \sum_{h=0}^1 c_{m,j,h} \: \scopmjh^{(1)}$, where the coefficients are
+Finally, fix $a = 1$. For the operator $\Delta^{(1)}_W$ for the Laplacian on the weighted space, the entries of the operator are given by the coefficients in the expansion $\DeltaS \big(\genjacw^{(1,0)} \: \scopnki^{(1)} \big) = \sum_{m=0}^{n+2} \sum_{j=0}^m \sum_{h=0}^1 c_{m,j,h} \: \scopmjh^{(1)}$, where the coefficients are
 \begin{align*}
-	c_{m,j,h} = \norm{\scopmjh^{(1)}}^{-2}_{\scop^{(1)}} \ip<\nabla^2_s \big(\genjacw^{(1,0)} \: \scopnki^{(1)} \big), \: \scopmjh^{(1)}>_{\scop^{(1)}}.
+	c_{m,j,h} = \norm{\scopmjh^{(1)}}^{-2}_{\scop^{(1)}} \ip<\DeltaS \big(\genjacw^{(1,0)} \: \scopnki^{(1)} \big), \: \scopmjh^{(1)}>_{\scop^{(1)}}.
 \end{align*}
 Now, note that the Laplacian acting on the weighted spherical cap OP $\scopnki^{(a)}$ yields
 \begin{align*}
-	\nabla^2_s \big(\genjacw^{(1,0)} \: \scopnki^{(1)} \big) &= 
+	\DeltaS \big(\genjacw^{(1,0)} \: \scopnki^{(1)} \big) &= 
 \end{align*}
 Hence,
 \begin{align*}
-	&\ip<\nabla^2_s \big(\genjacw^{(1,0)} \: \scopnki^{(1)} \big), \: \scopmjh^{(1)}>_{\scop^{(1)}} \\
+	&\ip<\DeltaS \big(\genjacw^{(1,0)} \: \scopnki^{(1)} \big), \: \scopmjh^{(1)}>_{\scop^{(1)}} \\
 	&\quad = \Big( \int_0^{2\pi} \: \chki(\theta) \: \chjh(\theta) \: \D \theta \Big) \\
 	&\quad \quad \quad \quad \cdot \: \Big( \int_\alpha^1 \: \genjacmmj^{(1,2j)} \: \Big\{ \genjacnmk^{(a, 2k)} \: [- k^2 \genjacw^{(1, k)} - \genjacw^{(1, k)} - 2(k + 1)z \genjacw^{(0, k)}] \\
 	&\quad \quad \quad \quad \quad \quad \quad \quad \quad \quad \quad \quad + \genjacnmk^{(a, 2k) \: \prime} \: [2 \genjacw^{(0, k+2)} - 2(k + 1)z \genjacw^{(1, k)}] \\
@@ -1156,33 +1163,33 @@ which is zero for $n > m + \tilde a \iff m < n - \tilde a$. The sparsity argumen
 	\begin{subfigure}{0.45\textwidth}
 		\includegraphics[scale=0.3]{sparsity-of-biharmonic}
 		\centering
-		\caption{The Biharmonic operator $B_W^{(2)}$}
+		\caption{The Biharmonic operator $B_W^{(2)}$ \sotodoinline{This one is surprising as I was expecting rotational invariance to give us block-diagonal operators}}
 	\end{subfigure}\hfil % <-- added
 	\caption{\enquote{Spy} plots of (differential) operator matrices, showing their sparsity. For (c), the the weighted variable coefficient Helmholtz operator is $\Delta^{(1)}_W + k^2 \: T^{(0)\to(1)} \: V({J_x^{(0)}}^\top, {J_y^{(0)}}^\top, {J_z^{(0)}}^\top) \: T_W^{(1)\to(0)}$ for $v(x,y,z) = 1 - (3(x-x_0)^2 + 5(y-y_0)^2 + 2(z-z_0)^2)$ where $(x_0, z_0) := (0.7, 0.2)$, $y_0 := \sqrt{(x_0^2 + z_0^2)}$ and $k = 200$.}
 	\label{fig:sparsity}
 \end{figure}
 
-General linear partial differential operators with polynomial variable coefficients can be constructed by composing the sparse representations for partial derivatives, conversion between bases, and Jacobi operators. As a canonical example, we can obtain the matrix operator for the $\rho^2$-factored surface Laplacian $\rho(z)^2 \: \nabla^2_s$, that will take us from coefficients for expansion in the weighted space $\bigW_N^{(1)}(x,y,z) = \genjacw^{(1,0)}(z) \: \bigscopN^{(1)}(x,y,z)$ to coefficients in the non-weighted space $\bigscopN^{(1)}(x,y,z)$. Note that this construction will ensure the imposition of the Dirichlet zero boundary conditions on $\Omega$, similar to how the Dirichlet zero boundary conditions would be imposed for the operator $\Delta^{(1)}_W$ in Definition \ref{def:differentialoperators}. The matrix operator for this $\rho^2$-factored Laplacian we denote $\mathcal{L}_W^{(1)}$ acting on the coefficients vector is then given by
+General linear partial differential operators with polynomial variable coefficients can be constructed by composing the sparse representations for partial derivatives, conversion between bases, and Jacobi operators. As a canonical example, we can obtain the matrix operator for the $\rho^2$-factored surface Laplacian $\rho(z)^2 \: \DeltaS$, that will take us from coefficients for expansion in the weighted space $\bigW_N^{(1)}(x,y,z) = \genjacw^{(1,0)}(z) \: \bigscopN^{(1)}(x,y,z)$ to coefficients in the non-weighted space $\bigscopN^{(1)}(x,y,z)$. Note that this construction will ensure the imposition of the Dirichlet zero boundary conditions on $\Omega$, similar to how the Dirichlet zero boundary conditions would be imposed for the operator $\Delta^{(1)}_W$ in Definition \ref{def:differentialoperators}. The matrix operator for this $\rho^2$-factored Laplacian we denote $\mathcal{L}_W^{(1)}$ acting on the coefficients vector is then given by
 \begin{align*}
-    \mathcal{L}_W^{(1)} := D_\phi^{(0)} \: W_\phi^{(1)} + T^{(0)\to(1)} \: T_W^{(1)\to(0)} \: (D_\theta)^2.
+    \mathcal{L}_W^{(1)} := D_\varphi^{(0)} \: W_\varphi^{(1)} + T^{(0)\to(1)} \: T_W^{(1)\to(0)} \: (D_\theta)^2.
 \end{align*}
 Importantly, this operator will have banded-block-banded structure, and hence will be sparse, as seen in Figure \ref{fig:sparsity}.
 
-Another desirable operator is the Biharmonic operator $\Delta^2_s$ (defined by $\Delta^2_s f = \nabla^2_s (\nabla^2_s f)$), for which we assume zero Dirichlet and Neumann conditions. To construct a matrix operator, we first note that we can obtain the matrix operator for the $\rho^2$-factored Laplacian $\rho(z)^2 \: \nabla^2_s$ that will take us from coefficients for expansion in the space $\bigscopN^{(0)}(x,y,z)$ to coefficients in the space $\bigscopN^{(2)}(x,y,z)$. We denote this matrix operator that acts on the coefficients vector as $\mathcal{L}^{(0) \to (2)}$, and it is given by
+Another desirable operator is the Biharmonic operator $\DeltaS^2$, for which we assume zero Dirichlet and Neumann conditions \sotodo{We need to explain Neumann conditions precisely, as the normal derivative is not so obvious}. To construct a matrix operator, we first note that we can obtain the matrix operator for the $\rho^2$-factored Laplacian $\rho(z)^2 \: \DeltaS$ that will take us from coefficients for expansion in the space $\bigscopN^{(0)}(x,y,z)$ to coefficients in the space $\bigscopN^{(2)}(x,y,z)$. We denote this matrix operator that acts on the coefficients vector as $\mathcal{L}^{(0) \to (2)}$, and it is given by
 \begin{align*}
-    \mathcal{L}^{(0) \to (2)} := D_\phi^{(2)} \: D_\phi^{(0)} + T^{(0)\to(2)} \: D_\theta.
+    \mathcal{L}^{(0) \to (2)} := D_\varphi^{(2)} \: D_\varphi^{(0)} + T^{(0)\to(2)} \: D_\theta.
 \end{align*}
 Further, we can represent this same Laplacian as a map from coefficients in the space $\bigW_N^{(2)}$ to coefficients in the space $\bigW_N^{(0)} \equiv \bigscopN^{(0)}$. Note that a function expanded in the $\bigW_N^{(2)}$ basis will satisfy both zero Dirichlet and Neumann boundary conditions on $\Omega$. We denote this matrix operator as $\mathcal{L}_W^{(2) \to (0)}$, and is given by
 \begin{align*}
-	\mathcal{L}_W^{(2) \to (0)} := W_\phi^{(1)} \: W_\phi^{(2)} + T_W^{(2)\to(0,0,0)} \: D_\theta.
+	\mathcal{L}_W^{(2) \to (0)} := W_\varphi^{(1)} \: W_\varphi^{(2)} + T_W^{(2)\to(0,0,0)} \: D_\theta.
 \end{align*}
-Since, for any scalar function $f:\Omega \to \R$,
+Since, for any scalar function $f:\Omega \to \R$, \sotodo{The extra $\rho^2$ in front is weird to me}
 \begin{align*}
-	\rho^2(z) \: \Delta^2 \: f(x,y,z) = \rho^2 \: \nabla^2_s (\rho^2 \: \nabla^2_s f) - z \: \rhoppphi (\rho^2 \: \nabla^2_s f) - [2z^2 - 2\rho^2 + 3z] \:\rho^2 \: \nabla^2_s f
+	\rho^2(z) \: \Delta^2 \: f(x,y,z) = \rho^2 \: \DeltaS (\rho^2 \: \DeltaS f) - z \: \rhoppphi (\rho^2 \: \DeltaS f) - [2z^2 - 2\rho^2 + 3z] \:\rho^2 \: \DeltaS f
 \end{align*}
-the matrix operator for the $\rho^2$-factored Biharmonic operator $\rho(z)^2 \: \Delta_s^2$ is then given by
+the matrix operator for the $\rho^2$-factored Biharmonic operator $\rho(z)^2 \: \DeltaS^2$ is then given by
 \begin{align*}
-	\mathcal{B}_W^{(2)} := \mathcal{L}^{(0) \to (2)} \: \mathcal{L}_W^{(2) \to (0)} - (J_z^{(2)})^\top \: T^{(1)\to(2)} \: D_\phi^{(0)} \: \mathcal{L}_W^{(2) \to (0)} - V^{(2)} \:  T^{(0)\to(2)} \: \mathcal{L}_W^{(2) \to (0)},
+	\mathcal{B}_W^{(2)} := \mathcal{L}^{(0) \to (2)} \: \mathcal{L}_W^{(2) \to (0)} - (J_z^{(2)})^\top \: T^{(1)\to(2)} \: D_\varphi^{(0)} \: \mathcal{L}_W^{(2) \to (0)} - V^{(2)} \:  T^{(0)\to(2)} \: \mathcal{L}_W^{(2) \to (0)},
 \end{align*}
 where $V^{(a)}$ is an operator corresponding to multiplication by the scalar polynomial $v(z) := 2z^2 - 2\rho(z)^2 + 3z = 4z^2 + 3z - 2$ acting on coefficients in the $\bigscopN^{(a)}$ space (see Section \ref{subsection:operatorclenshaw} for how to computationally obtain operators representing functional coefficients). The sparsity and structure of this biharmonic operator are seen in Figure \ref{fig:sparsity}.
 
@@ -1233,12 +1240,12 @@ so that $\xvec \mapsto f_e(\xvec, z)$ for fixed $z$ is an even function, and $\x
 
 Firstly, we note that
 \begin{align*}
-	\int_0^{2\pi} g\big(\cos(\theta), \sin(\theta)\big) \: \D \theta = \int_{-1}^1 \Big( g\big(x, \sqrt{1-x^2}\big) + g\big(x, -\sqrt{1-x^2}\big) \Big) \frac{\D x}{\sqrt{1-x^2}}
+	\int_0^{2\pi} g\big(\cos(\theta), \sin\theta\big) \: \D \theta = \int_{-1}^1 \Big( g\big(x, \sqrt{1-x^2}\big) + g\big(x, -\sqrt{1-x^2}\big) \Big) \frac{\D x}{\sqrt{1-x^2}}
 \end{align*}
 for some function $g$. Then, integrating the even function $f_e$ we have
 \begin{align*}
 	&\int_\Omega f_e(x,y,z) \: \genjacw^{(a,0)}(z) \: \D \sigma(x,y) \: \D z \\
-	&\quad \quad = \int_\alpha^1 \genjacw^{(a,0)}(z) \: \Big( \int_0^{2\pi} f_e\big(\rho(z)\cos(\theta),\rho(z)\sin(\theta), z\big) \: \D \theta \Big) \: \D z \\
+	&\quad \quad = \int_\alpha^1 \genjacw^{(a,0)}(z) \: \Big( \int_0^{2\pi} f_e\big(\rho(z)\cos(\theta),\rho(z)\sin\theta, z\big) \: \D \theta \Big) \: \D z \\
 	&\quad \quad = 2 \int_\alpha^1 \genjacw^{(a,0)}(z) \: \Big( \int_{-1}^1 f_e\big(\rho(z)x,\rho(z)\sqrt{1-x^2}, z\big) \: \D x \Big) \: \D z \\
 	&\quad \quad \approx \int_\alpha^1 \genjacw^{(a,0)}(z) \: \Big( \sum_{l=1}^{M_2} w_l^{(s)} f_e\big(\rho(z) s_l, \rho(z) \sqrt{1 - s_l^2}, z\big) \Big) \: \D z \quad (\star) \\
 	&\quad \quad \approx \sum_{j=1}^{M_1} w_j^{(t)} \sum_{l=1}^{M_2} w_l^{(s)} f_e\big(\rho(t_j) s_l, \rho(t_j) \sqrt{1 - s_l^2}, t_j\big) \quad (\star \star) \\
@@ -1249,7 +1256,7 @@ Suppose $f$ is a polynomial in $x,y,z$ of degree $N$, and hence that $f_e$ is a 
 Integrating the odd function $f_o$ results in
 \begin{align*}
 	&\int_\Omega f_o(x,y,z) \: \genjacw^{(a,0)}(z) \: \D \sigma(x,y) \: \D z \\
-	&\quad \quad = \int_\alpha^1 \genjacw^{(a,0)}(z) \: \Big( \int_0^{2\pi} f_o\big(\rho(z)\cos(\theta),\rho(z)\sin(\theta), z)\big) \: \D \theta \Big) \: \D z \\
+	&\quad \quad = \int_\alpha^1 \genjacw^{(a,0)}(z) \: \Big( \int_0^{2\pi} f_o\big(\rho(z)\cos(\theta),\rho(z)\sin\theta, z)\big) \: \D \theta \Big) \: \D z \\
 	&\quad \quad = \int_\alpha^1 \genjacw^{(a,0)}(z) \: \Big( \int_{-1}^1 \Big[ f_o\big(\rho(z)x,\rho(z)\sqrt{1-x^2}, z\big) + f_o\big(\rho(z)x, - \rho(z)\sqrt{1-x^2}, z\big) \big] \: \D x \Big) \: \D z \\
 	&\quad \quad = \int_\alpha^1 \genjacw^{(a,0)}(z) \: \Big( \int_{-1}^1 \Big[ f_o\big(\rho(z)x,\rho(z)\sqrt{1-x^2}, z\big) - f_o\big(\rho(z)x, \rho(z)\sqrt{1-x^2}, z\big) \big] \: \D x \Big) \: \D z \\
 	&\quad \quad = 0.
@@ -1293,8 +1300,8 @@ where $M = M_1 M_2$ and $2M_1 - 1 \ge N, 2M_2 - 1 \ge N$.
 %Now, we have that
 %\begin{align*}
 %	&\int_\Omega f_e(x,y,z) \: \genjacw^{(a,0)}(z) \: \D \sigma(x,y) \: \D z \\
-%	&\quad \quad = \int_0^{\cos^{-1}(\alpha)} \int_0^{2\pi} f_e\big(\cos(\theta)\sin(\phi), \sin(\theta)\sin(\phi), \cos(\phi)\big) \: \genjacw^{(a,0)}\big(\cos(\phi)\big) \: \sin(\phi) \: \D \theta \: \D \phi \\
-%	&\quad \quad = \int_\alpha^1 \genjacw^{(a,0)}(z) \: \Big( \int_0^{2\pi} f_e\big(\rho(z)\cos(\theta),\rho(z)\sin(\theta), z)\big) \: \D \theta \Big) \: \D z \\
+%	&\quad \quad = \int_0^{\cos^{-1}(\alpha)} \int_0^{2\pi} f_e\big(\cos(\theta)\sin(\varphi), \sin\theta\sin(\varphi), \cos(\varphi)\big) \: \genjacw^{(a,0)}\big(\cos(\varphi)\big) \: \sin(\varphi) \: \D \theta \: \D \varphi \\
+%	&\quad \quad = \int_\alpha^1 \genjacw^{(a,0)}(z) \: \Big( \int_0^{2\pi} f_e\big(\rho(z)\cos(\theta),\rho(z)\sin\theta, z)\big) \: \D \theta \Big) \: \D z \\
 %	&\quad \quad = \int_\alpha^1 \genjacw^{(a,0)}(z) \: \Big( \int_{\norm{\bm{\xi}} = 1} f_e\big(\rho(z)\bm{\xi}, z)\big) \: \D \sigma(\bm{\xi}) \Big) \: \D z \\
 %	&\quad \quad \approx\int_\alpha^1 \genjacw^{(a,0)}(z) \: \Big( \sum_{l=1}^{M_2} w_l^{(s)} f_e\big(\rho(z) \mathbf{s}_l, z\big) \Big) \: \D z \quad (\star) \\
 %	&\quad \quad \approx \sum_{j=1}^{M_1} w_j^{(t)} \sum_{l=1}^{M_2} w_l^{(s)} f_e\big(\rho(t_j) \mathbf{s}_l, t_j\big) \quad (\star \star) \\
@@ -1305,8 +1312,8 @@ where $M = M_1 M_2$ and $2M_1 - 1 \ge N, 2M_2 - 1 \ge N$.
 %Next, note that 
 %\begin{align*}
 %	&\int_\Omega f_o(x,y,z) \: \genjacw^{(a,0)}(z) \: \D \sigma(x,y) \: \D z \\
-%	&\quad \quad = \int_0^{\cos^{-1}(\alpha)} \int_0^{2\pi} f_o\big(\cos(\theta)\sin(\phi), \sin(\theta)\sin(\phi), \cos(\phi)\big) \: \genjacw^{(a,0)}\big(\cos(\phi)\big) \: \sin(\phi) \: \D \theta \: \D \phi \\
-%	&\quad \quad = \int_\alpha^1 \genjacw^{(a,0)}(z) \: \Big( \int_0^{2\pi} f_o\big(\rho(z)\cos(\theta),\rho(z)\sin(\theta), z)\big) \: \D \theta \Big) \: \D z \\
+%	&\quad \quad = \int_0^{\cos^{-1}(\alpha)} \int_0^{2\pi} f_o\big(\cos(\theta)\sin(\varphi), \sin\theta\sin(\varphi), \cos(\varphi)\big) \: \genjacw^{(a,0)}\big(\cos(\varphi)\big) \: \sin(\varphi) \: \D \theta \: \D \varphi \\
+%	&\quad \quad = \int_\alpha^1 \genjacw^{(a,0)}(z) \: \Big( \int_0^{2\pi} f_o\big(\rho(z)\cos(\theta),\rho(z)\sin\theta, z)\big) \: \D \theta \Big) \: \D z \\
 %	&\quad \quad = \int_\alpha^1 \genjacw^{(a,0)}(z) \: \Big( \int_{\norm{\bm{\xi}} = 1} f_o\big(\rho(z)\bm{\xi}, z)\big) \: \D \sigma(\bm{\xi}) \Big) \: \D z \quad (\dagger) \\
 %	&\quad \quad = 0
 %\end{align*}
@@ -1383,7 +1390,7 @@ For a function $f$, with coefficients vector $\bm{f}$ for expansion in the $\{\s
 			\tilde{\bm{f}}_N
 		\end{pmatrix} \in \R^{(N+1)^2}.
 \end{align*}
-The Clenshaw algorithm is then \cite{}\bstodoinline{Reference for Clenshaw in >1 dimensions???} 
+The trivariate Clenshaw algorithm works similar to the bivariate Clenshaw algorithm introduced in \cite{olver2019triangle}:
 \begin{align*}
 	\quad &\text{1) } \text{Set } \bm{\xi}_{N+2} = \bold{0}, \: \bm{\xi}_{N+2} = \bold{0}. \\
 	\quad &\text{2) } \text{For } n = N:-1:0 \\
@@ -1417,7 +1424,7 @@ where at each iteration, $\bm{\xi}_n$ is a vector of matrices.
 
 
 %
-\section{Examples on the disk-slice with zero Dirichlet conditions}\label{Section:Examples}
+\section{Examples on spherical caps with zero Dirichlet conditions}\label{Section:Examples}
 
 We now demonstrate how the sparse linear systems constructed as above can be used to efficiently solve PDEs with zero Dirichlet conditions on the spherical cap defined by $\Omega$. We consider Poisson, inhomogeneous variable coefficient Helmholtz equation and the Biharmonic equation, as well as a time dependent heat equation, demonstrating the versatility of the approach.
 
@@ -1471,7 +1478,10 @@ We now demonstrate how the sparse linear systems constructed as above can be use
 	\includegraphics[scale=0.3]{solutionblocknorms-helmholtz-N=100}
         	%\label{fig:solutionblocknorms-poisson}
 	\end{subfigure}
-	\caption{Left: The computed solution to $\Delta u + k^2 \: v \: u = f$ with zero boundary conditions with $f(x,y,z) = y e^x \genjacw^{(1,0)}(z)$, $v(x,y,z) = 1 - (3(x-x_0)^2 + 5(y-y_0)^2 + 2(z-z_0)^2)$ where $(x_0, z_0) := (0.7, 0.2)$, $y_0 := \sqrt{(x_0^2 + z_0^2)}$ and $k = 100$. Right: The norms of each block of the computed solution of the Helmholtz equation with the given right hand side functions, with $k=20$ and the same function $v$ (again, $\bf{p}$ is simply a point on the spherical cap surface away from the pole and boundary). This demonstrates spectral convergence observed.}
+	\caption{Left: The computed solution to $\Delta u + k^2 \: v \: u = f$ with zero boundary conditions with $f(x,y,z) = y e^x \genjacw^{(1,0)}(z)$, $v(x,y,z) = 1 - (3(x-x_0)^2 + 5(y-y_0)^2 + 2(z-z_0)^2)$ where $(x_0, z_0) := (0.7, 0.2)$, $y_0 := \sqrt{(x_0^2 + z_0^2)}$ and $k = 100$. Right: The norms of each block of the computed solution of the Helmholtz equation with the given right hand side functions, with $k=20$ and the same function $v$ (again, $\bf{p}$ is simply a point on the spherical cap surface away from the pole and boundary). This demonstrates spectral convergence observed.
+	\sotodoinline{Change $x$-axis to use normal (not logarithmic) scaling: this will change exponential convergence to more readable straight lines. For examples, having  nearby singularities (e.g.  something like$f(\vc x) = \|\vc x - (1,1,1) * (1 /\sqrt 3 + \epsilon)\|$) should give different exponential convergence rates.}
+	\sotodoinline{Just write out $W$ in terms of $z$}
+	}
 	\centering
 	\label{fig:helmholtz}
 \end{figure}
@@ -1493,10 +1503,10 @@ We now demonstrate how the sparse linear systems constructed as above can be use
 \end{figure}
 % END FIGURES
 
-The Poisson equation is the classic problem of finding $u(x,y)$ given a function $f(x,y)$ such that:
+The Poisson equation is the classic problem of finding $u(x,y,z)$ given a function $f(x,y,z)$ such that:
 \begin{align}
 	\begin{cases}
-    		\nabla^2 u(x,y,z) = f(x,y,z) &\quad \text{in } \Omega \\
+\DeltaS u(x,y,z) = f(x,y,z) &\quad \text{in } \Omega \\
 		u(x,y,z) = 0& \quad \text{on } \partial \Omega
 	\end{cases}
 	\label{eqn:poisson}
@@ -1508,7 +1518,7 @@ We can tackle the problem as follows. Choose an $N \in \N$ large enough for the 
     \Delta_W^{(1)} \mathbf{u} = \mathbf{f}
 \end{align*}
 which can be solved to find $\mathbf{u}$.
-In Figure \ref{fig:poisson} we see the solution to the Poisson equation with zero boundary conditions given in (\ref{eqn:poisson}) in the disk-slice $\Omega$. In Figure \ref{fig:poisson} we also show the norms of each block of calculated coefficients of the approximation for four right-hand sides of the Poisson equation with $N = 100$, that is, $(N+1)^2 = 10,201$ unknowns. In the plot, a "block" is simply the group of coefficients corresponding to OPs of the same degree, and so the plot shows how the norms of these blocks decay as the degree of the expansion increases. Thus, the rate of decay in the coefficients is a proxy for the rate of convergence of the computed solution: as typical of spectral methods, we expect the numerical scheme to converge at the same rate as the coefficients decay. We see that we achieve spectral convergence \bstodo{Add to the comments here}
+In Figure \ref{fig:poisson} we see the solution to the Poisson equation with zero boundary conditions given in (\ref{eqn:poisson}) in the disk-slice $\Omega$. In Figure \ref{fig:poisson} we also show the norms of each block of calculated coefficients of the approximation for four right-hand sides of the Poisson equation with $N = 100$, that is, $(N+1)^2 = 10,201$ unknowns. In the plot, a ``block'' is simply the group of coefficients corresponding to OPs of the same degree, and so the plot shows how the norms of these blocks decay as the degree of the expansion increases. Thus, the rate of decay in the coefficients is a proxy for the rate of convergence of the computed solution: as typical of spectral methods, we expect the numerical scheme to converge at the same rate as the coefficients decay. We see that we achieve spectral convergence \bstodo{Add to the comments here}
 
 \bstodoinline{Are there more suitable RHSs for the block norms plot that will demonstrate further properties? Or as there are no corners, we are pretty limited?}
 
@@ -1518,14 +1528,14 @@ In Figure \ref{fig:poisson} we see the solution to the Poisson equation with zer
 Find $u(x,y)$ given functions $v$, $f : \Omega \to \R$ such that:
 \begin{align}
 	\begin{cases}
-    		\nabla^2 u(x,y,z) + k^2 \: v(x,y,z) \; u(x,y,z) = f(x,y,z) &\quad \text{in } \Omega \\
+    		\DeltaS u(x,y,z) + k^2 \: v(x,y,z) \; u(x,y,z) = f(x,y,z) &\quad \text{in } \Omega \\
 		u(x,y,z) = 0 &\quad \text{on } \partial \Omega
 	\end{cases}
 	\label{eqn:helmholtz}
 \end{align}
 where $k \in \R$, noting the imposition of zero Dirichlet boundary conditions on $u$.
 
-We can tackle the problem as follows. Denote the coefficient vector for expansion of $u$ in the $\bigWNi$ OP basis up to degree $N$ by $\mathbf{u}$, and the coefficient vector for expansion of $f$ in the $\bigscopNi$ OP basis up to degree $N$ by $\mathbf{f}$. Since $f$ is known, we can obtain  the coefficients $\mathbf{f}$ using the quadrature rule in Section \ref{subsection:expandingfunctions}. We can obtain the matrix operator for the variable-coefficient function $v(x,y,z)$ by using the Clenshaw algorithm with matrix inputs as the Jacobi matrices ${J_x^{(0)}}^\top, {J_y^{(0)}}^\top, {J_z^{(0)}}^\top$, yielding an operator matrix of the same dimension as the input Jacobi matrices a la the procedure introduced in \cite{olver2019triangle}. We can denote the resulting operator acting on coefficients in the $\bigscopNo$ space by $V({J_x^{(0)}}^\top, {J_y^{(0)}}^\top, {J_z^{(0)}}^\top)$. In matrix-vector notation, our system hence becomes:
+We can tackle the problem as follows. Denote the coefficient vector for expansion of $u$ in the $\bigWNi$ OP basis up to degree $N$ by $\mathbf{u}$, and the coefficient vector for expansion of $f$ in the $\bigscopNi$ OP basis up to degree $N$ by $\mathbf{f}$. Since $f$ is known, we can obtain  the coefficients $\mathbf{f}$ using the quadrature rule in Section \ref{subsection:expandingfunctions}. We can obtain the matrix operator for the variable-coefficient function $v(x,y,z)$ by using the Clenshaw algorithm with matrix inputs as the Jacobi matrices\sotodo{It would be cleaner defining $X := (J_x^{(0)})^\top$, $Y := ...$, $Z := ...$} ${J_x^{(0)}}^\top, {J_y^{(0)}}^\top, {J_z^{(0)}}^\top$, yielding an operator matrix of the same dimension as the input Jacobi matrices a la the procedure introduced in \cite{olver2019triangle}. We can denote the resulting operator acting on coefficients in the $\bigscopNo$ space by $V({J_x^{(0)}}^\top, {J_y^{(0)}}^\top, {J_z^{(0)}}^\top)$. In matrix-vector notation, our system hence becomes:
 \begin{align*}
     (\Delta_W^{(1)} + k^2 \:T^{(0)\to(1)} \: V \: T_W^{(1)\to(0)}) \: \mathbf{u} = \mathbf{f}
 \end{align*}
@@ -1536,14 +1546,14 @@ which can be solved to find $\mathbf{u}$. We can see the sparsity and structure 
 We can extend this to constant non-zero boundary conditions by simply noting that the problem 
 \begin{align*}
 	\begin{cases}
-    		\nabla^2 u(x,y,z) + k^2 \: v(x,y,z) \; u(x,y,z) = f(x,y,z) &\quad \text{in } \Omega \\
+    		\DeltaS u(x,y,z) + k^2 \: v(x,y,z) \; u(x,y,z) = f(x,y,z) &\quad \text{in } \Omega \\
 		u(x,y,z) = c \in \R &\quad \text{on } \partial \Omega
 	\end{cases}
 \end{align*}
 is equivalent to letting $u = \tilde{u} + c$ and solving
 \begin{align*}
 	\begin{cases}
-    		\nabla^2 \tilde{u}(x,y,z) + k^2 \: v(x,y,z) \; \tilde{u}(x,y,z) = f(x,y,z) - c \: k^2 \: v(x,y,z) \; =: g(x,y,z)  \quad \text{in } \Omega \\
+    		\DeltaS \tilde{u}(x,y,z) + k^2 \: v(x,y,z) \; \tilde{u}(x,y,z) = f(x,y,z) - c \: k^2 \: v(x,y,z) \; =: g(x,y,z)  \quad \text{in } \Omega \\
 		\tilde{u}(x,y,z) = 0 \quad \text{on } \partial \Omega
 	\end{cases}
 \end{align*}
@@ -1567,11 +1577,11 @@ where $\Delta^2$ is the Biharmonic operator, noting the imposition of zero Diric
 %
 \section{Conclusions}
 
-We have shown that tri-variate orthogonal polynomials can lead to sparse discretizations of general linear PDEs on spherical cap domains, with Dirichlet boundary conditions on the $z = \alpha \in (0,1)$ boundary. This work provides a detailed practical framework for the application of the methods described for quadratic surfaces of revolution \cite{olver2020orthogonal}, by utilising the non-classical 1D OPs on the interval $[\alpha, 1]$ with the weight $(z - \alpha)^a \: \sqrt{(1-z^2)}^b$ defined for the disk-slice case \cite{snowball2019sparse}. This work also forms a building block in developing an $hp-$finite element method to solve PDEs on the sphere by using spherical band and spherical cap shaped elements.
+We have shown that trivariate orthogonal polynomials can lead to sparse discretizations of general linear PDEs on spherical cap domains, with Dirichlet boundary conditions on the $z = \alpha \in (0,1)$ boundary. We have provided a detailed practical framework for the application of the methods described for quadratic surfaces of revolution \cite{olver2020orthogonal}, by utilising the non-classical 1D OPs on the interval $[\alpha, 1]$ with the weight $(z - \alpha)^a \: \sqrt{(1-z^2)}^b$ defined for the disk-slice case \cite{snowball2019sparse}. This  also forms a building block in developing an $hp-$finite element method to solve PDEs on the sphere by using spherical band and spherical cap shaped elements.
 
 This work serves as a stepping stone to constructing similar methods to solve partial differential equations on other 3D sub-domains of the sphere -- it is clear from the construction in this paper that discretizations of spherical gradients and Laplacian's are sparse on other suitable sub-components of the sphere. The resulting sparsity in high-polynomial degree discretizations presents an attractive alternative to methods based on bijective mappings (e.g., \cite{DGShallowWater,FEMShallowWater,boyd2005sphere}). Constructing these sparse spectral methods for surface PDEs on spherical bands and spherical triangles is future work, and has applications in weather prediction \cite{staniforth2012horizontal}.
 
-The next stage of this work is to develop an orthogonal basis for the tangent space of the spherical cap/band, and obtain sparse differential operators for gradient, divergence etc. On the complete sphere, the vector spherical harmonics that form the orthogonal basis are simply the gradients and perpendicular gradients of the scalar spherical harmonics \cite{barrera1985vector} -- however, we do not have that luxury for the spherical cap or band, and hence the choice of basis will not be as straightforward.
+The next stage is to develop an orthogonal basis for the tangent space of the spherical cap/band, and obtain sparse differential operators for gradient, divergence etc. On the complete sphere, the vector spherical harmonics that form the orthogonal basis are simply the gradients and perpendicular gradients of the scalar spherical harmonics \cite{barrera1985vector} which has been used effectively for solving PDEs on the sphere \cite{vasil2019tensor,lecoanet2019tensor} -- however, we do not have that luxury for the spherical cap or band, and hence the choice of basis will not be as straightforward.
 
 
 %\noindent{\bf Acknowledgements}:  We would like to thank the anonymous referees for their helpful comments.  The second author was supported in part by the Leverhulme Trust Research Project Grant RPG-2019-144 ``Constructive approximation theory on and inside algebraic curves and surfaces.
@@ -1583,6 +1593,8 @@ The next stage of this work is to develop an orthogonal basis for the tangent sp
 \section{P-finite element methods using sparse operators}\label{Appendix:PFEM}
 
 \bstodoinline{Is this worth including?}
+
+\sotodoinline{It's already a very long paper so probably better to skip this. But include it in your thesis}
 
 %\begin{figure}[t]
 %	\begin{subfigure}{0.3\textwidth}
@@ -1609,7 +1621,7 @@ The next stage of this work is to develop an orthogonal basis for the tangent sp
 We follow the method of \cite{beuchler2006new} to construct a sparse $p$-finite element method in terms of the operators constructed above, with the benefit of ensuring that the resulting discretisation is symmetric. Consider the 3D Dirichlet problem on a domain $\Omega$:
 \begin{align*}
 	\begin{cases}
-         - \rho(z)^2 \: \nabla^2 u(x,y,z) = \rho(z)^2 \: f(x,y,z) \quad \text{in } \Omega \\
+         - \rho(z)^2 \: \DeltaS u(x,y,z) = \rho(z)^2 \: f(x,y,z) \quad \text{in } \Omega \\
          u = 0 \quad \text{on } \partial \Omega
          \end{cases}
 \end{align*}
@@ -1637,9 +1649,9 @@ Let $\mathbf{u}, \mathbf{v}$ be the coefficient vectors of the expansions of $u_
 \begin{align*}
 	a(u_p,v_p) &= \int_\element \big(\rho \: \nabla u\big) \cdot \big(\rho \: \nabla v\big) \: \D \sigma(\bm{x}, z) \\
 	&= \int_\element \Big( \rhoppphi u_p \: \rhoppphi v_p + \pptheta u_p \: \pptheta v_p \Big) \: \D \sigma(\bm{x}, z) \\
-	&= \int_\element \Big( \mathbf{v}^\top {W_\phi^{(1)}}^\top \bigscopo_p {\bigscopo_p}^\top W_\phi^{(1)} \mathbf{u} \nonumber \\
+	&= \int_\element \Big( \mathbf{v}^\top {W_\varphi^{(1)}}^\top \bigscopo_p {\bigscopo_p}^\top W_\varphi^{(1)} \mathbf{u} \nonumber \\
 					& \quad \quad \quad + \mathbf{v}^\top ({T_W^{(1)\to(0)} D_\theta})^\top \bigscopa_p {\bigscopa_p}^\top T_W^{(1)\to(0)} D_\theta \mathbf{u}  \Big) \: \D \sigma(\bm{x}, z) \\
-	&= \mathbf{v}^\top \: \Big( {W_\phi^{(1)}}^\top \Lambda^{(0)}  W_\phi^{(1)} + ({T_W^{(1)\to(0)} D_\theta})^\top \Lambda^{(0)} T_W^{(1)\to(0)} D_\theta \Big) \: \mathbf{u}.
+	&= \mathbf{v}^\top \: \Big( {W_\varphi^{(1)}}^\top \Lambda^{(0)}  W_\varphi^{(1)} + ({T_W^{(1)\to(0)} D_\theta})^\top \Lambda^{(0)} T_W^{(1)\to(0)} D_\theta \Big) \: \mathbf{u}.
 \end{align*}
 Further, let $\mathbf{f}$ is the coefficient vector for the expansion of the function $f(x,y,z)$ in the $\bigscopi_p$ OP basis and let $P$ be the operator for multiplication by $\rho(z)^2$, that is the operator matrix defined by $P^\top \bigscopi_p(x,y,z) = \rho(z)^2 \: \bigscopi_p(x,y,z)$. Then,
 \begin{align*}
@@ -1658,7 +1670,7 @@ Since (\ref{eqn:FEMweakform}) is equivalent to stating that
 \end{align*}
 where the (element) stiffness matrix $A$ is defined by 
 \begin{align*}
-	A =  {W_\phi^{(1)}}^\top \Lambda^{(0)}  W_\phi^{(1)} + ({T_W^{(1)\to(0)} D_\theta})^\top \Lambda^{(0)} T_W^{(1)\to(0)} D_\theta
+	A =  {W_\varphi^{(1)}}^\top \Lambda^{(0)}  W_\varphi^{(1)} + ({T_W^{(1)\to(0)} D_\theta})^\top \Lambda^{(0)} T_W^{(1)\to(0)} D_\theta
 \end{align*}
 and the load vector $\tilde{\mathbf{f}}$ is given by 
 \begin{align*}
