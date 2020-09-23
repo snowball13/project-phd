@@ -1665,35 +1665,49 @@ function getlaplacianval(S::SphericalCapSpace{<:Any, B, T, <:Any},
                             ptsr::Vector{B}, wr::Vector{B}, rhoptsr2::Vector{B},
                             w10ptsr::Vector{B}, n::Int, m::Int, k::Int;
                             weighted::Bool=false, specialcase::Bool=false) where {B,T}
+    # specialcase == true if S.a == 1 == St.a and S is a weighted space
+
     a = Int(S.params[1])
-    if specialcase && weighted
+    rhoptsr2k = rhoptsr2.^k
+    rhoptsr2kp2 = rhoptsr2k .* rhoptsr2
+    if specialcase
+        if !weighted
+            error("specialcase true only if weighted true")
+        end
         R = getRspace(S, k)
-        ret = - inner2(R, getptsevalforop(R, n-k) .* getptsevalforop(R, m-k) .* rhoptsr2.^k,
+        ret = - inner2(R, getptsevalforop(R, n-k) .* getptsevalforop(R, m-k) .* rhoptsr2k,
                         (2(k+1) * ptsr .+ k*(k+1) * w10ptsr),
                         wr)
         ret -= inner2(R, w10ptsr .* getderivptsevalforop(R, n-k),
-                        getderivptsevalforop(R, m-k) .* rhoptsr2.^(k+1), wr)
+                        getderivptsevalforop(R, m-k) .* rhoptsr2kp2,
+                        wr)
         ret / getopnorm(R)
     elseif weighted
+        ã = a - Int(St.params[1])
         R = getRspace(S, k); Rt = getRspace(St, k)
         ret = inner2(Rt, getptsevalforop(R, n-k) .* getptsevalforop(Rt, m-k),
-                        (-k^2 * w10ptsr.^2
-                            .- 2 * a * (k+1) * ptsr .* w10ptsr
-                            .+ a * (a-1) * rhoptsr2) .* rhoptsr2.^k,
+                        (-k * (k+1) * w10ptsr.^ã
+                            - 2 * a * (k+1) * ptsr .* w10ptsr.^(ã-1)
+                            + a * (a-1) * rhoptsr2 .* w10ptsr.^(ã-2)) .* rhoptsr2k,
                         wr)
-        ret += inner2(Rt, a * getderivptsevalforop(R, n-k) .* w10ptsr,
-                        getptsevalforop(Rt, m-k) .* rhoptsr2.^(k+1), wr)
-        ret -= inner2(Rt, getderivptsevalforop(R, n-k) .* w10ptsr.^2,
-                        getderivptsevalforop(Rt, m-k) .* rhoptsr2.^(k+1), wr)
+        ret += inner2(Rt, a * getderivptsevalforop(R, n-k) .* w10ptsr.^(ã-1),
+                        getptsevalforop(Rt, m-k) .* rhoptsr2kp2,
+                        wr)
+        ret -= inner2(Rt, getderivptsevalforop(R, n-k) .* w10ptsr.^ã,
+                        getderivptsevalforop(Rt, m-k) .* rhoptsr2kp2,
+                        wr)
         ret / getopnorm(Rt)
     else
         ã = Int(St.params[1]) - a
         R = getRspace(S, k); Rt = getRspace(St, k)
-        ret = - inner2(R, getptsevalforop(R, n-k) .* getptsevalforop(Rt, m-k),
-                        k * (k+1) * w10ptsr.^ã, wr)
-        ret -= inner2(R, getderivptsevalforop(R, n-k) .* ptsr.^2,
-                        (getderivptsevalforop(Rt, m-k) .* w10ptsr.^ã
-                            .+ (a + ã) * getptsevalforop(Rt, m-k) .* w10ptsr.^(ã-1)),
+        ret = - k * (k+1) * inner2(R, getptsevalforop(R, n-k) .* rhoptsr2k,
+                                    getptsevalforop(Rt, m-k) .* w10ptsr.^ã,
+                                    wr)
+        ret -= (a + ã) * inner2(R, getderivptsevalforop(R, n-k) .* rhoptsr2kp2,
+                                    getptsevalforop(Rt, m-k) .* w10ptsr.^(ã-1),
+                                    wr)
+        ret -= inner2(R, getderivptsevalforop(R, n-k) .* rhoptsr2kp2,
+                        getderivptsevalforop(Rt, m-k) .* w10ptsr.^ã,
                         wr)
         ret / getopnorm(Rt)
     end
@@ -1708,82 +1722,107 @@ function laplacianoperator(S::SphericalCapSpace{<:Any, B, T, <:Any},
     #   w_R^{(a,0)} Q^{a} -> w_R^{(a-ã,0)} Q^{a-ã}, where ã≥2, a≥ã  OR
     #   Q^{a} -> Q^{a+ã}, where ã≥2.
 
+    # TODO how many pts needed?
+
     @assert (Int(S.params[1]) ≥ 0 && Int(St.params[1]) ≥ 0) "Invalid SphericalCapSpace"
+
+    # Determine which case we have, and set the appropriate objects
+    specialcase = false
     if Int(S.params[1]) == 1 && weighted && Int(St.params[1]) == 1 # Special case
-        # resizedataonedimops! for the SCSpace
-        resizedataonedimops!(S, N+5)
-
-        # Get pts and weights, and set the R norms
-        # TODO how many pts needed?
-        ptsr, wr = pointswithweights(B, getRspace(S, 0), N+4) # R^{(a, 1)}
-        getopnorms(S, N)
-
-        # Evaluate ρ.(ptsr).^2 at the R inner product points
-        rhoptsr2 = S.family.ρ.(ptsr).^2
-        w10ptsr = ptsr .- S.family.α
-
-        band1 = 1
-        band2 = 1
-        bandm = square ? 0 : band2
-        A = BandedBlockBandedMatrix(Zeros{B}((N+bandm+1)^2, (N+1)^2),
-                                    [N+bandm+1; 2(N+bandm):-2:1], [N+1; 2N:-2:1],
-                                    (0, 0), (2band2, 2band1))
-        for k = 0:N
-            if k % 20 == 0
-                @show "Δ", k
-            end
-            R = getRspace(S, k)
-            getopptseval(R, N-k+band2, ptsr); getderivopptseval(R, N-k+band2, ptsr)
-            for n = k:N, m = max(0, n-band1):min(n+band2, N+bandm)
-                if k ≤ m
-                    val = getlaplacianval(S, St, ptsr, wr, rhoptsr2, w10ptsr, n, m, k;
-                                            weighted=weighted, specialcase=true)
-                    for i = 0:min(1,k)
-                        view(A, Block(k+1, k+1))[getblockindex(S, m, k, i), getblockindex(S, n, k, i)] = val
-                    end
-                end
-            end
-            resetopptseval(R); resetderivopptseval(R)
-        end
-        A
+        band1, band2 = 1, 1
+        Rpts = getRspace(S, 0)
+        specialcase = true
+    elseif weighted && Int(S.params[1]) - Int(St.params[1]) == 2 # Could be ≥ 2
+        ã = Int(S.params[1]) - Int(St.params[1])
+        band1, band2 = 0, ã
+        Rpts = getRspace(St, 0)
+    elseif !weighted && Int(St.params[1]) - Int(S.params[1]) == 2 # Could be ≥ 2
+        ã = Int(St.params[1]) - Int(S.params[1])
+        band1, band2 = ã, 0
+        Rpts = getRspace(S, 0)
     else
-        if weighted && Int(S.params[1]) - Int(St.params[1]) == 2 # Could be ≥ 2
-            ã = Int(S.params[1]) - Int(St.params[1])
-        elseif !weighted && Int(St.params[1]) - Int(S.params[1]) == 2 # Could be ≥ 2
-            ã = Int(St.params[1]) - Int(S.params[1])
-        else
-            error("Invalid SphericalCapSpace")
+        error("Invalid SphericalCapSpace")
+    end
+
+    # Create matrix
+    bandm = square ? 0 : band2
+    A = BandedBlockBandedMatrix(Zeros{B}((N+bandm+1)^2, (N+1)^2),
+                                [N+bandm+1; 2(N+bandm):-2:1], [N+1; 2N:-2:1],
+                                (0, 0), (2band2, 2band1))
+
+    # Gather data
+    resizedataonedimops!(S, N+5)
+    resizedataonedimops!(St, N+5)
+    getopnorms(St, N+band2)
+    ptsr, wr = pointswithweights(B, Rpts, N+4)
+
+    # Evaluate ρ.(ptsr).^2 at the R inner product points
+    rhoptsr2 = S.family.ρ.(ptsr).^2
+    w10ptsr = ptsr .- S.family.α
+
+    # Begin assigning entries
+    for k = 0:N
+        if k % 20 == 0
+            @show "Δ", weighted, k
         end
-        A = BandedBlockBandedMatrix(Zeros{B}((N+bandm+1)^2, (N+1)^2),
-                                    [N+bandm+1; 2(N+bandm):-2:1], [N+1; 2N:-2:1],
-                                    (0, 0), (2band2, 2band1))
-        for k = 0:N
-            if k % 20 == 0
-                @show "Δ", weighted, k
-            end
-            R = getRspace(S, k); Rt = getRspace(St, k)
-            getopptseval(R, N-k+band2, ptsr)
+        R = getRspace(S, k)
+        getopptseval(R, N-k+band2, ptsr)
+        getderivopptseval(R, N-k+band2, ptsr)
+        if !specialcase
+            Rt = getRspace(St, k)
             getopptseval(Rt, N-k+band2, ptsr)
             getderivopptseval(Rt, N-k+band2, ptsr)
-            getderivopptseval(R, N-k+band2, ptsr)
-            for n = k:N, m = max(0, n-band1):min(n+band2, N+bandm)
-                if k ≤ m
-                    val = getlaplacianval(S, St, ptsr, wr, rhoptsr2, w10ptsr, n, m, k;
-                                            weighted=weighted)
-                    for i = 0:min(1,k)
-                        view(A, Block(k+1, k+1))[getblockindex(St, m, k, i), getblockindex(S, n, k, i)] = val
-                    end
+        end
+        for n = k:N, m = max(0, n-band1):min(n+band2, N+bandm)
+            if k ≤ m
+                val = getlaplacianval(S, St, ptsr, wr, rhoptsr2, w10ptsr, n, m, k;
+                                        weighted=weighted, specialcase=specialcase)
+                for i = 0:min(1,k)
+                    view(A, Block(k+1, k+1))[getblockindex(St, m, k, i), getblockindex(S, n, k, i)] = val
                 end
             end
-            resetopptseval(R); resetderivopptseval(R)
+        end
+        resetopptseval(R); resetderivopptseval(R)
+        if !specialcase
             resetopptseval(Rt); resetderivopptseval(Rt)
         end
-        A
     end
     A
 end
 
-# The operator for ρ²Δ
+function biharmonicoperator(S2::SphericalCapSpace{<:Any, B, T, <:Any}, N::Int;
+                            weighted::Bool=true, square::Bool=false) where {B,T}
+    @assert (Int(S2.params[1]) == 2 && weighted) "Invalid SphericalCapSpace" # We could have any number over 1
+    S0 = S2.family(S2.params .* 0)
+    Δ = laplacianoperator(S0, S2, N+2; weighted=false)
+    Δw = laplacianoperator(S2, S0, N; weighted=true)
+    bihar = Δ * Δw
+    if square
+        squareoperator(S2, bihar, N)
+    else
+        bihar
+    end
+end
+
+function squareoperator(S::SphericalCapSpace{<:Any, B, T, <:Any},
+                        A::BandedBlockBandedMatrix, N::Int) where {B,T}
+    """ this is to square the given operator, by reassigning the non-zero
+        entries correctly for given N value
+    """
+    @assert (N < blocksize(A)[1] - 1 && N == blocksize(A)[2] - 1) "Invalid size of A or incorrect N val"
+    C = BandedBlockBandedMatrix(Zeros{B}((N+1)^2, (N+1)^2),
+                                [N+1; 2N:-2:1], [N+1; 2N:-2:1],
+                                (A.l, A.u), (A.λ, A.μ))
+    for k = 1:N
+        inds = 1:2(N-k+1)
+        view(C, Block(k+1, k+1)) .= view(A, Block(k+1, k+1))[inds, inds]
+    end
+    k = 0
+    view(C, Block(k+1, k+1)) .= view(A, Block(k+1, k+1))[1:N+1, 1:N+1]
+    C
+end
+
+# The operator for ρ²Δ # NOTE OBSOLETE
 function rho2laplacianoperator(S::SphericalCapSpace, St::SphericalCapSpace, N::Int;
                                 weighted=true, square=false)
     # Outputs the sum(1:N+1) × sum(1:N+1) matrix operator if square=true
@@ -1849,57 +1888,6 @@ function rho2laplacianoperator(S::SphericalCapSpace, St::SphericalCapSpace, N::I
         end
     end
 end
-
-function biharmonicoperator(S2::SphericalCapSpace{<:Any, B, T, <:Any}, N::Int;
-                            weighted::Bool=true, square::Bool=false) where {B,T}
-    @assert (Int(S2.params[1]) == 2 && weighted) "Invalid SphericalCapSpace"
-
-    S0 = S2.family(0.0, 0.0)
-    S1 = S2.family(1.0, 0.0)
-    degv = 3
-    v = Fun((x,y,z)->2z^2 - 2S2.family.ρ(z)^2 + 3z, S2, 2(degv+1)^2)
-    if square
-        Lw = squareoperator(S2, rho2laplacianoperator(S2, S0, N; weighted=true), N)
-        L = squareoperator(S2, rho2laplacianoperator(S0, S2, N; weighted=false), N)
-        Jz = jacobiz(S2, N)
-        t = transformparamsoperator(S1, S2, N; weighted=false)
-        Dϕ = squareoperator(S2, diffoperatorphi(S0, N), N)
-        t2 = transformparamsoperator(S0, S2, N; weighted=false)
-        V = operatorclenshaw(v.coefficients, S2, N)
-        Bw = L * Lw - Jz * t * Dϕ * Lw - V * t2 * Lw
-    else
-        Lw = rho2laplacianoperator(S2, S0, N; weighted=true)
-        L = rho2laplacianoperator(S0, S2, N+4; weighted=false)
-        Jz = jacobiz(S2, N+5)
-        t = transformparamsoperator(S1, S2, N+5; weighted=false)
-        Dϕ = diffoperatorphi(S0, N+4)
-        t2 = transformparamsoperator(S0, S2, N+4; weighted=false)
-        V = operatorclenshaw(v.coefficients, S2, N+4)
-        id1 = increasedegreeoperator(S2, N+4, N+6)
-        id2 = increasedegreeoperator(S2, N+5, N+6)
-        Bw = L * Lw - id2 * Jz * t * Dϕ * Lw - id1 * V * t2 * Lw
-    end
-    Bw
-end
-
-function squareoperator(S::SphericalCapSpace{<:Any, B, T, <:Any},
-                        A::BandedBlockBandedMatrix, N::Int) where {B,T}
-    """ this is to square the given operator, by reassigning the non-zero
-        entries correctly for given N value
-    """
-    @assert (N < blocksize(A)[1] - 1 && N == blocksize(A)[2] - 1) "Invalid size of A or incorrect N val"
-    C = BandedBlockBandedMatrix(Zeros{B}((N+1)^2, (N+1)^2),
-                                [N+1; 2N:-2:1], [N+1; 2N:-2:1],
-                                (A.l, A.u), (A.λ, A.μ))
-    for k = 1:N
-        inds = 1:2(N-k+1)
-        view(C, Block(k+1, k+1)) .= view(A, Block(k+1, k+1))[inds, inds]
-    end
-    k = 0
-    view(C, Block(k+1, k+1)) .= view(A, Block(k+1, k+1))[1:N+1, 1:N+1]
-    C
-end
-
 
 #===#
 # Grad operator matrix
