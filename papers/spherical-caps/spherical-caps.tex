@@ -1225,7 +1225,7 @@ We now demonstrate how the sparse linear systems constructed as above can be use
         	%\label{fig:solutionblocknorms-poisson}
 	\end{subfigure}
 	\caption{Left: The computed solution to $\Delta u + k^2 \: v \: u = f$ with zero boundary conditions with $f(x,y,z) = y e^x (z - \alpha) $, $v(x,y,z) = 1 - (3(x-x_0)^2 + 5(y-y_0)^2 + 2(z-z_0)^2)$ where $(x_0, z_0) := (0.7, 0.2)$, $y_0 := \sqrt{(x_0^2 + z_0^2)}$ and $k = 100$. Right: The norms of each block of the computed solution of the Helmholtz equation with the given right hand side functions, with $k=20$ and the same function $v$ (again, $\bf{p}$ is simply a point on the spherical cap surface away from the pole and boundary). This demonstrates spectral convergence observed.
-	\sotodoinline{Change $x$-axis to use normal (not logarithmic) scaling: this will change exponential convergence to more readable straight lines. For examples, having  nearby singularities (e.g.  something like$f(\vc x) = \|\vc x - (1,1,1) * (1 /\sqrt 3 + \epsilon)\|$) should give different exponential convergence rates.}
+	\sotodoinline{For examples, having  nearby singularities (e.g. something like$f(\vc x) = \|\vc x - (1,1,1) * (1 /\sqrt 3 + \epsilon)\|$) should give different exponential convergence rates.}
 	\bstodoinline{to do}
 	}
 	\centering
@@ -1234,12 +1234,12 @@ We now demonstrate how the sparse linear systems constructed as above can be use
 
 \begin{figure}[t]
 	\begin{subfigure}{0.5\textwidth}
-	\includegraphics[scale=0.25]{biharmonic-f=erf-N=80-n=50}
+	\includegraphics[scale=0.15]{biharmonic-f=erf-N=80-n=50}
 	\centering
 	%\label{fig:solution-biharmonic}
 	\end{subfigure}
 	\begin{subfigure}{0.5\textwidth}
-	\includegraphics[scale=0.3]{solutionblocknorms-biharmonic-N=100}
+	\includegraphics[scale=0.3]{solutionblocknorms-biharmonic-N=100-xnolog}
 	\centering
         	%\label{fig:solutionblocknorms-biharmonic}
 	\end{subfigure}
