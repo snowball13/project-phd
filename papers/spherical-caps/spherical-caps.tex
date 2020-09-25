@@ -669,7 +669,7 @@ We further denote the weighted set of OPs on $\Omega$ by
 \end{align*}
 and recall that a function $f(x,y,z)$ defined on $\Omega$ is approximated by its expansion $f(x,y,z) = \bigscopa(x,y,z)^\top \mathbf{f}$.
 
-\bstodoinline{I have added defns (and sparsity proofs) for two other Laplacian operators. In practice, I cannot get the non-weighted one to work coded up, which I assume is a bug on my end and not the maths (which to me is correct).}
+\bstodoinline{I have added defns (and sparsity proofs) for two other Laplacian operators. In practice, I have found that the non-weighted one is singular - is this correct/expected? The weighted one and the resulting Biharmonic operators both work (as far as I have tested).}
 \begin{definition}\label{def:differentialoperators}
 	Let $a$ be a nonnegative parameter, and $\tilde a \ge 2$ be a positive integer. Define the operator matrices $D_\varphi^{(a)}, \: W_\varphi^{(a)}, \: D_\theta, \: \calL^{(a)\to(a+\tilde a)}, \: \calL_W^{(a)\to(a-\tilde a)}, \: \Delta^{(1)}_W$ according to:
 \begin{align*}
@@ -1226,7 +1226,7 @@ We now demonstrate how the sparse linear systems constructed as above can be use
 	\end{subfigure}
 	\caption{Left: The computed solution to $\Delta u + k^2 \: v \: u = f$ with zero boundary conditions with $f(x,y,z) = y e^x (z - \alpha) $, $v(x,y,z) = 1 - (3(x-x_0)^2 + 5(y-y_0)^2 + 2(z-z_0)^2)$ where $(x_0, z_0) := (0.7, 0.2)$, $y_0 := \sqrt{(x_0^2 + z_0^2)}$ and $k = 100$. Right: The norms of each block of the computed solution of the Helmholtz equation with the given right hand side functions, with $k=20$ and the same function $v$ (again, $\bf{p}$ is simply a point on the spherical cap surface away from the pole and boundary). This demonstrates spectral convergence observed.
 	\sotodoinline{For examples, having  nearby singularities (e.g. something like$f(\vc x) = \|\vc x - (1,1,1) * (1 /\sqrt 3 + \epsilon)\|$) should give different exponential convergence rates.}
-	\bstodoinline{to do}
+	\bstodoinline{New examples, such as the suggested $f(\vc x) = \|\vc x - (1,1,1) * (1 /\sqrt 3 + \epsilon)\|$. Though these look like I should remove the trivial examples entirely, as it ruins the scaling.}
 	}
 	\centering
 	\label{fig:helmholtz}
@@ -1243,7 +1243,7 @@ We now demonstrate how the sparse linear systems constructed as above can be use
 	\centering
         	%\label{fig:solutionblocknorms-biharmonic}
 	\end{subfigure}
-	\caption{\bstodoinline{update when biharmonic is fixed} Left: The computed solution to $\Delta^2 u = f$ with zero Dirichlet and Neumann boundary conditions with $f(x,y,z) = (1 + \text{erf}(5(1 - 10((x - 0.5)^2 + y^2)))) \rho(z)^2$. Right: The norms of each block of the computed solution of the biharmonic equation with the given right hand side functions (again, $\bf{p}$ is simply a point on the spherical cap surface away from the pole and boundary). This demonstrates algebraic convergence observed.}
+	\caption{Left: The computed solution to $\Delta^2 u = f$ with zero Dirichlet and Neumann boundary conditions with $f(x,y,z) = (1 + \text{erf}(5(1 - 10((x - 0.5)^2 + y^2)))) \rho(z)^2$. Right: The norms of each block of the computed solution of the biharmonic equation with the given right hand side functions (again, $\bf{p}$ is simply a point on the spherical cap surface away from the pole and boundary). This demonstrates algebraic convergence observed.}
 	\centering
 	\label{fig:biharmonic}
 \end{figure}
@@ -1265,8 +1265,6 @@ We can tackle the problem as follows. Choose an $N \in \N$ large enough for the 
 \end{align*}
 which can be solved to find $\mathbf{u}$.
 In Figure \ref{fig:poisson} we see the solution to the Poisson equation with zero boundary conditions given in (\ref{eqn:poisson}) in the disk-slice $\Omega$. In Figure \ref{fig:poisson} we also show the norms of each block of calculated coefficients of the approximation for four right-hand sides of the Poisson equation with $N = 100$, that is, $(N+1)^2 = 10,201$ unknowns. In the plot, a ``block'' is simply the group of coefficients corresponding to OPs of the same degree, and so the plot shows how the norms of these blocks decay as the degree of the expansion increases. Thus, the rate of decay in the coefficients is a proxy for the rate of convergence of the computed solution: as typical of spectral methods, we expect the numerical scheme to converge at the same rate as the coefficients decay. We see that we achieve spectral convergence \bstodo{Add to the comments here}
-
-\bstodoinline{Are there more suitable RHSs for the block norms plot that will demonstrate further properties? Or as there are no corners, we are pretty limited?}
 
 
 \subsection{Inhomogeneous variable-coefficient Helmholtz}
