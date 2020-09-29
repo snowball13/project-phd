@@ -39,19 +39,19 @@ This paper develops sparse spectral methods for solving linear partial different
 \begin{align*}
 	\Omega := \{(x,y,z) \in \R^3 \quad | \quad \alpha < z < \beta, \: ||(x,y)|| := \sqrt{x^2 + y^2} =  \rho(z)\}
 \end{align*}
-and consider the case where $\alpha \in (-1,1)$ and where $ \rho(z) := \sqrt{1-z^2}$,  $\beta := 1$ \sotodoinline{Don't we need $\beta \neq 1$ to get a band?} \bstodoinline{yes, but to keep it simple this paper focuses on the cap (otherwise the maths would become more complex/longer. I state that the band is an extension below.}.
+and consider the case where $\alpha \in (-1,1)$ and where $ \rho(z) := \sqrt{1-z^2}$.
 This framework then yields that $\Omega$ is a spherical cap (the region of the surface of a sphere where the $z$-coordinate ranges from $\alpha$ to $1$), i.e.
 \begin{align*}
-	\Omega := \{(x,y,z) \in \R^3 \quad | \quad \alpha < z < 1, \: x^2 + y^2 + z^2 = 1\}
+	\Omega := \{(x,y,z) \in \R^3 \quad | \quad \alpha < z < \beta, \: x^2 + y^2 + z^2 = 1\}
 \end{align*}
-Of course, there is a simple extension to a spherical band by taking $\beta \in (\alpha,1)$. However, for simplicity, we focus on the spherical cap in this paper.
+For simplicity we focus on a spherical cap with   $\beta := 1$, though there is a simple extension to a spherical band by taking $\beta \in (\alpha,1)$. 
 
 
 We advocate using a basis that is polynomial in cartesian coordinates, that is, polynomial in $x$, $y$, and $z$, and orthogonal with respect to a prescribed weight: that is, multivariate orthogonal polynomials, whose construction was considered in \cite{olver2020orthogonal}. Equivalently, we can think of these as polynomials modulo the vanishing ideal $\{ x^2 + y^2 + z^2 = 1 \}$, or simply as a linear recombination of spherical harmonics that are orthogonalised on a subset of the sphere.    This is in contrast to more standard approaches based on mapping the geometry to a simpler one (e.g., a rectangle or disk) and using orthogonal polynomials in the mapped coordinates (e.g., a basis that is polynomial in the spherical coordinates $\varphi$ and $\theta$). The benefit of the new approach is that we do not need to resolve Jacobians, and thereby we can achieve sparse discretisations for partial differential operators, including those with polynomial variable coefficients.   On the spherical cap, the family of weights we consider are of the form
 \begin{align*}
 	\Wa(x,y,z) := (z - \alpha)^a, \qfor (x,y,z) \in \Omega,
 \end{align*}
-noting that $\Wa(x,y,z) = 0$ for $(x,y,z) \in \partial \; \Omega$. The corresponding OPs denoted $\scopnkia(x,y,z)$, where $n$ denotes the polynomial degree, $0 \le k \le n$ and $i \in \{0, \min(1,k)\}$. We define these to be orthogonalised lexicographically, that is, \sotodoinline{I don't understand this ordering. Shouldn't it either be $x^k y^j z^{n-k-j}$ or $x^k y^{j-k} z^{n-j}$?  PS I prefer $j$ to $i$ } \bstodoinline{I have changed to the below. I will change i -> j throughout later if we prefer this.}
+noting that $\Wa(x,y,z) = 0$ for $(x,y,z) \in \partial \; \Omega$. The corresponding OPs denoted $\scopnkia(x,y,z)$, where $n$ denotes the polynomial degree, $0 \le k \le n$ and $i \in \{0, \min(1,k)\}$. We define these to be orthogonalised lexicographically, that is,
 \begin{align*}
 	\scopnkia(x,y,z) = C_{n,k,i} \: x^{k-i} \: y^i \: z^{n-k} + (\hbox{lower order terms})
 \end{align*}
@@ -591,7 +591,7 @@ For each $n = 0,1,2\dots$ let $\Dnt$ be any matrix that is a left inverse of $A_
 	\end{cases}
 \end{align*}
 
-Note that we can define an explicit \(\Dnt\) as follows:\sotodoinline{Improve following notation, say, by adding notation to the top part} \bstodoinline{is this any better?}
+Note that we can define an explicit \(\Dnt\) as follows:
 \begin{align*}
 	\Dnt := 
 		\begin{pmatrix}
@@ -627,7 +627,7 @@ For $n=0$, we can simply take
 		\end{pmatrix} \in \R^{3\times3}.
 \end{align*}
 
-It follows that we can apply $\Dnt$ in $O(n)$ complexity, and thereby calculate $\bigscopta_{0}(x,y,z)$  through $\bigscopta_{n}(x,y,z)$ in optimal $O(n^2)$ complexity. \bstodoinline{I think this is correct for this case}
+It follows that we can apply $\Dnt$ in $O(n)$ complexity, and thereby calculate $\bigscopta_{0}(x,y,z)$  through $\bigscopta_{n}(x,y,z)$ in optimal $O(n^2)$ complexity. 
 
 \begin{definition}\label{def:clenshawmats}
 The Clenshaw matrices associated with the OPs $\{\scopnkia\}$ are given by the matrices $A_n, B_n, C_n, \Dnt$ for $n = 0,1,2,\dots$ defined above.
@@ -639,7 +639,8 @@ The Clenshaw matrices associated with the OPs $\{\scopnkia\}$ are given by the m
 %
 \section{Sparse partial differential operators}\label{Section:PDOs}
 
-In this section, we will derive the entries of spherical partial differential operators applied to our basis, demonstrating their sparsity in the process. To this end, we will use a different ordering\sotodoinline{I thought we would discuss this separately as a permutation of rows/columns?} \bstodoinline{Not sure what you mean by this comment - maybe I misunderstood before?} of the OPs and coefficients of a function's expansion, in order to exploit the orthogonality the circular harmonics will bring and thus the operators will be block-diagonal. Let $N \in \N$ and recall from equations (\ref{eqn:OPdefNka}, \ref{eqn:OPdefN0a}, \ref{eqn:OPdefNa}) that: 
+In this section, we will derive the entries of spherical partial differential operators applied to our basis, demonstrating their sparsity in the process. To this end, we will use a different ordering
+ of the OPs and coefficients of a function's expansion, in order to exploit the orthogonality the circular harmonics will bring and thus the operators will be block-diagonal. Let $N \in \N$ and recall from equations (\ref{eqn:OPdefNka}, \ref{eqn:OPdefN0a}, \ref{eqn:OPdefNa}) that: 
 \begin{align*}
 	\bigscopNka &:= 
 		\begin{pmatrix}
@@ -733,7 +734,7 @@ which is indeed zero for $m < n - k - 1$ by orthogonality.
 
 \begin{proof}[Proof of Theorem \ref{theorem:sparsityofdifferentialoperators}]
 
-For the operator $D_\theta$ for partial differentiation by $\theta$, we simply have that \sotodoinline{Would it be better as ${\rm d} \over {\rm d} \theta$?} \bstodoinline{fixed}
+For the operator $D_\theta$ for partial differentiation by $\theta$, we simply have that
 \begin{align*}
 	\pptheta \scopnkia(x,y,z) &= \genjacnmk^{(a,2k)}(z) \: \rho(z)^{k} \: \ddx{\theta} \chki(\theta) \\
 	&= 
@@ -747,7 +748,7 @@ We now proceed with the case for the operator $D_\varphi^{(a)}$ for partial diff
 \begin{align*}
 	c_{m,j,h} = \norm{\scopmjh^{(a+1)}}^{-2}_{\scop^{(a+1)}} \ip<\rhoppphi \scopnkia, \: \scopmjh^{(a+1)}>_{\scop^{(a+1)}}.
 \end{align*}
-Now, note that \sotodoinline{Here and elsewhere: ${\partial \over \partial z}$ is not well-defined as we are on the sphere. Though perhaps ${\rm d} \over {\rm d} z$ works as we are differentiating the formula with respect to $z$?} \bstodoinline{Is the following clearer?}:
+Now, note that:
 \begin{align*}
 	\genjacw^{(a,b) \: \prime}(z) &= a \: \genjacw^{(a-1,b)}(z) + c \: \rho(z) \: \rho'(z) \:\genjacw^{(a,b-2)}(z), \\
 	\rho(z) \: \rho'(z) &= -z \\
@@ -928,7 +929,7 @@ General linear partial differential operators with polynomial variable coefficie
 \end{align*}
 Importantly, this operator will have banded-block-banded structure, and hence will be sparse, as seen in Figure \ref{fig:sparsity}.
 
-Another desirable operator is the Biharmonic operator $\DeltaS^2$, for which we assume zero Dirichlet and Neumann conditions \sotodoinline{We need to explain Neumann conditions precisely, as the normal derivative is not so obvious}\bstodoinline{Is the following correct? As in, isnt the normal at the boundary still just the unit outward normal on the sphere?}. That is, 
+Another desirable operator is the Biharmonic operator $\DeltaS^2$, for which we assume zero Dirichlet and Neumann conditions. That is, 
 \begin{align*}
 	u(x,y,z) &= 0 \quad \text{for } (x,y,z) \in \Omega, \\
 	\pfpx{n}{u}(x,y,z) &= \nabla_S u(x,y,z) \cdot \unitvec{n}(x,y,z) = 0 \quad \text{for } (x,y,z) \in \partial\Omega
