@@ -34,8 +34,8 @@ T = Float64; B = T#BigFloat
 α = 0.2
 SCF = SphericalCapFamily(B, T, B(α * 1000) / 1000)
 a = 1.0
-S = SCF(a, 0.0); S2 = SCF(2.0, a); S0 = SCF(0.0, 0.0)
-ST = gettangentspace(SCF)
+S = SCF(a, 0.0); S2 = SCF(2.0, 0.0); S0 = SCF(0.0, 0.0)
+# ST = gettangentspace(SCF)
 
 y, z = B(-234)/1000, B(643)/1000; x = sqrt(1 - z^2 - y^2); p = [x; y; z]; isindomain(p, SCF)
 θ = atan(y / x)
@@ -142,9 +142,17 @@ maxm = sum(1:20+1)
 N = 30
 
 # Laplacian
-Δw = squareoperator(S, laplacianoperator(S, N), N)
+Δw = squareoperator(S, laplacianoperator(S, S, N), N)
 Plots.spy(sparse(getspymat(Δw)), marker = (:square, 1), legend=nothing)
 Plots.savefig("experiments/saved/sphericalcap/images/sparsity-of-laplacian.png")
+
+Δ2w = squareoperator(S, laplacianoperator(S2, S0, N; weighted=true), N)
+Plots.spy(sparse(getspymat(Δw)), marker = (:square, 1), legend=nothing)
+Plots.savefig("experiments/saved/sphericalcap/images/sparsity-of-laplacian-w2.png")
+
+Δ2 = laplacianoperator(S0, S2, N; weighted=false)
+Plots.spy(sparse(getspymat(Δw)), marker = (:square, 1), legend=nothing)
+Plots.savefig("experiments/saved/sphericalcap/images/sparsity-of-laplacian-2.png")
 
 # Biharmonic
 Bw = biharmonicoperator(S2, N; square=true)
@@ -168,6 +176,11 @@ Lw = squareoperator(S, rho2laplacianoperator(S, S, N), N)
 Plots.spy(sparse(getspymat(Lw)), marker = (:square, 1), legend=nothing)
 Plots.savefig("experiments/saved/sphericalcap/images/sparsity-of-rho2laplacian.png")
 
+a = randn(10)
+b = randn(10)
+c = randn(10)
+d = randn(10)
+(a' * b) * (c' * d) - a' * (b * d') * c
 
 #=======#
 # Poisson
@@ -231,21 +244,20 @@ Makie.save("experiments/saved/sphericalcap/images/helmholtz-f=wyexpx-N=$N-n=$n.p
 
 # Biharmonic
 N = 80
-biharmonicoperator(S2, N; square=false)
-
-f = (x,y,z)->(1 + erf(5(1 - 10((x - 0.5)^2 + y^2)))) * (1 - z^2)
-F = Fun(f, S2, 10000)
-resizecoeffs!(S2, F, N+6)
+Bw = biharmonicoperator(S2, N; square=false)
+using SpecialFunctions
+f = (x,y,z)->(1 + erf(5(1 - 10((x - 0.5)^2 + y^2))))
+F = Fun(f, S2, 5000)
+resizecoeffs!(S2, F, N+2)
 # f = (x,y,z) -> (- 2exp(x)*y*z*(2+x)
 #                 + (weight(S,x,y,z)
 #                     * exp(x)
 #                     * (y^3 + z^2*y - 4x*y - 2y))) # Exact solution to Δu = f, where u = wR10(z)*y*exp(x)
 # F = Fun(f, S2, 1000); resizecoeffs!(S2, F, N+6)
-F.coefficients
 F(p)
 f(p...)
 F(p) - f(p...)
-ucfs = sparse(Bw) \ F.coefficients
+ucfs = sparse(Bw) \ resizecoeffs!(S2, F, N+2)
 u = Fun(S2, ucfs)
 u(p)
 n = 50
@@ -267,117 +279,186 @@ Makie.save("experiments/saved/sphericalcap/images/biharmonic-f=erf-N=$N-n=$n.png
 Plotting the norms of each block of coeffs for solutions for different RHSs
 =#
 function getsolutionblocknorms(N::Int, S::SphericalCapSpace, A::BandedBlockBandedMatrix,
-                                f1, f2, f3, f4; makesparse=false)
+                                fs; makesparse=false)
     if makesparse
         AA = sparse(A)
     else
         AA = A
     end
-    u1 = Fun(S, AA \ f1)
-    @show "1"
-    u2 = Fun(S, AA \ f2)
-    @show "2"
-    u3 = Fun(S, AA \ f3)
-    @show "3"
-    u4 = Fun(S, AA \ f4)
-    u1coeffs = converttopseudo(S, u1.coefficients; converttobydegree=true)
-    u2coeffs = converttopseudo(S, u2.coefficients; converttobydegree=true)
-    u3coeffs = converttopseudo(S, u3.coefficients; converttobydegree=true)
-    u4coeffs = converttopseudo(S, u4.coefficients; converttobydegree=true)
-    u1norms = zeros(N+1)
-    u2norms = zeros(N+1)
-    u3norms = zeros(N+1)
-    u4norms = zeros(N+1)
-    for i = 1:N+1
-        u1norms[i] = norm(view(u1coeffs, Block(i)))
-        u2norms[i] = norm(view(u2coeffs, Block(i)))
-        u3norms[i] = norm(view(u3coeffs, Block(i)))
-        u4norms[i] = norm(view(u4coeffs, Block(i)))
+    unorms = Vector{Vector{B}}(undef, length(fs))
+    for j = 1:length(fs)
+        @show j, length(fs)
+        u = Fun(S, AA \ fs[j])
+        ucoeffs = converttopseudo(S, u.coefficients; converttobydegree=true)
+        unorms[j] = [norm(view(ucoeffs, Block(i))) for i=1:N+1]
     end
-    u1norms, u2norms, u3norms, u4norms
+    unorms
 end
 
 # solutionblocknorms - Poisson
-N = 100
-Δw = squareoperator(S, laplacianoperator(S, N), N)
-z1 = S.family.α; x1 = 0.7; vpt = [x1; sqrt(1 - x1^2 - z1^2); z1]
-f1 = Fun((x,y,z)->1.0, S, 10); f1.coefficients
-f2 = Fun((x,y,z)->weight(S, x, y, z)^2, S, 100); f2.coefficients
-f3 = Fun((x,y,z)->weight(S, x, y, z) * S.family.ρ(z)^2, S, 300); f3.coefficients
-f4anon = (x,y,z) -> exp(-100((x-vpt[1])^2 + (y-vpt[2])^2 + (z-vpt[3])^2))
-f4 = Fun(f4anon, S, 40000); f4.coefficients
-resize!(S.reccoeffsa, 0)
-using JLD
-save("experiments/saved/sphericalcap/jld/f4cfs-a=1-N=200.jld", "f4cfs", f4.coefficients)
-f4cfs = load("experiments/saved/sphericalcap/jld/f4cfs-a=1-N=200.jld", "f4cfs")
-f4 = Fun(S, f4cfs)
-f4(p)
-f4anon(p...)
+N = 200
+Δw = squareoperator(S, laplacianoperator(S, S, N), N)
+
+ϵ = 0.5; f5anon = (x,y,z)->norm([x; y; z] .- (1.0 * (1 / sqrt(3) + ϵ)))
+f5 = Fun(f5anon, S, 2115*2); f5.coefficients
+f5(p) - f5anon(p...)
+ϵ = 1; f1anon = (x,y,z)->norm([x; y; z] .- (1.0 * (1 / sqrt(3) + ϵ)))
+f1 = Fun(f1anon, S, 500*2); f1.coefficients
+f1(p) - f1anon(p...)
+ϵ = 2; f2anon = (x,y,z)->norm([x; y; z] .- (1.0 * (1 / sqrt(3) + ϵ)))
+f2 = Fun(f2anon, S, 400*2); f2.coefficients
+f2(p) - f2anon(p...)
+ϵ = 3; f3anon = (x,y,z)->norm([x; y; z] .- (1.0 * (1 / sqrt(3) + ϵ)))
+f3 = Fun(f3anon, S, 282*2); f3.coefficients
+f3(p) - f3anon(p...)
+ϵ = 10; f4anon = (x,y,z)->norm([x; y; z] .- (1.0 * (1 / sqrt(3) + ϵ)))
+f4 = Fun(f4anon, S, 141*2); f4.coefficients
 f4(p) - f4anon(p...)
-u1norms, u2norms, u3norms, u4norms = getsolutionblocknorms(N, S, Δw, resizecoeffs!(S, f1, N),
-                resizecoeffs!(S, f2, N), resizecoeffs!(S, f3, N), resizecoeffs!(S, f4, N))
+# f4 = Fun(f4anon, S, 2(N+1)^2); f4.coefficients
+# f4cfs = f4.coefficients
+# save("experiments/saved/sphericalcap/jld/f4cfs-a=1-N=$N.jld", "f4cfs", f4.coefficients)
+# f4anon = (x,y,z) -> exp(-100((x-vpt[1])^2 + (y-vpt[2])^2 + (z-vpt[3])^2))
+# f4cfs = load("experiments/saved/sphericalcap/jld/f4cfs-a=1-N=100.jld", "f4cfs")
+
+unorms = getsolutionblocknorms(N, S, Δw,
+                                (resizecoeffs!(S, f5, N), resizecoeffs!(S, f1, N),
+                                    resizecoeffs!(S, f2, N), resizecoeffs!(S, f3, N),
+                                    resizecoeffs!(S, f4, N)))
 using Plots
-Plots.plot(u1norms, line=(3, :solid), label="f(x,y,z) = 1", xscale=:log10, yscale=:log10, legend=:bottomleft)
-Plots.plot!(u2norms, line=(3, :dash), label="f(x,y,z) = W{(1)}^2")
-Plots.plot!(u3norms, line=(3, :dashdot), label="f(x,y,z) = (1-z^2) * W{(1)}")
-Plots.plot!(u4norms, line=(3, :dot), label = "f(x,y,z) = exp(-100(||x-p||^2))")
+Plots.plot(unorms[1], line=(3, :solid), label="ϵ = 0.5", yscale=:log10, legend=:bottomleft)
+Plots.plot!(unorms[2], line=(3, :dash), label="ϵ = 1")
+Plots.plot!(unorms[3], line=(3, :dashdot), label="ϵ = 2")
+Plots.plot!(unorms[4], line=(3, :dot), label = "ϵ = 3")
+Plots.plot!(unorms[5], line=(3, :solid), label = "ϵ = 10")
 Plots.xlabel!("Block")
 Plots.ylabel!("Norm")
-Plots.savefig("experiments/saved/sphericalcap/images/solutionblocknorms-poisson-N=$N.pdf")
+Plots.savefig("experiments/saved/sphericalcap/images/solutionblocknorms-poisson-epsilonfun-N=$N.pdf")
 
 # Helmholtz
-N = 100
-k = 20
-    z1 = S.family.α; x1 = 0.7; vpt = [x1; sqrt(1 - x1^2 - z1^2); z1]
-    v = (x,y,z) -> 1 - (3(x - vpt[1])^2 + 5(y - vpt[2])^2 + 2(z - vpt[3])^2)
-    V = operatorclenshaw(Fun(v, S, 100), S, N)
-    Δw = squareoperator(S, laplacianoperator(S, N), N)
+f1 = Fun((x,y,z)->1.0, S, 2(1+1)^2); f1.coefficients
+f2 = Fun((x,y,z)->weight(S, x, y, z) * S.family.ρ(z)^2, S, 2(3+1)^2); f2.coefficients
+N = 100 # TODO Run with N larger
+Jx = OrthogonalPolynomialFamilies.jacobix(S, N)
+Jy = OrthogonalPolynomialFamilies.jacobiy(S, N)
+Jz = OrthogonalPolynomialFamilies.jacobiz(S, N)
+Δw = squareoperator(S, laplacianoperator(S, S, N), N)
     tw = transformparamsoperator(S, S0, N; weighted=true)
     t = transformparamsoperator(S0, S, N+1; weighted=false)
+z1 = S.family.α; x1 = 0.7; vpt = [x1; sqrt(1 - x1^2 - z1^2); z1]
+    v = (x,y,z) -> 1 - (3(x - vpt[1])^2 + 5(y - vpt[2])^2 + 2(z - vpt[3])^2)
+    V = operatorclenshaw(Fun(v, S, 13*2).coefficients, S, N, Jx, Jy, Jz)
+
+ks = (1, 10, 20, 50) # , 100, 200)
+styles = (:solid, :dash, :dashdot, :dot, :dash, :solid)
+for j = 1:length(ks)
+    k = ks[j]
+    @show k
     A = Δw + k^2 * V * squareoperator(S, t * tw, N)
-u1norms, u2norms, u3norms, u4norms = getsolutionblocknorms(N, S, A, resizecoeffs!(S, f1, N),
-                resizecoeffs!(S, f2, N), resizecoeffs!(S, f3, N), resizecoeffs!(S, f4, N))
-using Plots
-Plots.plot(u1norms, line=(3, :solid), label="f(x,y,z) = 1", xscale=:log10, yscale=:log10, legend=:bottomleft)
-Plots.plot!(u2norms, line=(3, :dash), label="f(x,y,z) = W{(1)}^2")
-Plots.plot!(u3norms, line=(3, :dashdot), label="f(x,y,z) = (1-z^2) * W{(1)}")
-Plots.plot!(u4norms, line=(3, :dot), label = "f(x,y,z) = exp(-100(||x-p||^2))")
+    unorms = getsolutionblocknorms(N, S, A, (resizecoeffs!(S, f1, N),))
+    if j == 1
+        Plots.plot(unorms[1], line=(3, styles[j]), label="k = $k", yscale=:log10, legend=:bottomleft)
+    else
+        Plots.plot!(unorms[1], line=(3, styles[j]), label="k = $k", yscale=:log10, legend=:bottomleft)
+    end
+    # Plots.plot!(unorms[2], line=(3, :dash), label="k = $k, f = (1-z^2) * (z - α)")
+end
 Plots.xlabel!("Block")
 Plots.ylabel!("Norm")
-Plots.savefig("experiments/saved/sphericalcap/images/solutionblocknorms-helmholtz-N=$N.pdf")
+Plots.savefig("experiments/saved/sphericalcap/images/solutionblocknorms-helmholtz-varyingk-N=$N.pdf")
 
 # Biharmonic
 N = 100
 Bw = biharmonicoperator(S2, N)
+Bw = squareoperator(S2, Bw, N)
+
 z1 = S.family.α; x1 = 0.7; vpt = [x1; sqrt(1 - x1^2 - z1^2); z1]
-f1 = Fun((x,y,z)->1.0, S2, 10); f1.coefficients
-f2 = Fun((x,y,z)->weight(S, x, y, z)^2, S2, 100); f2.coefficients
-f3 = Fun((x,y,z)->weight(S, x, y, z) * S.family.ρ(z)^2, S2, 300); f3.coefficients
-f4anon = (x,y,z) -> exp(-100((x-vpt[1])^2 + (y-vpt[2])^2 + (z-vpt[3])^2))
-f4 = Fun(f4anon, S2, 2(N+1)^2); f4.coefficients
-f4(p)
-f4anon(p...)
-f4(p) - f4anon(p...)
-u1norms, u2norms, u3norms, u4norms = getsolutionblocknorms(N, S2, Bw,
-                    resizecoeffs!(S2, f1, N+6), resizecoeffs!(S2, f2, N+6),
-                    resizecoeffs!(S2, f3, N+6), resizecoeffs!(S2, f4, N+6);
-                    makesparse=true)
+
+ϵ = 10; f1anon = (x,y,z) -> exp(-ϵ*((x-vpt[1])^2 + (y-vpt[2])^2 + (z-vpt[3])^2))
+    f1 = Fun(f1anon, S2, 2500); f1.coefficients
+    f1(p) - f1anon(p...)
+ϵ = 50; f2anon = (x,y,z) -> exp(-ϵ*((x-vpt[1])^2 + (y-vpt[2])^2 + (z-vpt[3])^2))
+    f2 = Fun(f2anon, S2, 10000); f2.coefficients
+    f2(p) - f2anon(p...)
+ϵ = 100; f3anon = (x,y,z) -> exp(-ϵ*((x-vpt[1])^2 + (y-vpt[2])^2 + (z-vpt[3])^2))
+    f3cfs = load("experiments/saved/sphericalcap/jld/f4cfs-a=1-N=100-S2.jld", "f4cfs")
+    f3 = Fun(S2, f3cfs); f3.coefficients
+    f3(p) - f3anon(p...)
+ϵ = 200; f4anon = (x,y,z) -> exp(-ϵ*((x-vpt[1])^2 + (y-vpt[2])^2 + (z-vpt[3])^2))
+    f4 = Fun(f4anon, S2, 2(N+1)^2); f4.coefficients
+    f4(p) - f4anon(p...)
+
+unorms = getsolutionblocknorms(N, S2, Bw,
+                    (resizecoeffs!(S2, f1, N), resizecoeffs!(S2, f2, N),
+                     resizecoeffs!(S2, f3, N), resizecoeffs!(S2, f4, N)))
 using Plots
-Plots.plot(u1norms, line=(3, :solid), label="f(x,y,z) = 1", xscale=:log10, yscale=:log10, legend=:bottomleft)
-Plots.plot!(u2norms, line=(3, :dash), label="f(x,y,z) = W{(1)}^2")
-Plots.plot!(u3norms, line=(3, :dashdot), label="f(x,y,z) = (1-z^2) * W{(1)}")
-Plots.plot!(u4norms, line=(3, :dot), label = "f(x,y,z) = exp(-100(||x-p||^2))")
+Plots.plot(unorms[1], line=(3, :solid), label="ϵ = 10", yscale=:log10, legend=:bottomleft)
+Plots.plot!(unorms[2], line=(3, :dash), label="ϵ = 50")
+Plots.plot!(unorms[3], line=(3, :dashdot), label="ϵ = 100")
+Plots.plot!(unorms[4], line=(3, :dot), label = "ϵ = 200")
 Plots.xlabel!("Block")
 Plots.ylabel!("Norm")
-Plots.savefig("experiments/saved/sphericalcap/images/solutionblocknorms-biharmonic-N=$N.pdf")
+Plots.savefig("experiments/saved/sphericalcap/images/solutionblocknorms-biharmonic-expfun-N=$N.pdf")
+
 
 
 #====#
 
-"""
-# TODO:
-Sort out Makie
-Work out if Biharmonic operator is correct
-    - what RHSs should I use?
-Add to paper
-"""
+# Complexity plots for building differential operators
+using BenchmarkTools, Plots
+function testcomplexityofdifferentialoperator(S::SphericalCapSpace, N::Int,
+                                                v::Fun,
+                                                Jx::BandedBlockBandedMatrix,
+                                                Jy::BandedBlockBandedMatrix,
+                                                Jz::BandedBlockBandedMatrix)
+    V = operatorclenshaw(v.coefficients, S, N, Jx, Jy, Jz; rotationalinvariant=true)
+    L = laplacianoperator(S, S, N; square=true)
+    L + V
+end
+function testcomplexityofdifferentialoperator2(N::Int)
+    laplacianoperator(S, S, N; square=true)
+end
+function testcomplexity!(S::SphericalCapSpace, v::Fun, tms, Ns)
+    # # TODO create an operatorclenshaw method for rotational invariant V,
+    # # i.e. v(x,y,z) ≡ v(z), where the result V is Block-Diagonal and we dont
+    # # need to account for the Jx, Jy bits.
+    for k = 1:length(Ns)
+        N = Ns[k]
+        @show "TEST COMPLEXITY", k, N
+        # tms[k] = @elapsed testcomplexityofdifferentialoperator2(N)
+        Jz = OrthogonalPolynomialFamilies.jacobiz(S, N)
+        Jx = BandedBlockBandedMatrix(Zeros{B}((N+1)^2, (N+1)^2),
+                                        [N+1; 2N:-2:1], [N+1; 2N:-2:1],
+                                        (0, 0), (0, 0))
+        Jy = Jx
+        @show "done Jacobi mats"
+        tms[k] = @belapsed testcomplexityofdifferentialoperator($(S), $(N), $(v), $(Jx), $(Jy), $(Jz))
+        # tms[k] = @elapsed testcomplexityofdifferentialoperator(S, N, v, Jx, Jy, Jz)
+    end
+    tms
+end
+
+Nend = 1000; Ns = [1; 100:100:Nend]
+tms = Array{Float64}(undef, length(Ns))
+vanon = (x,y,z)->cos(z)
+v = Fun(vanon, S, 300)
+resizedataonedimops!(S, Nend+5)
+testcomplexity!(S, v, tms, Ns)
+tms
+
+using Plots
+Plots.plot(Ns, tms; yscale=:log10, xscale=:log10, label="Complexity")
+yy = Ns.^2
+Plots.plot!(Ns, yy; label="x = y^2")
+Plots.xlabel!("Degree")
+Plots.ylabel!("Time")
+savefig("experiments/saved/sphericalcap/images/complexity-Nend=$Nend.pdf")
+
+
+
+#====#
+
+T = Float64; B = T#BigFloat
+α = 0.2
+SCF = SphericalCapFamily(B, T, B(α * 1000) / 1000)
+a = 1.0
+S = SCF(a, 0.0); S2 = SCF(2.0, 0.0); S0 = SCF(0.0, 0.0)

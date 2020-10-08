@@ -1272,11 +1272,21 @@ end
 #     end
 #     B
 # end
-function operatorclenshaw(cfs::AbstractVector{T}, S::SphericalCapSpace, M) where T
+function operatorclenshaw(cfs::AbstractVector{T},
+                            S::SphericalCapSpace,
+                            M::Int,
+                            Jx::BandedBlockBandedMatrix,
+                            Jy::BandedBlockBandedMatrix,
+                            Jz::BandedBlockBandedMatrix;
+                            rotationalinvariant::Bool=false) where T
     # Outputs the operator MxM-blocked matrix operator corresponding to the
     # function f given by its coefficients of its expansion in the space S
 
-    @show "Operator Clenshaw"
+    # rotationalinvariance flag: true ⟹ function is only dependent on z, and
+    # so we can reduce the arithmatic significantly
+
+    # @show "Operator Clenshaw"
+
     # Convert the cfs vector from ordered by Fourier mode k, to by degree n
     f = convertcoeffsvecorder(S, cfs)
 
@@ -1285,32 +1295,59 @@ function operatorclenshaw(cfs::AbstractVector{T}, S::SphericalCapSpace, M) where
     resizedata!(S, N+1)
     f = PseudoBlockArray(f, [2n+1 for n=0:N])
 
-    @show "getting Jacobi matrices"
-    Jx = jacobix(S, M); @show "Jx done"
-    Jy = jacobiy(S, M); @show "Jy done"
-    Jz = jacobiz(S, M); @show "Jz done"
+    # identity matrix, requiredfor converting the coeffs vector into mat coeffs
     id = BandedBlockBandedMatrix(I, [M+1; 2M:-2:1], [M+1; 2M:-2:1], (0, 0), (0, 0))
-    # Begin alg
     P0 = getdegzeropteval(T, S)
+
+    # Special case
     if N == 0
         return f[1] * P0 * id
     end
-    ξ2 = operatorclenshawvector(S, view(f, Block(N+1)), id)
-    ξ1 = (- clenshawDTBmG(S, N-1, ξ2, Jx, Jy, Jz; operator=true)
-            + operatorclenshawvector(S, view(f, Block(N)), id))
-    for n = N-2:-1:0
-        @show "Operator Clenshaw", M, N, n
-        ξ = (- clenshawDTBmG(S, n, ξ1, Jx, Jy, Jz; operator=true)
-             - clenshawDTC(S, n+1, ξ2)
-             + operatorclenshawvector(S, view(f, Block(n+1)), id))
-        ξ2 = copy(ξ1)
-        ξ1 = copy(ξ)
+
+    # Begin alg
+    if rotationalinvariant
+        # NOTE we assume now that the vector f only non-zeros at the first
+        # entry of each block in the vector
+        k = 0
+        ξ2 = view(f, Block(N+1))[1] * id
+        ξ1 = (ξ2 * (Jz - recγ(T, S, N-1, k, 2) * I) / recγ(T, S, N-1, k, 3)
+                + view(f, Block(N))[1] * id)
+        for n = N-2:-1:0
+            # @show "Operator Clenshaw (rot inv)", M, N, n
+            ξ = (ξ1 * (Jz - recγ(T, S, n, k, 2) * I) / recγ(T, S, n, k, 3)
+                    - recγ(T, S, n+1, k, 1) * ξ2 / recγ(T, S, n+1, k, 3)
+                    + view(f, Block(n+1))[1] * id)
+            ξ2 = copy(ξ1)
+            ξ1 = copy(ξ)
+        end
+        P0 * ξ1
+    else
+        ξ2 = operatorclenshawvector(S, view(f, Block(N+1)), id)
+        ξ1 = (- clenshawDTBmG(S, N-1, ξ2, Jx, Jy, Jz; operator=true)
+                + operatorclenshawvector(S, view(f, Block(N)), id))
+        for n = N-2:-1:0
+            @show "Operator Clenshaw", M, N, n
+            ξ = (- clenshawDTBmG(S, n, ξ1, Jx, Jy, Jz; operator=true)
+                 - clenshawDTC(S, n+1, ξ2)
+                 + operatorclenshawvector(S, view(f, Block(n+1)), id))
+            ξ2 = copy(ξ1)
+            ξ1 = copy(ξ)
+        end
+        (ξ1 * P0)[1]
     end
-    (ξ1 * P0)[1]
+end
+function operatorclenshaw(cfs::AbstractVector{T},
+                            S::SphericalCapSpace,
+                            M::Int) where T
+    @show "No Jacobi matrices input. Obtaining Jacobi matrices..."
+    Jx = jacobix(S, M); @show "Jx done"
+    Jy = jacobiy(S, M); @show "Jy done"
+    Jz = jacobiz(S, M); @show "Jz done"
+    operatorclenshaw(cfs, S, M, Jx, Jy, Jz)
 end
 operatorclenshaw(f::Fun, S::SphericalCapSpace) =
     operatorclenshaw(f.coefficients, S, getnki(S, ncoefficients(f))[1])
-operatorclenshaw(f::Fun, S::SphericalCapSpace, N) =
+operatorclenshaw(f::Fun, S::SphericalCapSpace, N::Int) =
     operatorclenshaw(f.coefficients, S, N)
 
 
@@ -1644,6 +1681,8 @@ function increasedegreeoperator(S::SphericalCapSpace{<:Any, B, T, <:Any}, N, Nto
     # reorganise the coeffs so that the length is increased from deg N to
     # deg Nto, with all coeffs representing the extra degrees being zero.
 
+    @assert Nto > N "Degree is not being increased (Nto shuld be > N)"
+
     C = BandedBlockBandedMatrix(Zeros{B}((Nto+1)^2, (N+1)^2),
                                 [Nto+1; 2(Nto):-2:1], [N+1; 2N:-2:1],
                                 (0, 0), (0, 0))
@@ -1754,7 +1793,7 @@ function laplacianoperator(S::SphericalCapSpace{<:Any, B, T, <:Any},
     resizedataonedimops!(S, N+5)
     resizedataonedimops!(St, N+5)
     getopnorms(St, N+band2)
-    ptsr, wr = pointswithweights(B, Rpts, N+4)
+    ptsr, wr = pointswithweights(B, Rpts, 2N+4)
 
     # Evaluate ρ.(ptsr).^2 at the R inner product points
     rhoptsr2 = S.family.ρ.(ptsr).^2
@@ -2101,8 +2140,7 @@ function jacobix(S::SphericalCapSpace{<:Any, B, T, <:Any}, N) where {B,T}
     Jout = BandedBlockBandedMatrix(Zeros{B}((N+1)^2, (N+1)^2),
                                     [N+1; 2N:-2:1], [N+1; 2N:-2:1],
                                     (bandk, bandk),
-                                    (N-1, N-1))
-                                    #(2bandn+2bandk+bandi, 2bandn+2bandk+bandi))
+                                    (max(4, N-1), max(4, N-1)))
     for row = 1:(N+1)^2
         n, k, i = getnki(S, row)
         ind = getopindex(S, n, k, i; bydegree=false, N=N)
@@ -2127,8 +2165,7 @@ function jacobiy(S::SphericalCapSpace{<:Any, B, T, <:Any}, N) where {B,T}
     Jout = BandedBlockBandedMatrix(Zeros{B}((N+1)^2, (N+1)^2),
                                     [N+1; 2N:-2:1], [N+1; 2N:-2:1],
                                     (bandk, bandk),
-                                    (N, N))
-                                    #(2bandn+2bandk+bandi, 2bandn+2bandk+bandi))
+                                    (max(5, N), max(5, N)))
     for row = 1:(N+1)^2
         n, k, i = getnki(S, row)
         ind = getopindex(S, n, k, i; bydegree=false, N=N)
@@ -2136,29 +2173,46 @@ function jacobiy(S::SphericalCapSpace{<:Any, B, T, <:Any}, N) where {B,T}
     end
     Jout
 end
-function jacobiz(S::SphericalCapSpace{<:Any, B, T, <:Any}, N) where {B,T}
-    resizedata!(S, N; jacobimatcall=true)
-    J = BandedBlockBandedMatrix(Zeros{B}((N+1)^2, (N+1)^2),
-                                1:2:2N+1, 1:2:2N+1, (1, 1), (0, 0))
-    j = 3 # z
-    n = 0
-    view(J, Block(n+1, n+1))[:,:] = S.B[n+1][j]'
-    for n = 1:N
-        view(J, Block(n, n+1))[:,:] = S.C[n+1][j]'
-        view(J, Block(n+1, n+1))[:,:] = S.B[n+1][j]'
-        view(J, Block(n+1, n))[:,:] = S.A[n][j]'
-    end
+function jacobiz(S::SphericalCapSpace{<:Any, B, T, <:Any}, N::Int) where {B,T}
+    # NOTE in this method, we construct the operator directly (as its simple)
+    # so should be quick
+    resizedataonedimops!(S, N)
     bandn = 1; bandk = bandi = 0
-    Jout = BandedBlockBandedMatrix(Zeros{B}((N+1)^2, (N+1)^2),
-                                    [N+1; 2N:-2:1], [N+1; 2N:-2:1],
-                                    (bandk, bandk),
-                                    (2bandn+2bandk+bandi, 2bandn+2bandk+bandi))
-    for row = 1:(N+1)^2
-        n, k, i = getnki(S, row)
-        ind = getopindex(S, n, k, i; bydegree=false, N=N)
-        Jout[ind, :] = convertcoeffsvecorder(S, J[row, :]; todegree=false)
+    J = BandedBlockBandedMatrix(Zeros{B}((N+1)^2, (N+1)^2),
+                                [N+1; 2N:-2:1], [N+1; 2N:-2:1],
+                                (bandk, bandk),
+                                (2bandn+2bandk+bandi, 2bandn+2bandk+bandi))
+    # Assign each block
+    for k = 1:N-1
+        vu = zeros(B, 2(N-k)); vd = zeros(2(N-k+1))
+        n = k
+        c2 = recγ(B, S, n, k, 2)
+        c3 = recγ(B, S, n, k, 3)
+        vd[1:2] = [c2; c2]
+        vu[1:2] = [c3; c3]
+        ind = 3
+        for n = k+1:N-1
+            # TODO Not sure how to do this without loop...
+            c2 = recγ(B, S, n, k, 2)
+            c3 = recγ(B, S, n, k, 3)
+            vd[ind:ind+1] = [c2; c2]
+            vu[ind:ind+1] = [c3; c3]
+            ind += 2
+        end
+        n = N
+        c2 = recγ(B, S, n, k, 2)
+        vd[ind:ind+1] = [c2; c2]
+        view(J, Block(k+1, k+1)) .= diagm(2 => vu, 0 => vd, -2 => vu)
     end
-    Jout
+    # k = 0,N are special cases
+    k = 0
+    vu = [recγ(B, S, n, k, 3) for n = k:N-1]
+    vd = [recγ(B, S, n, k, 2) for n = k:N]
+    view(J, Block(k+1, k+1)) .= Tridiagonal(vu, vd, vu)
+    k = N; n = k
+    c2 = recγ(B, S, n, k, 2)
+    view(J, Block(k+1, k+1)) .= [c2 0; 0 c2]
+    J
 end
 
 # function jacobix(S::SphericalCapSpace{<:Any, B, T, <:Any}, N) where {B,T}
