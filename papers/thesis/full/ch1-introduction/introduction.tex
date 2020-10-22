@@ -1,0 +1,27 @@
+
+\chapter{Introduction}
+
+Univariate orthogonal polynomials (hereon also referred to as OPs) have been extensively involved in the development of multiple fields of computational and applied mathematics \cite{onedimopsrefs}. While there are many famous examples -- such as the Jacobi polynomials, the Legendre polynomials and the Chebyshev polynomials but to name a few -- the area of multivariate orthogonal polynomials has a smaller array of research. However, this branch of mathematics has an encouraging future \cite{dunkl2014orthogonal}, not least as a basis for sparse spectral methods for solving partial differential equations (PDEs) on multidimensional domains, such as on the triangle \cite{olver2019triangle} with applications including solving Volterra integral equations \cite{gutleb2020sparse}.
+
+One famous group of multidimensional orthogonal polynomials is of course the Spherical Harmonics. The European Centre for Medium-range Weather Forecasts (ECMWF) use a Spherical Harmonic spectral method in their weather and climate model \cite{cheong2006dynamical}. Chapter 2 of this thesis provides an introduction to sparse spectral methods via the long established Spherical Harmonics on the whole sphere surface. We present a framework for how the spherical harmonics can be used to expand functions defined on the sphere as multidimensional polynomials in $x, y, z$, and how differential operators can be applied as banded-block-banded matrix operators to coefficient vectors for the function's expansion. Further, we demonstrate how the Vector Spherical Harmonics can be used as an orthogonal basis for vector valued functions lying in the tangent space of the sphere, and thus how one can additionally derive gradient and divergence operators.
+
+While the whole sphere spectral method has been successful for numerous years \cite{wedi2013fast}, there is a drawback in the parallel scalability bottleneck that arises from the global spectral transform, which is expected to inhibit future performance of the ECMWF model \cite{ecmwf2020scalability}. This thesis serves to lay a foundation for addressing this while still utilising a spectral approach. More precisely, we develop a sparse spectral method for solving partial differential equations (PDEs) on the spherical cap as a surface in 3D, with a simple extension to a spherical band. Together, these frameworks can be pieced together to create a spectral element method for the whole sphere, or further developed to investigate spectral methods on other spherical subdomains.
+
+To this end, in Chapter 3 we move on to working in 2D, where in recent years sparse spectral methods for solving PDEs have been derived using hierarchies of classical orthogonal polynomials on intervals, disks, and triangles. Presenting a new framework for choosing a suitable orthogonal polynomial basis for more general 2D domains defined via an algebraic curve as a boundary, this work builds on the observation that sparsity is guaranteed due to this definition of the boundary, and that the entries of partial differential operators can be determined using formulae in terms of (non-classical) univariate orthogonal polynomials, which we define. Triangles and the full disk are then special cases of our framework, which we formalise for the disk-slice and trapezium cases.
+
+With a greater knowledge base in our quiver, we can adapt the techniques learnt from the founding of the disk-slice formulation to a surface in 3D in Chapter 4 -- in particular the spherical cap, a subdomain of the surface of a unit sphere. Using the same family of (non-classical) 1D OPs, we present a suitable orthogonal polynomial basis once more, this time as polynomials in $x,y,z$ complete with sparse differential operators.
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+

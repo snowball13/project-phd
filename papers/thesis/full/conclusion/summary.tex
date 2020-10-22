@@ -1,0 +1,33 @@
+
+
+\chapter{Summary and future directions}
+
+\section{Summary}
+
+In this thesis, we have developed sparse spectral methods for solving partial differential equations (PDEs) on disk-slices and trapeziums in 2D, and spherical caps as a surface 3D. The work can also be used as a template for developing similar methods on other such similar domains, in particular other subdomains of the sphere.
+
+We began with an introduction to multidimensional sparse spectral methods by looking at the spherical harmonics on the whole sphere, explaining how they can be written as orthogonal polynomials in $x,y,z$, and how Jacobi and differential operators that apply to coefficient vectors will hence be banded-block-banded.
+
+For the disk-slice in 2D, we defined the OPs that allow similar sparse and banded-block-banded operators required for solving PDEs in the domain, deriving their structure and providing a method to efficiently calculate numerically their entries. The reason they need to be calculated numerically is due to the non-classical univariate OPs that are involved in the 2D OP definitions. Finally, we moved on to use the same arguments for the spherical cap, a 3D surface that is a subdomain of the unit sphere. We once again defined the 3D OPs as orthogonal polynomials in in $x,y,z$, and showed how the differential operator matrices continue to elicit similar banded-block-banded structure.
+
+
+\section{Future directions}
+
+We hope that this thesis can serve as somewhat of a blueprint for formalising sparse spectral methods, including how one should define the OPs and derive the accompanying Jacobi and differential operators. The motivation behind this work was to develop sparse spectral methods for subdomains of the unit sphere in 3D space. Thus, the natural direction from this point would be to formalise the framework for spherical bands, which would simply involve slightly more complex arithmetic and the sub-block bands would be slightly larger (this due to the $\genjac$ polynomials we defined now having no zero coefficients in their three-term recurrences, meaning the expressions for multiplication by $x,y,z$ would gain some extra terms).
+
+Ideally, we would like to pair this with a spectral element method for the sphere, where the elements would be the spherical subdomains of spherical bands and spherical caps. The goal here would be to test this method against the full sphere spectral method the is in place in the ECMWF model, with the hypothesis being that by reducing the size of the transforms, we can improve the overall efficiency while still maintaining the accuracy that we achieve from a spectral approach.
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
