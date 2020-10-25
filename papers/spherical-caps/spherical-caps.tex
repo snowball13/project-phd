@@ -19,7 +19,7 @@
 
 
 
-\title{Sparse spectral methods for partial differential equations on spherical caps and bands}
+\title{Sparse spectral methods for partial differential equations on spherical caps}
 \author{Ben Snowball, Sheehan Olver\thanks{Department of Mathematics, Imperial College, London, England}}
 %\date{}							% Activate to display a given date or no date
 
@@ -28,7 +28,7 @@
 \maketitle
 
 \begin{abstract}
-In recent years, sparse spectral methods for solving partial differential equations have been derived using hierarchies of classical orthogonal polynomials on intervals, disks, disk-slices and triangles. In this work we extend the methodology to a hierarchy of non-classical multivariate orthogonal polynomials on spherical caps and bands. The entries of discretisations of partial differential operators can be effectively computed using formulae in terms of (non-classical) univariate orthogonal polynomials. We demonstrate the results on partial differential equations involving the spherical Laplacian and Biharmonic operators, showing spectral convergence. 
+In recent years, sparse spectral methods for solving partial differential equations have been derived using hierarchies of classical orthogonal polynomials on intervals, disks, disk-slices and triangles. In this work we extend the methodology to a hierarchy of non-classical multivariate orthogonal polynomials on spherical caps. The entries of discretisations of partial differential operators can be effectively computed using formulae in terms of (non-classical) univariate orthogonal polynomials. We demonstrate the results on partial differential equations involving the spherical Laplacian and Biharmonic operators, showing spectral convergence. 
 \end{abstract}
 
 
@@ -44,7 +44,7 @@ This framework then yields that $\Omega$ is a spherical cap (the region of the s
 \begin{align*}
 	\Omega := \{(x,y,z) \in \R^3 \quad | \quad \alpha < z < \beta, \: x^2 + y^2 + z^2 = 1\}
 \end{align*}
-For simplicity we focus on the case of a spherical cap, though there is a simple extension to a spherical band by taking $\beta \in (\alpha,1)$. The methods presented here translate to the spherical band case by including the necessary adjustments to the weights and recurrence relations we present in this paper (these adjustments make the mathematics more involved, which is why they are omitted here, but the approach is the same). For clarity we note that, for all examples and plots in this paper, we take $\alpha = 0.2$. \bstodo{removed "band" from title, and added a bit more here about the extension}
+For simplicity we focus on the case of a spherical cap, though there is a simple extension to a spherical band by taking $\beta \in (\alpha,1)$. The methods presented here translate to the spherical band case by including the necessary adjustments to the weights and recurrence relations we present in this paper (these adjustments make the mathematics more involved, which is why they are omitted here, but the approach is the same). For clarity we note that, for all examples and plots in this paper, we take $\alpha = 0.2$. 
 
 
 We advocate using a basis that is polynomial in cartesian coordinates, that is, polynomial in $x$, $y$, and $z$, and orthogonal with respect to a prescribed weight: that is, multivariate orthogonal polynomials, whose construction was considered in \cite{olver2020orthogonal}. Equivalently, we can think of these as polynomials modulo the vanishing ideal $\{ x^2 + y^2 + z^2 = 1 \}$, or simply as a linear recombination of spherical harmonics that are orthogonalised on a subset of the sphere. This is in contrast to more standard approaches based on mapping the geometry to a simpler one (e.g., a rectangle or disk) and using orthogonal polynomials in the mapped coordinates (e.g., a basis that is polynomial in the spherical coordinates $\varphi$ and $\theta$). The benefit of the new approach is that we do not need to resolve Jacobians, and thereby we can achieve sparse discretisations for partial differential operators, including those with polynomial variable coefficients. Further, we remove the singular nature as $\alpha$ approaches $0$ that such a projection would give, since our new approach is applicable for all $\alpha \in (-1,1)$. On the spherical cap, the family of weights we consider are of the form
@@ -75,18 +75,18 @@ i.e. $\DeltaS f(\xvec) = \Delta f({\xvec \over \norm{\xvec}})$ for $\xvec := (x,
  \begin{figure}[t]
 	\centering % <-- added
 	\includegraphics[scale=0.3]{complexity-Nend=1000}
-	\caption{Complexity plot showing the length of time taken to construct the operator matrix for $\DeltaS + V(x,y,z)$, with rotationally invariant potential $V(x,y,z) = \cos(z)$.}
+	\caption{Complexity plot showing the length of time taken to construct the operator matrix for $\DeltaS + V(x,y,z)$, with rotationally invariant potential $V(x,y,z) = \cos z$. \sotodoinline{Move to experiments section} \sotodoinline{Add solve time}}
 	\centering
 	\label{fig:complexity}
 \end{figure}
 
-Note that we consider partial differential operators that are not necessarily rotational invariant:  for example, one can use these techniques for  Schr\"odinger operators $\DeltaS + V(x,y,z)$ where $V$ is first approximated by a polynomial. A nice feature though is that if the partial differential operator is invariant with respect to rotation around the $z$ axes (e.g., a Schr\"odinger operator with potential $V(z)$) the discretisation decouples, and can be reordered as a block-diagonal matrix. This improves the complexity further to an optimal $O(p^2$), which is demonstrated in Figure \ref{fig:complexity}. This plot presents the time taken (measured using the \enquote{@belapsed} macro from the BenchmarkTools package in Julia) to construct the operator for $\DeltaS + V(x,y,z)$, with $V(x,y,z) = \cos(z)$, as we increase the orthogonal polynomial degree $p$. \bstodoinline{Added plot}
+Note that we consider partial differential operators that are not necessarily rotational invariant:  for example, one can use these techniques for  Schr\"odinger operators $\DeltaS + V(x,y,z)$ where $V$ is first approximated by a polynomial. A nice feature though is that if the partial differential operator is invariant with respect to rotation around the $z$ axes (e.g., a Schr\"odinger operator with potential $V(z)$) the discretisation decouples, and can be reordered as a block-diagonal matrix. This improves the complexity further to an optimal $O(p^2$), which is demonstrated in Figure \ref{fig:complexity}. This plot presents the time taken\footnote{measured using the \enquote{@belapsed} macro from the BenchmarkTools package in Julia.} to construct the operator for $\DeltaS + V(x,y,z)$, with $V(x,y,z) = \cos z$, as we increase the orthogonal polynomial degree $p$. 
 
 An overview of the paper is as follows:  
 
 \noindent \secref{OPs}: We present our definition of a (one-parameter) family of 3D orthogonal polynomials (OPs) on the spherical cap domain $\Omega$, by combining 1D OPs on the interval $(\alpha, 1)$ with Chebyshev polynomials, to form 3D OPs on the spherical cap surface. We show that these families will lead to sparse Jacobi operators for multiplication by $x, y, z$ and demonstrate how to obtain the 3D OPs.
 
-\noindent\secref{PDOs}: We define useful partial differential operators and further show that these will also be sparse. We can exactly calculate the non-zero entries of these sparse operators using the quadrature rule associated with the non-classical 1D OPs.
+\noindent\secref{PDOs}: We define several partial differential operators such as spherical Laplacians and  show that these will  be sparse when applied to a suitable choice of expansions in bases built from OPs on the spherical cap. We can exactly calculate the non-zero entries of these sparse operators using the quadrature rule associated with the non-classical 1D OPs.
 
 \noindent\secref{Computation}: We derive a quadrature rule on the spherical cap that can be used to expand a function in the OP basis up to a given order $N$, and demonstrate how to evaluate a function using the Clenshaw algorithm using the coefficients of its expansion.
 
@@ -118,7 +118,7 @@ where $\ch_{0} := \frac{\sqrt{2}}{2}$ and $T_k$, $U_{k-1}$ are the standard Cheb
 Note that we have defined $\ch_0$ so as to ensure orthonormality. 
 
 \begin{proposition}[\cite{olver2020orthogonal}]\label{prop:construction}
-	Let $w : (\alpha,\beta) \: \to \R$ be a weight function. $\forall$, $n = 0,1,2,\dots, $ let $\{r_{n,k}\}$ be polynomials orthogonal with respect to the weight $\rho(x)^{2k} w(x)$ where $0 \le k \le n$. Then the 3D polynomials defined on $\Omega$
+	Let $w : (\alpha,\beta) \: \to \R$ be a weight function. For $n = 0,1,2,\dots, $ let $\{r_{n,k}\}$ be polynomials orthogonal with respect to the weight $\rho(x)^{2k} w(x)$ where $0 \le k \le n$. Then the 3D polynomials defined on $\Omega$
 \begin{align*}
 	\scopnki(x,y,z) \equiv \scopnki(\xvec,z) := r_{n-k,k}(z) \: \rho(z)^k \: \ch_{k,i}\fpr(\frac{\xvec}{\rho(z)})
 \end{align*}
@@ -127,7 +127,7 @@ for $i \in {0,1}, \: 0 \le k \le n, \: n = 0,1,2,\dots$ are orthogonal polynomia
 	\ip< p, \: q > &:= \int_\Omega p(\xvec, z) \: q(\xvec, z) \: w(z) \: \D \sigma(\xvec, z) \\
 	&= \int_\alpha^1 \int_0^{2\pi} p(\rho(z) \cos\theta, \rho(z) \sin\theta, z) \: q(\rho(z) \cos\theta, \rho(z) \sin\theta, z) \: \D \theta \: w(z) \: \D z
 \end{align*}
-on $\Omega$. 
+on $\Omega$, where $\D \sigma(\xvec, z)$ is the Lebesgue measure\sotodo{Is Lebesgue measure the right term? From my understanding the measure of a sphere would be 0} on $\Omega$. 
 \end{proposition}
 
 For the spherical cap, we can use Proposition \ref{prop:construction} to create our one-parameter family of OPs. We first introduce notation for our family of non-classical univariate OPs that will be used as the $r_n$ polynomials above.
@@ -161,7 +161,7 @@ By construction, $\{\scopnkia\}$ are orthogonal with respect to the inner produc
 	\ip< p, \: q >_{\scopa} &:= \int_\Omega p(\xvec, z) \: q(\xvec, z) \: \genjacw^{(a,0)}(z) \: \D \sigma(\xvec, z) \\
 	&= \int_\alpha^1 \int_0^{2\pi} p(\rho(z) \cos\theta, \rho(z) \sin\theta, z) \: q(\rho(z) \cos\theta, \rho(z) \sin\theta, z) \: \D \theta \: \genjacw^{(a,0)}(z) \: \D z,
 \end{align*}
-where $\D \sigma(\xvec, z)$ is the Lebesgue measure on $\Omega$, with
+with
 \begin{align}
 	\norm{\scopnkia}_{\scopa}^2 &:= \ip< \scopnkia, \: \scopnkia >_{\scopa} = \pi \: \normgenjac^{(a, 2k)}. \label{eqn:normscop}
 \end{align}
@@ -175,7 +175,7 @@ We can express the three-term recurrences associated with $\genjac_n^{(a,b)}$ as
 \begin{align}
 	x \genjac_n^{(a,b)}(x) &= \beta_n^{(a,b)} \genjac_{n+1}^{(a,b)}(x) + \alpha_n^{(a,b)} \genjac_n^{(a,b)}(x) + \beta_{n-1}^{(a,b)} \genjac_{n-1}^{(a,b)}(x) \label{eqn:Rrecurrence}
 \end{align}
-where the coefficients are calculatable (see \cite{snowball2019sparse}). We can use (\ref{eqn:Rrecurrence}) to determine the 3D recurrences for $\scopnkia(x,y,z)$. Importantly, we can deduce sparsity in the recurrence relationships.  We first require the following Lemma.
+where the coefficients are calculatable (see \cite{snowball2019sparse}). We can use (\ref{eqn:Rrecurrence}) to determine the 3D recurrences for $\scopnkia(x,y,z)$. Importantly, we can deduce sparsity in the recurrence relationships.  We first require the following lemma.
 
 \begin{lemma}\label{lemma:Yrecurrence} 
 The following identities hold for $k = 2,3,\dots$, $j = 0,1,\dots$ and $i, h \in \{0,1\}$:
@@ -188,6 +188,7 @@ The following identities hold for $k = 2,3,\dots$, $j = 0,1,\dots$ and $i, h \in
 	&6) \quad \int_0^{2\pi} \chki(\theta) \: \chjh(\theta) \: \sin\theta \: \D \theta = \half \: \pi \: \delta_{|i-1|,h} \: ((-1)^{i+1} \: \delta_{k-1,j} + (-1)^i \: \delta_{k+1,j}).
 \end{align*}
 \end{lemma}
+
 \begin{proof}
 Each follows from the definitions of $\ch_{k,i}$ and $\ch_0$, as well as the relationships:
 \begin{align*}
@@ -220,21 +221,23 @@ $\scopnkia(x,y,z)$ satisfy the following recurrences:
 \end{align*}
 for $(x,y,z) \in \Omega$, where
 \begin{align*}
-	\alphaa_{n,k,1} &:= \eta_{k-1} \: \ip<\genjacnmk^{(a, 2k)}, \: \genjacnmk^{(a, 2(k-1))}>_{\genjacw^{(a, 2k)}} \\
-	\alphaa_{n,k,2} &:= \eta_{k} \: \ip<\genjacnmk^{(a, 2k)}, \genjac_{n-k-2}^{(a, 2(k+1))}>_{\genjacw^{(a, 2(k+1))}} \\
-	\alphaa_{n,k,3} &:=\eta_{k-1} \: \ip<\genjacnmk^{(a, 2k)}, \: \genjac_{n-k+1}^{(a, 2(k-1))}>_{\genjacw^{(a, 2k)}} \\
-	\alphaa_{n,k,4} &:= \eta_{k} \: \ip<\genjacnmk^{(a, 2k)}, \genjac_{n-k-1}^{(a, 2(k+1))}>_{\genjacw^{(a, 2(k+1))}} \\
-	\alphaa_{n,k,5} &:= \eta_{k-1} \: \ip<\genjacnmk^{(a, 2k)}, \: \genjac_{n-k+2}^{(a, 2(k-1))}>_{\genjacw^{(a, 2k)}} \\
-	\alphaa_{n,k,6} &:=\eta_{k} \: \ip<\genjacnmk^{(a, 2k)}, \genjacnmk^{(a, 2(k+1))}>_{\genjacw^{(a, 2(k+1))}} \\
+	\alphaa_{n,k,1} &:= \eta_{k-1} \: \ip<\genjacnmk^{(a, 2k)}, \: \genjacnmk^{(a, 2(k-1))}>_{\genjacw^{(a, 2k)}}, \\
+	\alphaa_{n,k,2} &:= \eta_{k} \: \ip<\genjacnmk^{(a, 2k)}, \genjac_{n-k-2}^{(a, 2(k+1))}>_{\genjacw^{(a, 2(k+1))}}, \\
+	\alphaa_{n,k,3} &:=\eta_{k-1} \: \ip<\genjacnmk^{(a, 2k)}, \: \genjac_{n-k+1}^{(a, 2(k-1))}>_{\genjacw^{(a, 2k)}}, \\
+	\alphaa_{n,k,4} &:= \eta_{k} \: \ip<\genjacnmk^{(a, 2k)}, \genjac_{n-k-1}^{(a, 2(k+1))}>_{\genjacw^{(a, 2(k+1))}}, \\
+	\alphaa_{n,k,5} &:= \eta_{k-1} \: \ip<\genjacnmk^{(a, 2k)}, \: \genjac_{n-k+2}^{(a, 2(k-1))}>_{\genjacw^{(a, 2k)}}, \\
+	\alphaa_{n,k,6} &:=\eta_{k} \: \ip<\genjacnmk^{(a, 2k)}, \genjacnmk^{(a, 2(k+1))}>_{\genjacw^{(a, 2(k+1))}}, \\
 	\betaa_{n,k,i,j} &:= 
 		\begin{cases}
 			- \alphaa_{n,k,j} \quad &\text{if }(i = 0 \text{ and } j \text{ is odd}) \text{ or }(i = 1 \text{ and } j \text{ is even}) \\
 			\alphaa_{n,k,j} \quad &\text{otherwise}
-		\end{cases} \\	
-	\gammaa_{n,k,1} &:= \beta_{n-k-1}^{(a, 2k)}, \qquad \gammaa_{n,k,2} := \alpha_{n-k}^{(a, 2k)}, \qquad \gammaa_{n,k,3} := \beta_{n-k}^{(a, 2k)}
+		\end{cases}, \\	
+	\gammaa_{n,k,1} &:= \beta_{n-k-1}^{(a, 2k)}, \qquad \gammaa_{n,k,2} := \alpha_{n-k}^{(a, 2k)}, \qquad \gammaa_{n,k,3} := \beta_{n-k}^{(a, 2k)}.
 \end{align*}
 \end{lemma}
-
+\begin{remark}
+For $z$ multiplication, note that different Fourier modes do not interact. This is because $z$ is rotationally invariant. 
+\end{remark}
 \begin{proof}
 The 3-term recurrence for multiplication by $z$ follows from (\ref{eqn:Rrecurrence}). For the recurrence for multiplication by $x$, since $\{\scopmjha\}$ for $m = 0,\dots,n+1$, $j = 0,\dots,m$, $h = 0,1$ is an orthogonal basis for any degree $n+1$ polynomial on $\Omega$, we can expand 
 \begin{align*}
@@ -244,8 +247,8 @@ These coefficients are given by
 \begin{align*}
 	c_{m,j} = {\ip< x \: \scopnkia, \scopmjha >_{\scopa}}{\norm{\scopmjha}^{-2}_{\scopa}}
 \end{align*}
-where we show the non-zero coefficients that result are the $\alphaa_{n,k,1},\dots,\alphaa_{n,k,6}$ in the Lemma.
-Recall from equation (\ref{eqn:normscop}) that $\norm{\scopmjha}_{\scopa}^2 = \pi \: \normgenjac^{(a,2j)}$. Then for $m = 0,\dots,n+1$, $j = 0,\dots,m$, using a change of variables $(\cos(\theta) \sin(\varphi), \: \sin\theta\sin(\varphi), \: \cos(\varphi)) = (x, y, z)$:
+where we show the non-zero coefficients that result are the $\alphaa_{n,k,1},\dots,\alphaa_{n,k,6}$ in the lemma.
+Recall from equation (\ref{eqn:normscop}) that $\norm{\scopmjha}_{\scopa}^2 = \pi \: \normgenjac^{(a,2j)}$. Then for $m = 0,\dots,n+1$, $j = 0,\dots,m$, using a change of variables $(\cos\theta \sin\varphi, \: \sin\theta\sin\varphi, \: \cos\varphi) = (x, y, z)$:
 \begin{align*}
 	&\ip<x \: \scopnkia, \scopmjha>_{\scopa} \\
 	&= \int_\Omega \scopnkia(\xvec,z) \: \scopmjha(\xvec,z) \: x \: \genjacw^{(a,0)}(z) \: \D\sigma(\xvec, z) \\
@@ -261,7 +264,7 @@ These coefficients are given by
 \begin{align*}
 	d_{m,j} = {\ip< y \: \scopnkia, \scopmjha >_{\scopa}}{\norm{\scopmjha}^{-2}_{\scopa}}
 \end{align*}
-where we show the non-zero coefficients that result are the $\betaa_{n,k,1},\dots,\betaa_{n,k,6}$ in the Lemma:
+where we show the non-zero coefficients that result are the $\betaa_{n,k,1},\dots,\betaa_{n,k,6}$ in the lemma:
 \begin{align*}
 	&\ip<y \: \scopnkia, \scopmjha>_{\scopa} \\
 	&= \int_\Omega \scopnkia(\xvec,z) \: \scopmjha(\xvec,z) \: y \: \genjacw^{(a,0)}(z) \: \D\sigma(\xvec, z) \\
@@ -273,7 +276,7 @@ where again $\delta_{k, j}$ is the standard Kronecker delta function, and we hav
 
 \end{proof}
 
-The recurrences in Lemma \ref{lemma:Qrecurrence} lead to Jacobi operators that correspond to multiplication by $x$, $y$ and $z$. Let $N \in \N$ and define: 
+The recurrences in Lemma \ref{lemma:Qrecurrence} lead to Jacobi operators that correspond to multiplication by $x$, $y$ and $z$. Let $N \in \N$ and define notation that groups degree $N$ polynomials together[: 
 \begin{align}
 	\bigscopNka &:= 
 		\begin{pmatrix}
@@ -296,13 +299,13 @@ The recurrences in Lemma \ref{lemma:Qrecurrence} lead to Jacobi operators that c
 			\bigscopa_{N,N}
 		\end{pmatrix} \in \R^{(N+1)^2} \label{eqn:OPdefNa}
 \end{align}
-and set $J_x^{(a)}, J_y^{(a)}, J_z^{(a)}$ as the Jacobi matrices corresponding to
+and set $J_x^{(a)}, J_y^{(a)}, J_z^{(a)}$ as the Jacobi matrices corresponding to\sotodo{The following is wrong as it only applies if $N = \infty$}
 \begin{align}
-	J_x^{(a,b,c,d)} \: \bigscopNa(x,y,z) = x \: \bigscopNa(x,y,z), \nonumber \\
-	J_y^{(a,b,c,d)} \: \bigscopNa(x,y,z) = y \: \bigscopNa(x,y,z), \label{eqn:jacobimatricesdefinition} \\
-	J_z^{(a,b,c,d)} \: \bigscopNa(x,y,z) = z \: \bigscopNa(x,y,z). \nonumber
+	J_x^{(a)} \: \bigscopNa(x,y,z) = x \: \bigscopNa(x,y,z), \nonumber \\
+	J_y^{(a)} \: \bigscopNa(x,y,z) = y \: \bigscopNa(x,y,z), \label{eqn:jacobimatricesdefinition} \\
+	J_z^{(a)} \: \bigscopNa(x,y,z) = z \: \bigscopNa(x,y,z). \nonumber
 \end{align}
-The matrices $J_x^{(a)}, J_y^{(a)}, J_z^{(a)}$ act on the coefficients vector of a function's expansion in the $\{\scopnkia\}$ basis. For example, let $a$ be a general parameter and let a function $f(x,y,z)$ defined on $\Omega$ be approximated up to order $N \in \N$ by its expansion $f(x,y,z) = \bigscopNa(x,y,z)^\top \mathbf{f}$. Then $x \: f(x,y,z)$ is approximated by $\bigscopNa(x,y,z)^\top {J_x^{(a)\top}} \mathbf{f}$. In other words, ${J_x^{(a,b,c,d)\top}} \mathbf{f}$ is the coefficients vector for the expansion of the function $(x,y,z) \mapsto x \: f(x,y,z)$ in the  $\{\scopnkia\}$ basis. Note that $J_x^{(a)}, J_y^{(a)}, J_z^{(a)}$ are banded-block-banded matrices:
+The matrices $J_x^{(a)}, J_y^{(a)}, J_z^{(a)}$ act on the coefficients vector of a function's expansion in the $\{\scopnkia\}$ basis. For example, let $a$ be a general parameter and let a function $f(x,y,z)$ defined on $\Omega$ be approximated up to order $N \in \N$ by its expansion $f(x,y,z) = \bigscopNa(x,y,z)^\top \mathbf{f}$. Then $x \: f(x,y,z)$ is approximated by $\bigscopNa(x,y,z)^\top {J_x^{(a)\top}} \mathbf{f}$. In other words, ${J_x^{(a)\top}} \mathbf{f}$ is the coefficients vector for the expansion of the function $(x,y,z) \mapsto x \: f(x,y,z)$ in the  $\{\scopnkia\}$ basis. Note that $J_x^{(a)}, J_y^{(a)}, J_z^{(a)}$ are banded-block-banded matrices:
 
 \begin{definition}
 A block matrix $A$ with blocks $A_{i,j}$ has block-bandwidths $(L,U)$ if $A_{i,j} = 0$ for $- L \leq j-i \leq U$, and sub-block-bandwidths $(\lambda, \mu)$ if all blocks $A_{i,j}$ are banded with bandwidths $(\lambda,\mu)$. A matrix where the block-bandwidths and sub-block-bandwidths are small compared to the dimensions is referred to as a banded-block-banded matrix. 
@@ -330,18 +333,19 @@ For $J_x^{(a)}$, the sub-blocks $A^{(a)}_{x, k}, C^{(a)}_{x, k}$ have sub-block-
 			A^{(a)}_{k+2,k,2} & \ddots & \ddots & \\
 			& \ddots & \ddots & A^{(a)}_{N-1,k,6} \\
 			& & A^{(a)}_{N,k,2} & A^{(a)}_{N,k,4}
-		\end{pmatrix}, \quad k = 0,1,2,\dots,N \\
-	&\big( \text{so that } A^{(a)}_{x,0} \in \R^{(N+1)\times2N}, \quad A^{(a)}_{x,k} \in \R^{2(N-k+1)\times2(N-k)} \text{ for } k = 1,2,\dots,N \big) \\
+		\end{pmatrix}, \quad k = 0,1,2,\dots,N 
+\end{align*}
+so that  $A^{(a)}_{x,0} \in \R^{(N+1)\times2N}$,  $A^{(a)}_{x,k} \in \R^{2(N-k+1)\times2(N-k)}$ for $k = 1,2,\dots,N$,
+\begin{align*}
 	C^{(a)}_{x,k} &:= 
 		\begin{pmatrix}
 			A^{(a)}_{k,k,1} & A^{(a)}_{k,k,3} & A^{(a)}_{k,k,5} & & \\
 			& \ddots & \ddots & \ddots \\
 			& & \ddots & \ddots & A^{(a)}_{N-1,k,5} \\
 			& & & A^{(a)}_{N,k,1} & A^{(a)}_{N,k,3}
-		\end{pmatrix}, \quad k = 1,2,\dots,N \\
-	&\big( \text{so that } C^{(a)}_{x,1} \in \R^{2N\times(N+1)}, \quad C^{(a)}_{x,k} \in \R^{2(N-k+1)\times2(N-k+2)} \text{ for } k = 2,3,\dots,N \big)
+		\end{pmatrix}, \quad k = 1,2,\dots,N 
 \end{align*}
-where for $k = 1,\dots,N, \: n = k,\dots,N$
+so that $C^{(a)}_{x,1} \in \R^{2N\times(N+1)}$,  $C^{(a)}_{x,k} \in \R^{2(N-k+1)\times2(N-k+2)}$  for  $k = 2,3,\dots,N$, here for $k = 1,\dots,N, \: n = k,\dots,N$,
 \begin{align}
 	A^{(a)}_{n,k,j} &:= 
 		\begin{pmatrix}
@@ -430,7 +434,7 @@ Note that the sparsity of the Jacobi matrices (in particular the sparsity of the
 
 In this section, we introduce new notation for a different ordering of the OP vector, in order to demonstrate how we can obtain a recurrence for the OPs in matrix-vector form, and derive the associated \enquote{Clenshaw matrices} -- we define the Clenshaw matrices as the matrices derived from the OP's $x,y,z$-multiplication relationships that form the multidimensional three-term recurrences. While in Section \ref{subsection:jacobimats} the ordering used is convenient for the application of Jacobi and differential operators to the vector of coefficients of a given function's expansion, the ordering we will use in this section is convenient for building the OPs and more importantly obtaining the \enquote{Clenshaw matrices} necessary for efficient function evaluation using the Clenshaw algorithm. In practice, it is simply a matter of converting coefficients between the two orderings.
 
-Define, for $n=0,1,2,\dots$: 
+Define, for $n=0,1,2,\dots$:  \sotodo{Explain why these are needed}
 \begin{align*}
 	\bigscoptna := 
 		\begin{pmatrix}
@@ -450,11 +454,11 @@ Define, for $n=0,1,2,\dots$:
 			\vdots \\
 		\end{pmatrix}
 \end{align*}
-and set $\tilde J_x^{(a)}, \tilde J_y^{(a)}, \tilde J_z^{(a)}$ as the Jacobi matrices corresponding to
+and set $\tilde J_x^{(a)}, \tilde J_y^{(a)}, \tilde J_z^{(a)}$ as the Jacobi matrices corresponding to \sotodo{Can the following be simplified? Seems like it repeats}
 \begin{align}
-	\tilde J_x^{(a,b,c,d)} \: \bigscopta(x,y,z) = x \: \bigscopta(x,y,z), \nonumber \\
-	\tilde J_y^{(a,b,c,d)} \: \bigscopta(x,y,z) = y \: \bigscopta(x,y,z), \label{eqn:jacobimatricesdefinitionalt} \\
-	\tilde J_z^{(a,b,c,d)} \: \bigscopta(x,y,z) = z \: \bigscopta(x,y,z). \nonumber
+	\tilde J_x^{(a)} \: \bigscopta(x,y,z) = x \: \bigscopta(x,y,z), \nonumber \\
+	\tilde J_y^{(a)} \: \bigscopta(x,y,z) = y \: \bigscopta(x,y,z), \label{eqn:jacobimatricesdefinitionalt} \\
+	\tilde J_z^{(a)} \: \bigscopta(x,y,z) = z \: \bigscopta(x,y,z). \nonumber
 \end{align}
 where
 \begin{align*}
@@ -546,7 +550,7 @@ where $B^{(a)}_{n,k,j}$ are defined equations (\ref{eqn:jacobisubblocksB1}, \ref
 \end{align*}
 where $\Gamma^{(a)}_{n,k,j}$ are defined in equations (\ref{eqn:jacobisubblocksGamma1}, \ref{eqn:jacobisubblocksGamma2}). 
 
-We can combine each system in (\ref{eqn:jacobimatricesdefinitionalt}) into a block-tridiagonal system, for any $(x,y,z) \in \Omega$:
+Following the triangle case \cite{olver2019triangle}, we can combine each system in (\ref{eqn:jacobimatricesdefinitionalt}) into a block-tridiagonal system, for any $(x,y,z) \in \Omega$:
 \begin{align*}
 	\renewcommand\arraystretch{1.3}
 	\begin{pmatrix}
@@ -703,7 +707,7 @@ The incrementing and decrementing of parameters as seen here is analogous to oth
 \end{itemize}
 \end{theorem}
 
-In order to show the last part of Theorem \ref{theorem:sparsityofdifferentialoperators}, we require the following short Lemma.
+In order to show the last part of Theorem \ref{theorem:sparsityofdifferentialoperators}, we require the following short lemma.
 
 \begin{lemma}\label{lemma:Rsecondderivative}
 	For any general parameter $a$ and any $n = 0,1,\dots$, $k = 0,\dots,n$ we have that
@@ -993,12 +997,12 @@ so that $\xvec \mapsto f_e(\xvec, z)$ for fixed $z$ is an even function, and $\x
 
 Firstly, we note that
 \begin{align*}
-	\int_0^{2\pi} g\big(\cos(\theta), \sin\theta\big) \: \D \theta = \int_{-1}^1 \Big( g\big(x, \sqrt{1-x^2}\big) + g\big(x, -\sqrt{1-x^2}\big) \Big) \frac{\D x}{\sqrt{1-x^2}}
+	\int_0^{2\pi} g\big(\cos \theta, \sin\theta\big) \: \D \theta = \int_{-1}^1 \Big( g\big(x, \sqrt{1-x^2}\big) + g\big(x, -\sqrt{1-x^2}\big) \Big) \frac{\D x}{\sqrt{1-x^2}}
 \end{align*}
 for some function $g$. Then, integrating the even function $f_e$ we have
 \begin{align*}
 	&\int_\Omega f_e(x,y,z) \: \genjacw^{(a,0)}(z) \: \D \sigma(x,y) \: \D z \\
-	&\quad \quad = \int_\alpha^1 \genjacw^{(a,0)}(z) \: \Big( \int_0^{2\pi} f_e\big(\rho(z)\cos(\theta),\rho(z)\sin\theta, z\big) \: \D \theta \Big) \: \D z \\
+	&\quad \quad = \int_\alpha^1 \genjacw^{(a,0)}(z) \: \Big( \int_0^{2\pi} f_e\big(\rho(z)\cos\theta,\rho(z)\sin\theta, z\big) \: \D \theta \Big) \: \D z \\
 	&\quad \quad = 2 \int_\alpha^1 \genjacw^{(a,0)}(z) \: \Big( \int_{-1}^1 f_e\big(\rho(z)x,\rho(z)\sqrt{1-x^2}, z\big) \: \D x \Big) \: \D z \\
 	&\quad \quad \approx \int_\alpha^1 \genjacw^{(a,0)}(z) \: \Big( \sum_{l=1}^{M_2} w_l^{(s)} f_e\big(\rho(z) s_l, \rho(z) \sqrt{1 - s_l^2}, z\big) \Big) \: \D z \quad (\star) \\
 	&\quad \quad \approx \sum_{j=1}^{M_1} w_j^{(t)} \sum_{l=1}^{M_2} w_l^{(s)} f_e\big(\rho(t_j) s_l, \rho(t_j) \sqrt{1 - s_l^2}, t_j\big) \quad (\star \star) \\
@@ -1009,7 +1013,7 @@ Suppose $f$ is a polynomial in $x,y,z$ of degree $N$, and hence that $f_e$ is a 
 Integrating the odd function $f_o$ results in
 \begin{align*}
 	&\int_\Omega f_o(x,y,z) \: \genjacw^{(a,0)}(z) \: \D \sigma(x,y) \: \D z \\
-	&\quad \quad = \int_\alpha^1 \genjacw^{(a,0)}(z) \: \Big( \int_0^{2\pi} f_o\big(\rho(z)\cos(\theta),\rho(z)\sin\theta, z)\big) \: \D \theta \Big) \: \D z \\
+	&\quad \quad = \int_\alpha^1 \genjacw^{(a,0)}(z) \: \Big( \int_0^{2\pi} f_o\big(\rho(z)\cos\theta,\rho(z)\sin\theta, z)\big) \: \D \theta \Big) \: \D z \\
 	&\quad \quad = \int_\alpha^1 \genjacw^{(a,0)}(z) \: \Big( \int_{-1}^1 \Big[ f_o\big(\rho(z)x,\rho(z)\sqrt{1-x^2}, z\big) + f_o\big(\rho(z)x, - \rho(z)\sqrt{1-x^2}, z\big) \big] \: \D x \Big) \: \D z \\
 	&\quad \quad = \int_\alpha^1 \genjacw^{(a,0)}(z) \: \Big( \int_{-1}^1 \Big[ f_o\big(\rho(z)x,\rho(z)\sqrt{1-x^2}, z\big) - f_o\big(\rho(z)x, \rho(z)\sqrt{1-x^2}, z\big) \big] \: \D x \Big) \: \D z \\
 	&\quad \quad = 0.
@@ -1053,8 +1057,8 @@ where $M = M_1 M_2$ and $2M_1 - 1 \ge N, 2M_2 - 1 \ge N$.
 %Now, we have that
 %\begin{align*}
 %	&\int_\Omega f_e(x,y,z) \: \genjacw^{(a,0)}(z) \: \D \sigma(x,y) \: \D z \\
-%	&\quad \quad = \int_0^{\cos^{-1}(\alpha)} \int_0^{2\pi} f_e\big(\cos(\theta)\sin(\varphi), \sin\theta\sin(\varphi), \cos(\varphi)\big) \: \genjacw^{(a,0)}\big(\cos(\varphi)\big) \: \sin(\varphi) \: \D \theta \: \D \varphi \\
-%	&\quad \quad = \int_\alpha^1 \genjacw^{(a,0)}(z) \: \Big( \int_0^{2\pi} f_e\big(\rho(z)\cos(\theta),\rho(z)\sin\theta, z)\big) \: \D \theta \Big) \: \D z \\
+%	&\quad \quad = \int_0^{\cos^{-1}(\alpha)} \int_0^{2\pi} f_e\big(\cos\theta\sin(\varphi), \sin\theta\sin(\varphi), \cos(\varphi)\big) \: \genjacw^{(a,0)}\big(\cos(\varphi)\big) \: \sin(\varphi) \: \D \theta \: \D \varphi \\
+%	&\quad \quad = \int_\alpha^1 \genjacw^{(a,0)}(z) \: \Big( \int_0^{2\pi} f_e\big(\rho(z)\cos\theta,\rho(z)\sin\theta, z)\big) \: \D \theta \Big) \: \D z \\
 %	&\quad \quad = \int_\alpha^1 \genjacw^{(a,0)}(z) \: \Big( \int_{\norm{\bm{\xi}} = 1} f_e\big(\rho(z)\bm{\xi}, z)\big) \: \D \sigma(\bm{\xi}) \Big) \: \D z \\
 %	&\quad \quad \approx\int_\alpha^1 \genjacw^{(a,0)}(z) \: \Big( \sum_{l=1}^{M_2} w_l^{(s)} f_e\big(\rho(z) \mathbf{s}_l, z\big) \Big) \: \D z \quad (\star) \\
 %	&\quad \quad \approx \sum_{j=1}^{M_1} w_j^{(t)} \sum_{l=1}^{M_2} w_l^{(s)} f_e\big(\rho(t_j) \mathbf{s}_l, t_j\big) \quad (\star \star) \\
@@ -1065,8 +1069,8 @@ where $M = M_1 M_2$ and $2M_1 - 1 \ge N, 2M_2 - 1 \ge N$.
 %Next, note that 
 %\begin{align*}
 %	&\int_\Omega f_o(x,y,z) \: \genjacw^{(a,0)}(z) \: \D \sigma(x,y) \: \D z \\
-%	&\quad \quad = \int_0^{\cos^{-1}(\alpha)} \int_0^{2\pi} f_o\big(\cos(\theta)\sin(\varphi), \sin\theta\sin(\varphi), \cos(\varphi)\big) \: \genjacw^{(a,0)}\big(\cos(\varphi)\big) \: \sin(\varphi) \: \D \theta \: \D \varphi \\
-%	&\quad \quad = \int_\alpha^1 \genjacw^{(a,0)}(z) \: \Big( \int_0^{2\pi} f_o\big(\rho(z)\cos(\theta),\rho(z)\sin\theta, z)\big) \: \D \theta \Big) \: \D z \\
+%	&\quad \quad = \int_0^{\cos^{-1}(\alpha)} \int_0^{2\pi} f_o\big(\cos\theta\sin(\varphi), \sin\theta\sin(\varphi), \cos(\varphi)\big) \: \genjacw^{(a,0)}\big(\cos(\varphi)\big) \: \sin(\varphi) \: \D \theta \: \D \varphi \\
+%	&\quad \quad = \int_\alpha^1 \genjacw^{(a,0)}(z) \: \Big( \int_0^{2\pi} f_o\big(\rho(z)\cos\theta,\rho(z)\sin\theta, z)\big) \: \D \theta \Big) \: \D z \\
 %	&\quad \quad = \int_\alpha^1 \genjacw^{(a,0)}(z) \: \Big( \int_{\norm{\bm{\xi}} = 1} f_o\big(\rho(z)\bm{\xi}, z)\big) \: \D \sigma(\bm{\xi}) \Big) \: \D z \quad (\dagger) \\
 %	&\quad \quad = 0
 %\end{align*}
