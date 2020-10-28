@@ -296,11 +296,11 @@ function getsolutionblocknorms(N::Int, S::SphericalCapSpace, A::BandedBlockBande
 end
 
 # solutionblocknorms - Poisson
-N = 200
+N = 100
 Δw = squareoperator(S, laplacianoperator(S, S, N), N)
 
-ϵ = 0.5; f5anon = (x,y,z)->norm([x; y; z] .- (1.0 * (1 / sqrt(3) + ϵ)))
-f5 = Fun(f5anon, S, 2115*2); f5.coefficients
+ϵ = 0.1; f5anon = (x,y,z)->norm([x; y; z] .- (1.0 * (1 / sqrt(3) + ϵ)))
+f5 = Fun(f5anon, S, 2(N+1)^2); f5.coefficients
 f5(p) - f5anon(p...)
 ϵ = 1; f1anon = (x,y,z)->norm([x; y; z] .- (1.0 * (1 / sqrt(3) + ϵ)))
 f1 = Fun(f1anon, S, 500*2); f1.coefficients
@@ -325,7 +325,7 @@ unorms = getsolutionblocknorms(N, S, Δw,
                                     resizecoeffs!(S, f2, N), resizecoeffs!(S, f3, N),
                                     resizecoeffs!(S, f4, N)))
 using Plots
-Plots.plot(unorms[1], line=(3, :solid), label="ϵ = 0.5", yscale=:log10, legend=:bottomleft)
+Plots.plot(unorms[1], line=(3, :solid), label="ϵ = 0.1", yscale=:log10, legend=:bottomleft)
 Plots.plot!(unorms[2], line=(3, :dash), label="ϵ = 1")
 Plots.plot!(unorms[3], line=(3, :dashdot), label="ϵ = 2")
 Plots.plot!(unorms[4], line=(3, :dot), label = "ϵ = 3")
@@ -337,7 +337,7 @@ Plots.savefig("experiments/saved/sphericalcap/images/solutionblocknorms-poisson-
 # Helmholtz
 f1 = Fun((x,y,z)->1.0, S, 2(1+1)^2); f1.coefficients
 f2 = Fun((x,y,z)->weight(S, x, y, z) * S.family.ρ(z)^2, S, 2(3+1)^2); f2.coefficients
-N = 100 # TODO Run with N larger
+N = 200 # TODO Run with N larger
 Jx = OrthogonalPolynomialFamilies.jacobix(S, N)
 Jy = OrthogonalPolynomialFamilies.jacobiy(S, N)
 Jz = OrthogonalPolynomialFamilies.jacobiz(S, N)
@@ -367,7 +367,7 @@ Plots.ylabel!("Norm")
 Plots.savefig("experiments/saved/sphericalcap/images/solutionblocknorms-helmholtz-varyingk-N=$N.pdf")
 
 # Biharmonic
-N = 100
+N = 200
 Bw = biharmonicoperator(S2, N)
 Bw = squareoperator(S2, Bw, N)
 
@@ -384,9 +384,10 @@ z1 = S.family.α; x1 = 0.7; vpt = [x1; sqrt(1 - x1^2 - z1^2); z1]
     f3 = Fun(S2, f3cfs); f3.coefficients
     f3(p) - f3anon(p...)
 ϵ = 200; f4anon = (x,y,z) -> exp(-ϵ*((x-vpt[1])^2 + (y-vpt[2])^2 + (z-vpt[3])^2))
-    f4 = Fun(f4anon, S2, 2(N+1)^2); f4.coefficients
+    f4 = Fun(f4anon, S2, 2(150+1)^2); f4.coefficients
     f4(p) - f4anon(p...)
 
+save("experiments/saved/sphericalcap/jld/biharmonic-f4cfs-N=150.jld", "f4cfs", f4.coefficients)
 unorms = getsolutionblocknorms(N, S2, Bw,
                     (resizecoeffs!(S2, f1, N), resizecoeffs!(S2, f2, N),
                      resizecoeffs!(S2, f3, N), resizecoeffs!(S2, f4, N)))
@@ -417,7 +418,7 @@ end
 function testcomplexityofdifferentialoperator2(N::Int)
     laplacianoperator(S, S, N; square=true)
 end
-function testcomplexity!(S::SphericalCapSpace, v::Fun, tms, Ns)
+function testcomplexity!(S::SphericalCapSpace, v::Fun, f::Fun, Ns, tbuild, tfact, tsolve)
     # # TODO create an operatorclenshaw method for rotational invariant V,
     # # i.e. v(x,y,z) ≡ v(z), where the result V is Block-Diagonal and we dont
     # # need to account for the Jx, Jy bits.
@@ -431,27 +432,52 @@ function testcomplexity!(S::SphericalCapSpace, v::Fun, tms, Ns)
                                         (0, 0), (0, 0))
         Jy = Jx
         @show "done Jacobi mats"
-        tms[k] = @belapsed testcomplexityofdifferentialoperator($(S), $(N), $(v), $(Jx), $(Jy), $(Jz))
-        # tms[k] = @elapsed testcomplexityofdifferentialoperator(S, N, v, Jx, Jy, Jz)
+
+        # # belapsed
+        # tbuild[k] = @belapsed testcomplexityofdifferentialoperator($(S), $(N), $(v), $(Jx), $(Jy), $(Jz))
+        # A = testcomplexityofdifferentialoperator(S, N, v, Jx, Jy, Jz)
+        # tfact[k] = @belapsed factorize($(A))
+        # Afact = factorize(A)
+        # tsolve[k] = @belapsed $(A) \ resizecoeffs!($(f), $(N))
+
+        # elapsed
+        tbuild[k] = @elapsed testcomplexityofdifferentialoperator(S, N, v, Jx, Jy, Jz)
+        A = testcomplexityofdifferentialoperator(S, N, v, Jx, Jy, Jz)
+        tfact[k] = @elapsed factorize(A)
+        Afact = factorize(A)
+        if N < 25
+            tsolve[k] = @elapsed Afact \ f.coefficients[1:4]
+        else
+            tsolve[k] = @elapsed Afact \ resizecoeffs!(S, f, N)
+        end
     end
-    tms
+    tbuild, tfact, tsolve
 end
 
-Nend = 1000; Ns = [1; 100:100:Nend]
-tms = Array{Float64}(undef, length(Ns))
+Nend = 1000; Ns = 100:100:Nend
+tbuild = Array{Float64}(undef, length(Ns))
+tfact, tsolve = copy(tbuild), copy(tbuild)
 vanon = (x,y,z)->cos(z)
 v = Fun(vanon, S, 300)
+# Exact solution to Δu = f, where u = wR10(z)*y*exp(x)
+fanon = (x,y,z) -> (- 2exp(x)*y*z*(2+x)
+                    + (weight(S,x,y,z) * exp(x) * (y^3 + z^2*y - 4x*y - 2y)))
+f = Fun(fanon, S, 1000)
 resizedataonedimops!(S, Nend+5)
-testcomplexity!(S, v, tms, Ns)
-tms
+testcomplexity!(S, v, f, Ns, tbuild, tfact, tsolve)
+tbuild, tfact, tsolve
+save("experiments/saved/sphericalcap/jld/complexity-N=$N.jld", "tbuild", tbuild, "tfact", tfact, "tsolve", tsolve)
+
+
 
 using Plots
-Plots.plot(Ns, tms; yscale=:log10, xscale=:log10, label="Complexity")
-yy = Ns.^2
-Plots.plot!(Ns, yy; label="x = y^2")
+Plots.plot(Ns, tbuild; line=(3, :dash), yscale=:log10, xscale=:log10, legend=:bottomright, label="Building")
+Plots.plot!(Ns, tfact; line=(3, :dot), label="Factorisation")
+Plots.plot!(Ns, tsolve; line=(3, :dashdot), label="Solve")
+Plots.plot!(Ns, tbuild + tfact + tsolve; line=(3, :solid), label="Total")
 Plots.xlabel!("Degree")
 Plots.ylabel!("Time")
-savefig("experiments/saved/sphericalcap/images/complexity-Nend=$Nend.pdf")
+savefig("experiments/saved/sphericalcap/images/complexity-new-Nend=$Nend.pdf")
 
 
 

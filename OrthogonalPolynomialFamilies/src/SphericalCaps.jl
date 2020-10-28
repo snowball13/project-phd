@@ -1801,9 +1801,9 @@ function laplacianoperator(S::SphericalCapSpace{<:Any, B, T, <:Any},
 
     # Begin assigning entries
     for k = 0:N
-        if k % 20 == 0
-            @show "Δ", weighted, k
-        end
+        # if k % 20 == 0
+        #     @show "Δ", weighted, k
+        # end
         R = getRspace(S, k)
         getopptseval(R, N-k+band2, ptsr)
         getderivopptseval(R, N-k+band2, ptsr)
