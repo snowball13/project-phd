@@ -37,21 +37,20 @@ In recent years, sparse spectral methods for solving partial differential equati
 
 This paper develops sparse spectral methods for solving linear partial differential equations on certain subsets of the sphere -- specifically spherical caps. More precisely, we consider the solution of partial differential equations on the domain $\Omega$ given by
 \begin{align*}
-	\Omega := \{(x,y,z) \in \R^3 \quad | \quad \alpha < z < \beta, \: ||(x,y)|| := \sqrt{x^2 + y^2} = \rho(z)\}
-\end{align*}
-and consider the case where $\alpha \in (-1,1)$, $\beta := 1$ and where $ \rho(z) := \sqrt{1-z^2}$.
-This framework then yields that $\Omega$ is a spherical cap (the region of the surface of a sphere where the $z$-coordinate ranges from $\alpha$ to $1$), i.e.
-\begin{align*}
 	\Omega := \{(x,y,z) \in \R^3 \quad | \quad \alpha < z < \beta, \: x^2 + y^2 + z^2 = 1\}
 \end{align*}
-For simplicity we focus on the case of a spherical cap, though there is a simple extension to a spherical band by taking $\beta \in (\alpha,1)$. The methods presented here translate to the spherical band case by including the necessary adjustments to the weights and recurrence relations we present in this paper (these adjustments make the mathematics more involved, which is why they are omitted here, but the approach is the same). For clarity we note that, for all examples and plots in this paper, we take $\alpha = 0.2$. 
+where $\alpha \in (-1,1)$ and $\beta := 1$.
+This framework then yields that $\Omega$ is a spherical cap (the region of the surface of a sphere where the $z$-coordinate ranges from $\alpha$ to $1$), i.e.
 
+\begin{remark}
+For simplicity we focus on the case of a spherical cap, though there is an extension to a spherical band by taking $\beta \in (\alpha,1)$. The methods presented here translate to the spherical band case by including the necessary adjustments to the weights and recurrence relations we present in this paper. These adjustments make the mathematics more involved, which is why they are omitted here, but the approach is the same.
+\end{remark}
 
 We advocate using a basis that is polynomial in cartesian coordinates, that is, polynomial in $x$, $y$, and $z$, and orthogonal with respect to a prescribed weight: that is, multivariate orthogonal polynomials, whose construction was considered in \cite{olver2020orthogonal}. Equivalently, we can think of these as polynomials modulo the vanishing ideal $\{ x^2 + y^2 + z^2 = 1 \}$, or simply as a linear recombination of spherical harmonics that are orthogonalised on a subset of the sphere. This is in contrast to more standard approaches based on mapping the geometry to a simpler one (e.g., a rectangle or disk) and using orthogonal polynomials in the mapped coordinates (e.g., a basis that is polynomial in the spherical coordinates $\varphi$ and $\theta$). The benefit of the new approach is that we do not need to resolve Jacobians, and thereby we can achieve sparse discretisations for partial differential operators, including those with polynomial variable coefficients. Further, we remove the singular nature as $\alpha$ approaches $0$ that such a projection would give, since our new approach is applicable for all $\alpha \in (-1,1)$. On the spherical cap, the family of weights we consider are of the form
 \begin{align*}
 	\Wa(x,y,z) := (z - \alpha)^a, \qfor (x,y,z) \in \Omega,
 \end{align*}
-noting that $\Wa(x,y,z) = 0$ for $(x,y,z) \in \partial \; \Omega$. The corresponding OPs denoted $\scopnkia(x,y,z)$, where $n$ denotes the polynomial degree, $0 \le k \le n$ and $i \in \{0, \min(1,k)\}$. We define these to be orthogonalised lexicographically, that is,
+noting that $\Wa(x,y,z) = 0$ for $(x,y,z) \in \partial \; \Omega$ when $a > 0$. The corresponding OPs denoted $\scopnkia(x,y,z)$, where $n$ denotes the polynomial degree, $0 \le k \le n$ and $i \in \{0, \min(1,k)\}$. We define these to be orthogonalised lexicographically, that is,
 \begin{align*}
 	\scopnkia(x,y,z) = C_{n,k,i} \: x^{k-i} \: y^i \: z^{n-k} + (\hbox{lower order terms})
 \end{align*}
@@ -64,7 +63,7 @@ We consider partial differential operators involving the spherical Laplacian (th
 	x &= \sin\varphi \cos\theta = \rho(z) \cos\theta, \\
 	y &= \sin\varphi \sin\theta = \rho(z) \sin\theta.
 \end{align*}
-we have
+where $ \rho(z) := \sqrt{1-z^2}$, we have
 \begin{align*}
 	\DeltaS &= {1 \over \sinphi} \ppphi \Big( \sinphi \ppphi \Big) + {1 \over \sin^2 \varphi} \ppthetatwo = {1 \over \rho} \ppphi \Big( \rho \ppphi \Big) + {1 \over \rho^2} \ppthetatwo
 \end{align*}
@@ -72,7 +71,7 @@ i.e. $\DeltaS f(\xvec) = \Delta f({\xvec \over \norm{\xvec}})$ for $\xvec := (x,
 
  The three-dimensional orthogonal polynomials defined here involve the same non-classical (in fact, semi-classical \cite[\S5]{magnus1995painleve}) 1D OPs as those outlined for the disk-slice, and so methods for calculating these 1D OP recurrence coefficients and integrals has already been outlined \cite{snowball2019sparse}. In particular, by exploiting the connection with these 1D OPs we can construct discretizations of general partial differential operators of size $(p+1)^2 \times (p+1)^2$ in $O(p^3)$ operations, where $p$ is the total polynomial degree. This clearly compares favourably to proceeding in a na\"ive approach where one would require $O(p^6)$ operations.
 
-Note that we consider partial differential operators that are not necessarily rotational invariant:  for example, one can use these techniques for  Schr\"odinger operators $\DeltaS + V(x,y,z)$ where $V$ is first approximated by a polynomial. A nice feature though is that if the partial differential operator is invariant with respect to rotation around the $z$ axes (e.g., a Schr\"odinger operator with potential $V(z)$) the discretisation decouples, and can be reordered as a block-diagonal matrix. This improves the complexity further to an optimal $O(p^2$), which is demonstrated in Figure \ref{fig:complexity}. This plot presents the time taken\footnote{measured using the \enquote{@belapsed} macro from the BenchmarkTools package in Julia.} to construct the operator for $\DeltaS + V(x,y,z)$, with $V(x,y,z) = \cos z$, as we increase the orthogonal polynomial degree $p$. 
+Note that we consider partial differential operators that are not necessarily rotational invariant:  for example, one can use these techniques for  Schr\"odinger operators $\DeltaS + V(x,y,z)$ where $V$ is first approximated by a polynomial. A nice feature though is that if the partial differential operator is invariant with respect to rotation around the $z$ axes (e.g., a Schr\"odinger operator with potential $V(z)$) the discretisation decouples, and can be reordered as a block-diagonal matrix. This improves the complexity further to an optimal $O(p^2$), which is demonstrated\sotodo{This isn't actually shown in the referenced figure, which shows a non-radially symmetric potential Also, we need to make $V$ vs $v$ consistent with the figures and example} in Figure \ref{fig:complexity} with $V(x,y,z) = \cos z$.
 
 An overview of the paper is as follows:  
 
@@ -110,7 +109,7 @@ where $\ch_{0} := \frac{\sqrt{2}}{2}$ and $T_k$, $U_{k-1}$ are the standard Cheb
 Note that we have defined $\ch_0$ so as to ensure orthonormality. 
 
 \begin{proposition}[\cite{olver2020orthogonal}]\label{prop:construction}
-	Let $w : (\alpha,\beta) \: \to \R$ be a weight function. For $n = 0,1,2,\dots, $ let $\{r_{n,k}\}$ be polynomials orthogonal with respect to the weight $\rho(x)^{2k} w(x)$ where $0 \le k \le n$. Then the 3D polynomials defined on $\Omega$
+	Let $w : (\alpha,\beta) \: \to \R$ be a weight function. For $n = 0,1,2,\dots, $ let $\{r_{n,k}\}$ be polynomials orthogonal with respect to the weight $\rho(x)^{2k} w(x)$ where $0 \le k \le n$. Then the 3D polynomials defined on $\Omega$\sotodo{Make notation consistent with Def 3, i.e., whether you use $\xvec$ or not}
 \begin{align*}
 	\scopnki(x,y,z) \equiv \scopnki(\xvec,z) := r_{n-k,k}(z) \: \rho(z)^k \: \ch_{k,i}\fpr(\frac{\xvec}{\rho(z)})
 \end{align*}
@@ -120,9 +119,7 @@ for $i \in {0,1}, \: 0 \le k \le n, \: n = 0,1,2,\dots$ are orthogonal polynomia
 	&= \int_0^{\cos^{-1}(\alpha)} \int_0^{2\pi} p\big(\sinphi \costheta, \sinphi \sintheta, \cosphi \big) \: q\big(\sinphi \costheta, \sinphi \sintheta, \cosphi \big) \: w(\cosphi) \: \sinphi \: \D \theta \: \D \varphi \\
 	&= \int_\alpha^1 \int_0^{2\pi} p\big(\rho(z) \cos\theta, \rho(z) \sin\theta, z\big) \: q\big(\rho(z) \cos\theta, \rho(z) \sin \theta, z\big) \: w(z) \: \D \theta \: \D z
 \end{align*}
-on $\Omega$, where $\D A = \sinphi \: \D \theta \: \D \varphi$ is the Lebesgue measure on $\Omega$. 
-\sotodoinline{Is Lebesgue measure the right term? From my understanding the measure of a sphere would be 0} 
-\bstodoinline{I have changed it to dA and elaborated a bit more on it, but I am not sure on this so you could be correct that another term needs to be used. Your quadratic surfaces paper with Yuan says Lebesgue I think when discussing this. I have tried to keep it general here by using a measure definition, but we could omit this if its just going to cause confusion?}
+on $\Omega$, where $\D A = \sinphi \: \D \theta \: \D \varphi$ is the uniform spherical measure on $\Omega$. 
 \end{proposition}
 
 For the spherical cap, we can use Proposition \ref{prop:construction} to create our one-parameter family of OPs. We first introduce notation for our family of non-classical univariate OPs that will be used as the $r_n$ polynomials above.
@@ -271,7 +268,7 @@ where again $\delta_{k, j}$ is the standard Kronecker delta function, and we hav
 
 \end{proof}
 
-The recurrences in Lemma \ref{lemma:Qrecurrence} lead to Jacobi operators that correspond to multiplication by $x$, $y$ and $z$. Let $N \in \N$ and define notation that groups degree $N$ polynomials together[: 
+The recurrences in Lemma \ref{lemma:Qrecurrence} lead to Jacobi operators that correspond to multiplication by $x$, $y$ and $z$. Let $N \in \N$ and define notation that groups degree $N$ polynomials together: 
 \begin{align}
 	\bigscopNka &:= 
 		\begin{pmatrix}
@@ -297,6 +294,7 @@ The recurrences in Lemma \ref{lemma:Qrecurrence} lead to Jacobi operators that c
 and set $J_x^{(a)}, J_y^{(a)}, J_z^{(a)}$ as the Jacobi matrices corresponding to
 \sotodoinline{The following is wrong as it only applies if $N = \infty$} 
 \bstodoinline{What is better? To define them in this way for $N \to \infty$? Or to include the extra terms in this defn below? Or just state that the Jacobi operators approximate multiplication by x,y,z? This also relates to the next comments}
+\sotodoinline{If we get rid of them as suggested below this is no longer an issue}
 \begin{align}
 	J_x^{(a)} \: \bigscopNa(x,y,z) = x \: \bigscopNa(x,y,z), \nonumber \\
 	J_y^{(a)} \: \bigscopNa(x,y,z) = y \: \bigscopNa(x,y,z), \label{eqn:jacobimatricesdefinition} \\
@@ -454,6 +452,7 @@ While in Section \ref{subsection:jacobimats} the ordering used is convenient for
 and set $\tilde J_x^{(a)}, \tilde J_y^{(a)}, \tilde J_z^{(a)}$ as the Jacobi matrices corresponding to 
 \sotodoinline{Can the following be simplified? Seems like it repeats} 
 \bstodoinline{Is it worth removing the previous? And just explaining that we can reorder the Jacobi matrices according to the OP/coefficient vector ordering? This section is important for deriving how to build the OPs, whereas before I simply need to say that the Jacobi operators that apply to coefficients vectors are reorderings of the ones in this section.}
+\sotodoinline{I agree: get rid of the previous definition and remove the tilde from these polynomials, as they are the "default" ones}
 \begin{align}
 	\tilde J_x^{(a)} \: \bigscopta(x,y,z) = x \: \bigscopta(x,y,z), \nonumber \\
 	\tilde J_y^{(a)} \: \bigscopta(x,y,z) = y \: \bigscopta(x,y,z), \label{eqn:jacobimatricesdefinitionalt} \\
@@ -1197,7 +1196,7 @@ We now demonstrate how the sparse linear systems constructed as above can be use
 \begin{figure}[t]
 	\centering % <-- added
 	\includegraphics[scale=0.35]{complexity-Nend=1000}
-	\caption{Complexity plot showing the length of time taken to construct the operator matrix for $\DeltaS + V(x,y,z)$, with rotationally invariant potential $V(x,y,z) = \cos z$. This shows that the time to build and solve the system $\big[\DeltaS + V(x,y,z) \big] \: u(x,y,z) = f(x,y,z)$ is of order $\bigO(N^2)$, where $N$ is the degree to which we approximate the solution. Here, we used $f = -2e^{x}yz(2+x) + (z - \alpha) e^{x} (y^3 + z^2 y - 4xy - 2y)$. \bstodoinline{Redo with belapsed}}
+	\caption{Complexity plot showing the length of time taken to construct the operator matrix for $\DeltaS + V(x,y,z)$, with rotationally invariant potential $V(x,y,z) = \cos z$. This shows that the time to build and solve the system $\big[\DeltaS + V(x,y,z) \big] \: u(x,y,z) = f(x,y,z)$ is roughly of order $\bigO(N^2)$, where $N$ is the degree to which we approximate the solution. Here, we used $f = -2e^{x}yz(2+x) + (z - \alpha) e^{x} (y^3 + z^2 y - 4xy - 2y)$. \bstodoinline{Redo with belapsed}}
 	\centering
 	\label{fig:complexity}
 \end{figure}
@@ -1213,7 +1212,7 @@ We now demonstrate how the sparse linear systems constructed as above can be use
 	\includegraphics[scale=0.3]{solutionblocknorms-poisson-epsilonfun-N=200}
         	%\label{fig:solutionblocknorms-poisson}
 	\end{subfigure}
-	\caption{Left: The computed solution to $\Delta u = f$ with zero boundary conditions with $f(x,y,z) = - 2 e^x y z (2+x) + \genjacw^{(1,0)}(z) e^x (y^3 + z^2 y - 4xy - 2y)$. Right: The norms of each block of the computed solution of the Poisson equation with right hand side function $f(x,y,z) = \norm{\xvec - (\epsilon + 1 / \sqrt{3}) \; (1,1,1)^\top }$ for different $\epsilon$ values. This indicates spectral convergence. \bstodoinline{Plots increased to N=200 for each}}
+	\caption{Left: The computed solution to $\Delta u = f$ with zero boundary conditions with $f(x,y,z) = - 2 e^x y z (2+x) + \genjacw^{(1,0)}(z) e^x (y^3 + z^2 y - 4xy - 2y)$. Right: The norms of each block of the computed solution of the Poisson equation with right hand side function $f(x,y,z) = \norm{\xvec - (\epsilon + 1 / \sqrt{3}) \; (1,1,1)^\top }$ for different $\epsilon$ values. This indicates spectral convergence.}
 	\centering
 	\label{fig:poisson}
 \end{figure}
@@ -1313,10 +1312,8 @@ Define $X := (J_x^{(0)})^\top$, $Y := (J_y^{(0)})^\top$, $Z := (J_z^{(0)})^\top$
 \end{align*}
 which can be solved to find $\mathbf{u}$. We can see the sparsity and structure of this matrix system in Figure \ref{fig:sparsity} with $v(x,y,z) = zxy^2$ as an example. In Figure \ref{fig:helmholtz} we see the solution to the inhomogeneous variable-coefficient Helmholtz equation with zero boundary conditions given in (\ref{eqn:helmholtz}) in the spherical cap $\Omega$, with $f(x,y,z) = y e^x \genjacw^{(1,0)}(z)$, $v(x,y,z) = 1 - (3(x-x_0)^2 + 5(y-y_0)^2 + 2(z-z_0)^2)$ where $(x_0, z_0) := (0.7, 0.2)$, $y_0 := \sqrt{1 - x_0^2 - z_0^2}$ and $k = 100$. In Figure \ref{fig:helmholtz} we also show the norms of each block of calculated coefficients for the approximation of the solution to the inhomogeneous variable-coefficient Helmholtz equation with various $k$ values. Here, we use $N = 100$, that is, $(N+1)^2 = 10,201$ unknowns. Once again, the rate of decay in the coefficients is a proxy for the rate of convergence of the computed solution, and we see that we achieve spectral convergence.
 
-\sotodoinline{
-Wouldn't this trick work for any boundary conditions $c(x,y)$?  That is, expand in Fourier series (a polynomial in $x$ and $y$) and use that to extend off the $z=0$ axis. If you agree we should explain that here.
-}
-\bstodoinline{Is the following is what you were thinking?}
+In Figure~\ref{fig:complexity} we plot presents the time taken\footnote{measured using the \enquote{@belapsed} macro from the BenchmarkTools package in Julia.} to construct the operator for $\DeltaS + V(x,y,z)$, with $V(x,y,z) = \cos z$, as we increase the orthogonal polynomial degree $p$. \sotodo{The example is not the radially symmetric case}
+
 We can extend this to other boundary conditions that depend only on $x$ and $y$, i.e. $c = c(x,y)$. In this case, the problem
 \begin{align*}
 	\begin{cases}
@@ -1346,9 +1343,6 @@ since the coefficients $\{c_{n,k,i}\}$ for such a function are zero for $k < n$ 
 
 \subsection{Biharmonic equation}
 
-\sotodoinline{I think we may need to explain what ${\partial u \over\partial n}$ means here: is the normal derivative well defined for 2D surfaces embedded in 3D?}
-\bstodoinline{Hopefully expanded on what the normal direction is here, and referenced back to where I defined the Biharmonic operator that also mentions it. Unless I am mistaken, the unit normal is simply the (normalised) positional vector $\vec x$ here. So I dont see a reason why normal derivative wont be well defined (though I very well could be wrong here).}
-\bstodoinline{The normal direction (including at the boundary) on a surface is the cross product $\ppx{\varphi}\vec r \times \ppx{\theta}\vec r$ where $\vec r = (x(\varphi,\theta),y(\varphi,\theta),z(\varphi,\theta))^\top$. For the spherical cap its the same as the sphere, i.e. is simply $\rho(z)^2 \: \vec r$ and so the unit normal would be $\vec r (= \vec x)$.}
 Find $u(x,y,z)$ given a function $f(x,y,z)$ such that:
 \begin{align}
 	\begin{cases}
