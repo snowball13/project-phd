@@ -35,6 +35,8 @@ In recent years, sparse spectral methods for solving partial differential equati
 %
 \section{Introduction}
 
+\bstodoinline{You mentioned before that you didnt like the use of $i$ being an index thoughout (as in $n,k,i$}. Is this still the case?}
+
 This paper develops sparse spectral methods for solving linear partial differential equations on certain subsets of the sphere -- specifically spherical caps. More precisely, we consider the solution of partial differential equations on the domain $\Omega$ given by
 \begin{align*}
 	\Omega := \{(x,y,z) \in \R^3 \quad | \quad \alpha < z < \beta, \: x^2 + y^2 + z^2 = 1\}
@@ -71,7 +73,9 @@ i.e. $\DeltaS f(\xvec) = \Delta f({\xvec \over \norm{\xvec}})$ for $\xvec := (x,
 
  The three-dimensional orthogonal polynomials defined here involve the same non-classical (in fact, semi-classical \cite[\S5]{magnus1995painleve}) 1D OPs as those outlined for the disk-slice, and so methods for calculating these 1D OP recurrence coefficients and integrals has already been outlined \cite{snowball2019sparse}. In particular, by exploiting the connection with these 1D OPs we can construct discretizations of general partial differential operators of size $(p+1)^2 \times (p+1)^2$ in $O(p^3)$ operations, where $p$ is the total polynomial degree. This clearly compares favourably to proceeding in a na\"ive approach where one would require $O(p^6)$ operations.
 
-Note that we consider partial differential operators that are not necessarily rotational invariant:  for example, one can use these techniques for  Schr\"odinger operators $\DeltaS + V(x,y,z)$ where $V$ is first approximated by a polynomial. A nice feature though is that if the partial differential operator is invariant with respect to rotation around the $z$ axes (e.g., a Schr\"odinger operator with potential $V(z)$) the discretisation decouples, and can be reordered as a block-diagonal matrix. This improves the complexity further to an optimal $O(p^2$), which is demonstrated\sotodo{This isn't actually shown in the referenced figure, which shows a non-radially symmetric potential Also, we need to make $V$ vs $v$ consistent with the figures and example} in Figure \ref{fig:complexity} with $V(x,y,z) = \cos z$.
+Note that we consider partial differential operators that are not necessarily rotational invariant:  for example, one can use these techniques for  Schr\"odinger operators $\DeltaS + v(x,y,z)$ where $v$ is first approximated by a polynomial. A nice feature though is that if the partial differential operator is invariant with respect to rotation around the $z$ axis (e.g., a Schr\"odinger operator with potential $v(z)$) the discretisation decouples, and can be reordered as a block-diagonal matrix. This improves the complexity further to an optimal $O(p^2$), which is demonstrated in Figure \ref{fig:complexity} with $v(x,y,z) = \cos z$.
+\sotodoinline{This isn't actually shown in the referenced figure, which shows a non-radially symmetric potential} 
+\bstodoinline{I dont really understand - isnt $V(x,y,z) =  V(z) = \cos z$ valid? I could be wrong but are you confusing this with the helmholtz example, with a different function $v$? If so, maybe I should make this clearer.}
 
 An overview of the paper is as follows:  
 
@@ -109,9 +113,9 @@ where $\ch_{0} := \frac{\sqrt{2}}{2}$ and $T_k$, $U_{k-1}$ are the standard Cheb
 Note that we have defined $\ch_0$ so as to ensure orthonormality. 
 
 \begin{proposition}[\cite{olver2020orthogonal}]\label{prop:construction}
-	Let $w : (\alpha,\beta) \: \to \R$ be a weight function. For $n = 0,1,2,\dots, $ let $\{r_{n,k}\}$ be polynomials orthogonal with respect to the weight $\rho(x)^{2k} w(x)$ where $0 \le k \le n$. Then the 3D polynomials defined on $\Omega$\sotodo{Make notation consistent with Def 3, i.e., whether you use $\xvec$ or not}
+	Let $w : (\alpha,\beta) \: \to \R$ be a weight function. For $n = 0,1,2,\dots, $ let $\{r_{n,k}\}$ be polynomials orthogonal with respect to the weight $\rho(x)^{2k} w(x)$ where $0 \le k \le n$. Then the 3D polynomials defined on $\Omega$
 \begin{align*}
-	\scopnki(x,y,z) \equiv \scopnki(\xvec,z) := r_{n-k,k}(z) \: \rho(z)^k \: \ch_{k,i}\fpr(\frac{\xvec}{\rho(z)})
+	\scopnki(x,y,z) := r_{n-k,k}(z) \: \rho(z)^k \: \ch_{k,i}\fpr({x \over \rho(z)}, {y \over \rho(z)})
 \end{align*}
 for $i \in {0,1}, \: 0 \le k \le n, \: n = 0,1,2,\dots$ are orthogonal polynomials with respect to the inner product
 \begin{align*}
@@ -150,7 +154,7 @@ We can now define the 3D OPs for the spherical cap.
 
 By construction, $\{\scopnkia\}$ are orthogonal with respect to the inner product
 \begin{align*}
-	\ip< p, \: q >_{\scopa} &:= \int_\Omega p(\xvec, z) \: q(\xvec, z) \: \genjacw^{(a,0)}(z) \: \D \sigma(\xvec, z) \\
+	\ip< p, \: q >_{\scopa} &:= \int_\Omega p(\xvec, z) \: q(\xvec, z) \: \genjacw^{(a,0)}(z) \: \D A \\
 	&= \int_\alpha^1 \int_0^{2\pi} p(\rho(z) \cos\theta, \rho(z) \sin\theta, z) \: q(\rho(z) \cos\theta, \rho(z) \sin\theta, z) \: \D \theta \: \genjacw^{(a,0)}(z) \: \D z,
 \end{align*}
 with
@@ -243,7 +247,7 @@ where we show the non-zero coefficients that result are the $\alphaa_{n,k,1},\do
 Recall from equation (\ref{eqn:normscop}) that $\norm{\scopmjha}_{\scopa}^2 = \pi \: \normgenjac^{(a,2j)}$. Then for $m = 0,\dots,n+1$, $j = 0,\dots,m$, using a change of variables $(\cos\theta \sin\varphi, \: \sin\theta\sin\varphi, \: \cos\varphi) = (x, y, z)$:
 \begin{align*}
 	&\ip<x \: \scopnkia, \scopmjha>_{\scopa} \\
-	&= \int_\Omega \scopnkia(\xvec,z) \: \scopmjha(\xvec,z) \: x \: \genjacw^{(a,0)}(z) \: \D\sigma(\xvec, z) \\
+	&= \int_\Omega \scopnkia(\xvec,z) \: \scopmjha(\xvec,z) \: x \: \genjacw^{(a,0)}(z) \: \D A \\
 	&= \Big( \int^1_\alpha \genjacnmk^{(a, 2k)}(z) \: \genjacmmj^{(a, 2j)}(z) \: \rho(z)^{k+j+1} \: \genjacw^{(a, 0)}(z) \: \D z \Big) \cdot \: \Big( \int_0^{2\pi} \chki(\theta) \: \chjh(\theta) \: \cos\theta \: \D \theta \Big) \\
 	&= \Big( \int^1_\alpha \genjacnmk^{(a, 2k)}(z) \: \genjacmmj^{(a, 2j)}(z) \: \genjacw^{(a, k + j + 1)}(z) \: \D z \Big) \cdot \: \Big( \int_0^{2\pi} \chki(\theta) \: \chjh(\theta) \: \cos\theta \: \D \theta \Big) \\
 	&= \half \: \pi \: \delta_{i,h} \: (\eta_{k-1} \: \delta_{k-1, j} + \eta_{k} \: \delta_{k+1, j})  \int^1_\alpha \genjacnmk^{(a, 2k)}(z) \: \genjacmmj^{(a, 2j)}(z) \: \genjacw^{(a, k + j + 1)}(z) \: \D z.
@@ -259,7 +263,7 @@ These coefficients are given by
 where we show the non-zero coefficients that result are the $\betaa_{n,k,1},\dots,\betaa_{n,k,6}$ in the lemma:
 \begin{align*}
 	&\ip<y \: \scopnkia, \scopmjha>_{\scopa} \\
-	&= \int_\Omega \scopnkia(\xvec,z) \: \scopmjha(\xvec,z) \: y \: \genjacw^{(a,0)}(z) \: \D\sigma(\xvec, z) \\
+	&= \int_\Omega \scopnkia(\xvec,z) \: \scopmjha(\xvec,z) \: y \: \genjacw^{(a,0)}(z) \: \D A \\
 	&= \Big( \int^1_\alpha \genjacnmk^{(a, 2k)}(z) \: \genjacmmj^{(a, 2j)}(z) \: \rho(z)^{k+j+1} \: \genjacw^{(a, 0)}(z) \: \D z \Big) \cdot \: \Big( \int_0^{2\pi} \chki(\theta) \: \chjh(\theta) \: \sin\theta \: \D \theta \Big) \\
 	&= \Big( \int^1_\alpha \genjacnmk^{(a, 2k)}(z) \: \genjacmmj^{(a, 2j)}(z) \: \genjacw^{(a, k + j + 1)}(z) \: \D z \Big) \cdot \: \Big( \int_0^{2\pi} \chki(\theta) \: \chjh(\theta) \: \sin\theta \: \D \theta \Big) \\
 	&= \half \: \pi \: \delta_{|i-1|,h} \: \big[(-1)^{i+1} \: \eta_{k-1} \: \delta_{k-1, j} + (-1)^i \: \eta_{k} \: \delta_{k+1, j}\big] \int^1_\alpha \genjacnmk^{(a, 2k)}(z) \: \genjacmmj^{(a, 2j)}(z) \: \genjacw^{(a, k + j + 1)}(z) \: \D z.
@@ -268,168 +272,7 @@ where again $\delta_{k, j}$ is the standard Kronecker delta function, and we hav
 
 \end{proof}
 
-The recurrences in Lemma \ref{lemma:Qrecurrence} lead to Jacobi operators that correspond to multiplication by $x$, $y$ and $z$. Let $N \in \N$ and define notation that groups degree $N$ polynomials together: 
-\begin{align}
-	\bigscopNka &:= 
-		\begin{pmatrix}
-			\scopa_{k,k,0}(x,y,z) \\
-			\scopa_{k,k,1}(x,y,z) \\
-			\vdots \\
-			\scopa_{N,k,0}(x,y,z) \\
-			\scopa_{N,k,1}(x,y,z)
-		\end{pmatrix} \in \R^{2(N-k+1)},  \quad k = 1,\dots,N, \label{eqn:OPdefNka} \\ 
-	\bigscopa_{N,0} &:= 
-		\begin{pmatrix}
-			\scopa_{0,0,0}(x,y,z) \\
-			\vdots \\
-			\scopa_{N,0,0}(x,y,z) \\
-		\end{pmatrix} \in \R^{N+1}, \label{eqn:OPdefN0a} \\
-	\bigscopNa &:= 
-		\begin{pmatrix}
-			\bigscopa_{N,0} \\
-			\vdots \\
-			\bigscopa_{N,N}
-		\end{pmatrix} \in \R^{(N+1)^2} \label{eqn:OPdefNa}
-\end{align}
-and set $J_x^{(a)}, J_y^{(a)}, J_z^{(a)}$ as the Jacobi matrices corresponding to
-\sotodoinline{The following is wrong as it only applies if $N = \infty$} 
-\bstodoinline{What is better? To define them in this way for $N \to \infty$? Or to include the extra terms in this defn below? Or just state that the Jacobi operators approximate multiplication by x,y,z? This also relates to the next comments}
-\sotodoinline{If we get rid of them as suggested below this is no longer an issue}
-\begin{align}
-	J_x^{(a)} \: \bigscopNa(x,y,z) = x \: \bigscopNa(x,y,z), \nonumber \\
-	J_y^{(a)} \: \bigscopNa(x,y,z) = y \: \bigscopNa(x,y,z), \label{eqn:jacobimatricesdefinition} \\
-	J_z^{(a)} \: \bigscopNa(x,y,z) = z \: \bigscopNa(x,y,z). \nonumber
-\end{align}
-The matrices $J_x^{(a)}, J_y^{(a)}, J_z^{(a)}$ act on the coefficients vector of a function's expansion in the $\{\scopnkia\}$ basis. For example, let $a$ be a general parameter and let a function $f(x,y,z)$ defined on $\Omega$ be approximated up to order $N \in \N$ by its expansion $f(x,y,z) = \bigscopNa(x,y,z)^\top \mathbf{f}$. Then $x \: f(x,y,z)$ is approximated by $\bigscopNa(x,y,z)^\top {J_x^{(a)\top}} \mathbf{f}$. In other words, ${J_x^{(a)\top}} \mathbf{f}$ is the coefficients vector for the expansion of the function $(x,y,z) \mapsto x \: f(x,y,z)$ in the  $\{\scopnkia\}$ basis. Note that $J_x^{(a)}, J_y^{(a)}, J_z^{(a)}$ are banded-block-banded matrices:
-
-\begin{definition}
-A block matrix $A$ with blocks $A_{i,j}$ has block-bandwidths $(L,U)$ if $A_{i,j} = 0$ for $- L \leq j-i \leq U$, and sub-block-bandwidths $(\lambda, \mu)$ if all blocks $A_{i,j}$ are banded with bandwidths $(\lambda,\mu)$. A matrix where the block-bandwidths and sub-block-bandwidths are small compared to the dimensions is referred to as a banded-block-banded matrix. 
-\end{definition}
-
-For example, $J_x^{(a)}, J_y^{(a)}$ are block-tridiagonal (block-bandwidths $(1,1)$) while $J_z^{(a)}$ is block-diagonal (block-bandwidths $(0,0)$):
-\begin{align*}
-	J_{x/y/z}^{(a)} &= 
-		\begin{pmatrix}
-			B^{(a)}_{x/y/z, 0} & A^{(a)}_{x/y/z, 0} & & & & \\
-			C^{(a)}_{x/y/z, 1} & B^{(a)}_{x/y/z, 1} & A^{(a)}_{x/y/z, 1} & & & \\
-			& C^{(a)}_{x/y/z, 2} & B^{(a)}_{x/y/z, 2} & A^{(a)}_{x/y/z, 2} & & & \\
-			& & C^{(a)}_{x/y/z, 3} & \ddots & \ddots & \\
-			& & & \ddots & \ddots & \ddots \\
-		\end{pmatrix}
-\end{align*}
-
-For $J_x^{(a)}$, the sub-blocks $A^{(a)}_{x, k}, C^{(a)}_{x, k}$ have sub-block-bandwidths $(4,4)$ while the sub-blocks $B^{(a)}_{x,k}$ are zero matrices:
-\begin{align*}
-	B^{(a)}_{x,0} &= 0 \in \R^{(N+1)\times(N+1)}, \quad B^{(a)}_{x,k} = 0 \in \R^{2(N-k+1)\times2(N-k+1)} \text{ for } k = 1,2,\dots,N \\
-	A^{(a)}_{x,k} &:= 
-		\begin{pmatrix}
-			A^{(a)}_{k,k,6} & & & \\
-			A^{(a)}_{k+1,k,4} & \ddots & & \\
-			A^{(a)}_{k+2,k,2} & \ddots & \ddots & \\
-			& \ddots & \ddots & A^{(a)}_{N-1,k,6} \\
-			& & A^{(a)}_{N,k,2} & A^{(a)}_{N,k,4}
-		\end{pmatrix}, \quad k = 0,1,2,\dots,N 
-\end{align*}
-so that  $A^{(a)}_{x,0} \in \R^{(N+1)\times2N}$,  $A^{(a)}_{x,k} \in \R^{2(N-k+1)\times2(N-k)}$ for $k = 1,2,\dots,N$,
-\begin{align*}
-	C^{(a)}_{x,k} &:= 
-		\begin{pmatrix}
-			A^{(a)}_{k,k,1} & A^{(a)}_{k,k,3} & A^{(a)}_{k,k,5} & & \\
-			& \ddots & \ddots & \ddots \\
-			& & \ddots & \ddots & A^{(a)}_{N-1,k,5} \\
-			& & & A^{(a)}_{N,k,1} & A^{(a)}_{N,k,3}
-		\end{pmatrix}, \quad k = 1,2,\dots,N 
-\end{align*}
-so that $C^{(a)}_{x,1} \in \R^{2N\times(N+1)}$,  $C^{(a)}_{x,k} \in \R^{2(N-k+1)\times2(N-k+2)}$  for  $k = 2,3,\dots,N$, here for $k = 1,\dots,N, \: n = k,\dots,N$,
-\begin{align}
-	A^{(a)}_{n,k,j} &:= 
-		\begin{pmatrix}
-			\alphaa_{n,k,j} & 0 \\
-			0 & \alphaa_{n,k,j}
-		\end{pmatrix} \in \R^{2\times2}, (k \ne 1 \text { for } j \text{ odd}) \label{eqn:jacobisubblocksA1} \\
-	A^{(a)}_{n,0,j} &:=
-		\begin{pmatrix}
-			\alphaa_{n,0,j} & 0
-		\end{pmatrix} \in \R^{1\times2}, j \text{ odd} \label{eqn:jacobisubblocksA2} \\
-	A^{(a)}_{n,1,j} &:=
-		\begin{pmatrix}
-			\alphaa_{n,1,j} \\
-			0
-		\end{pmatrix} \in \R^{2\times1}, j \text{ odd} \label{eqn:jacobisubblocksA3} \\
-\end{align}
-
-For $J_y^{(a)}$, the sub-blocks have sub-block-bandwidths $(5,5)$ while the sub-blocks $B^{(a)}_{y,k}$ are zero matrices:
-\begin{align*}
-	B^{(a)}_{y,0} &= 0 \in \R^{(N+1)\times(N+1)}, \quad B^{(a)}_{y,k} = 0 \in \R^{2(N-k+1)\times2(N-k+1)} \text{ for } k = 1,2,\dots,N \\
-	A^{(a)}_{y,k} &:= 
-		\begin{pmatrix}
-			B^{(a)}_{k,k,6} & & & \\
-			B^{(a)}_{k+1,k,4} & \ddots & & \\
-			B^{(a)}_{k+2,k,2} & \ddots & \ddots & \\
-			& \ddots & \ddots & B^{(a)}_{N-1,k,6} \\
-			& & B^{(a)}_{N,k,2} & B^{(a)}_{N,k,4}
-		\end{pmatrix}, \quad k = 0,1,2,\dots,N \\
-	&\big( \text{so that } A^{(a)}_{y,0} \in \R^{(N+1)\times2N}, \quad A^{(a)}_{y,k} \in \R^{2(N-k+1)\times2(N-k)} \text{ for } k = 1,2,\dots,N \big) \\
-	C^{(a)}_{y,k} &:= 
-		\begin{pmatrix}
-			B^{(a)}_{k,k,1} & B^{(a)}_{k,k,3} & B^{(a)}_{k,k,5} & & \\
-			& \ddots & \ddots & \ddots \\
-			& & \ddots & \ddots & B^{(a)}_{N-1,k,5} \\
-			& & & B^{(a)}_{N,k,1} & B^{(a)}_{N,k,3}
-		\end{pmatrix}, \quad k = 1,2,\dots,N \\
-	&\big( \text{so that } C^{(a)}_{y,1} \in \R^{2N\times(N+1)}, \quad C^{(a)}_{y,k} \in \R^{2(N-k+1)\times2(N-k+2)} \text{ for } k = 2,3,\dots,N \big)
-\end{align*}
-where for $k = 1,\dots,N, \: n = k,\dots,N$
-\begin{align}
-	B^{(a)}_{n,k,j} &:= 
-		\begin{pmatrix}
-			0 & \betaa_{n,k,0,j} \\
-			\betaa_{n,k,1,j} & 0
-		\end{pmatrix} \in \R^{2\times2}, (k \ne 1 \text { for } j \text{ odd}) \label{eqn:jacobisubblocksB1} \\
-	B^{(a)}_{n,0,j} &:=
-		\begin{pmatrix}
-			0 & \betaa_{n,0,0,j}
-		\end{pmatrix} \in \R^{1\times2}, j \text{ odd}  \label{eqn:jacobisubblocksB2} \\
-	B^{(a)}_{n,1,j} &:=
-		\begin{pmatrix}
-			0 \\
-			\betaa_{n,1,1,j}
-		\end{pmatrix}\in \R^{2\times1}, j \text{ odd}  \label{eqn:jacobisubblocksB3} \\
-\end{align}
-
-For $J_z^{(a)}$, the sub-blocks $B^{(a)}_{z,k}$ have sub-block-bandwidths $(2,2)$, while the sub-blocks $A^{(a)}_{z,k}, \: C^{(a)}_{z,k}$ are zero matrices:
-\begin{align*}
-	A^{(a)}_{z,0} &= 0 \in \R^{(N+1)\times2N}, \quad A^{(a)}_{z,k} = 0 \in \R^{2(N-k+1)\times2(N-k)} \text{ for } k = 1,2,\dots,N \\
-	C^{(a)}_{z,1} &= 0 \in \R^{2N\times(N+1)}, \quad C^{(a)}_{z,k} = 0 \in \R^{2(N-k+1)\times2(N-k+2)} \text{ for } k = 2,3,\dots,N \\
-	B^{(a)}_{z,k} &:= 
-		\begin{pmatrix}
-			\Gamma^{(a)}_{k,k,2} & \Gamma^{(a)}_{k,k,3} & \\
-			\Gamma^{(a)}_{k+1,k,1} & \ddots & \ddots & \\
-			& \ddots & \ddots & \Gamma^{(a)}_{N-1,k,3} \\
-			& & \Gamma^{(a)}_{N,k,1} & \Gamma^{(a)}_{N,k,2}
-		\end{pmatrix}  \quad k = 0,1,2,\dots,N \\
-	&\big( \text{so that } B^{(a)}_{z,0} \in \R^{(N+1)\times(N+1)}, \quad B^{(a)}_{z,k} \in \R^{2(N-k+1)\times2(N-k+1)} \text{ for } k = 1,2,\dots,N \big)
-\end{align*}
-where for $k = 1,\dots,N, \: n = k,\dots,N$
-\begin{align}
-	\Gamma^{(a)}_{n,k,j} &:= 
-		\begin{pmatrix}
-			\gamma_{n,k,j} & 0 \\
-			0 & \gamma_{n,k,j}
-		\end{pmatrix} \in \R^{2\times2}, \label{eqn:jacobisubblocksGamma1} \\
-	\Gamma^{(a)}_{n,0,j} &:= \gammaa_{n,0,j}. \label{eqn:jacobisubblocksGamma2}
-\end{align}
-
-Note that the sparsity of the Jacobi matrices (in particular the sparsity of the sub-blocks) comes from the natural sparsity of the three-term recurrences of the 1D OPs and the circular harmonics, meaning that the sparsity is not limited to the specific spherical cap, and would extend to the spherical band.
-
-
-
-
-\subsection{Building the OPs} 
-
-In this section, we introduce new notation for a different ordering of the OP vector, in order to demonstrate how we can obtain a recurrence for the OPs in matrix-vector form, and derive the associated \textit{recurrence coefficient matrices} -- we define these as the matrices derived from the OP's $x,y,z$-multiplication relationships that form the coefficients for the multidimensional three-term recurrences. 
-
-While in Section \ref{subsection:jacobimats} the ordering used is convenient for the application of Jacobi and differential operators to the vector of coefficients of a given function's expansion, the ordering we will use in this section is convenient for building the OPs and more importantly obtaining the recurrence coefficient matrices necessary for efficient function evaluation using the Clenshaw algorithm. In practice, it is simply a matter of converting coefficients between the two orderings. To this end, we define our OP-building ordering as follows. For $n=0,1,2,\dots$:
+The recurrences in Lemma \ref{lemma:Qrecurrence} lead to Jacobi operators that correspond to multiplication by $x$, $y$ and $z$. In later sections we will use an ordering of the OPs so that they are grouped by Fourier mode $k$, which is convenient for the application of differential and other operators to the vector of coefficients of a given function's expansion (some operators will exploit this ordering for operators where Fourier modes do not interact, and thus will be block-diagonal). Before that though, the ordering we will use in the remainder of this section is convenient for establishing Jacobi operators for multiplication by $x$, $y$ and $z$, and hence building the OPs and importantly obtaining the associated \textit{recurrence coefficient matrices} necessary for efficient function evaluation using the Clenshaw algorithm. In practice, it is simply a matter of converting coefficients between the two orderings. To this end, we define our OP-building ordering as follows. For $n=0,1,2,\dots$:
 \begin{align*}
 	\bigscoptna := 
 		\begin{pmatrix}
@@ -449,10 +292,7 @@ While in Section \ref{subsection:jacobimats} the ordering used is convenient for
 			\vdots \\
 		\end{pmatrix}
 \end{align*}
-and set $\tilde J_x^{(a)}, \tilde J_y^{(a)}, \tilde J_z^{(a)}$ as the Jacobi matrices corresponding to 
-\sotodoinline{Can the following be simplified? Seems like it repeats} 
-\bstodoinline{Is it worth removing the previous? And just explaining that we can reorder the Jacobi matrices according to the OP/coefficient vector ordering? This section is important for deriving how to build the OPs, whereas before I simply need to say that the Jacobi operators that apply to coefficients vectors are reorderings of the ones in this section.}
-\sotodoinline{I agree: get rid of the previous definition and remove the tilde from these polynomials, as they are the "default" ones}
+and set $\tilde J_x^{(a)}, \tilde J_y^{(a)}, \tilde J_z^{(a)}$ as the Jacobi matrices corresponding to
 \begin{align}
 	\tilde J_x^{(a)} \: \bigscopta(x,y,z) = x \: \bigscopta(x,y,z), \nonumber \\
 	\tilde J_y^{(a)} \: \bigscopta(x,y,z) = y \: \bigscopta(x,y,z), \label{eqn:jacobimatricesdefinitionalt} \\
@@ -469,9 +309,13 @@ where
 			& & & \ddots & \ddots & \ddots \\
 		\end{pmatrix}.
 \end{align*}
-These matrices are then block-tridiagonal (block-bandwidths $(1,1)$).
+Note that $J_x^{(a)}, J_y^{(a)}, J_z^{(a)}$ are \textit{banded-block-banded matrices}:
 
-For $\tilde J_x^{(a)}$, the sub-blocks have sub-block-bandwidths $(2,2)$:
+\begin{definition}
+	A block matrix $A$ with blocks $A_{i,j}$ has block-bandwidths $(L,U)$ if $A_{i,j} = 0$ for $- L \leq j-i \leq U$, and sub-block-bandwidths $(\lambda, \mu)$ if all blocks $A_{i,j}$ are banded with bandwidths $(\lambda,\mu)$. A matrix where the block-bandwidths and sub-block-bandwidths are small compared to the dimensions is referred to as a banded-block-banded matrix. 
+\end{definition}
+
+Each of these Jacobi matrices are then block-tridiagonal (block-bandwidths $(1,1)$). For $\tilde J_x^{(a)}$, the sub-blocks have sub-block-bandwidths $(2,2)$:
 \begin{align*}
 	\tilde A^{(a)}_{x,n} &:= 
 		\begin{pmatrix}
@@ -547,6 +391,12 @@ where $B^{(a)}_{n,k,j}$ are defined equations (\ref{eqn:jacobisubblocksB1}, \ref
 		\end{pmatrix} \in \R^{(2n+1)\times(2n-1)}, \quad n = 1,2,\dots
 \end{align*}
 where $\Gamma^{(a)}_{n,k,j}$ are defined in equations (\ref{eqn:jacobisubblocksGamma1}, \ref{eqn:jacobisubblocksGamma2}). 
+
+Note that the sparsity of the Jacobi matrices (in particular the sparsity of the sub-blocks) comes from the natural sparsity of the three-term recurrences of the 1D OPs and the circular harmonics, meaning that the sparsity is not limited to the specific spherical cap, and would extend to the spherical band.
+
+
+
+\subsection{Building the OPs} 
 
 Following the triangle case \cite{olver2019triangle}, we can combine each system in (\ref{eqn:jacobimatricesdefinitionalt}) into a block-tridiagonal system, for any $(x,y,z) \in \Omega$:
 \begin{align*}
@@ -643,14 +493,11 @@ It follows that we can apply $\Dnt$ in $O(n)$ complexity, and thereby calculate 
 \end{definition}
 
 
-
-
 %
 \section{Sparse partial differential operators}\label{Section:PDOs}
 
-In this section, we will derive the entries of spherical partial differential operators applied to our basis, demonstrating their sparsity in the process. To this end, we will use a different ordering
- of the OPs and coefficients of a function's expansion, in order to exploit the orthogonality the circular harmonics will bring and thus the operators will be block-diagonal. Let $N \in \N$ and recall from equations (\ref{eqn:OPdefNka}, \ref{eqn:OPdefN0a}, \ref{eqn:OPdefNa}) that: 
-\begin{align*}
+In this section we will derive the entries of spherical partial differential operators applied to our basis, demonstrating their sparsity in the process. To this end, as alluded to in Section~\ref{subsection:jacobimats}, we introduce new notation for a different ordering of the OP vector, in order to exploit the orthogonality the polynomials $\chki$ will bring and thus ensure the operators will be block-diagonal. Let $N \in \N$ and define:
+\begin{align}
 	\bigscopNka &:= 
 		\begin{pmatrix}
 			\scopa_{k,k,0}(x,y,z) \\
@@ -658,26 +505,31 @@ In this section, we will derive the entries of spherical partial differential op
 			\vdots \\
 			\scopa_{N,k,0}(x,y,z) \\
 			\scopa_{N,k,1}(x,y,z)
-		\end{pmatrix} \in \R^{2(N-k+1)},  \quad k = 1,\dots,N, \\ 
+		\end{pmatrix} \in \R^{2(N-k+1)},  \quad k = 1,\dots,N, \label{eqn:OPdefNka} \\ 
 	\bigscopa_{N,0} &:= 
 		\begin{pmatrix}
 			\scopa_{0,0,0}(x,y,z) \\
 			\vdots \\
-			\scopa_{N,0,0}(x,y,z)
-		\end{pmatrix} \in \R^{N+1}, \\
+			\scopa_{N,0,0}(x,y,z) \\
+		\end{pmatrix} \in \R^{N+1}, \label{eqn:OPdefN0a} \\
 	\bigscopNa &:= 
 		\begin{pmatrix}
 			\bigscopa_{N,0} \\
 			\vdots \\
 			\bigscopa_{N,N}
-		\end{pmatrix} \in \R^{(N+1)^2}.
-\end{align*}
+		\end{pmatrix} \in \R^{(N+1)^2} \label{eqn:OPdefNa}
+\end{align}
 
 We further denote the weighted set of OPs on $\Omega$ by 
 \begin{align*}
 	\bigWNa(x,y,z) := \genjacw^{(a,0)}(z) \: \bigscopNa(x,y,z),
 \end{align*}
-and recall that a function $f(x,y,z)$ defined on $\Omega$ is approximated by its expansion $f(x,y,z) = \bigscopa(x,y,z)^\top \mathbf{f}$.
+
+The operator matrices we derive here act on coefficient vectors, that represent a function $f(x,y,z)$ defined on $\Omega$ in spectral space -- such a function is approximated by its expansion up to degree $N$: 
+\begin{align*}
+	f(x,y,z) = \bigscopNa(x,y,z)^\top \vec f = \sum_{n=0}^{N} \sum_{k=0}^{n} \sum_{i=0}^{1} f_{n,k,i} \: \scopnkia(x,y,z),
+\end{align*}
+where $\vec f = (f_{n,k,i})$ is the coefficients vector for the function $f$.
 
 \begin{definition}\label{def:differentialoperators}
 	Let $a$ be a nonnegative parameter, and $\tilde a \ge 2$ be a positive integer. Define the operator matrices $D_\varphi^{(a)}, \: W_\varphi^{(a)}, \: D_\theta, \: \calL^{(a)\to(a+\tilde a)}, \: \calL_W^{(a)\to(a-\tilde a)}, \: \Delta^{(1)}_W$ according to:
@@ -982,7 +834,7 @@ Define for $j = 1,\dots,M_1, \: l=1,\dots,M_2$:
 \end{align*}
 Let $f(x,y,z)$ be a function on $\Omega$, and $N \in \N$. The quadrature rule is then
 \begin{align*}
-	\int_\Omega f(x,y,z) \: \genjacw^{(a,0)}(z) \: \D \sigma(x,y) \: \D z \approx \sum_{j=1}^{M} w_j \: \big[ f(x_j, y_j, z_j) + f(-x_j, -y_j, z_j) \big],
+	\int_\Omega f(x,y,z) \: \genjacw^{(a,0)}(z) \: \D A \approx \sum_{j=1}^{M} w_j \: \big[ f(x_j, y_j, z_j) + f(-x_j, -y_j, z_j) \big],
 \end{align*}
 where $M = M_1 \: M_2$, and the quadrature rule is exact if $f(x,y,z)$ is a polynomial of degree $\le N$ with $M_1 \ge \half (N+1), M_2 \ge N+1$.
 \end{theorem}
@@ -1005,7 +857,7 @@ Firstly, we note that
 \end{align*}
 for some function $g$. Then, integrating the even function $f_e$ we have
 \begin{align*}
-	&\int_\Omega f_e(x,y,z) \: \genjacw^{(a,0)}(z) \: \D \sigma(x,y) \: \D z \\
+	&\int_\Omega f_e(x,y,z) \: \genjacw^{(a,0)}(z) \: \D A \\
 	&\quad \quad = \int_\alpha^1 \genjacw^{(a,0)}(z) \: \Big( \int_0^{2\pi} f_e\big(\rho(z)\cos\theta,\rho(z)\sin\theta, z\big) \: \D \theta \Big) \: \D z \\
 	&\quad \quad = 2 \int_\alpha^1 \genjacw^{(a,0)}(z) \: \Big( \int_{-1}^1 f_e\big(\rho(z)x,\rho(z)\sqrt{1-x^2}, z\big) \: \D x \Big) \: \D z \\
 	&\quad \quad \approx \int_\alpha^1 \genjacw^{(a,0)}(z) \: \Big( \sum_{l=1}^{M_2} w_l^{(s)} f_e\big(\rho(z) s_l, \rho(z) \sqrt{1 - s_l^2}, z\big) \Big) \: \D z \quad (\star) \\
@@ -1016,7 +868,7 @@ Suppose $f$ is a polynomial in $x,y,z$ of degree $N$, and hence that $f_e$ is a 
 
 Integrating the odd function $f_o$ results in
 \begin{align*}
-	&\int_\Omega f_o(x,y,z) \: \genjacw^{(a,0)}(z) \: \D \sigma(x,y) \: \D z \\
+	&\int_\Omega f_o(x,y,z) \: \genjacw^{(a,0)}(z) \: \D A \\
 	&\quad \quad = \int_\alpha^1 \genjacw^{(a,0)}(z) \: \Big( \int_0^{2\pi} f_o\big(\rho(z)\cos\theta,\rho(z)\sin\theta, z)\big) \: \D \theta \Big) \: \D z \\
 	&\quad \quad = \int_\alpha^1 \genjacw^{(a,0)}(z) \: \Big( \int_{-1}^1 \Big[ f_o\big(\rho(z)x,\rho(z)\sqrt{1-x^2}, z\big) + f_o\big(\rho(z)x, - \rho(z)\sqrt{1-x^2}, z\big) \big] \: \D x \Big) \: \D z \\
 	&\quad \quad = \int_\alpha^1 \genjacw^{(a,0)}(z) \: \Big( \int_{-1}^1 \Big[ f_o\big(\rho(z)x,\rho(z)\sqrt{1-x^2}, z\big) - f_o\big(\rho(z)x, \rho(z)\sqrt{1-x^2}, z\big) \big] \: \D x \Big) \: \D z \\
@@ -1024,8 +876,8 @@ Integrating the odd function $f_o$ results in
 \end{align*}
 since $f_o(x,y,z) = - f_o(-x, -y, z)$. Hence, for a polynomial $f$ in $x,y,z$ of degree $N$,
 \begin{align*}
-	\int_\Omega f(x,y,z) \: \genjacw^{(a,0)}(z) \: \D \sigma(x,y) \: \D z &= \int_\Omega \Big(f_e(x,y,z) + f_o(x,y,z)\Big) \:  \genjacw^{(a,0)}(z) \: \D \sigma(x,y) \: \D z  \\
-	&= \int_\Omega f_e(x,y,z) \: \genjacw^{(a,0)}(z) \: \D \sigma(x,y) \: \D z \\
+	\int_\Omega f(x,y,z) \: \genjacw^{(a,0)}(z) \: \D A &= \int_\Omega \Big(f_e(x,y,z) + f_o(x,y,z)\Big) \:  \genjacw^{(a,0)}(z) \: \D A  \\
+	&= \int_\Omega f_e(x,y,z) \: \genjacw^{(a,0)}(z) \: \D A \\
 	&= \sum_{j=1}^{M}  w_j \: f_e(x_j, y_j, z_j),
 \end{align*}
 where $M = M_1 M_2$ and $2M_1 - 1 \ge N, 2M_2 - 1 \ge N$.
@@ -1194,14 +1046,6 @@ We now demonstrate how the sparse linear systems constructed as above can be use
 % FIGURES
 
 \begin{figure}[t]
-	\centering % <-- added
-	\includegraphics[scale=0.35]{complexity-Nend=1000}
-	\caption{Complexity plot showing the length of time taken to construct the operator matrix for $\DeltaS + V(x,y,z)$, with rotationally invariant potential $V(x,y,z) = \cos z$. This shows that the time to build and solve the system $\big[\DeltaS + V(x,y,z) \big] \: u(x,y,z) = f(x,y,z)$ is roughly of order $\bigO(N^2)$, where $N$ is the degree to which we approximate the solution. Here, we used $f = -2e^{x}yz(2+x) + (z - \alpha) e^{x} (y^3 + z^2 y - 4xy - 2y)$. \bstodoinline{Redo with belapsed}}
-	\centering
-	\label{fig:complexity}
-\end{figure}
-
-\begin{figure}[t]
 	\begin{subfigure}{0.5\textwidth}
 	\includegraphics[scale=0.25]{poisson-u=wyexpx-N=60}
 	\centering
@@ -1216,26 +1060,6 @@ We now demonstrate how the sparse linear systems constructed as above can be use
 	\centering
 	\label{fig:poisson}
 \end{figure}
-%
-%\begin{figure}[t]
-%	\begin{subfigure}{0.3\textwidth}
-%	\includegraphics[scale=0.3]{solution-exact-poisson-diskslice-alpha=0p2-beta=0p8-u=y3expx}
-%	\centering
-%	\end{subfigure}
-%	\begin{subfigure}{0.3\textwidth}
-%	\centering
-%	\includegraphics[scale=0.3]{solution-exact-poisson-diskslice-alpha=0p2-beta=0p8-u=y3expx-actual}
-%	\centering
-%	\end{subfigure}
-%	\begin{subfigure}{0.3\textwidth}
-%	\includegraphics[scale=0.3]{solution-exact-poisson-diskslice-alpha=0p2-beta=0p8-u=y3expx-compare}
-%	\centering
-%	\end{subfigure}
-%	\centering
-%	\caption{The computed solution to $\Delta u = f$ with zero boundary conditions compared with the exact solution $u(x,y) = \Wiii (x,y) y^3 \exp(x)$. Left: Computed. Centre: Exact. Right: Plot of the error (colourbar is shown to demonstrate magnitude of the error is of the order $10^{-17}$)}
-%	\centering
-%	\label{fig:poissonexact}
-%\end{figure}
 
 \begin{figure}[t]
 	\begin{subfigure}{0.5\textwidth}
@@ -1251,6 +1075,14 @@ We now demonstrate how the sparse linear systems constructed as above can be use
 	\caption{Left: The computed solution to $\Delta u + k^2 \: v \: u = f$ with zero boundary conditions with $f(x,y,z) = y e^x (z - \alpha) $, $v(x,y,z) = 1 - (3(x-x_0)^2 + 5(y-y_0)^2 + 2(z-z_0)^2)$ where $(x_0, z_0) := (0.7, 0.2)$, $y_0 := \sqrt{1 - x_0^2 - z_0^2}$ and $k = 100$. Right: The norms of each block of the computed solution of the Helmholtz equation with the right hand side function $f(x,y,z) = 1$ and the same function $v(x,y,z)$, for various $k$ values. This indicates spectral convergence.}
 	\centering
 	\label{fig:helmholtz}
+\end{figure}
+
+\begin{figure}[t]
+	\centering % <-- added
+	\includegraphics[scale=0.35]{complexity-Nend=1000}
+	\caption{Complexity plot showing the length of time taken to construct the operator matrix for $\DeltaS + v(x,y,z)$, with rotationally invariant potential $v(x,y,z) = \cos z$. This shows that the time to build and solve the system $\big[\DeltaS + v(x,y,z) \big] \: u(x,y,z) = f(x,y,z)$ is roughly of order $\bigO(N^2)$, where $N$ is the degree to which we approximate the solution. Here, we used $f = -2e^{x}yz(2+x) + (z - \alpha) e^{x} (y^3 + z^2 y - 4xy - 2y)$. \bstodoinline{Redo with belapsed}}
+	\centering
+	\label{fig:complexity}
 \end{figure}
 
 \begin{figure}[t]
@@ -1312,9 +1144,9 @@ Define $X := (J_x^{(0)})^\top$, $Y := (J_y^{(0)})^\top$, $Z := (J_z^{(0)})^\top$
 \end{align*}
 which can be solved to find $\mathbf{u}$. We can see the sparsity and structure of this matrix system in Figure \ref{fig:sparsity} with $v(x,y,z) = zxy^2$ as an example. In Figure \ref{fig:helmholtz} we see the solution to the inhomogeneous variable-coefficient Helmholtz equation with zero boundary conditions given in (\ref{eqn:helmholtz}) in the spherical cap $\Omega$, with $f(x,y,z) = y e^x \genjacw^{(1,0)}(z)$, $v(x,y,z) = 1 - (3(x-x_0)^2 + 5(y-y_0)^2 + 2(z-z_0)^2)$ where $(x_0, z_0) := (0.7, 0.2)$, $y_0 := \sqrt{1 - x_0^2 - z_0^2}$ and $k = 100$. In Figure \ref{fig:helmholtz} we also show the norms of each block of calculated coefficients for the approximation of the solution to the inhomogeneous variable-coefficient Helmholtz equation with various $k$ values. Here, we use $N = 100$, that is, $(N+1)^2 = 10,201$ unknowns. Once again, the rate of decay in the coefficients is a proxy for the rate of convergence of the computed solution, and we see that we achieve spectral convergence.
 
-In Figure~\ref{fig:complexity} we plot presents the time taken\footnote{measured using the \enquote{@belapsed} macro from the BenchmarkTools package in Julia.} to construct the operator for $\DeltaS + V(x,y,z)$, with $V(x,y,z) = \cos z$, as we increase the orthogonal polynomial degree $p$. \sotodo{The example is not the radially symmetric case}
+In Figure~\ref{fig:complexity} we plot the time taken\footnote{measured using the \enquote{@belapsed} macro from the BenchmarkTools package in Julia.} \bstodo{cite benchmarktools github?} to construct the operator for $\DeltaS + v(x,y,z)$, this time with a rotationally invariant $v(x,y,z) = \cos z$, and solve a zero boundary condition Helmholtz problem. The plot demonstrates that as we increase the degree of approximation $N$, we achieve a complexity of an optimal $\bigO(N^2)$. \sotodoinline{The example is not the radially symmetric case} \bstodoinline{see other comment on this}
 
-We can extend this to other boundary conditions that depend only on $x$ and $y$, i.e. $c = c(x,y)$. In this case, the problem
+What about other boundary conditions? One simple extension is the case where the value on the boundary takes that of a function depending only on $x$ and $y$, i.e. $c = c(x,y)$. In this case, the problem
 \begin{align*}
 	\begin{cases}
     		\DeltaS u(x,y,z) + k^2 \: v(x,y,z) \; u(x,y,z) = f(x,y,z) &\quad \text{in } \Omega \\
@@ -1330,15 +1162,13 @@ is equivalent to letting $u(x,y,z) = \tilde{u}(x,y,z)+ c(x,y)$ and solving
 \end{align*}
 for $\tilde u$. This new problem is then a zero boundary condition Helmholtz problem with right hand side 
 \begin{align*}
-	g(x,y,z) &:= f(x,y,z) - k^2 \: v(x,y,z) \: c(x,y) - \DeltaS \: c(x,y) \\
-	&= f(x,y,z) + k^2 \: [{1 \over \rho(z)^2} - v(x,y,z)] \: c(x,y)
+	g(x,y,z) &:= f(x,y,z) - k^2 \: v(x,y,z) \: c(x,y) - \DeltaS \: c(x,y)
 \end{align*}
-for $(x,y,z) \in \Omega$. Notice that the spherical Laplacian applied to $c(x,y)$ is just 
+for $(x,y,z) \in \Omega$. Notice that the spherical Laplacian applied to $c(x,y)$, expanded in the $\bigscopN^{(1)}$ basis with coefficients vector $\vec c = (c_{n,k,i})$, is just
 \begin{align*}
-	\DeltaS \: c(x,y) = {1 \over \rho(z)^2} \sum_{n=0}^N \sum_{i=0}^1 c_{n,n,i} \: \pmpxm{\theta}{2} \ch_{n,i}(\theta) = -{k^2 \over \rho(z)^2} c(x,y)
+	\DeltaS \: c(x,y) = {1 \over \rho(z)^2} \sum_{n=0}^N \sum_{i=0}^1 c_{n,n,i} \: \pmpxm{\theta}{2} \ch_{n,i}(\theta) = - {1 \over \rho(z)^2} \sum_{n=0}^N \sum_{i=0}^1 n^2 \: c_{n,n,i} \: \ch_{n,i}(\theta)
 \end{align*}
-since the coefficients $\{c_{n,k,i}\}$ for such a function are zero for $k < n$ due to the dependence on $x$ and $y$ only.
-
+since the coefficients $\{c_{n,k,i}\}$ for such a function are zero for $k < n$ due to the dependence on $x$ and $y$ only. Thus, since the function $c(x,y)$ is known, it is simple to evaluate $\pmpxm{\theta}{2} c(x,y)$ and hence one can obtain the coefficients for the expansion of $g(x,y,z)$ in the $\bigscopN^{(1)}$ basis in the usual manor.
 
 
 \subsection{Biharmonic equation}
