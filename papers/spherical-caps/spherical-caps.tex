@@ -35,8 +35,6 @@ In recent years, sparse spectral methods for solving partial differential equati
 %
 \section{Introduction}
 
-\bstodoinline{You mentioned before that you didnt like the use of $i$ being an index throughout (as in $n,k,i$). Is this still the case?}
-
 This paper develops sparse spectral methods for solving linear partial differential equations on certain subsets of the sphere -- specifically spherical caps. More precisely, we consider the solution of partial differential equations on the domain $\Omega$ given by
 \begin{align*}
 	\Omega := \{(x,y,z) \in \R^3 \quad | \quad \alpha < z < \beta, \: x^2 + y^2 + z^2 = 1\}
@@ -74,8 +72,6 @@ i.e. $\DeltaS f(\xvec) = \Delta f({\xvec \over \norm{\xvec}})$ for $\xvec := (x,
  The three-dimensional orthogonal polynomials defined here involve the same non-classical (in fact, semi-classical \cite[\S5]{magnus1995painleve}) 1D OPs as those outlined for the disk-slice, and so methods for calculating these 1D OP recurrence coefficients and integrals has already been outlined \cite{snowball2019sparse}. In particular, by exploiting the connection with these 1D OPs we can construct discretizations of general partial differential operators of size $(p+1)^2 \times (p+1)^2$ in $O(p^3)$ operations, where $p$ is the total polynomial degree. This clearly compares favourably to proceeding in a na\"ive approach where one would require $O(p^6)$ operations.
 
 Note that we consider partial differential operators that are not necessarily rotational invariant:  for example, one can use these techniques for  Schr\"odinger operators $\DeltaS + v(x,y,z)$ where $v$ is first approximated by a polynomial. A nice feature though is that if the partial differential operator is invariant with respect to rotation around the $z$ axis (e.g., a Schr\"odinger operator with potential $v(z)$) the discretisation decouples, and can be reordered as a block-diagonal matrix. This improves the complexity further to an optimal $O(p^2$), which is demonstrated in Figure \ref{fig:complexity} with $v(x,y,z) = \cos z$.
-\sotodoinline{This isn't actually shown in the referenced figure, which shows a non-radially symmetric potential} 
-\bstodoinline{I dont really understand - isnt $v(x,y,z) =  v(z) = \cos z$ valid? I could be wrong but are you confusing this with the helmholtz example, with a different function $v$? If so, maybe I should make this clearer.}
 
 An overview of the paper is as follows:  
 
@@ -1096,7 +1092,7 @@ We now demonstrate how the sparse linear systems constructed as above can be use
 	\centering
         	%\label{fig:solutionblocknorms-biharmonic}
 	\end{subfigure}
-	\caption{Left: The computed solution to $\Delta^2 u = f$ with zero Dirichlet and Neumann boundary conditions with $f(x,y,z) = (1 + \text{erf}(5(1 - 10((x - 0.5)^2 + y^2)))) \rho(z)^2$. Right: The norms of each block of the computed solution of the biharmonic equation with the right hand side function $f(x,y,z) = \exp(-\epsilon((x-x_0)^2 + (y-y_0)^2 + (z-z_0)^2))$ where where $(x_0, z_0) := (0.7, 0.2)$, $y_0 := \sqrt{1 - x_0^2 - z_0^2}$, for various $\epsilon$ values. This demonstrates algebraic convergence observed.}
+	\caption{Left: The computed solution to $\Delta^2 u = f$ with zero Dirichlet and Neumann boundary conditions with $f(x,y,z) = (1 + \text{erf}(5(1 - 10((x - 0.5)^2 + y^2)))) \rho(z)^2$. Right: The norms of each block of the computed solution of the biharmonic equation with the right hand side function $f(x,y,z) = \exp(-\epsilon((x-x_0)^2 + (y-y_0)^2 + (z-z_0)^2))$ where  $(x_0, z_0) := (0.7, 0.2)$, $y_0 := \sqrt{1 - x_0^2 - z_0^2}$, for various $\epsilon$ values. This demonstrates algebraic convergence.}
 	\centering
 	\label{fig:biharmonic}
 \end{figure}
@@ -1144,7 +1140,7 @@ Define $X := (J_x^{(0)})^\top$, $Y := (J_y^{(0)})^\top$, $Z := (J_z^{(0)})^\top$
 \end{align*}
 which can be solved to find $\mathbf{u}$. We can see the sparsity and structure of this matrix system in Figure \ref{fig:sparsity} with $v(x,y,z) = zxy^2$ as an example. In Figure \ref{fig:helmholtz} we see the solution to the inhomogeneous variable-coefficient Helmholtz equation with zero boundary conditions given in (\ref{eqn:helmholtz}) in the spherical cap $\Omega$, with $f(x,y,z) = y e^x \genjacw^{(1,0)}(z)$, $v(x,y,z) = 1 - (3(x-x_0)^2 + 5(y-y_0)^2 + 2(z-z_0)^2)$ where $(x_0, z_0) := (0.7, 0.2)$, $y_0 := \sqrt{1 - x_0^2 - z_0^2}$ and $k = 100$. In Figure \ref{fig:helmholtz} we also show the norms of each block of calculated coefficients for the approximation of the solution to the inhomogeneous variable-coefficient Helmholtz equation with various $k$ values. Here, we use $N = 200$, that is, $(N+1)^2 = 40,401$ unknowns. Once again, the rate of decay in the coefficients is a proxy for the rate of convergence of the computed solution, and we see that we achieve spectral convergence.
 
-In Figure~\ref{fig:complexity} we plot the time taken\footnote{measured using the \enquote{@belapsed} macro from the BenchmarkTools package in Julia.} \bstodo{cite benchmarktools github?} to construct the operator for $\DeltaS + v(x,y,z)$, this time with a rotationally invariant $v(x,y,z) = \cos z$, and solve a zero boundary condition Helmholtz problem. The plot demonstrates that as we increase the degree of approximation $N$, we achieve a complexity of an optimal $\bigO(N^2)$. \sotodoinline{The example is not the radially symmetric case} \bstodoinline{see other comment on this}
+In Figure~\ref{fig:complexity} we plot the time taken\footnote{measured using the \enquote{@belapsed} macro from the BenchmarkTools.jl package \cite{BenchmarkTools.jl-2016} in Julia.}  to construct the operator for $\DeltaS + v(x,y,z)$, this time with a rotationally invariant $v(x,y,z) = \cos z$, and solve a zero boundary condition Helmholtz problem. The plot demonstrates that as we increase the degree of approximation $N$, we achieve a complexity of an optimal $\bigO(N^2)$.
 
 What about other boundary conditions? One simple extension is the case where the value on the boundary takes that of a function depending only on $x$ and $y$, i.e. $c = c(x,y)$. In this case, the problem
 \begin{align*}
