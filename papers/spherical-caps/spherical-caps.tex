@@ -336,7 +336,24 @@ Each of these Jacobi matrices are then block-tridiagonal (block-bandwidths $(1,1
 			& & & A^{(a)}_{n,n,1} \\
 		\end{pmatrix} \in \R^{(2n+1)\times(2n-1)}, \quad n = 1,2,\dots
 \end{align*}
-where $A^{(a)}_{n,k,j}$ are defined in equations (\ref{eqn:jacobisubblocksA1}, \ref{eqn:jacobisubblocksA2}, \ref{eqn:jacobisubblocksA3}). For $\tilde J_y^{(a)}$, the sub-blocks have sub-block-bandwidths $(3,3)$:
+where for $k = 1,\dots,N, \: n = k,\dots,N$
+\begin{align*}
+	A^{(a)}_{n,k,j} &:= 
+		\begin{pmatrix}
+			\alphaa_{n,k,j} & 0 \\
+			0 & \alphaa_{n,k,j}
+		\end{pmatrix} \in \R^{2\times2}, (k \ne 1 \text { for } j \text{ odd}) \\
+	A^{(a)}_{n,0,j} &:=
+		\begin{pmatrix}
+			\alphaa_{n,0,j} & 0
+		\end{pmatrix} \in \R^{1\times2}, j \text{ even} \\
+	A^{(a)}_{n,1,j} &:=
+		\begin{pmatrix}
+			\alphaa_{n,1,j} \\
+			0
+		\end{pmatrix} \in \R^{2\times1}, j \text{ odd}.
+\end{align*}
+For $\tilde J_y^{(a)}$, the sub-blocks have sub-block-bandwidths $(3,3)$:
 \begin{align*}
 	\tilde A^{(a)}_{y,n} &:= 
 		\begin{pmatrix}
@@ -361,7 +378,24 @@ where $A^{(a)}_{n,k,j}$ are defined in equations (\ref{eqn:jacobisubblocksA1}, \
 			& & & B^{(a)}_{n,n,1} \\
 		\end{pmatrix} \in \R^{(2n+1)\times(2n-1)}, \quad n = 1,2,\dots
 \end{align*}
-where $B^{(a)}_{n,k,j}$ are defined equations (\ref{eqn:jacobisubblocksB1}, \ref{eqn:jacobisubblocksB2}, \ref{eqn:jacobisubblocksB3}). For $\tilde J_z^{(a)}$, the sub-blocks are diagonal, i.e. have sub-block-bandwidths $(0,0)$:
+where for $k = 1,\dots,N, \: n = k,\dots,N$  
+\begin{align*}
+	B^{(a)}_{n,k,j} &:= 
+		\begin{pmatrix}
+			0 & \betaa_{n,k,0,j} \\
+			\betaa_{n,k,1,j} & 0
+		\end{pmatrix} \in \R^{2\times2}, (k \ne 1 \text { for } j \text{ odd}) \\
+	B^{(a)}_{n,0,j} &:=
+		\begin{pmatrix}
+			0 & \betaa_{n,0,0,j}
+		\end{pmatrix} \in \R^{1\times2}, j \text{ even} \\
+	B^{(a)}_{n,1,j} &:=
+		\begin{pmatrix}
+			0 \\
+			\betaa_{n,1,1,j}
+		\end{pmatrix}\in \R^{2\times1}, j \text{ odd}.
+\end{align*}
+For $\tilde J_z^{(a)}$, the sub-blocks are diagonal, i.e. have sub-block-bandwidths $(0,0)$:
 \begin{align*}
 	\tilde A^{(a)}_{z,n} &:= 
 		\begin{pmatrix}
@@ -386,10 +420,16 @@ where $B^{(a)}_{n,k,j}$ are defined equations (\ref{eqn:jacobisubblocksB1}, \ref
 			& & & 0 \\
 		\end{pmatrix} \in \R^{(2n+1)\times(2n-1)}, \quad n = 1,2,\dots
 \end{align*}
-where $\Gamma^{(a)}_{n,k,j}$ are defined in equations (\ref{eqn:jacobisubblocksGamma1}, \ref{eqn:jacobisubblocksGamma2}). 
-
+where for $k = 1,\dots,N, \: n = k,\dots,N$
+\begin{align}
+	\Gamma^{(a)}_{n,k,j} &:= 
+		\begin{pmatrix}
+			\gamma_{n,k,j} & 0 \\
+			0 & \gamma_{n,k,j}
+		\end{pmatrix} \in \R^{2\times2}, \label{eqn:jacobisubblocksGamma1} \\
+	\Gamma^{(a)}_{n,0,j} &:= \gammaa_{n,0,j}. \label{eqn:jacobisubblocksGamma2}
+\end{align}
 Note that the sparsity of the Jacobi matrices (in particular the sparsity of the sub-blocks) comes from the natural sparsity of the three-term recurrences of the 1D OPs and the circular harmonics, meaning that the sparsity is not limited to the specific spherical cap, and would extend to the spherical band.
-
 
 
 \subsection{Building the OPs} 
