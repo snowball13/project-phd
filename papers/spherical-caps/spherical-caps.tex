@@ -28,29 +28,30 @@
 \maketitle
 
 \begin{abstract}
-In recent years, sparse spectral methods for solving partial differential equations have been derived using hierarchies of classical orthogonal polynomials on intervals, disks, disk-slices and triangles. In this work we extend the methodology to a hierarchy of non-classical multivariate orthogonal polynomials on spherical caps. The entries of discretisations of partial differential operators can be effectively computed using formulae in terms of (non-classical) univariate orthogonal polynomials. We demonstrate the results on partial differential equations involving the spherical Laplacian and Biharmonic operators, showing spectral convergence. 
+In recent years, sparse spectral methods for solving partial differential equations have been derived using hierarchies of classical orthogonal polynomials on intervals, disks, disk-slices and triangles. In this work we extend the methodology to a hierarchy of non-classical multivariate orthogonal polynomials on spherical caps. The entries of discretisations of partial differential operators can be effectively computed using formulae in terms of (non-classical) univariate orthogonal polynomials. We demonstrate the results on partial differential equations involving the spherical Laplacian and biharmonic operators, showing spectral convergence. 
 \end{abstract}
 
 
 %
 \section{Introduction}
 
-This paper develops sparse spectral methods for solving linear partial differential equations on certain subsets of the sphere -- specifically spherical caps. More precisely, we consider the solution of partial differential equations on the domain $\Omega$ given by
+This paper develops sparse spectral methods for solving linear partial differential equations on certain subsets of the sphere---specifically spherical caps. More precisely, we consider the solution of partial differential equations on the spherical cap $\Omega$ defined by
 \begin{align*}
 	\Omega := \{(x,y,z) \in \R^3 \quad | \quad \alpha < z < \beta, \: x^2 + y^2 + z^2 = 1\}
 \end{align*}
 where $\alpha \in (-1,1)$ and $\beta := 1$.
-This framework then yields that $\Omega$ is a spherical cap (the region of the surface of a sphere where the $z$-coordinate ranges from $\alpha$ to $1$), i.e.
 
 \begin{remark}
 For simplicity we focus on the case of a spherical cap, though there is an extension to a spherical band by taking $\beta \in (\alpha,1)$. The methods presented here translate to the spherical band case by including the necessary adjustments to the weights and recurrence relations we present in this paper. These adjustments make the mathematics more involved, which is why they are omitted here, but the approach is the same.
 \end{remark}
 
-We advocate using a basis that is polynomial in cartesian coordinates, that is, polynomial in $x$, $y$, and $z$, and orthogonal with respect to a prescribed weight: that is, multivariate orthogonal polynomials, whose construction was considered in \cite{olver2020orthogonal}. Equivalently, we can think of these as polynomials modulo the vanishing ideal $\{ x^2 + y^2 + z^2 = 1 \}$, or simply as a linear recombination of spherical harmonics that are orthogonalised on a subset of the sphere. This is in contrast to more standard approaches based on mapping the geometry to a simpler one (e.g., a rectangle or disk) and using orthogonal polynomials in the mapped coordinates (e.g., a basis that is polynomial in the spherical coordinates $\varphi$ and $\theta$). The benefit of the new approach is that we do not need to resolve Jacobians, and thereby we can achieve sparse discretisations for partial differential operators, including those with polynomial variable coefficients. Further, we remove the singular nature as $\alpha$ approaches $0$ that such a projection would give, since our new approach is applicable for all $\alpha \in (-1,1)$. On the spherical cap, the family of weights we consider are of the form
+We advocate using a basis that is polynomial in cartesian coordinates, that is, polynomial in $x$, $y$, and $z$, and orthogonal with respect to a prescribed weight: that is, multivariate orthogonal polynomials, whose construction was considered in \cite{olver2020orthogonal}. Equivalently, we can think of these as polynomials modulo the vanishing ideal $\{ x^2 + y^2 + z^2 = 1 \}$, or simply as a linear recombination of spherical harmonics that are orthogonalised on a subset of the sphere. This is in contrast to more standard approaches based on mapping the geometry to a simpler one (e.g., a rectangle or disk) and using orthogonal polynomials in the mapped coordinates (e.g., a basis that is polynomial in the spherical coordinates $\varphi$ and $\theta$). The benefit of the new approach is that we do not need to resolve Jacobians, and thereby we can achieve sparse discretisations for partial differential operators, including those with polynomial variable coefficients. Further, we avoid the singular nature at the poles or  as $\alpha$ approaches $0$ that  such a projection may give, since our new approach yields a smooth polynomial basis for all $\alpha \in [-1,1)$. 
+
+On the spherical cap, the family of weights we consider are of the form
 \begin{align*}
 	\Wa(x,y,z) := (z - \alpha)^a, \qfor (x,y,z) \in \Omega,
 \end{align*}
-noting that $\Wa(x,y,z) = 0$ for $(x,y,z) \in \partial \; \Omega$ when $a > 0$. The corresponding OPs denoted $\scopnkia(x,y,z)$, where $n$ denotes the polynomial degree, $0 \le k \le n$ and $i \in \{0, \min(1,k)\}$. We define these to be orthogonalised lexicographically, that is,
+noting that $\Wa(x,y,z) = 0$ for $(x,y,z) \in \partial \Omega$ when $a > 0$. The corresponding OPs denoted $\scopnkia(x,y,z)$, where $n$ denotes the polynomial degree, $0 \le k \le n$ and $i \in \{0, \min(1,k)\}$. We define these to be orthogonalised lexicographically, that is,
 \begin{align*}
 	\scopnkia(x,y,z) = C_{n,k,i} \: x^{k-i} \: y^i \: z^{n-k} + (\hbox{lower order terms})
 \end{align*}
@@ -69,7 +70,7 @@ where $ \rho(z) := \sqrt{1-z^2}$, we have
 \end{align*}
 i.e. $\DeltaS f(\xvec) = \Delta f({\xvec \over \norm{\xvec}})$ for $\xvec := (x,y,z) \in \R^3$. We do so by considering the component operators $\rho {\partial \over \partial \varphi}$ and ${\partial \over \partial \theta}$ applied to OPs with a specific choices of weight so that their discretisation is sparse, see Theorem~\ref{theorem:sparsityofdifferentialoperators}.  Sparsity comes from expanding the domain and range of an operator using different choices of the parameter $a$, a la the ultraspherical spectral method for intervals \cite{olver2013fast}, triangles \cite{olver2019triangle} and disk-slices and trapeziums \cite{snowball2019sparse}, and the related work on sparse discretisations on disks \cite{vasil2016tensor} and spheres \cite{vasil2019tensor,lecoanet2019tensor}.  As in the  disk-slice case in 2D \cite{snowball2019sparse}, we use an integration-by-parts argument to deduce the sparsity structure.
 
- The three-dimensional orthogonal polynomials defined here involve the same non-classical (in fact, semi-classical \cite[\S5]{magnus1995painleve}) 1D OPs as those outlined for the disk-slice, and so methods for calculating these 1D OP recurrence coefficients and integrals has already been outlined \cite{snowball2019sparse}. In particular, by exploiting the connection with these 1D OPs we can construct discretizations of general partial differential operators of size $(p+1)^2 \times (p+1)^2$ in $O(p^3)$ operations, where $p$ is the total polynomial degree. This clearly compares favourably to proceeding in a na\"ive approach where one would require $O(p^6)$ operations.
+ The three-dimensional orthogonal polynomials defined here involve the same non-classical (in fact, semi-classical \cite[\S5]{magnus1995painleve}) 1D OPs as those outlined for the disk-slice, and so methods for calculating these 1D OP recurrence coefficients and integrals have already been outlined \cite{snowball2019sparse}. In particular, by exploiting the connection with these 1D OPs we can construct discretizations of general partial differential operators of size $(p+1)^2 \times (p+1)^2$ in $O(p^3)$ operations, where $p$ is the total polynomial degree. This clearly compares favourably to proceeding in a na\"ive approach where one would require $O(p^6)$ operations.
 
 Note that we consider partial differential operators that are not necessarily rotational invariant:  for example, one can use these techniques for  Schr\"odinger operators $\DeltaS + v(x,y,z)$ where $v$ is first approximated by a polynomial. A nice feature though is that if the partial differential operator is invariant with respect to rotation around the $z$ axis (e.g., a Schr\"odinger operator with potential $v(z)$) the discretisation decouples, and can be reordered as a block-diagonal matrix. This improves the complexity further to an optimal $O(p^2$), which is demonstrated in Figure \ref{fig:complexity} with $v(x,y,z) = \cos z$.
 
@@ -116,7 +117,8 @@ Note that we have defined $\ch_0$ so as to ensure orthonormality.
 for $i \in {0,1}, \: 0 \le k \le n, \: n = 0,1,2,\dots$ are orthogonal polynomials with respect to the inner product
 \begin{align*}
 	\ip< p, \: q > &:= \int_\Omega p(x,y,z) \: q(x,y,z) \: w(z) \: \D A \\
-	&= \int_0^{\cos^{-1}(\alpha)} \int_0^{2\pi} p\big(\sinphi \costheta, \sinphi \sintheta, \cosphi \big) \: q\big(\sinphi \costheta, \sinphi \sintheta, \cosphi \big) \: w(\cosphi) \: \sinphi \: \D \theta \: \D \varphi \\
+	&= \int_0^{\cos^{-1}(\alpha)} \int_0^{2\pi} p\big(\sinphi \costheta, \sinphi \sintheta, \cosphi \big) \: q\big(\sinphi \costheta, \sinphi \sintheta, \cosphi \big) \: \times \\
+	&\qquad w(\cosphi) \: \sinphi \: \D \theta \: \D \varphi \\
 	&= \int_\alpha^1 \int_0^{2\pi} p\big(\rho(z) \cos\theta, \rho(z) \sin\theta, z\big) \: q\big(\rho(z) \cos\theta, \rho(z) \sin \theta, z\big) \: w(z) \: \D \theta \: \D z
 \end{align*}
 on $\Omega$, where $\D A = \sinphi \: \D \theta \: \D \varphi$ is the uniform spherical measure on $\Omega$. 
@@ -288,20 +290,20 @@ The recurrences in Lemma \ref{lemma:Qrecurrence} lead to Jacobi operators that c
 			\vdots \\
 		\end{pmatrix}
 \end{align*}
-and set $\tilde J_x^{(a)}, \tilde J_y^{(a)}, \tilde J_z^{(a)}$ as the Jacobi matrices corresponding to
+and set $ J_x^{(a)},  J_y^{(a)},  J_z^{(a)}$ as the Jacobi matrices corresponding to
 \begin{align}
-	\tilde J_x^{(a)} \: \bigscopta(x,y,z) = x \: \bigscopta(x,y,z), \nonumber \\
-	\tilde J_y^{(a)} \: \bigscopta(x,y,z) = y \: \bigscopta(x,y,z), \label{eqn:jacobimatricesdefinitionalt} \\
-	\tilde J_z^{(a)} \: \bigscopta(x,y,z) = z \: \bigscopta(x,y,z). \nonumber
+	J_x^{(a)} \: \bigscopta(x,y,z) = x \: \bigscopta(x,y,z), \nonumber \\
+	J_y^{(a)} \: \bigscopta(x,y,z) = y \: \bigscopta(x,y,z), \label{eqn:jacobimatricesdefinitionalt} \\
+	J_z^{(a)} \: \bigscopta(x,y,z) = z \: \bigscopta(x,y,z). \nonumber
 \end{align}
 where
 \begin{align*}
-	\tilde J_{x/y/z}^{(a)} &= 
+	J_{x/y/z}^{(a)} &= 
 		\begin{pmatrix}
-			\tilde B^{(a)}_{x/y/z, 0} & \tilde A^{(a)}_{x/y/z, 0} & & & & \\
-			\tilde C^{(a)}_{x/y/z, 1} & \tilde B^{(a)}_{x/y/z, 1} & \tilde A^{(a)}_{x/y/z, 1} & & & \\
-			& \tilde C^{(a)}_{x/y/z, 2} & \tilde B^{(a)}_{x/y/z, 2} & \tilde A^{(a)}_{x/y/z, 2} & & & \\
-			& & \tilde C^{(a)}_{x/y/z, 3} & \ddots & \ddots & \\
+			B^{(a)}_{x/y/z, 0} & A^{(a)}_{x/y/z, 0} & & & & \\
+			C^{(a)}_{x/y/z, 1} & B^{(a)}_{x/y/z, 1} & A^{(a)}_{x/y/z, 1} & & & \\
+			& C^{(a)}_{x/y/z, 2} & B^{(a)}_{x/y/z, 2} & A^{(a)}_{x/y/z, 2} & & & \\
+			& & C^{(a)}_{x/y/z, 3} & \ddots & \ddots & \\
 			& & & \ddots & \ddots & \ddots \\
 		\end{pmatrix}.
 \end{align*}
@@ -311,23 +313,23 @@ Note that $J_x^{(a)}, J_y^{(a)}, J_z^{(a)}$ are \textit{banded-block-banded matr
 	A block matrix $A$ with blocks $A_{i,j}$ has block-bandwidths $(L,U)$ if $A_{i,j} = 0$ for $- L \leq j-i \leq U$, and sub-block-bandwidths $(\lambda, \mu)$ if all blocks $A_{i,j}$ are banded with bandwidths $(\lambda,\mu)$. A matrix where the block-bandwidths and sub-block-bandwidths are small compared to the dimensions is referred to as a banded-block-banded matrix. 
 \end{definition}
 
-Each of these Jacobi matrices are then block-tridiagonal (block-bandwidths $(1,1)$). For $\tilde J_x^{(a)}$, the sub-blocks have sub-block-bandwidths $(2,2)$:
+Each of these Jacobi matrices are then block-tridiagonal (block-bandwidths $(1,1)$). For $J_x^{(a)}$, the sub-blocks have sub-block-bandwidths $(2,2)$:
 \begin{align*}
-	\tilde A^{(a)}_{x,n} &:= 
+	A^{(a)}_{x,n} &:= 
 		\begin{pmatrix}
 			0 & A^{(a)}_{n,0,6} & 0 & & \\
 			A^{(a)}_{n,1,5} & \ddots & \ddots & & \\
 			& \ddots & \ddots & \ddots & \\
 			& & A^{(a)}_{n,n,5} & 0 & A^{(a)}_{n,n,6} \\
 		\end{pmatrix} \in \R^{(2n+1)\times(2n+3)}, \quad n = 0,1,2,\dots \\
-	\tilde B^{(a)}_{x,n} &:= 
+	B^{(a)}_{x,n} &:= 
 		\begin{pmatrix}
 			0 & A^{(a)}_{n,0,4} & & \\
 			A^{(a)}_{n,1,3} & \ddots & \ddots & \\
-			& \ddots & \ddots & \tilde A^{(a)}_{n,n-1,4} \\
+			& \ddots & \ddots & A^{(a)}_{n,n-1,4} \\
 			& & A^{(a)}_{n,n,3} & 0
 		\end{pmatrix} \in \R^{(2n+1)\times(2n+1)}  \quad n = 0,1,2,\dots \\
-	\tilde C^{(a)}_{x,n} &:= 
+	C^{(a)}_{x,n} &:= 
 		\begin{pmatrix}
 			0 & A^{(a)}_{n,0,2} & & \\
 			A^{(a)}_{n,1,1} & \ddots & \ddots & \\
@@ -353,23 +355,23 @@ where for $k = 1,\dots,N, \: n = k,\dots,N$
 			0
 		\end{pmatrix} \in \R^{2\times1}, j \text{ odd}.
 \end{align*}
-For $\tilde J_y^{(a)}$, the sub-blocks have sub-block-bandwidths $(3,3)$:
+For $J_y^{(a)}$, the sub-blocks have sub-block-bandwidths $(3,3)$:
 \begin{align*}
-	\tilde A^{(a)}_{y,n} &:= 
+	A^{(a)}_{y,n} &:= 
 		\begin{pmatrix}
 			0 & B^{(a)}_{n,0,6} & 0 & & \\
 			B^{(a)}_{n,1,5} & \ddots & \ddots & & \\
 			& \ddots & \ddots & \ddots & \\
 			& & B^{(a)}_{n,n,5} & 0 & B^{(a)}_{n,n,6} \\
 		\end{pmatrix} \in \R^{(2n+1)\times(2n+3)}, \quad n = 0,1,2,\dots \\
-	\tilde B^{(a)}_{y,n} &:= 
+	B^{(a)}_{y,n} &:= 
 		\begin{pmatrix}
 			0 & B^{(a)}_{n,0,4} & & \\
 			B^{(a)}_{n,1,3} & \ddots & \ddots & \\
 			& \ddots & \ddots & B^{(a)}_{n,n-1,4} \\
 			& & B^{(a)}_{n,n,3} & 0
 		\end{pmatrix} \in \R^{(2n+1)\times(2n+1)}  \quad n = 0,1,2,\dots \\
-	\tilde C^{(a)}_{y,n} &:= 
+	C^{(a)}_{y,n} &:= 
 		\begin{pmatrix}
 			0 & B^{(a)}_{n,0,2} & & \\
 			B^{(a)}_{n,1,1} & \ddots & \ddots & \\
@@ -395,23 +397,23 @@ where for $k = 1,\dots,N, \: n = k,\dots,N$
 			\betaa_{n,1,1,j}
 		\end{pmatrix}\in \R^{2\times1}, j \text{ odd}.
 \end{align*}
-For $\tilde J_z^{(a)}$, the sub-blocks are diagonal, i.e. have sub-block-bandwidths $(0,0)$:
+For $J_z^{(a)}$, the sub-blocks are diagonal, i.e. have sub-block-bandwidths $(0,0)$:
 \begin{align*}
-	\tilde A^{(a)}_{z,n} &:= 
+	A^{(a)}_{z,n} &:= 
 		\begin{pmatrix}
 			\Gamma^{(a)}_{n,0,3} & 0 & \\
 			0 & \ddots & \ddots & & \\
 			& \ddots & \ddots & \ddots & \\
 			& & 0 & \Gamma^{(a)}_{n,n,3} & 0 \\
 		\end{pmatrix} \in \R^{(2n+1)\times(2n+3)}, \quad n = 0,1,2,\dots \\
-	\tilde B^{(a)}_{z,n} &:= 
+	B^{(a)}_{z,n} &:= 
 		\begin{pmatrix}
 			\Gamma^{(a)}_{n,0,2} & \\
 			& \ddots & & \\
 			& & \ddots & \\
 			& & & \Gamma^{(a)}_{n,n,2}
 		\end{pmatrix} \in \R^{(2n+1)\times(2n+1)}  \quad n = 0,1,2,\dots \\
-	\tilde C^{(a)}_{z,n} &:= 
+	C^{(a)}_{z,n} &:= 
 		\begin{pmatrix}
 			\Gamma^{(a)}_{n,0,1} & 0 & & \\
 			0 & \ddots & \ddots & \\
@@ -434,7 +436,7 @@ Note that the sparsity of the Jacobi matrices (in particular the sparsity of the
 
 \subsection{Building the OPs} 
 
-Following the triangle case \cite{olver2019triangle}, we can combine each system in (\ref{eqn:jacobimatricesdefinitionalt}) into a block-tridiagonal system, for any $(x,y,z) \in \Omega$:
+Following the triangle case \cite{olver2019triangle}, we use a multivariate analogue of Clenshaw's algorithm for evaluation, where we  combine each system in (\ref{eqn:jacobimatricesdefinitionalt}) into a block-tridiagonal system, for any $(x,y,z) \in \Omega$:
 \begin{align*}
 	\renewcommand\arraystretch{1.3}
 	\begin{pmatrix}
@@ -584,12 +586,12 @@ The incrementing and decrementing of parameters as seen here is analogous to oth
 \begin{theorem}\label{theorem:sparsityofdifferentialoperators}
 	The operator matrices $D_\varphi^{(a)}, \: W_\varphi^{(a)}, \: D_\theta, \: \calL^{(a)\to(a+\tilde a)}, \: \calL_W^{(a)\to(a-\tilde a)}, \: \Delta^{(1)}_W$ from Definition \ref{def:differentialoperators} are sparse, with banded-block-banded structure. More specifically:
 \begin{itemize}
-	\item $D_\varphi^{(a)}$ has block-bandwidths $(0,0)$, and sub-block-bandwidths $(2, 4)$
-  	\item $W_\varphi^{(a)}$ has block-bandwidths $(0,0)$, and sub-block-bandwidths $(4, 2)$
-	\item $D_\theta$ has  block-bandwidths $(0,0)$, and sub-block-bandwidths $(1, 1)$
-	\item $\calL^{(a)\to(a+\tilde a)}$ has block-bandwidths $(0,0)$, and sub-block-bandwidths $(0, 4)$
-	\item $\calL_W^{(a)\to(a-\tilde a)}$ has block-bandwidths $(0,0)$, and sub-block-bandwidths $(4, 0)$
-	\item $\Delta^{(1)}_W$ has block-bandwidths $(0,0)$, and sub-block-bandwidths $(2, 2)$
+	\item $D_\varphi^{(a)}$ is block-diagonal with sub-block-bandwidths $(2, 4)$
+  	\item $W_\varphi^{(a)}$ is block-diagonal with sub-block-bandwidths $(4, 2)$
+	\item $D_\theta$ is block-diagonal with sub-block-bandwidths $(1, 1)$
+	\item $\calL^{(a)\to(a+\tilde a)}$ is block-diagonal with sub-block-bandwidths $(0, 4)$
+	\item $\calL_W^{(a)\to(a-\tilde a)}$ is block-diagonal with sub-block-bandwidths $(4, 0)$
+	\item $\Delta^{(1)}_W$ is block-diagonal with sub-block-bandwidths $(2, 2)$
 \end{itemize}
 \end{theorem}
 
@@ -728,15 +730,15 @@ Using \bsrefeqn{eqn:woplaplacian}, and integrating by parts thrice, we then have
 \begin{align*}
 	&\ip<\DeltaS \big(\genjacw^{(a,0)} \: \scopnki^{(a)} \big), \: \scopmjh^{(a - \tilde a)}>_{\scop^{(0)}} \\
 	&\quad = \Big( \int_0^{2\pi} \: \chki(\theta) \: \chjh(\theta) \: \D \theta \Big) \\
-	&\quad \quad \quad \quad \cdot \: \Big( \int_\alpha^1 \: \genjacmmj^{(a - \tilde a, 2j)} \: \genjacw^{(a - 2, k+j)} \: \Big\{\genjacnmk^{(a,2k)} [-k(k+1) \genjacw^{(2,0)} - 2a(k+1)z \: \genjacw^{(1,0)} + a (a-1) \rho^2] \\
+	&\quad \quad  \cdot \: \Big( \int_\alpha^1 \: \genjacmmj^{(a - \tilde a, 2j)} \: \genjacw^{(a - 2, k+j)} \: \Big\{\genjacnmk^{(a,2k)} [-k(k+1) \genjacw^{(2,0)} - 2a(k+1)z \: \genjacw^{(1,0)} + a (a-1) \rho^2] \\
 	&\quad \quad \quad \quad \quad \quad \quad \quad \quad \quad \quad \quad \quad \quad \quad \quad \quad + \genjacnmk^{(a,2k) \: \prime} [-2(k+1) z \: \genjacw^{(2,0)} + 2a \genjacw^{(1,2)}] \\
 	&\quad \quad \quad \quad \quad \quad \quad \quad \quad \quad \quad \quad \quad \quad \quad \quad \quad + \genjacnmk^{(a,2k) \: \prime \prime} \: \genjacw^{(2,2)} \Big\} \: \D z \Big) \\
 	&\quad = \pi \: \delta_{k,j} \: \delta_{i,h} \: \int_\alpha^1 \: \Big\{ \genjac_{m-k}^{(a - \tilde a, 2k)} \: \genjacnmk^{(a,2k)} \: \genjacw^{(a - 2, 2k)} \: [-k(k+1) \genjacw^{(2,0)} - 2a(k+1)z \: \genjacw^{(1,0)} + a (a-1) \rho^2] \\
 	&\quad \quad \quad \quad \quad \quad \quad \quad \quad \quad + a \: \genjacnmk^{(a,2k) \: \prime} \: \genjac_{m-k}^{(a - \tilde a, 2k)} \: \genjacw^{(a - 1, 2k+2)} \\
 	&\quad \quad \quad \quad \quad \quad \quad \quad \quad \quad + \genjac_{m-k}^{(a - \tilde a, 2k)} \: \ddx{z} [\genjacnmk^{(a,2k) \: \prime} \: \genjacw^{(a, 2k+2)}] \Big\} \: \D z \\
 	&\quad = \pi \: \delta_{k,j} \: \delta_{i,h} \: \int_\alpha^1 \: \Big\{ \genjac_{m-k}^{(a - \tilde a, 2k)} \: \genjacnmk^{(a,2k)} \: \genjacw^{(a - 2, 2k)} \: [-k(k+1) \genjacw^{(2,0)} - 2a(k+1)z \: \genjacw^{(1,0)} + a (a-1) \rho^2] \\
-	&\quad \quad \quad \quad \quad \quad \quad \quad \quad \quad + a \: \genjacnmk^{(a,2k) \: \prime} \: \genjac_{m-k}^{(a - \tilde a, 2k)} \: \genjacw^{(a - 1, 2k+2)} \\
-	&\quad \quad \quad \quad \quad \quad \quad \quad \quad \quad + \genjacnmk^{(a,2k)} \: \genjacw^{(a-1, 2k)} [\genjac_{m-k}^{(a - \tilde a, 2k) \: \prime \prime} \: \genjacw^{(1, 2)} + a \genjac_{m-k}^{(a - \tilde a, 2k) \: \prime} \: \rho^2 - 2(k+1) z \: \genjac_{m-k}^{(a - \tilde a, 2k)} \: \genjacw^{(1, 0)}] \Big\} \: \D z \\
+	&\quad \quad \quad \quad \quad \quad \quad + a \: \genjacnmk^{(a,2k) \: \prime} \: \genjac_{m-k}^{(a - \tilde a, 2k)} \: \genjacw^{(a - 1, 2k+2)} \\
+	&\quad \quad \quad \quad \quad \quad \quad + \genjacnmk^{(a,2k)} \: \genjacw^{(a-1, 2k)} [\genjac_{m-k}^{(a - \tilde a, 2k) \: \prime \prime} \: \genjacw^{(1, 2)} + a \genjac_{m-k}^{(a - \tilde a, 2k) \: \prime} \: \rho^2 - 2(k+1) z \: \genjac_{m-k}^{(a - \tilde a, 2k)} \: \genjacw^{(1, 0)}] \Big\} \: \D z \\
 	&\quad = \pi \: \delta_{k,j} \: \delta_{i,h} \: \int_\alpha^1 \: \Big\{ \genjac_{m-k}^{(a - \tilde a, 2k)} \: \genjacnmk^{(a,2k)} \: \genjacw^{(a - 2, 2k)} \: [-k(k+1) \genjacw^{(2,0)} - 2a(k+1)z \: \genjacw^{(1,0)} + a (a-1) \rho^2] \\
 	&\quad \quad \quad \quad \quad \quad \quad \quad \quad \quad + \genjacnmk^{(a,2k)} \: \genjacw^{(a - 1, 2k+2)} [\genjac_{m-k}^{(a - \tilde a, 2k) \: \prime \prime} \: \rho^2 - 2(k+1) z \: \genjac_{m-k}^{(a - \tilde a, 2k) \: \prime} ] \\
 	&\quad \quad \quad \quad \quad \quad \quad \quad \quad \quad + a [\genjacnmk^{(a,2k)} \: \genjac_{m-k}^{(a - \tilde a, 2k) \: \prime} + \genjac_{m-k}^{(a - \tilde a, 2k)} \: \genjacnmk^{(a, 2k) \: \prime}] \: \genjacw^{(a-1, 2k+2)} \Big\} \: \D z \\
@@ -840,7 +842,7 @@ where $\partial\Omega$ is the $z=\alpha$ boundary, and $\unitvec{n}(x,y,z)$ is t
 \begin{align*}
 	\calB^{(2)}_W := \calL^{(0)\to(2)} \: \calL_W^{(2)\to(0)}.
 \end{align*}
-Since the operator $\calL_W^{(2)\to(0)}$ acts on coefficients in the $\bigW^{(2)}(x,y,z)$ space, we ensure that we satisfy the zero Dirichlet and Neumann boundary conditions -- such a function could be written $u(x,u,z) = \genjacw^{(2,0)}(z) \: \tilde u(x,y,z)$ and thus its spherical gradient would be zero on the boundary $z = \alpha$. This allows us to apply the $\calL^{(0)\to(2)}$ operator after, safe in the knowledge that boundary conditions have been accounted for. The sparsity and structure of this biharmonic operator are seen in Figure \ref{fig:sparsity}.
+Since the operator $\calL_W^{(2)\to(0)}$ acts on coefficients in the $\bigW^{(2)}(x,y,z)$ space, we ensure that we satisfy the zero Dirichlet and Neumann boundary conditions -- such a function could be written $u(x,y,z) = \genjacw^{(2,0)}(z) \: \tilde u(x,y,z)$ and thus its spherical gradient would be zero on the boundary $z = \alpha$. This allows us to apply the $\calL^{(0)\to(2)}$ operator after, safe in the knowledge that boundary conditions have been accounted for. The sparsity and structure of this biharmonic operator are seen in Figure \ref{fig:sparsity}.
 
 
 
@@ -1022,7 +1024,7 @@ where the quadrature nodes and weights are those from Theorem \ref{Theorem:quadr
 
 For a function $f$, with coefficients vector $\bm{f}$ for expansion in the $\{\scopnki\}$ basis as determined via the method in Section \ref{subsection:expandingfunctions} up to order $N$, we can use the Clenshaw algorithm to evaluate the function at a point $(x,y,z) \in \Omega$ as follows. Let $A_n, B_n, \Dnt, C_n$ be the Clenshaw matrices from Definition \ref{def:clenshawmats}, and define the rearranged coefficients vector $\tilde{\bm{f}}$ via
 \begin{align*}
-	\tilde{\bm{f}}_n &:= 
+	{\bm{f}}_n &:= 
 		\begin{pmatrix}
 			f_{n,0,0} \\
 			f_{n,1,0} \\
@@ -1031,19 +1033,19 @@ For a function $f$, with coefficients vector $\bm{f}$ for expansion in the $\{\s
 			f_{n,n,0} \\
 			f_{n,n,1}
 		\end{pmatrix} \in \R^{2(N+1)} \quad \text{for } n = 1,2,\dots,N, \quad
-	\tilde{\bm{f}}_0 = f_{0,0,0} \in \R, \\
-	\tilde{\bm{f}} &:= 
+	{\bm{f}}_0 = f_{0,0,0} \in \R, \\
+	{\bm{f}} &:= 
 		\begin{pmatrix}
-			\tilde{\bm{f}}_0 \\
+			{\bm{f}}_0 \\
 			\vdots \\
-			\tilde{\bm{f}}_N
+			{\bm{f}}_N
 		\end{pmatrix} \in \R^{(N+1)^2}.
 \end{align*}
 The trivariate Clenshaw algorithm works similar to the bivariate Clenshaw algorithm introduced in \cite{olver2019triangle} for expansions in the triangle:
 \begin{align*}
 	\quad &\text{1) } \text{Set } \bm{\xi}_{N+2} = \bold{0}, \: \bm{\xi}_{N+2} = \bold{0}. \\
 	\quad &\text{2) } \text{For } n = N:-1:0 \\
-	\quad & \quad \quad \quad \text{set } \bm{\xi}_{n}^T = {\tilde{\bm{f}}_n}^T - \bm{\xi}_{n+1}^T D^T_n (B_n - G_n(x,y,z)) -  \bm{\xi}_{n+2}^T D^T_{n+1}C_{n+1} \\
+	\quad & \quad \quad \quad \text{set } \bm{\xi}_{n}^T = {{\bm{f}}_n}^T - \bm{\xi}_{n+1}^T D^T_n (B_n - G_n(x,y,z)) -  \bm{\xi}_{n+2}^T D^T_{n+1}C_{n+1} \\
 	\quad &\text{3) } \text{Output: } f(x,y,z) \approx \bm{\xi}_{0} \: \bigscopta_{0}  = \xi_{0} \: \scopa_0
 \end{align*}
 
@@ -1057,11 +1059,11 @@ The proofs of Theorem \ref{theorem:sparsityofdifferentialoperators} and Lemma \r
 
 The Clenshaw algorithm outlined in Section \ref{subsection:functionevaluation} can also be used with Jacobi matrices $J^{(a)}_x, J^{(a)}_y, J^{(a)}_z$ replacing the point $(x,y,z)$. Let $v : \Omega \to \R$ be the function that we wish to obtain an operator matrix $V$ for $v$, so that
 \begin{align*}
-	v(x,y,z) \: f(x,y,z) = v(x,y,z) \: \bm{f}^\top \: \bigscopNa(x,y,z) = (V \bm{f})^\top \: \bigscopNa(x,y,z),
+	v(x,y,z) \: f(x,y,z) = v(x,y,z) \: \bm{f} \: \bigscopta(x,y,z) = (V \bm{f})^\top \: \bigscopta(x,y,z),
 \end{align*}
 i.e. $V \bm{f}$ is the coefficients vector for the function $v(x,y,z) \: f(x,y,z)$. 
 
-To this end, let $\tilde{\bm{v}}$ be the coefficients for expansion up to order $N$ in the $\{\scopnki\}$ basis of $v$ (rearranged as in Section \ref{subsection:functionevaluation} so that $v(x,y,z) = \tilde{\bm{v}}^\top \: \bigscopta(x,y,z)$). Denote $X := (J_x^{(a)})^\top$, $Y := (J_y^{(a)})^\top$, $Z := (J_z^{(a)})^\top$. The operator $V$ is then the result of the following:
+To this end, let $\tilde{\bm{v}}$ be the coefficients for expansion up to order $N$ in the $\{\scopnki\}$ basis of $v$ (rearranged as in Section \ref{subsection:functionevaluation} so that $v(x,y,z) = {\bm{v}}^\top \: \bigscopta(x,y,z)$). Denote $X := (J_x^{(a)})^\top$, $Y := (J_y^{(a)})^\top$, $Z := (J_z^{(a)})^\top$. The operator $V$ is then the result of the following:
 \begin{align*}
 	\quad &\text{1) } \text{Set } \bm{\xi}_{N+2} = \bold{0}, \: \bm{\xi}_{N+2} = \bold{0}. \\
 	\quad &\text{2) } \text{For } n = N:-1:0 \\
@@ -1116,7 +1118,7 @@ We now demonstrate how the sparse linear systems constructed as above can be use
 \begin{figure}[t]
 	\centering % <-- added
 	\includegraphics[scale=0.35]{complexity-Nend=1000}
-	\caption{Complexity plot showing the length of time taken to construct the operator matrix for $\DeltaS + v(x,y,z)$, with rotationally invariant potential $v(x,y,z) = \cos z$. This shows that the time to build and solve the system $\big[\DeltaS + v(x,y,z) \big] \: u(x,y,z) = f(x,y,z)$ is roughly of order $\bigO(N^2)$, where $N$ is the degree to which we approximate the solution. Here, we used $f = -2e^{x}yz(2+x) + (z - \alpha) e^{x} (y^3 + z^2 y - 4xy - 2y)$.}
+	\caption{Time in seconds to  to build and solve the system $\big[\DeltaS + v(x,y,z) \big] \: u(x,y,z) = f(x,y,z)$. This demonstrates that the approach is roughly of order $\bigO(N^2)$, where $N$ is the degree to which we approximate the solution. Here, we used $f = -2e^{x}yz(2+x) + (z - \alpha) e^{x} (y^3 + z^2 y - 4xy - 2y)$.}
 	\centering
 	\label{fig:complexity}
 \end{figure}
@@ -1204,12 +1206,12 @@ for $(x,y,z) \in \Omega$. Notice that the spherical Laplacian applied to $c(x,y)
 \begin{align*}
 	\DeltaS \: c(x,y) = {1 \over \rho(z)^2} \sum_{n=0}^N \sum_{i=0}^1 c_{n,n,i} \: \pmpxm{\theta}{2} \ch_{n,i}(\theta) = - {1 \over \rho(z)^2} \sum_{n=0}^N \sum_{i=0}^1 n^2 \: c_{n,n,i} \: \ch_{n,i}(\theta)
 \end{align*}
-since the coefficients $\{c_{n,k,i}\}$ for such a function are zero for $k < n$ due to the dependence on $x$ and $y$ only. Thus, since the function $c(x,y)$ is known, it is simple to evaluate $\pmpxm{\theta}{2} c(x,y)$ and hence one can obtain the coefficients for the expansion of $g(x,y,z)$ in the $\bigscopN^{(1)}$ basis in the usual manor.
+since the coefficients $\{c_{n,k,i}\}$ for such a function are zero for $k < n$ due to the dependence on $x$ and $y$ only, which are precisely the Fourier coefficients of $c(\cos \theta, \sin \theta)$. Thus, since the function $c(x,y)$ is known, it is simple to evaluate $\pmpxm{\theta}{2} c(x,y)$ and hence one can obtain the coefficients for the expansion of $g(x,y,z)$ in the $\bigscopN^{(1)}$ basis in the usual manor.
 
 
 \subsection{Biharmonic equation}
 
-Find $u(x,y,z)$ given a function $f(x,y,z)$ such that:
+Our last erxample is the biharmonic equation: find $u(x,y,z)$ given a function $f(x,y,z)$ such that:
 \begin{align}
 	\begin{cases}
     		\DeltaS^2 u(x,y,z) = f(x,y,z) &\quad \text{in } \Omega \\
@@ -1217,7 +1219,7 @@ Find $u(x,y,z)$ given a function $f(x,y,z)$ such that:
 	\end{cases}
 	\label{eqn:biharmonic}
 \end{align}
-where $\DeltaS^2$ is the Biharmonic operator, noting the imposition of zero Dirichlet and Neumann boundary conditions on $u$. For clarity, we reiterate that the unit normal vector in this sense is simply $\unitvec{n}(x,y,z) = \unitvec{n}(\vec x) := {\vec x \over \norm{\vec x}} = \vec x$ (see Section \ref{subsection:furtherdiffoperators}). In Figure \ref{fig:biharmonic} we see the solution to the Biharmonic equation (\ref{eqn:biharmonic}) in the spherical cap $\Omega$. In Figure \ref{fig:biharmonic} we also show the norms of each block of calculated coefficients of the approximation for four more complex right-hand sides of the biharmonic equation with $N = 200$, that is, $(N+1)^2 = 40,401$ unknowns. Once again, the rate of decay in the coefficients is a proxy for the rate of convergence of the computed solution, and we see that we achieve algebraic convergence for these more complex functions.
+where $\DeltaS^2$ is the Biharmonic operator, noting the imposition of zero Dirichlet and Neumann boundary conditions on $u$. For clarity, we reiterate that the unit normal vector in this sense is simply $\unitvec{n}(x,y,z) = \unitvec{n}(\vec x) := {\vec x \over \norm{\vec x}} = \vec x$ (see Section \ref{subsection:furtherdiffoperators}). In Figure \ref{fig:biharmonic} we see the solution to the Biharmonic equation (\ref{eqn:biharmonic}) in the spherical cap $\Omega$. In Figure \ref{fig:biharmonic} we also show the norms of each block of calculated coefficients of the approximation for four more complex right-hand sides of the biharmonic equation with $N = 200$, that is, $(N+1)^2 = 40,401$ unknowns. Once again, the rate of decay in the coefficients is a proxy for the rate of convergence of the computed solution, and we see that we achieve exponential convergence for these more complex functions.
 
 
 
@@ -1226,7 +1228,7 @@ where $\DeltaS^2$ is the Biharmonic operator, noting the imposition of zero Diri
 
 We have shown that trivariate orthogonal polynomials can lead to sparse discretizations of general linear PDEs on spherical cap domains, with Dirichlet boundary conditions on the $z = \alpha \in (0,1)$ boundary. We have provided a detailed practical framework for the application of the methods described for quadratic surfaces of revolution \cite{olver2020orthogonal}, by utilising the non-classical 1D OPs on the interval $[\alpha, 1]$ with the weight $(z - \alpha)^a \: (1-z^2)^{b/2}$ defined for the disk-slice case \cite{snowball2019sparse}. Generalisation to spherical bands ($\alpha \leq z \leq \beta$) is straightforward.  This work thus forms a building block in developing an $hp-$finite element method to solve PDEs on the sphere by using spherical band and spherical cap shaped elements.
 
-This work serves as a stepping stone to constructing similar methods to solve partial differential equations on other 3D sub-domains of the sphere -- it is clear from the construction in this paper that discretizations of spherical gradients and Laplacian's are sparse on other suitable sub-components of the sphere. The resulting sparsity in high-polynomial degree discretizations presents an attractive alternative to methods based on bijective mappings (e.g., \cite{DGShallowWater,FEMShallowWater,boyd2005sphere}). Constructing these sparse spectral methods for surface PDEs on  spherical triangles is future work, and has applications in weather prediction \cite{staniforth2012horizontal}.
+This work also serves as a stepping stone to constructing similar methods to solve partial differential equations on other 3D sub-domains of the sphere---it is clear from the construction in this paper that discretizations of spherical gradients and Laplacian's are sparse on other suitable sub-components of the sphere. The resulting sparsity in high-polynomial degree discretizations presents an attractive alternative to methods based on bijective mappings (e.g., \cite{DGShallowWater,FEMShallowWater,boyd2005sphere}). Constructing these sparse spectral methods for surface PDEs on  spherical triangles is future work, and has applications in weather prediction \cite{staniforth2012horizontal}, though it is not yet clear how to directly construct the necessary orthogonal polynomials. 
 
 The next stage is to develop an orthogonal basis for the tangent space of the spherical cap (or band), and obtain sparse differential operators for gradient, divergence etc. On the complete sphere, the vector spherical harmonics that form the orthogonal basis are simply the gradients and perpendicular gradients of the scalar spherical harmonics \cite{barrera1985vector} which has been used effectively for solving PDEs on the sphere \cite{vasil2019tensor,lecoanet2019tensor} -- however, we do not have that luxury for the spherical cap or band, and hence the choice of basis will not be as straightforward.
 
