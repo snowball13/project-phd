@@ -1,3 +1,4 @@
+using BandedMatrices
 using Revise
 using ApproxFun
 using Test, Profile, StaticArrays, LinearAlgebra, BlockArrays,
@@ -406,17 +407,40 @@ Plots.savefig("experiments/saved/sphericalcap/images/solutionblocknorms-biharmon
 
 # Complexity plots for building differential operators
 using BenchmarkTools, Plots
-function testcomplexityofdifferentialoperator(S::SphericalCapSpace, N::Int,
-                                                v::Fun,
-                                                Jx::BandedBlockBandedMatrix,
-                                                Jy::BandedBlockBandedMatrix,
-                                                Jz::BandedBlockBandedMatrix)
+function testcomplexityofdifferentialoperator(S::SphericalCapSpace, N::Int, v::Fun)
+    Jz = OrthogonalPolynomialFamilies.jacobiz(S, N)
+    Jx = BandedBlockBandedMatrix(Zeros{B}((N+1)^2, (N+1)^2),
+                                    [N+1; 2N:-2:1], [N+1; 2N:-2:1],
+                                    (0, 0), (0, 0))
+    Jy = Jx
+    # @show "done Jacobi mats"
     V = operatorclenshaw(v.coefficients, S, N, Jx, Jy, Jz; rotationalinvariant=true)
     L = laplacianoperator(S, S, N; square=true)
     L + V
 end
+# function testcomplexityofdifferentialoperator(S::SphericalCapSpace, N::Int, v::Fun)
+#     V = operatorclenshaw(v.coefficients, S, N)
+#     L = laplacianoperator(S, S, N; square=true)
+#     L + V
+# end
 function testcomplexityofdifferentialoperator2(N::Int)
     laplacianoperator(S, S, N; square=true)
+end
+function factorizeblockdiagonal(A::BandedBlockBandedMatrix{T}, N::Int) where T
+    qrvec = [factorize(A[Block(k+1, k+1)]) for k = 0:N]
+end
+function factorizeblockdiagonalsolve(qrvec::Vector{L}, N::Int, cfs::Vector{T}) where {L,T}
+    # qrvec = [factorize(A[Block(k+1, k+1)]) for k = 0:N]
+    # NOTE assumes square matrix
+    ret = copy(cfs)
+    k = 0
+    view(ret, 1:N+1) .= qrvec[k+1] \ view(cfs, 1:N+1)
+    ind = N+1
+    for k = 1:N
+        view(ret, (ind+1):(ind + 2(N - k + 1))) .= qrvec[k+1] \ view(ret, (ind+1):(ind+ 2(N - k + 1)))
+        ind += 2(N - k + 1)
+    end
+    ret
 end
 function testcomplexity!(S::SphericalCapSpace, v::Fun, f::Fun, Ns, tbuild, tfact, tsolve)
     # # TODO create an operatorclenshaw method for rotational invariant V,
@@ -425,49 +449,68 @@ function testcomplexity!(S::SphericalCapSpace, v::Fun, f::Fun, Ns, tbuild, tfact
     for k = 1:length(Ns)
         N = Ns[k]
         @show "TEST COMPLEXITY", k, N
-        # tms[k] = @elapsed testcomplexityofdifferentialoperator2(N)
-        Jz = OrthogonalPolynomialFamilies.jacobiz(S, N)
-        Jx = BandedBlockBandedMatrix(Zeros{B}((N+1)^2, (N+1)^2),
-                                        [N+1; 2N:-2:1], [N+1; 2N:-2:1],
-                                        (0, 0), (0, 0))
-        Jy = Jx
-        @show "done Jacobi mats"
 
-        # # belapsed
-        # tbuild[k] = @belapsed testcomplexityofdifferentialoperator($(S), $(N), $(v), $(Jx), $(Jy), $(Jz))
-        # A = testcomplexityofdifferentialoperator(S, N, v, Jx, Jy, Jz)
-        # tfact[k] = @belapsed factorize($(A))
+        # belapsed
+        tbuild[k] = @belapsed testcomplexityofdifferentialoperator($(S), $(N), $(v))
+        A = testcomplexityofdifferentialoperator(S, N, v)
+        tfact[k] = @belapsed factorizeblockdiagonal($(A), $(N)) # factorize
+        Afact = factorizeblockdiagonal(A, N) # factorize(A)
+        cfs = resizecoeffs!(S, f, N)
+        tsolve[k] = @belapsed factorizeblockdiagonalsolve($(Afact), $(N), $(cfs)) # $(A) \ resizecoeffs!($(S), $(f), $(N))
+
+        # # elapsed
+        # # tbuild[k] = @elapsed testcomplexityofdifferentialoperator(S, N, v, Jx, Jy, Jz) # we have v=v(z)
+        # # A = testcomplexityofdifferentialoperator(S, N, v, Jx, Jy, Jz)
+        # tbuild[k] = @elapsed testcomplexityofdifferentialoperator(S, N, v) # We have v=v(x,y,z)
+        # A = testcomplexityofdifferentialoperator(S, N, v)
+        # tfact[k] = @elapsed factorize(A)
         # Afact = factorize(A)
-        # tsolve[k] = @belapsed $(A) \ resizecoeffs!($(f), $(N))
-
-        # elapsed
-        tbuild[k] = @elapsed testcomplexityofdifferentialoperator(S, N, v, Jx, Jy, Jz)
-        A = testcomplexityofdifferentialoperator(S, N, v, Jx, Jy, Jz)
-        tfact[k] = @elapsed factorize(A)
-        Afact = factorize(A)
-        if N < 25
-            tsolve[k] = @elapsed Afact \ f.coefficients[1:4]
-        else
-            tsolve[k] = @elapsed Afact \ resizecoeffs!(S, f, N)
-        end
+        # tsolve[k] = @elapsed Afact \ resizecoeffs!(S, f, N)
     end
     tbuild, tfact, tsolve
 end
 
+
+
+
+
+N = 300
+A = testcomplexityofdifferentialoperator(S, N, v)
+@time AA = BandedMatrices.qr(A); 1
+@time AA = factorize(A); 1
+@time qrvec = [factorize(A[Block(k+1, k+1)]) for k = 0:N]; 1
+@time ret = AA \ resizecoeffs!(S, f, N)
+@time ret2 = factorizeblockdiagonalsolve(qrvec, N, resizecoeffs!(S, f, N))
+ret ≈ ret2
+
+
+# NOTE that the operatorclenshaw as implemented is basically unable to handle any large N>100.
+# Try sifting through zero coeff vals and thus limiting the arithmetic in the operatorclenshaw methods
+
 Nend = 1000; Ns = 100:100:Nend
 tbuild = Array{Float64}(undef, length(Ns))
 tfact, tsolve = copy(tbuild), copy(tbuild)
-vanon = (x,y,z)->cos(z)
-v = Fun(vanon, S, 300)
+vanon = (x,y,z) -> cos(z) # (x,y,z) -> x * cos(z * y)
+v = Fun(vanon, S, 500)
+v(p) - vanon(p...)
+v.coefficients
 # Exact solution to Δu = f, where u = wR10(z)*y*exp(x)
-fanon = (x,y,z) -> (- 2exp(x)*y*z*(2+x)
-                    + (weight(S,x,y,z) * exp(x) * (y^3 + z^2*y - 4x*y - 2y)))
-f = Fun(fanon, S, 1000)
+fanon = (x,y,z) -> (- 2exp(x)*y*z*(2+x) + (weight(S,x,y,z) * exp(x) * (y^3 + z^2*y - 4x*y - 2y)))
+f = Fun(fanon, S, 2*21^2)
+f(p) - fanon(p...)
+resizedataonedimops!(S, 20)
 resizedataonedimops!(S, Nend+5)
+
 testcomplexity!(S, v, f, Ns, tbuild, tfact, tsolve)
 tbuild, tfact, tsolve
-save("experiments/saved/sphericalcap/jld/complexity-N=$N.jld", "tbuild", tbuild, "tfact", tfact, "tsolve", tsolve)
+save("experiments/saved/sphericalcap/jld/complexity-belapsed-new-Nend=$Nend.jld", "tbuild", tbuild, "tfact", tfact, "tsolve", tsolve)
+# tbuildold = load("experiments/saved/sphericalcap/jld/complexity2-Nend=60.jld", "tbuild")
+# tfactold = load("experiments/saved/sphericalcap/jld/complexity-Nend=60.jld", "tfact")
+# tsolveold = load("experiments/saved/sphericalcap/jld/complexity-Nend=60.jld", "tsolve")
 
+tb = vcat(tbuildold, tbuild)
+tf = vcat(tfactold, tfact)
+ts = vcat(tsolveold, tsolve)
 
 
 using Plots
@@ -475,9 +518,10 @@ Plots.plot(Ns, tbuild; line=(3, :dash), yscale=:log10, xscale=:log10, legend=:bo
 Plots.plot!(Ns, tfact; line=(3, :dot), label="Factorisation")
 Plots.plot!(Ns, tsolve; line=(3, :dashdot), label="Solve")
 Plots.plot!(Ns, tbuild + tfact + tsolve; line=(3, :solid), label="Total")
+Plots.plot!(Ns, Ns.^2; line=(3, :solid), label="Total")
 Plots.xlabel!("Degree")
 Plots.ylabel!("Time")
-savefig("experiments/saved/sphericalcap/images/complexity-new-Nend=$Nend.pdf")
+savefig("experiments/saved/sphericalcap/images/complexity-belapsed-new-Nend=$Nend.pdf")
 
 
 
@@ -488,3 +532,153 @@ T = Float64; B = T#BigFloat
 SCF = SphericalCapFamily(B, T, B(α * 1000) / 1000)
 a = 1.0
 S = SCF(a, 0.0); S2 = SCF(2.0, 0.0); S0 = SCF(0.0, 0.0)
+
+
+
+#====#
+# SH stuff
+
+function muval(l, r)
+    if r < 0
+        return (l+1)*sqrt(l/(2l+1))
+    elseif r > 0
+        return l*sqrt((l+1)/(2l+1))
+    else
+        return im*sqrt(l*(l+1))
+    end
+end
+
+#=
+Function that returns the Clebsch-Gordan coefficient
+    <L, M-ms; 1, ms | J, M>
+=#
+function clebsch_gordan_coeff(J, M, L, ms)
+    out = 0.0
+    if ms == 1
+        if J == L+1
+            out = sqrt((L+M)*(L+M+1) / ((2L+1)*(2L+2)))
+        elseif J == L
+            out = - sqrt((L+M)*(L-M+1) / (2L*(L+1)))
+        elseif J == L-1
+            out = sqrt((L-M)*(L-M+1) / (2L*(2L+1)))
+        end
+    elseif ms == 0
+        if J == L+1
+            out = sqrt((L-M+1)*(L+M+1) / ((L+1)*(2L+1)))
+        elseif J == L
+            out = M / sqrt(L*(L+1))
+        elseif J == L-1
+            out = - sqrt((L-M)*(L+M) / (L*(2L+1)))
+        end
+    elseif ms == -1
+        if J == L+1
+            out = sqrt((L-M)*(L-M+1) / ((2L+1)*(2L+2)))
+        elseif J == L
+            out = sqrt((L-M)*(L+M+1) / (2L*(L+1)))
+        elseif J == L-1
+            out = sqrt((L+M)*(L+M+1) / (2L*(2L+1)))
+        end
+    end
+    return out
+end
+function shcoeff(l, m)
+    α = 0
+    if m == 0
+        α = sqrt((2l+1)/(4pi))
+    elseif m > 0
+        α = sqrt((2l+1)/(4pi) * factorial(big(l+m)) * factorial(big(l-m))) / (factorial(big(l)) * (-2.0)^m)
+    else
+        m = abs(m)
+        α = sqrt((2l+1)/(4pi) * factorial(big(l+m)) * factorial(big(l-m))) / (factorial(big(l)) * (2.0)^m)
+    end
+    Float64(α)
+end
+function shreccoeff(l, m, j; type::String="x")
+    if type == "z"
+        if j == 1
+            if l - m < 1
+                return 0
+            end
+            ret = (l / 2l+1) * (shcoeff(l, m) / shcoeff(l-1, m))
+        elseif j == 2
+            ret = (l - m + 1) * (l + m + 1) / ((2l + 1) * (l + 1)) * (shcoeff(l, m) / shcoeff(l+1, m))
+        else
+            error("invalid j")
+        end
+    else
+        if j == 1
+            # Do we have a non-zero coeff?
+            if m ≤ 0 && l + m < 2
+                return 0.0
+            end
+            if m > 0
+                ret = 2l / (2l + 1)
+            else
+                ret = - l / (2 * (2l + 1))
+            end
+            ret *= shcoeff(l, m) / (2 * shcoeff(l-1, m-1))
+        elseif j == 2
+            if m ≥ 0 && l - m < 2
+                return 0.0
+            end
+            if m < 0
+                ret = 2l / (2l + 1)
+            else
+                ret = - l / (2 * (2l + 1))
+            end
+            ret *= shcoeff(l, m) / (2 * shcoeff(l-1, m+1))
+        elseif j == 3
+            if m > 0
+                ret = - 2(l - m + 2) * (l - m + 1) / ((2l + 1) * (l + 1))
+            else
+                ret = (l - m + 2) * (l - m + 1) / (2 * (2l + 1) * (l + 1))
+            end
+            ret *= shcoeff(l, m) / (2 * shcoeff(l+1, m-1))
+        elseif j == 4
+            if m < 0
+                ret = - 2(l + m + 2) * (l + m + 1) / ((2l + 1) * (l + 1))
+            else
+                ret = (l + m + 2) * (l + m + 1) / (2 * (2l + 1) * (l + 1))
+            end
+            ret *= shcoeff(l, m) / (2 * shcoeff(l+1, m+1))
+        end
+        if type == "y"
+            ret *= (-1)^(j+1) * im
+        end
+    end
+    ret
+end
+
+
+for l = 1:10, m = -l:l
+    if l - 2 ≥ abs(m)
+        aa = clebsch_gordan_coeff(l, m, l-1, -1) * shreccoeff(l-1, m+1, 1; type="y")
+        bb = clebsch_gordan_coeff(l, m, l-1, 1) * shreccoeff(l-1, m-1, 2; type="y")
+        ret = abs(aa - bb)
+        if ret > 1e-16
+            @show l, m, ret
+        end
+    end
+end
+
+for l = 1:10, m = -l:l
+    aa = clebsch_gordan_coeff(l, m, l+1, -1) * shreccoeff(l+1, m+1, 3; type="y")
+    bb = clebsch_gordan_coeff(l, m, l+1, 1) * shreccoeff(l+1, m-1, 4; type="y")
+    ret = abs(aa - bb)
+    if ret > 1e-15
+        @show l, m, ret
+    end
+end
+
+l, m = 4, -1
+for l = 1:20, m = -l:l
+    aa = (- clebsch_gordan_coeff(l, m, l-1, -1) * shreccoeff(l-1, m+1, 3; type="y")
+            + clebsch_gordan_coeff(l, m, l-1, 1) * shreccoeff(l-1, m-1, 4; type="y"))
+    bb = (- clebsch_gordan_coeff(l, m, l+1, -1) * shreccoeff(l+1, m+1, 1; type="y")
+            + clebsch_gordan_coeff(l, m, l+1, 1) * shreccoeff(l+1, m-1, 2; type="y"))
+    cc = clebsch_gordan_coeff(l, m, l, 0)
+    ret = abs(cc * muval(l, 0) - 2(aa * muval(l, -1) + bb * muval(l, 1)) / sqrt(2))
+    if ret > 1e-14
+        @show l, m, ret
+    end
+end

@@ -3,20 +3,21 @@
 #=
 NOTE
 
-The tangent space basis we use is
-        Φ̲_{n,k,i} = ϕ̲ * Q^{0}_{n,k,i}
-        Ψ̲_{n,k,i} = θ̲ * Q^{0}_{n,k,abs(i-1)}
+The tangent space basis we use is, owrt w_R^{(a,2)},
+        Φ̲^{(a)}_{n,k,i} = ϕ̲ * (1/ρ) * Q^{a}_{n,k,i}
+        Ψ̲^{(a)}_{n,k,i} = θ̲ * (1/ρ) * Q^{a}_{n,k,abs(i-1)}
     Let u̲ be a function that is a sum of gradients and perp gradients (hence
-    lies in the tangent space). Then we can expand ρu̲ in this basis, i.e.
-        ρu̲ = Σ u_{n,k,i}\^Φ * Φ̲_{n,k,i} + u_{n,k,i}\^Ψ Ψ̲_{n,k,i}
-    where {u\^Φ, u\^Φ} are coefficients. The coefficients vector is ordered
+    lies in the tangent space). Then we can expand u̲ in this basis, i.e.
+        u̲ = Σ u_{n,k,i}\^Φ * Φ̲_{n,k,i} + u_{n,k,i}\^Ψ Ψ̲_{n,k,i}
+    where {u\^Φ, u\^Ψ} are coefficients. The coefficients vector is ordered
     as follows:
     i.e. for a given max degree N:
+    # TODO sort this out
 
         𝕋_N := [𝕋_{N,0};...;𝕋_{N,N}]
         𝕋_{N,k} := [Φ̲_{k,k,0};Ψ̲_{k,k,0};Φ̲_{k,k,1};Ψ̲_{k,k,1}...;Φ̲_{N,k,0};Ψ̲_{N,k,0};Φ̲_{N,k,1};Ψ̲_{N,k,1}] ∈ ℝ^{4(N-k+1)}
                                                                 for k = 1,...,N
-        𝕋_{N,0} := [Φ̲_{0,0,0};Ψ̲_{0,0,0};Φ̲_{1,0,0};Ψ̲_{1,0,0};...;Φ̲_{N,0,0};Ψ̲_{N,0,0}] ∈ ℝ^{2(N+1)}
+        𝕋_{N,0} := [Φ̲_{0,0,0};Ψ̲_{0,0,1};Φ̲_{1,0,0};Ψ̲_{1,0,1};...;Φ̲_{N,0,0};Ψ̲_{N,0,1}] ∈ ℝ^{2(N+1)}
                                                                 for k = 0
 
 =#
@@ -35,11 +36,11 @@ end
 
 spacescompatible(A::SphericalCapTangentSpace, B::SphericalCapTangentSpace) = (A.params == B.params)
 
-function gettangentspace(D::SphericalCapFamily{B,T,N,<:Any,<:Any}) where {B,T,N}
-    length(D.tangentspace) == 1 && return D.tangentspace[1]
-    resize!(D.tangentspace, 1)
-    params = (B(0), B(0))
-    D.tangentspace[1] = SphericalCapTangentSpace(D, params)
+function gettangentspace(S::SphericalCapSpace{<:Any,B,T,N}) where {B,T,N}
+    D = S.family
+    params = S.params
+    haskey(D.tangentspaces,params) && return D.spaces[params]
+    D.tangentspaces[params] = SphericalCapTangentSpace(D, params)
 end
 
 getSCSpace(S::SphericalCapTangentSpace) = S.family(S.params)
@@ -264,140 +265,203 @@ function getblockindextangent(S::SphericalCapTangentSpace, n::Int, k::Int,
     getblockindextangent(getSCSpace(S), n, k, i, j)
 end
 
-# Divergence operator (ρ²∇.)
-function getrhodivminusgradrhodotval(S::SphericalCapTangentSpace, ptsr,
-                                        rhoptsr2, rhodxrhoptsr, wr, n::Int,
-                                        m::Int, k::Int, i::Int, j::Int)
-    S0 = getSCSpace(S)
-    S1 = differentiatespacephi(S0)
+# Divergence operator (∇.)
+function getdivergenceval(S::SphericalCapTangentSpace, ptsr, rhoptsr2,
+                            rhodxrhoptsr, wr, n::Int, m::Int, k::Int,
+                            i::Int, j::Int; weighted::Bool=true)
+    # TODO weighted=false case
+    s = getSCSpace(S)
+    st = differentiatespacephi(s; weighted=weighted)
+    R = getRspace(s, k); Rt = getRspace(st, k)
     if j == 0
-        ret = getpartialphival(S0, ptsr, rhoptsr2, rhodxrhoptsr, wr, n, m, k)
+        ret = inner2(R, getptsevalforop(R, n-k) .* rhoptsr2.^k,
+                        (getderivptsevalforop(Rt, m-k) .* rhoptsr2
+                            - k * ptsr .* getptsevalforop(Rt, m-k)),
+                        wr)
     elseif j == 1
-        ret = (gettransformparamsval(S0, S1, rhoptsr2, wr, n, m, k)
-                * getpartialthetaval(S0, k, i))
+        ret = inner2(R, getptsevalforop(R, n-k) .* rhoptsr2.^k,
+                        getptsevalforop(Rt, m-k), wr)
+        ret *= (-1)^i * k
     else
         error("invalid param j")
     end
-    ret
+    ret / getopnorm(Rt)
 end
-function rhodivminusgradrhodotoperator(S::SphericalCapTangentSpace{<:Any, B, T, <:Any}, N) where {B,T}
-    # Operator acts on coeffs in the 𝕋 basis, and results in coeffs in the ℚ^{1}
-    # basis.
+function divergenceoperator(S::SphericalCapTangentSpace{<:Any, B, T, <:Any},
+                            N::Int; square::Bool=true) where {B,T}
+    # Operator acts on coeffs in the 𝕋_W^{a} basis, and results in coeffs in the
+    # 𝕎^{a-1} basis.
 
-    # NOTE this operator acts on F̲ expanded in 𝕋 to result in "ρ∇̇.F̲ - ∇ρ.F̲"
-    # expanded in the ℚ^{1} basis which, when F̲ = ρu̲, means that this operator
-    # outputs the result of ρ^2 ∇.u̲
+    # NOTE the coeffs for scalar funs that result are double the length you'd
+    # expect, with each entry duplicated in turn, so as to keep the operator a
+    # true BandedBlockBanded object.
 
-    S0 = getSCSpace(S)
-    S1 = differentiatespacephi(S0)
-    R1 = getRspace(S1, 0)
+    weighted = true # TODO weighted=false
+    s = getSCSpace(S)
+    st = differentiatespacephi(s; weighted=weighted)
+    R = getRspace(s, 0)
 
-    resizedataonedimops!(S1, N+1)
-    resizedataonedimops!(S0, N+1)
+    resizedataonedimops!(st, N+1)
+    resizedataonedimops!(s, N+1)
 
-    ptsr, wr = pointswithweights(B, R1, 2N+3)
+    ptsr, wr = pointswithweights(B, R, 2N+3)
     rhoptsr2 = S.family.ρ.(ptsr).^2
     rhodxrhoptsr = S.family.ρ.(ptsr) .* differentiate(S.family.ρ).(ptsr)
 
-    band1 = 2
-    band2 = 1
     # TODO sort out bandwidths!
-    A = BandedBlockBandedMatrix(Zeros{B}((N+band2+1)^2, 2 * (N+1)^2),
-                                [N+band2+1; 2(N+band2):-2:1], 2 * [N+1; 2N:-2:1],
-                                (0, 0), (2band2, 2N+band1+1))
+    band1 = 1
+    band2 = 2
+    if square
+        A = BandedBlockBandedMatrix(Zeros{B}(2 * (N+1)^2, 2 * (N+1)^2),
+                                    2 * [N+1; 2N:-2:1],
+                                    2 * [N+1; 2N:-2:1],
+                                    (0, 0),
+                                    (4band2, 4band1))
+    else
+        A = BandedBlockBandedMatrix(Zeros{B}(2 * (N+band2+1)^2, 2 * (N+1)^2),
+                                    2 * [N+band2+1; 2(N+band2):-2:1],
+                                    2 * [N+1; 2N:-2:1],
+                                    (0, 0),
+                                    (4band2, 4band1))
+    end
+
     for k = 0:N
         if k % 100 == 0
-            @show "rhodivminusgradrhodot", k
+            @show "divoperator", k
         end
-        R0 = getRspace(S0, k); R1 = getRspace(S1, k)
-        getopptseval(R0, N-k, ptsr); getopptseval(R1, N-k+band2, ptsr)
-        getderivopptseval(R0, N-k, ptsr)
-        for n = k:N, m = max(0, n-band1):n+band2 # min(n+band2, N)
-            if k ≤ m
-                for i = 0:min(1,k), j = 0:1
-                    # TODO check indexing here
-                    j == 1 && (m < n - 1 || m > n || k == 0) && continue
-                    val = getrhodivminusgradrhodotval(S, ptsr, rhoptsr2, rhodxrhoptsr, wr, n, m, k, i, j)
-                    view(A, Block(k+1, k+1))[getblockindex(S1, m, k, abs(i-j)), getblockindextangent(S, n, k, i, j)] = val
+        R = getRspace(s, k); Rt = getRspace(st, k)
+        getopptseval(R, N-k, ptsr); getopptseval(Rt, N-k+band2, ptsr)
+        getderivopptseval(Rt, N-k+band2, ptsr)
+        for n = k:N
+            maxm = square ? min(n+band2, N) : n+band2
+            for m = max(0, n-band1):maxm
+                if k ≤ m
+                    for i = 0:min(1,k), j = 0:1
+                        (j == 1 && (m < n - (band1 - 1) || m > n + (band2 - 1)
+                                                        || k == 0)
+                                && continue)
+                        val = getdivergenceval(S, ptsr, rhoptsr2, rhodxrhoptsr,
+                                                wr, n, m, k, i, j)
+                        ind1 = getblockindextangent(S, m, k, i, j)
+                        ind2 = getblockindextangent(S, n, k, i, j)
+                        view(A, Block(k+1, k+1))[ind1, ind2] = val
+                    end
                 end
             end
         end
-        resetopptseval(R0); resetopptseval(R1); resetderivopptseval(R0)
+        resetopptseval(R); resetopptseval(Rt); resetderivopptseval(R)
     end
     A
 end
 
-# Coriolis operator (2Ωz r̲̂ ×)
-function coriolisoperator(S::SphericalCapTangentSpace{<:Any, B, T, <:Any}, N;
-                            square=true) where {B,T}
-    # We output the operator that results in coefficients {u\^Φ, u\^Φ}, for
-    # expansion in the 𝕋 basis
-
-    Ω = B(72921) / 1e9 # TODO make this a global definition somehow (maybe a
-                       # member of the class struct)
+# gradient of the divergence operator, i.e. ∇(∇.u̲) for u̲ in the tangent space
+function gradofdivoperator(S::SphericalCapTangentSpace{<:Any, B, T, <:Any}, N::Int) where {B,T}
+    # NOTE Takes coeffs from 𝕋_W^{1} -> 𝕋^{1} only
 
     # resizedataonedimops! for the SCSpace
-    S0 = getSCSpace(S)
-    resizedataonedimops!(S0, N+1)
+    s = getSCSpace(S)
+    resizedataonedimops!(s, N+1)
 
     band1 = 1
     band2 = 1
     A = BandedBlockBandedMatrix(Zeros{B}(2 * (N+band2+1)^2, 2 * (N+1)^2),
                                 2 * [N+band2+1; 2(N+band2):-2:1], 2 * [N+1; 2N:-2:1],
                                 (0, 0), (4band2+1, 4band1+1))
+end
+
+
+#===#
+
+# Coriolis operator (2Ωz r̲̂ ×)
+function coriolisoperator(S::SphericalCapTangentSpace{<:Any, B, T, <:Any},
+                            N::Int; square::Bool=false) where {B,T}
+    # We output the operator that results in coefficients {u\^Φ, u\^Ψ}, for
+    # expansion in the 𝕋 basis
+
+    Ω = B(72921) / 1e9 # TODO make this a global definition somehow (maybe a
+                       # member of the class struct)
+
+    # resizedataonedimops! for the SCSpace
+    s = getSCSpace(S)
+    resizedataonedimops!(s, N+1)
+
+    band1 = 1
+    band2 = 1
+    if square
+        A = BandedBlockBandedMatrix(Zeros{B}(2 * (N+1)^2, 2 * (N+1)^2),
+                                    2 * [N+1; 2N:-2:1],
+                                    2 * [N+1; 2N:-2:1],
+                                    (0, 0),
+                                    (4band2+1, 4band1+1))
+    else
+        A = BandedBlockBandedMatrix(Zeros{B}(2 * (N+band2+1)^2, 2 * (N+1)^2),
+                                    2 * [N+band2+1; 2(N+band2):-2:1],
+                                    2 * [N+1; 2N:-2:1],
+                                    (0, 0),
+                                    (4band2+1, 4band1+1))
+    end
     for k = 0:N
         if k % 100 == 0
            @show "coriolis", k
         end
-        for n = k:N, m = max(0, n-band1):n+band2 # min(n+band2, N)
-            if k ≤ m
-                c = 2 * Ω * recγ(B, S0, m, k, n-m+2)
-                for i = 0:min(1,k), j = 0:1
-                    view(A, Block(k+1, k+1))[getblockindextangent(S, m, k, i, abs(j-1)), getblockindextangent(S, n, k, i, j)] = c * (-1)^(j)
+        for n = k:N
+            maxm = square ? min(n+band2, N) : n+band2
+            for m = max(0, n-band1):maxm
+                if k ≤ m
+                    c = 2 * Ω * recγ(B, s, m, k, n-m+2)
+                    for i = 0:min(1,k), j = 0:1
+                        ind1 = getblockindextangent(S, m, k, i, abs(j-1))
+                        ind2 = getblockindextangent(S, n, k, i, j)
+                        view(A, Block(k+1, k+1))[ind1, ind2] = c * (-1)^(j)
+                    end
                 end
             end
         end
     end
     A
-    if square
-        F = BandedBlockBandedMatrix(A[1:getopindex(S, N, N, 1, 1), 1:getopindex(S, N, N, 1, 1)],
-                                      2 * [N+1; 2N:-2:1], 2 * [N+1; 2N:-2:1],
-                                      (0, 0), (4band2+1, 4band1+1))
-    else
-        A
-    end
 end
 
 
 
 #====#
-# Conversion operator (from 𝕋^{0} -> 𝕋^{2})
+# Conversion operator (from 𝕋_W^{a} -> 𝕋_W^{a-1} or 𝕋^{a} -> 𝕋^{a+1})
 function transformparamsoperator(S::SphericalCapTangentSpace{<:Any, B, <:Any, <:Any}, N::Int;
-                                    paramincrease::Int=2) where B
+                                    weighted::Bool=false, square::Bool=false) where B
     # St refers to the target space
-    @assert paramincrease ≥ 2 "Invalid parameter: paramincrease should be ≥ 2"
     s = getSCSpace(S)
-    st = differentiatespacephi(s)
-    for i = 2:paramincrease
-        st = differentiatespacephi(st)
+    st = differentiatespacephi(s; weighted=weighted)
+    T = transformparamsoperator(s, st, N; weighted=weighted)
+    if weighted
+        band1 = 0; band2 = 1
+    else
+        band1 = 1; band2 = 0
     end
-    @show st.params
-    T = transformparamsoperator(s, st, N; weighted=false)
-    # C = BandedBlockBandedMatrix(Zeros{B}((N+band2+1)^2, (N+1)^2),
-    #                             ([N+band2+1; 2(N+band2):-2:1], [N+1; 2N:-2:1]),
-    #                             (0, 0), (2band2, 2band1))
-    band1 = 2; band2 = 0
-    C = BandedBlockBandedMatrix(Zeros{B}(2(N+1)^2, 2(N+1)^2),
-                                2 * [N+1; 2N:-2:1], 2 * [N+1; 2N:-2:1],
-                                (0, 0), (4band2, 4band1))
+    if square
+        C = BandedBlockBandedMatrix(Zeros{B}(2(N+1)^2, 2(N+1)^2),
+                                    2 * [N+1; 2N:-2:1],
+                                    2 * [N+1; 2N:-2:1],
+                                    (0, 0),
+                                    (4band2, 4band1))
+    else
+        C = BandedBlockBandedMatrix(Zeros{B}(2(N+band2+1)^2, 2(N+1)^2),
+                                    2 * [N+band2+1; 2(N+band2):-2:1],
+                                    2 * [N+1; 2N:-2:1],
+                                    (0, 0),
+                                    (4band2, 4band1))
+    end
+
     for k = 0:N
-        for n = k:N, m = max(0, n-band1):n+band2 # min(n+band2, N)
-            if k ≤ m
-                val = view(T, Block(k+1, k+1))[getblockindex(s, m, k, 0),
-                                               getblockindex(s, n, k, 0)]
-                for i = 0:min(1,k), j = 0:1
-                    view(C, Block(k+1, k+1))[getblockindextangent(S, m, k, i, j),
-                                             getblockindextangent(S, n, k, i, j)] = val
+        for n = k:N
+            maxm = square ? min(n+band2, N) : n+band2
+            for m = max(0, n-band1):maxm
+                if k ≤ m
+                    val = view(T, Block(k+1, k+1))[getblockindex(s, m, k, 0),
+                                                   getblockindex(s, n, k, 0)]
+                    for i = 0:min(1,k), j = 0:1
+                        ind1 = getblockindextangent(S, m, k, i, j)
+                        ind2 = getblockindextangent(S, n, k, i, j)
+                        view(C, Block(k+1, k+1))[ind1, ind2] = val
+                    end
                 end
             end
         end

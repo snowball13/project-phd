@@ -214,40 +214,93 @@ maximum(abs, ret - retactual)
 
 # 1) u = constant
 N = 10
-L = laplacianoperator(S, N)
-c = 2.0
-u = (x,y,z)->c
-f = (x,y,z)->-c * 2 * z
-F = Fun(f, S, 2*(N+2)^2); F.coefficients
-ucfs = iterimprove(sparse(L), F.coefficients)
-U = Fun(S, ucfs)
-U(p)
-u(p...)
-@test U(p) ≈ u(p...)
+    L = laplacianoperator(S, S, N)
+    c = 2.0
+    u = (x,y,z)->c
+    f = (x,y,z)->-c * 2 * z
+    F = Fun(f, S, 2*(N+2)^2); F.coefficients
+    ucfs = iterimprove(sparse(L), F.coefficients)
+    U = Fun(S, ucfs)
+    U(p)
+    u(p...)
+    @test U(p) ≈ u(p...)
 
 # 2) u = monomial
 inds = [2, 3, 3]; N = 50
-u = (x,y,z)->x^inds[1] * y^inds[2] * z^inds[3]
-L = laplacianoperator(S, N)
-f = (x,y,z)->(rholaplacian(S, u, inds, [x;y;z]) / rhoval(z)^2) # NOTE methods at bottom of script for this
-F = Fun(f, S, 2*(sum(inds)+2)^2); F.coefficients
-resizecoeffs!(S, F, N+1)
-ucfs = iterimprove(sparse(L), F.coefficients)
-U = Fun(S, ucfs)
-@test U(p) ≈ u(p...)
+    u = (x,y,z)->x^inds[1] * y^inds[2] * z^inds[3]
+    L = laplacianoperator(S, S, N)
+    f = (x,y,z)->(laplaciantest(S, u, inds, [x;y;z])) # NOTE methods at bottom of script for this
+    F = Fun(f, S, 2*(sum(inds)+2)^2); F.coefficients
+    resizecoeffs!(S, F, N+1)
+    ucfs = iterimprove(sparse(L), F.coefficients)
+    U = Fun(S, ucfs)
+    @test U(p) ≈ u(p...)
+
+# 3) u = monomial, W2->Q0
+inds = [4, 2, 5]; N = 30
+    u = (x,y,z)->x^inds[1] * y^inds[2] * z^inds[3]
+    L = laplacianoperator(S2, S0, N; weighted=true)
+    f = (x,y,z)->(laplaciantest(S2, u, inds, [x;y;z])) # NOTE methods at bottom of script for this
+    U = Fun(u, S2, 2*(sum(inds)+10)^2)
+    fcfs = L * resizecoeffs!(S2, U, N)
+    F = Fun(S0, fcfs)
+    @test F(p) ≈ f(p...)
+F = Fun(f, S0, 2*(sum(inds)+10)^2); F.coefficients
+    ucfs = iterimprove(sparse(L), resizecoeffs!(S0, F, N+2))
+    U = Fun(S2, ucfs)
+    @test U(p) ≈ u(p...)
+
+# 4) u = monomial, Q0->Q2
+inds = [4, 2, 2]; N = 30; sum(inds)
+    u = (x,y,z)->x^inds[1] * y^inds[2] * z^inds[3]
+    L = laplacianoperator(S0, S2, N; weighted=false)
+    f = (x,y,z)->(laplaciantest(S0, u, inds, [x;y;z])) # NOTE methods at bottom of script for this
+    U = Fun(u, S0, 2*(sum(inds)+5)^2); U.coefficients
+    fcfs = L * resizecoeffs!(S0, U, N)
+    F = Fun(S2, fcfs)
+    @test F(p) ≈ f(p...)
+F = Fun(f, S2, 2*(sum(inds)+10)^2); F.coefficients
+    ucfs = iterimprove(sparse(L), resizecoeffs!(S2, F, N))
+    U = Fun(S0, ucfs)
+    # NOTE This fails, as the matrix L is singular (I think...)
+    @test U(p) ≈ u(p...)
+
+# 5) u = constant
+N = 10
+    L = laplacianoperator(S2, S0, N)
+    c = 2.0
+    u = (x,y,z)->c
+    f = (x,y,z)->2c * (S.family.ρ(z)^2 - 2z * weight(S, x, y, z))
+    F = Fun(f, S0, 2*(N+3)^2); F.coefficients
+    ucfs = iterimprove(sparse(L), F.coefficients)
+    U = Fun(S2, ucfs)
+    U(p)
+    u(p...)
+    @test U(p) ≈ u(p...)
 
 
-checklaplacian(S, p)
-function checklaplacian(S, p)
-    x, y, z = p[1], p[2], p[3]
-    θ = atan(y / x)
-    ρ = sqrt(1 - z^2)
-    w10 = (z - S.family.α)
-    ret = - 4 * w10 + (-z - S.family.α) * ρ^2 + 5 * (-ρ - S.family.α) * ρ * z
-    ret += 4 * w10 * z^2 - 2 * w10 * ρ^2
-    ret *= cos(θ) * sin(θ)
-    ret
-end
+#===#
+# Biharmonic operator test
+u = (x,y,z) -> x * y
+    U = Fun(u, S2, 2*(2+1)^2); U.coefficients
+    N = 6
+    Lw = laplacianoperator(S2, S0, N)
+    L = laplacianoperator(S0, S2, N+2; weighted=false)
+    Bw = L * Lw
+    fcfs = Bw * resizecoeffs!(S2, U, N)
+    F = Fun(S2, fcfs)
+    f1 = (x,y,z) -> 12 * x * y * (3 * weight(S2, x, y, z) + 6z * weight(S, x, y, z) - S.family.ρ(z)^2)
+    f2 = (x,y,z) -> 24 * x * y * (3z^2 + 6z * weight(S, x, y, z) - S.family.ρ(z)^2)
+    f3 = (x,y,z) -> 8 * x * y * (4z^2 - S.family.ρ(z)^2 - 1)
+    f = (x,y,z)->f1(x,y,z) + f2(x,y,z) + f3(x,y,z)
+    @test F(p) ≈ f(p...)
+F = Fun(f, S2, 2*(N+3)^2); F.coefficients
+    ucfs = iterimprove(sparse(Bw), F.coefficients)
+    U = Fun(S2, ucfs)
+    U(p)
+    u(p...)
+    U(p) / u(p...)
+    @test U(p) ≈ u(p...)
 
 
 
@@ -351,7 +404,7 @@ Fi = Fun(S, t * F.coefficients); Fi.coefficients
 # Laplacian tests
 # 1) u = constant
 N = 10
-Δ = laplacianoperator(S, N)
+Δ = laplacianoperator(S, S, N)
 c = 2.0
 u = (x,y,z)->c
 rho2f = (x,y,z)->-c * 2 * z #* (1-z^2) # 2 * ρ * ρ' * ρ^2
@@ -363,7 +416,7 @@ U = Fun(S, ucfs)
 # 2) u = monomial
 inds = [2, 3, 3]; N = 50
 u = (x,y,z)->x^inds[1] * y^inds[2] * z^inds[3]
-Δ = laplacianoperator(S, N)
+Δ = laplacianoperator(S, S, N)
 fff = (x,y,z)->laplaciantest(S, u, inds, [x;y;z]) # NOTE methods at bottom of script for this
 F = Fun(fff, S, 2*(sum(inds)+2)^2); resizecoeffs!(S, F, N+1)
 F(p) - fff(p...)
@@ -373,9 +426,11 @@ U = Fun(S, ucfs)
 
 
 # Jacobi operators
-inds = [2, 3, 3]; N = sum(inds) + 1 # +1 so that the Jacobi operator can work
-f = (x,y,z)->x^inds[1] * y^inds[2] * z^inds[3]
+inds = [6, 10, 3]; N = sum(inds) + 1 # +1 so that the Jacobi operator can work
+# f = (x,y,z)->x^inds[1] * y^inds[2] * z^inds[3]
+f = (x,y,z) -> x * cos(y * z)
 F = Fun(f, S, 2*(N+1)^2); F.coefficients
+F(p) - f(p...)
 # x
 J = OrthogonalPolynomialFamilies.jacobix(S, N)
 xF = Fun(S, J * F.coefficients)
@@ -396,6 +451,8 @@ f = Fun((x,y,z)->x^inds[1] * y^inds[2] * z^inds[3], S, 2*(N+1)^2); f.coefficient
 v = Fun((x,y,z)->(1 - (3(x-0.2)^2 + 5y^2)), S, 30); v.coefficients
 V = operatorclenshaw(v, S, N)
 vf = Fun(S, V * f.coefficients)
+vf(p)
+v(p) * f(p)
 @test vf(p) ≈ v(p) * f(p)
 
 #====#
@@ -441,14 +498,8 @@ Plots.ylabel!("Norm")
 
 
 
-N = 50
-Δw = laplaceoperator(S2, S2, N; weighted=true, square=false)
-f1 = Fun((x,y)->1.0, S2, 10); f1.coefficients
-u1 = Fun(S2, iterimprove(sparse(Δw), resizecoeffs!(f1, N+1)))
-u1cfs = PseudoBlockArray(u1.coefficients, [i+1 for i=0:N])
-maximum(abs, u1cfs[Block(51)])
-u1cfs[Block(51)]
-u1norms = [norm(u1cfs[Block(n+1)]) for n=0:N]
+
+
 
 
 
@@ -457,10 +508,13 @@ u1norms = [norm(u1cfs[Block(n+1)]) for n=0:N]
 #====#
 
 
-
 # The Poisson/Laplacian test methods for Q^{1}
 rhoval(z) = sqrt(1 - z^2)
 function laplaciantest(S::SphericalCapSpace, u, uinds, xvec)
+    @assert length(uinds) == 3 && uinds[1] > 1 && uinds[2] > 1 && uinds[3] > 1 "Indicies need to be ≥ 2"
+    a = Int(S.params[1])
+    Sm1 = S.family((S.params[1] - 1, B(0.0)))
+    Sm2 = S.family((S.params[1] - 2, B(0.0)))
     x, y, z = xvec
     wght = weight(S, xvec)
     rhoz = rhoval(z)
@@ -471,13 +525,12 @@ function laplaciantest(S::SphericalCapSpace, u, uinds, xvec)
     # wghtm1 = weight(S.family(a-1, 0.0), xvec)
     # θ = atan(y / x)
 
-    ret = - rhoz^2 * up
-    ret += wght * upp
-    ret += z * wght * up
-    ret -= 2 * rhoz^2 * z * u(x,y,z)
-    ret -= rhoz^2 * up
-    ret += utt * wght
-    ret / rhoz^2
+    ret = a * (a-1) * weight(Sm2, xvec) * rhoz^2 * u(x,y,z)
+    ret -= 2a * weight(Sm1, xvec) * z * u(x,y,z)
+    ret -= 2a *  weight(Sm1, xvec) * up
+    ret += weight(S, xvec) * z * up / rhoz^2
+    ret += weight(S, xvec) * upp / rhoz^2
+    ret += weight(S, xvec) * utt / rhoz^2
 end
 function getuttfrommononial(inds, p)
     a, b, c = inds
@@ -504,7 +557,8 @@ function getrho2uppfrommononial(inds, p)
     θ = atan(y / x)
     rhoz = rhoval(z)
     ret = (a + b) * (a + b - 1) * z^4
-    ret -= (2c * (a + b) + a + b + c) * z^2 * rhoz^2
+    ret -= (c + 1) * (a + b) * z^2 * rhoz^2
+    ret -= c * (a + b + 1) * z^2 * rhoz^2
     ret += c * (c - 1) * rhoz^4
     ret *= x^a * y^b * z^(c-2)
     ret
