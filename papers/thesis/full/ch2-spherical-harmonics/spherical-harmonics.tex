@@ -1,6 +1,6 @@
 
 
-\chapter{Spherical harmonics as orthogonal polynomials in three variables}
+\chapter{Spherical harmonics as orthogonal polynomials}
 
 
 To introduce ourselves to the world of multidimensional orthogonal polynomials for solving PDEs on the sphere, we can naturally choose to look at the famous spherical harmonics. Our aim here is to express the spherical harmonics as polynomials in three variables $x, y, z$ to evaluate functions and solve PDEs on the whole sphere. More precisely, we desire the solution to partial differential equations on the domain
@@ -87,25 +87,25 @@ where
 \bseqn{
 	\alpha_{l,m,1} &:= 
 		\begin{cases}
-			\frac{\alphalm}{2\alpha^{m-1}_{l-1}} \tilde \alpha_{l,m,1} \quad \text{if } m>0 \\
-			\frac{\alphalm}{2\alpha^{m-1}_{l-1}} \tilde \alpha_{l,|m|,2} \quad \text{if } m\le0 , \, l - |m| \ge 2 \\
+			\frac{\clm}{2c^{m-1}_{l-1}} \tilde \alpha_{l,m,1} \quad \text{if } m>0 \\
+			\frac{\clm}{2c^{m-1}_{l-1}} \tilde \alpha_{l,|m|,2} \quad \text{if } m\le0 , \, l - |m| \ge 2 \\
 			\quad \quad 0 \quad \quad \quad \quad \text{otherwise} 
 		\end{cases} \\ 
 	\alpha_{l,m,2} &:= 
 		\begin{cases}
-			\frac{\alphalm}{2\alpha^{m+1}_{l-1}} \tilde \alpha_{l,m,2} \quad \text{if } m\ge0, \, l - |m| \ge 2 \\
-			\frac{\alphalm}{2\alpha^{m+1}_{l-1}} \tilde \alpha_{l,|m|,1} \quad \text{if } m<0 \\
+			\frac{\clm}{2c^{m+1}_{l-1}} \tilde \alpha_{l,m,2} \quad \text{if } m\ge0, \, l - |m| \ge 2 \\
+			\frac{\clm}{2c^{m+1}_{l-1}} \tilde \alpha_{l,|m|,1} \quad \text{if } m<0 \\
 			\quad \quad 0 \quad \quad \quad \quad \text{otherwise} 
 		\end{cases} \\
 	\alpha_{l,m,3} &:= 
 		\begin{cases}
-			\frac{\alphalm}{2\alpha^{m-1}_{l+1}} \tilde \alpha_{l,m,3} \quad \text{if } m>0 \\
-			\frac{\alphalm}{2\alpha^{m-1}_{l+1}} \tilde \alpha_{l,|m|,4} \quad \text{if } m\le0 
+			\frac{\clm}{2c^{m-1}_{l+1}} \tilde \alpha_{l,m,3} \quad \text{if } m>0 \\
+			\frac{\clm}{2c^{m-1}_{l+1}} \tilde \alpha_{l,|m|,4} \quad \text{if } m\le0 
 		\end{cases} \\
 	\alpha_{l,m,4} &:=
 		\begin{cases}
-			\frac{\alphalm}{2\alpha^{m+1}_{l+1}} \tilde \alpha_{l,m,4} \quad \text{if } m\ge0 \\
-			\frac{\alphalm}{2\alpha^{m+1}_{l+1}} \tilde \alpha_{l,|m|,3} \quad \text{if } m<0 
+			\frac{\clm}{2c^{m+1}_{l+1}} \tilde \alpha_{l,m,4} \quad \text{if } m\ge0 \\
+			\frac{\clm}{2c^{m+1}_{l+1}} \tilde \alpha_{l,|m|,3} \quad \text{if } m<0 
 		\end{cases} \\
 	\beta_{l,m,j} &:= (-1)^{j+1} \: i \: \alpha_{l,m,j}, \quad j = 1,2,3,4 \\
 	\gamma_{l,m,1} &:= \frac{\clm}{c^{m}_{l-1}} \: \tilde \gamma_{l,m,1} \\
@@ -410,6 +410,7 @@ Once again, let $f(x,y,z)$ be a function on the unit sphere $\Omega$ be approxim
 }
 where $\SHvecl (x,y,z), \fvec_l \in \C^{2l+1}$ for each $l \in \{0,\dots,N\}$, for some coefficients vector $\fvec = (f_{l,m})$ up to degree order $N \in \N$.
 
+
 \subsection{Obtaining coefficients}
 
 \bstodoinline{obtaining coeffs/ transform}
@@ -431,7 +432,7 @@ We can use the Clenshaw algorithm to evaluate this function at a given point $(x
 }
 
 
-\subsection{Variable coefficients as operators}
+\subsection{Obtaining operator matrices for variable coefficients}
 
 The Clenshaw algorithm presented in \bsrefsection{subsubsection:clenshaw} can also be used with the Jacobi matrices replacing the point $(x,y,z)$, to yield an operator matrix. 
 
@@ -455,7 +456,7 @@ where at each iteration, $\vec{\xi}_n$ is a vector of matrices (note that we are
 
 
 %%%
-\section{Tangent space -- vector spherical harmonics as orthogonal vectors in three variables}
+\section{Vector spherical harmonics as orthogonal vectors in three variables}
 
 
 Since the spherical harmonics are a basis for the surface of the sphere, and the tangent space of the sphere is spanned by the gradient and perpendicular gradient of a scalar function, we have that the gradients and perpendicular gradients of the spherical harmonics 
@@ -467,15 +468,18 @@ span the tangent space. Here, $\rvec$ is simply the outward unit normal vector t
 A simple calculation shows that such orthogonal vectors must still have block-tridiagonal Jacobi operators, as multiplication by $x, y$, or $z$ remains inside the ideal. We will determine the coefficients of these Jacobi operators, as well as other important operators needed -- however first we note a useful property of the VSHs that is a result of the definition used.
 
 
-\subsection{Vector spherical harmonics as a vector-weighted sum of scalar spherical harmonics} %{Spin-1 tensor spherical harmonics}
+\subsection{Jacobi matrices} %{Spin-1 tensor spherical harmonics}
 
-The vector spherical harmonics in \bsrefeqn{eqn:VSHs} can be expressed in terms of \textit{spin-1 tensor spherical harmonics}, which in turn can each be expressed as a vector-weighted sum of spherical harmonics \cite{khersonskii1988quantum}.
+\bstodoinline{cite C-G coeffs, spin-1 tensor harmonics, and the combination expression in \label{eqn:VSHsalt}}
+\bstodoinline{get better reference than that Winter 2017 physics document}
 
-We start by defining what we mean by a spin-1 tensor spherical harmonic. In general, the tensor spherical harmonic is given by, for $2l, \, j, \, 2s \in \No$,
+We start as before for the scalar case by finding $x \,\gradYlm (x,y,z)$, $x \,\gradpYlm (x,y,z)$ etc. in terms of $\gradY^{m'}_{l'} (x,y,z)$, $\gradpY^{m'}_{l'} (x,y,z)$. To this end, we use the helpful property that the vector spherical harmonics as defined in \bsrefeqn{eqn:VSHs} can be expressed in terms of \textit{spin-1 tensor spherical harmonics}, which in turn can each be expressed as a vector-weighted sum of spherical harmonics \cite{khersonskii1988quantum}.
+
+We start by defining what we mean by a spin-1 tensor spherical harmonic. In general, the tensor spherical harmonic is given by, for $2l, \, j, \, 2s \in \No$, \cite{}
 \bseqn{
 	\curlyy^{j,s}_{l,m}(x,y,z) = \sum_{m_s=-s}^s \langle j \quad m-m_s \; ; \; s \quad m_s \; | \; l \quad m \rangle \, Y^{m-m_s}_j (x,y,z) \, \vec{\chi}_{s, m_s},
 }
-where $\vec{\chi}_{s, m_s}$ are the simultaneous eigenstates of the spin operators $\bold{S}^2$ and $S_z$, and where $\langle j \quad m-m_s \; ; \; s \quad m_s \; | \; l \quad m \rangle$ is a Clebsch-Gordan coefficient \cite{} \bstodo{cite C-G coeffs}. We note that a property of the Clebsch--Gordan coefficients means that they vanish unless $|j - s| \le l \le j + s$. We further note that there are simple calculable expressions for the Clebsch--Gordan coefficients when the spin $s=1$. 
+where $\vec{\chi}_{s, m_s}$ are the simultaneous eigenstates of the spin operators $\bold{S}^2$ and $S_z$, and where $\langle j \quad m-m_s \; ; \; s \quad m_s \; | \; l \quad m \rangle$ is a Clebsch--Gordan coefficient \cite{} . We note that a property of the Clebsch--Gordan coefficients means that they vanish unless $|j - s| \le l \le j + s$ \cite{}. We further note that there are simple calculable expressions for the Clebsch--Gordan coefficients when the spin $s=1$ \cite{}. 
 
 To simplify the notation, for spin $s=1$, we define
 \bseqnnumber{
@@ -483,8 +487,8 @@ To simplify the notation, for spin $s=1$, we define
 }
 Thus we have that the three spin-1 tensor spherical harmonics are given by
 \bseqn{
-	\curlyy^{l \pm1,s}_{l,m}(x,y,z) &= \sum_{m_s=-1}^1 \cgcoeff^{l\pm1, m_s}_{l, m} \, Y^{m-m_s}_{l \pm 1} (x,y,z) \, \chivec, \\
-	\curlyy^{l,s}_{l,m}(x,y,z) &= \sum_{m_s=-1}^1 \cgcoeff^{l, m_s}_{l, m} \, Y^{m-m_s}_l (x,y,z) \, \chivec.
+	\curlyy^{l \pm1,1}_{l,m}(x,y,z) &= \sum_{m_s=-1}^1 \cgcoeff^{l\pm1, m_s}_{l, m} \, Y^{m-m_s}_{l \pm 1} (x,y,z) \, \chivec, \\
+	\curlyy^{l,1}_{l,m}(x,y,z) &= \sum_{m_s=-1}^1 \cgcoeff^{l, m_s}_{l, m} \, Y^{m-m_s}_l (x,y,z) \, \chivec.
 }
 
 Here, the vectors $\chivec$ are the orthonormal eigenvectors of the matrix
@@ -497,58 +501,86 @@ and so are given as
 }
 Then, for any $l \in \No$, $m \in \Z$ s.t. $0 \le |m| \le l$ we have that
 \bseqnnumber{
-	\gradYlm &= \mu_{l,-1} \, \curlyy^{l-1,1}_{l,m} + \mu_{l,1} \curlyy^{l+1,1}_{l,m}, \quad \gradpYlm = \mu_{l,0} \, \curlyy^{l,1}_{l,m},\label{eqn:VSHsalt}
+	\gradYlm &= \mu_{l,-1} \, \curlyy^{l-1,1}_{l,m} + \mu_{l,1} \curlyy^{l+1,1}_{l,m}, \quad \gradpYlm = \mu_{l,0} \, \curlyy^{l,1}_{l,m}, \label{eqn:VSHsalt}
 }
-where \bstodoinline{get better reference than that Winter 2017 physics document}
+where
 \bseqnnumber{
 	\mu_{l,-1} &:= (l+1) \, \Big(\frac{l}{2l+1}\Big)^\half, \quad
 	\mu_{l,0} := i \, \big(l(l+1)\big)^\half, \quad 
 	\mu_{l,1} := l \, \Big(\frac{l+1}{2l+1}\Big)^\half. \label{eqn:spintensorvshcoeffsdef}
 }
 
-
-
-\subsection{Jacobi matrices}
-
-We start as before for the scalar case by finding $x \,\gradYlm (x,y,z)$, $x \,\gradpYlm (x,y,z)$ etc. in terms of $\gradY^{m'}_{l'} (x,y,z)$, $\gradpY^{m'}_{l'} (x,y,z)$. 
+The expressions for the VSHs as given in \bsrefeqn{eqn:VSHsalt} allow us to be able to find the coefficients for our desired expressions for $x \gradYlm$, $y \gradYlm$ and $z \gradYlm$. 
 \begin{lemma}\label{lemma:VSHrecurrences}
 	For $l \in \No$, $-l \le m \le l$ the vector spherical harmonics satisfy the relationships:
 \bseqn{
-	x \gradYlm &= A_{l,m,1} \gradY^{m-1}_{l-1} + A_{l,m,2} \gradY^{m+1}_{l-1} + A_{l,m,5} \gradY^{m-1}_{l+1} + A_{l,m,6} \gradY^{m+1}_{l+1} \\
-& \quad \quad \quad + A_{l,m,3}^{*} \gradpY^{m-1}_{l} + A_{l,m,4}^{*} \gradpY^{m+1}_{l}, \\
-	x \gradpYlm &= A_{l,m,1}^{*} \gradpY^{m-1}_{l-1} + A_{l,m,2}^{*} \gradpY^{m+1}_{l-1} + A_{l,m,5}^{*} \gradpY^{m-1}_{l+1} + A_{l,m,6}^{*} \gradpY^{m+1}_{l+1} \\
-	& \quad \quad \quad + A_{l,m,3} \gradY^{m+1}_{l} + A_{l,m,4} \gradY^{m-1}_{l}, \\
-	y \gradYlm &= B_{l,m,1} \gradY^{m-1}_{l-1} + B_{l,m,2} \gradY^{m+1}_{l-1} + B_{l,m,5} \gradY^{m-1}_{l+1} + B_{l,m,6} \gradY^{m+1}_{l+1} \\
-& \quad \quad \quad + B_{l,m,3}^{*} \gradpY^{m-1}_{l} + B_{l,m,4}^{*} \gradpY^{m+1}_{l}, \\
-	y \gradpYlm &= B_{l,m,1}^{*} \gradpY^{m-1}_{l-1} + B_{l,m,2}^{*} \gradpY^{m+1}_{l-1} + B_{l,m,5}^{*} \gradpY^{m-1}_{l+1} + B_{l,m,6}^{*} \gradpY^{m+1}_{l+1} \\
-	& \quad \quad \quad + B_{l,m,3} \gradY^{m+1}_{l} + B_{l,m,4} \gradY^{m-1}_{l}, \\
-	z \gradYlm &= \Gamma_{l,m,1} \gradY^{m}_{l-1} + \Gamma_{l,m,3} \gradY^{m}_{l+1} + \Gamma_{l,m,2}^* \gradpY^{m}_{l}, \\
-	z \gradpYlm &= \Gamma_{l,m,1}^* \gradpY^{m}_{l-1} + \Gamma_{l,m,3}^* \gradpY^{m}_{l+1} + \Gamma_{l,m,2} \gradY^{m}_{l}
+	x \gradYlm &= A_{l,m,1} \gradY^{m-1}_{l-1} + A_{l,m,2} \gradY^{m+1}_{l-1} + A_{l,m,3} \gradY^{m-1}_{l+1} + A_{l,m,4} \gradY^{m+1}_{l+1} \\
+& \quad \quad \quad + A_{l,m,5} \gradpY^{m-1}_{l} + A_{l,m,6} \gradpY^{m+1}_{l}, \\
+	x \gradpYlm &= A_{l,m,1} \gradpY^{m-1}_{l-1} + A_{l,m,2} \gradpY^{m+1}_{l-1} + A_{l,m,3} \gradpY^{m-1}_{l+1} + A_{l,m,4} \gradpY^{m+1}_{l+1} \\
+& \quad \quad \quad - A_{l,m,5} \gradY^{m-1}_{l} - A_{l,m,6} \gradY^{m+1}_{l}, \\
+	y \gradYlm &= B_{l,m,1} \gradY^{m-1}_{l-1} + B_{l,m,2} \gradY^{m+1}_{l-1} + B_{l,m,3} \gradY^{m-1}_{l+1} + B_{l,m,4} \gradY^{m+1}_{l+1} \\
+& \quad \quad \quad + B_{l,m,5} \gradpY^{m-1}_{l} + B_{l,m,6} \gradpY^{m+1}_{l}, \\
+	y \gradpYlm &= B_{l,m,1} \gradpY^{m-1}_{l-1} + B_{l,m,2} \gradpY^{m+1}_{l-1} + B_{l,m,3} \gradpY^{m-1}_{l+1} + B_{l,m,4} \gradpY^{m+1}_{l+1} \\
+& \quad \quad \quad - B_{l,m,5} \gradY^{m-1}_{l} - B_{l,m,6} \gradY^{m+1}_{l}, \\
+	z \gradYlm &= \Gamma_{l,m,1} \gradY^{m}_{l-1} + \Gamma_{l,m,2} \gradY^{m}_{l+1} + \Gamma_{l,m,3} \gradpY^{m}_{l}, \\
+	z \gradpYlm &= \Gamma_{l,m,1} \gradpY^{m}_{l-1} + \Gamma_{l,m,2} \gradpY^{m}_{l+1} - \Gamma_{l,m,3} \gradY^{m}_{l}
 }
-where $*$ denotes the complex conjugate, and where, for any valid $m_s$ value,
+%\bseqn{
+%	x \gradYlm &= A_{l,m,1} \gradY^{m-1}_{l-1} + A_{l,m,2} \gradY^{m+1}_{l-1} + A_{l,m,5} \gradY^{m-1}_{l+1} + A_{l,m,6} \gradY^{m+1}_{l+1} \\
+%& \quad \quad \quad + A_{l,m,3}^{*} \gradpY^{m-1}_{l} + A_{l,m,4}^{*} \gradpY^{m+1}_{l}, \\
+%	x \gradpYlm &= A_{l,m,1}^{*} \gradpY^{m-1}_{l-1} + A_{l,m,2}^{*} \gradpY^{m+1}_{l-1} + A_{l,m,5}^{*} \gradpY^{m-1}_{l+1} + A_{l,m,6}^{*} \gradpY^{m+1}_{l+1} \\
+%	& \quad \quad \quad + A_{l,m,3} \gradY^{m+1}_{l} + A_{l,m,4} \gradY^{m-1}_{l}, \\
+%	y \gradYlm &= B_{l,m,1} \gradY^{m-1}_{l-1} + B_{l,m,2} \gradY^{m+1}_{l-1} + B_{l,m,5} \gradY^{m-1}_{l+1} + B_{l,m,6} \gradY^{m+1}_{l+1} \\
+%& \quad \quad \quad + B_{l,m,3}^{*} \gradpY^{m-1}_{l} + B_{l,m,4}^{*} \gradpY^{m+1}_{l}, \\
+%	y \gradpYlm &= B_{l,m,1}^{*} \gradpY^{m-1}_{l-1} + B_{l,m,2}^{*} \gradpY^{m+1}_{l-1} + B_{l,m,5}^{*} \gradpY^{m-1}_{l+1} + B_{l,m,6}^{*} \gradpY^{m+1}_{l+1} \\
+%	& \quad \quad \quad + B_{l,m,3} \gradY^{m+1}_{l} + B_{l,m,4} \gradY^{m-1}_{l}, \\
+%	z \gradYlm &= \Gamma_{l,m,1} \gradY^{m}_{l-1} + \Gamma_{l,m,3} \gradY^{m}_{l+1} + \Gamma_{l,m,2}^* \gradpY^{m}_{l}, \\
+%	z \gradpYlm &= \Gamma_{l,m,1}^* \gradpY^{m}_{l-1} + \Gamma_{l,m,3}^* \gradpY^{m}_{l+1} + \Gamma_{l,m,2} \gradY^{m}_{l}
+%}
+%where $*$ denotes the complex conjugate, and where, for any valid $m_s$ value,
+where, for any valid $m_s$ value,
 \bseqn{
 	A_{l,m,1} &:= \frac{\mu_{l,-1}}{\mu_{l-1,-1}} \frac{\cgcoeff^{l-1,m_s}_{l,m}}{\cgcoeff^{l-2,m_s}_{l-1,m-1}} \alpha_{l-1,m-m_s,1}, \\
 	A_{l,m,2} &:= \frac{\mu_{l,-1}}{\mu_{l-1,-1}} \frac{\cgcoeff^{l-1,m_s}_{l,m}}{\cgcoeff^{l-2,m_s}_{l-1,m+1}} \alpha_{l-1,m-m_s,2}, \\
-	A_{l,m,3} &:= \frac{1}{\mu_{l,0} \, \cgcoeff^{l,m_s}_{l, m-1}} \, \Big[ \cgcoeff^{l-1,m_s}_{l,m} \, \mu_{l,-1} \, \alpha_{l-1,m-m_s,3} + \cgcoeff^{l+1,m_s}_{l,m} \, \mu_{l,1} \, \alpha_{l-1,m-m_s,1} \\
-	& \quad \quad \quad \quad \quad \quad \quad - A_{l,m,5} \, \mu_{l+1,-1} \, \cgcoeff^{l,m_s}_{l+1,m-1} - A_{l,m,1} \, \mu_{l-1,1} \, \cgcoeff^{l,m_s}_{l-1,m-1} \Big], \\	
-	A_{l,m,4} &:= \frac{1}{\mu_{l,0} \, \cgcoeff^{l,m_s}_{l, m+1}} \, \Big[ \cgcoeff^{l-1,m_s}_{l,m} \, \mu_{l,-1} \, \alpha_{l-1,m-m_s,4} + \cgcoeff^{l+1,m_s}_{l,m} \, \mu_{l,1} \, \alpha_{l-1,m-m_s,2} \\
-	& \quad \quad \quad \quad \quad \quad \quad - A_{l,m,6} \, \mu_{l+1,-1} \, \cgcoeff^{l,m_s}_{l+1,m+1} - A_{l,m,2} \, \mu_{l-1,1} \, \cgcoeff^{l,m_s}_{l-1,m+1} \Big], \\
-	A_{l,m,5} &:= \frac{\mu_{l,1}}{\mu_{l+1,1}} \frac{\cgcoeff^{l+1,m_s}_{l,m}}{\cgcoeff^{l+2,m_s}_{l+1,m-1}} \alpha_{l+1,m-m_s,3}, \\
-	A_{l,m,6} &:= \frac{\mu_{l,1}}{\mu_{l+1,1}} \frac{\cgcoeff^{l+1,m_s}_{l,m}}{\cgcoeff^{l+2,m_s}_{l+1,m+1}} \alpha_{l+1,m-m_s,4}, \\
+	A_{l,m,3} &:= \frac{\mu_{l,1}}{\mu_{l+1,1}} \frac{\cgcoeff^{l+1,m_s}_{l,m}}{\cgcoeff^{l+2,m_s}_{l+1,m-1}} \alpha_{l+1,m-m_s,3}, \\
+	A_{l,m,4} &:= \frac{\mu_{l,1}}{\mu_{l+1,1}} \frac{\cgcoeff^{l+1,m_s}_{l,m}}{\cgcoeff^{l+2,m_s}_{l+1,m+1}} \alpha_{l+1,m-m_s,4}, \\
+	A_{l,m,5} &:= \frac{1}{\mu_{l,0} \, \cgcoeff^{l,m_s}_{l, m-1}} \, \Big[ \cgcoeff^{l-1,m_s}_{l,m} \, \mu_{l,-1} \, \alpha_{l-1,m-m_s,3} + \cgcoeff^{l+1,m_s}_{l,m} \, \mu_{l,1} \, \alpha_{l-1,m-m_s,1} \\
+	& \quad \quad \quad \quad \quad \quad \quad - A_{l,m,3} \, \mu_{l+1,-1} \, \cgcoeff^{l,m_s}_{l+1,m-1} - A_{l,m,1} \, \mu_{l-1,1} \, \cgcoeff^{l,m_s}_{l-1,m-1} \Big], \\	
+	A_{l,m,6} &:= \frac{1}{\mu_{l,0} \, \cgcoeff^{l,m_s}_{l, m+1}} \, \Big[ \cgcoeff^{l-1,m_s}_{l,m} \, \mu_{l,-1} \, \alpha_{l-1,m-m_s,4} + \cgcoeff^{l+1,m_s}_{l,m} \, \mu_{l,1} \, \alpha_{l-1,m-m_s,2} \\
+	& \quad \quad \quad \quad \quad \quad \quad - A_{l,m,4} \, \mu_{l+1,-1} \, \cgcoeff^{l,m_s}_{l+1,m+1} - A_{l,m,2} \, \mu_{l-1,1} \, \cgcoeff^{l,m_s}_{l-1,m+1} \Big], \\
 	B_{l,m,j} &:= i (-1)^{j+1} A_{l,m,j} \quad \text{for } j = 1,\dots,6, \\
-	\Gamma_{l,m,1} &:= \frac{\mu_{l,-1}}{\mu_{l-1,-1}} \frac{\cgcoeff^{l-1,m_s}_{l,m}}{\cgcoeff^{l-2,m_s}_{l-1,m+1}} \gamma_{l-1,m-m_s,1}, \\
-	\Gamma_{l,m,2} &:= \frac{1}{\mu_{l,0} \, \cgcoeff^{l,m_s}_{l, m}} \, \Big[ \cgcoeff^{l-1,m_s}_{l,m} \, \mu_{l,-1} \, \gamma_{l-1,m-m_s,2} + \cgcoeff^{l+1,m_s}_{l,m} \, \mu_{l,1} \, \gamma_{l+1,m-m_s,1} \\
-	& \quad \quad \quad \quad \quad \quad \quad - \Gamma_{l,m,3} \, \mu_{l+1,-1} \, \cgcoeff^{l,m_s}_{l+1,m} - \Gamma_{l,m,1} \, \mu_{l-1,1} \, \cgcoeff^{l,m_s}_{l-1,1} \Big], \\
-	\Gamma_{l,m,3} &:= \frac{\mu_{l,1}}{\mu_{l+1,1}} \frac{\cgcoeff^{l+1,m_s}_{l,m}}{\cgcoeff^{l+2,m_s}_{l+1,m+1}} \gamma_{l+1,m-m_s,2},
+	\Gamma_{l,m,1} &:= \frac{\mu_{l,-1}}{\mu_{l-1,-1}} \frac{\cgcoeff^{l-1,m_s}_{l,m}}{\cgcoeff^{l-2,m_s}_{l-1,m}} \gamma_{l-1,m-m_s,1}, \\
+	\Gamma_{l,m,2} &:= \frac{\mu_{l,1}}{\mu_{l+1,1}} \frac{\cgcoeff^{l+1,m_s}_{l,m}}{\cgcoeff^{l+2,m_s}_{l+1,m}} \gamma_{l+1,m-m_s,2}, \\
+	\Gamma_{l,m,3} &:= \frac{1}{\mu_{l,0} \, \cgcoeff^{l,m_s}_{l, m}} \, \Big[ \cgcoeff^{l-1,m_s}_{l,m} \, \mu_{l,-1} \, \gamma_{l-1,m-m_s,2} + \cgcoeff^{l+1,m_s}_{l,m} \, \mu_{l,1} \, \gamma_{l+1,m-m_s,1} \\
+	& \quad \quad \quad \quad \quad \quad \quad - \Gamma_{l,m,3} \, \mu_{l+1,-1} \, \cgcoeff^{l,m_s}_{l+1,m} - \Gamma_{l,m,1} \, \mu_{l-1,1} \, \cgcoeff^{l,m_s}_{l-1,1} \Big],
 }
-and where $\cgcoeff^{l,m_s}_{l',m'}$, $\mu_{l,k}$ are defined in \bsrefeqn{eqn:cgcoeffdef} and \bsrefeqn{eqn:spintensorvshcoeffsdef} respectively.
+and where $\cgcoeff^{L,m_s}_{l,m}$, $\mu_{l,k}$ are defined in \bsrefeqn{eqn:cgcoeffdef} and \bsrefeqn{eqn:spintensorvshcoeffsdef} respectively.
 \end{lemma}
 
 \remark It is the case that these coefficients are indeed the same for each $l,m$ pair despite appearing to depend on the value of $m_s$; we need only use any valid $m_s$ value for each expression. By \enquote{valid}, we mean the Clebsch--Gordan coefficients do not vanish for that $m_s$ value when used.
 
 \begin{proof}[Proof of \bsreflemma{lemma:VSHrecurrences}]
 
-\bstodoinline{Do the derivation of these rec coeffs, to have as the proof (and check they are correct!)}
+\bstodoinline{Do the derivation of these rec coeffs, to have as the proof (and check they are correct!). Need to account for l=1 case.}
+
+Fix $l \in \N, m\in\{-l,\dots,l\}$, and define $Y_{-1}^m := 0$ for any $m \in \Z$. We proceed first with the case for multiplication by $z$. Using the definitions given for $\Gamma_{l,m,1}, \Gamma_{l,m,2}, \Gamma_{l,m,3}$ in the Lemma, we have that
+\bseqn{
+	&\Gamma_{l,m,1} \gradY^{m}_{l-1} + \Gamma_{l,m,3} \gradY^{m}_{l+1} + \Gamma_{l,m,2}^* \gradpY^{m}_{l} \\
+	&\quad = \sum_{m_s=-1}^1 \vec{\chi}_{1, m_s} \: \Big\{ \Gamma_{l,m,1} \mu_{l-1,-1} \cgcoeff^{l-2, m_s}_{l-1, m} Y^{m-m_s}_{l-2} + \Gamma_{l,m,1} \mu_{l-1,1} \cgcoeff^{l, m_s}_{l-1, m} Y^{m-m_s}_{l} \\
+	&\quad \quad \quad \quad \quad \quad \quad \quad + \Gamma_{l,m,3} \mu_{l+1,-1} \cgcoeff^{l, m_s}_{l+1, m} Y^{m-m_s}_{l} + \Gamma_{l,m,3} \mu_{l+1,1} \cgcoeff^{l+2, m_s}_{l+1, m} Y^{m-m_s}_{l+2} \\
+	&\quad \quad \quad \quad \quad \quad \quad \quad + \Gamma_{l,m,2} \mu_{l,0} \cgcoeff^{l, m_s}_{l, m} Y^{m-m_s}_{l} \Big\} \\
+	&\quad = \sum_{m_s=-1}^1 \vec{\chi}_{1, m_s} \: \Big\{ Y^{m-m_s}_{l-2} \Gamma_{l,m,1} \mu_{l-1,-1} \cgcoeff^{l-2, m_s}_{l-1, m} + Y^{m-m_s}_{l+2} \Gamma_{l,m,3} \mu_{l+1,1} \cgcoeff^{l+2, m_s}_{l+1, m} \\
+	&\quad \quad \quad \quad \quad \quad \quad \quad + Y^{m-m_s}_{l} \Big[  \Gamma_{l,m,1} \mu_{l-1,1} \cgcoeff^{l, m_s}_{l-1, m} + \Gamma_{l,m,2} \mu_{l,0} \cgcoeff^{l, m_s}_{l, m} +  \Gamma_{l,m,3} \mu_{l+1,-1} \cgcoeff^{l, m_s}_{l+1, m} \Big] \Big\} \\
+	&\quad = \sum_{m_s=-1}^1 \vec{\chi}_{1, m_s} \: \Big\{ \cgcoeff^{l-1, m_s}_{l, m}  \mu_{l,-1} \Big[ \gamma_{l-1,m-m_s,1} \: Y^{m-m_s}_{l-2} + \gamma_{l-1,m-m_s,2} \: Y^{m-m_s}_{l} \Big] \\
+	&\quad \quad \quad \quad \quad \quad \quad \quad + \cgcoeff^{l+1, m_s}_{l, m}  \mu_{l,1} \Big[ \gamma_{l+1,m-m_s,1} \: Y^{m-m_s}_{l} + \gamma_{l+1,m-m_s,2} \: Y^{m-m_s}_{l+2} \Big] \Big\} \\
+	&\quad = \sum_{m_s=-1}^1 \vec{\chi}_{1, m_s} \: z \: \Big\{ \cgcoeff^{l, m_s}_{l-1, m} \mu_{l,-1} Y^{m-m_s}_{l-1} + \cgcoeff^{l, m_s}_{l+1, m} \mu_{l,1} Y^{m-m_s}_{l+1} \Big\} \\
+	&\quad = z \gradYlm,
+}
+demonstrating that the expression for $z \gradYlm(x,y,z)$ holds.
+
+Firstly, reiterating the previous remark, the ratios of the CG coeffs are equal for each valid $m_s$ value.
+
+Now, we compare coeffs and we are done.
 
 \end{proof}
 
@@ -857,7 +889,7 @@ for some scalar functions $u^\varphi, u^\theta$ where $\phivec, \thetavec$ are t
 \subsubsection{Obtaining coefficients}
 The development of vector spherical harmonic transforms is well established \cite{swarztrauber1993vector}, and continues today (see \cite{gia2019favest}). \bstodoinline{VSH Transform}
 
-\subsection{Function evaluation}
+\subsubsection{Function evaluation}
 The Clenshaw algorithm presented in \bsrefsection{subsubsection:clenshaw} can also be used to evaluate a vector-valued function in the tangent space for a point $(x,y,z) \in \Omega$:
 \bseqn{
 	\quad &\text{1) } \text{Set } \vec{\xi}_{N+2} = \bold{0}, \: \vec{\xi}_{N+2} = \bold{0}. \\
