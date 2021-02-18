@@ -72,9 +72,61 @@ where $\alpha^*$ denotes the complex conjugate of $\alpha \in \C$. Note how we c
 
 \section{Jacobi matrices}
 
-Jacobi operators that correspond to multiplication of the orthogonal polynomial basis, in this case the spherical harmonics, by our cartesian coordinates $x, y, z$. We start by expressing $x\,\Ylm(x,y,z)$, $y\,\Ylm(x,y,z)$ , and $z\,\Ylm(x,y,z)$ in terms of $Y^{m'}_{l'}(x,y,z)$ for any point $(x,y,z)$ on the unit sphere.
+Jacobi operators that correspond to multiplication of the orthogonal polynomial basis, in this case the spherical harmonics, by our cartesian coordinates $x, y, z$. We can obtain the entries to these operator matrices by determining the coefficients of $x\,\Ylm(x,y,z)$, $y\,\Ylm(x,y,z)$, and $z\,\Ylm(x,y,z)$ in terms of $Y^{m'}_{l'}(x,y,z)$ for any point $(x,y,z)$ on the unit sphere.
 
+First though, we require a few results concerning the incrementing and decrementing of the parameters for the Jacobi polynomials, and the three-term recurrence for the Jacobi polynomials, that will also prove useful later on in this chapter.
 \begin{lemma}
+	Let $\alpha, \beta \in \R$ be general parameters. Let $z \in [-1,1]$ and define $P_{-2}^{(\alpha+1, \beta+1)}(z) \equiv P_{-1}^{(\alpha+1, \beta+1)}(z) \equiv 0$. Then, for any $n \in \N_0$:
+\bseqn{
+	P_{n}^{(\alpha, \beta)}(z) =
+		{1 \over 2n + \alpha + \beta + 1} \Big\{ & {(n+\alpha+\beta+1)(n+\alpha+\beta+2) \over 2n+\alpha+\beta+2} \: P_{n}^{(\alpha+1, \beta+1)}(z) \\
+									  & + \big[{(n+\alpha+\beta+1)(n+\alpha) \over 2n+\alpha+\beta} \\
+									  		& \quad \quad - {(n+\alpha+\beta+1)(n+\beta+1) \over 2n+\alpha+\beta+2}\big] \: P_{n-1}^{(\alpha+1, \beta+1)}(z) \\
+									  & + {(n+\alpha)(n+\beta) \over 2n+\alpha+\beta} \: P_{n-2}^{(\alpha+1, \beta+1)}(z) \Big\}, \\
+	P_{n}^{(\alpha, \beta)}(z) =
+		{1 \over 2n + \alpha + \beta + 1} \Big\{ & {(n+\alpha+\beta+1)(n+\alpha+\beta+2) \over 2n+\alpha+\beta+2} \: P_{n}^{(\alpha+1, \beta+1)}(z) \\
+									  & + \big[{(n+\alpha+\beta+1)(n+\alpha) \over 2n+\alpha+\beta} \\
+									  		& \quad \quad - {(n+\alpha+\beta+1)(n+\beta+1) \over 2n+\alpha+\beta+2}\big] \: P_{n-1}^{(\alpha+1, \beta+1)}(z) \\
+									  & + {(n+\alpha)(n+\beta) \over 2n+\alpha+\beta} \: P_{n-2}^{(\alpha+1, \beta+1)}(z) \Big\}, \\
+	z \, P_{n}^{(\alpha, \beta)}(z) = 
+		\Big\{ & {2(n+\alpha)(n+\beta) \over (2n + \alpha + \beta)(2n + \alpha + \beta + 1)} \: P_{n-1}^{(\alpha, \beta)}(z) \\
+			 & {(\beta^2 - \alpha^2) \over (2n + \alpha + \beta)(2n + \alpha + \beta + 2)} \: P_{n}^{(\alpha, \beta)}(z) \\
+			 & {2(n+1)(n + \alpha + \beta + 1) \over 2(2n + \alpha + \beta + 1)(2n + \alpha + \beta + 2)} \: P_{n+1}^{(\alpha, \beta)}(z).
+}
+\end{lemma}
+\begin{proof}
+	\bstodoinline{Do the second result (i.e. $(1-z^2)P_n$ relationship).}
+	The first two results are simply consequences of the relationships established for incrementing and decrementing the parameters of Jacobi polynomials detailed in \cite[18.9.5, 18.9.6]{DLMF}, along with the symmetry relation that $P_{n}^{(\alpha, \beta)}(-z) \equiv (-1)^n P_{n}^{(\beta, \alpha)}(z)$. The final one is simply a rearranging of the established three-term recurrence detailed in \cite[18.9.1, 18.9.2]{DLMF}
+\end{proof}
+We thus can present a useful corollary specific for our needs.
+\begin{corollary}\label{corollary:incrementjacparams}
+	Let $l, m \in \N_0$ s.t. $0 \le m \le l$ and let $z \in [-1,1]$. Then:
+\bseqn{
+	(1-z^2) \, \jaclm{l}{m}(z) &=  \tilde \alpha_{l,m,1} P^{(m-1,m-1)}_{l-m}(z) + \tilde \alpha_{l,m,3} P^{(m-1,m-1)}_{l-m+2}(z) \\
+	\jaclm{l}{m}(z) &= \tilde \alpha_{l,m,2} P^{(m+1,m+1)}_{l-m-2}(z) + \tilde \alpha_{l,m,4} P^{(m+1,m+1)}_{l-m}(z), \\
+	z \, \jaclm{l}{m}(z) &= \tilde \gamma_{l,m,1} P^{(m,m)}_{l-m-1}(z) + \tilde \gamma_{l,m,2} P^{(m,m)}_{l-m+1}(z),
+}
+where
+\bseqn{
+	\tilde \alpha_{l,m,1} &:= {2l \over 2l+1} \\
+	\tilde \alpha_{l,m,2} &:= 
+		\begin{cases}
+			- {l \over 2(2l+1)} \quad \text{if } l - m \ge 2 \\
+			\quad \quad 0 \quad \quad \text{otherwise}
+		\end{cases} \\
+	\tilde \alpha_{l,m,3} &:= - {2(l-m+2)(l-m+1) \over (2l+1)(l+1)} \\
+	\tilde \alpha_{l,m,4} &:= {(l+m+2)(l+m+1) \over 2(2l+1)(l+1)} \\
+	\tilde \gamma_{l,m,1} &:= \begin{cases}
+			\frac{l}{2l+1} \quad \text{if } l - m \ge 1 \\
+			\quad 0 \quad \quad \text{otherwise}
+		\end{cases} \\
+	\tilde \gamma_{l,m,2} &:= \frac{(l-m+1)(l+m+1)}{(2l+1)(l+1)}.
+}
+\end{corollary}
+
+\bsrefcor{corollary:incrementjacparams} allows us to easily determine the aforementioned coefficients, that we will formalise in the following Lemma.
+
+\begin{lemma}\label{lemma:shxyzrelations}
 	For $l \in \No$, $m \in \Z$ s.t. $0 \le |m| \le l$, the spherical harmonics satisfy the relationships:
 \bseqnnumber{
 	x\,\Ylm(x,y,z) &= \alpha_{l,m,1} Y^{m-1}_{l-1}(x,y,z) +  \alpha_{l,m,2} Y^{m+1}_{l-1}(x,y,z) \nonumber \\
@@ -111,70 +163,37 @@ where
 	\gamma_{l,m,1} &:= \frac{\clm}{c^{m}_{l-1}} \: \tilde \gamma_{l,m,1} \\
 	\gamma_{l,m,2} &:= \frac{\clm}{c^{m}_{l+1}} \: \tilde \gamma_{l,m,2}.
 }
-and
-\bseqn{
-	\tilde \alpha_{l,m,1} &:= \frac{2l}{2l+1} \\
-	\tilde \alpha_{l,m,2} &:= 
-		\begin{cases}
-			- \frac{l}{2(2l+1)} \quad \text{if } l - m \ge 2 \\
-			\quad \quad 0 \quad \quad \text{otherwise}
-		\end{cases} \\
-	\tilde \alpha_{l,m,3} &:= - \frac{2(l-m+2)(l-m+1)}{(2l+1)(l+1)} \\
-	\tilde \alpha_{l,m,4} &:= \frac{(l+m+2)(l+m+1)}{2(2l+1)(l+1)} \\
-	\tilde \gamma_{l,m,1} &:= \begin{cases}
-			\frac{l}{2l+1} \quad \text{if } l - m \ge 1 \\
-			\quad 0 \quad \quad \text{otherwise}
-		\end{cases} \\
-	\tilde \gamma_{l,m,2} &:= \frac{(l-m+1)(l+m+1)}{(2l+1)(l+1)}.
-}
 \end{lemma}
 
 \begin{proof}
-	The recurrence relationship for the Jacobi polynomials satisfies \cite[18.9.1, 18.9.2]{DLMF} 
-\bseqn{
-	z P^{(m,m)}_{l-m}(z) = \tilde \gamma_{l,m,1} P^{(m,m)}_{l-m-1}(z) + \tilde \gamma_{l,m,2} P^{(m,m)}_{l-m+1}(z),
-}
-for $k \ge 0, \, m \in \Z$. Hence, the expression for multiplication of the spherical harmonic $\Ylm$ by $z$ is
+	The expression for multiplication of the spherical harmonic $\Ylm$ by $z$ is simply a consequence of the third result in \bsrefcor{corollary:incrementjacparams}:
 \bseqn{
 	z\,\Ylmxyz &= \clm \eimtheta \rho(z)^{|m|} z P^{(|m|,|m|)}_{l-|m|}(z)  \\
 		     &= \clm \eimtheta \rho(z)^{|m|} \big[ \tilde \gamma_{l,m,1} P^{(|m|,|m|)}_{l-|m|-1}(z) + \tilde \gamma_{l,m,2} P^{(|m|,|m|)}_{l-|m|+1}(z) \big] \\
 		     &= \gamma_{l,m,1} Y^{m}_{l-1}(x,y,z) + \gamma_{l,m,2} Y^{m}_{l+1}(x,y,z).
 }
 
-For multiplication by $x$ and $y$, we require some further relations for the complex exponential and the Jacobi polynomials. First, recall that
+For multiplication by $x$ and $y$, note that the complex exponential satisfies
 \bseqn{
 	\costheta \, \eimtheta &= \frac{1}{2} (e^{i\theta} + e^{-i\theta}) \eimtheta =  \frac{1}{2} (e^{i(m+1)\theta} + e^{i(m-1)\theta}) \\
 	\sintheta \, \eimtheta &= \frac{1}{2i} (e^{i\theta} - e^{-i\theta}) \eimtheta =  \frac{-i}{2} (e^{i(m+1)\theta} - e^{i(m-1)\theta})
 }
-We can express a Jacobi polynomial $P^{(a,b)}_{l-m}(z)$ in terms of an Ultraspherical polynomial $C^{(\lambda)}_{l-m}(z)$ \cite[18.7.2]{DLMF}:
-\bseqn{
-	{l! \: (2m)! \over (l+m)! \: m!} \: C^{(m+1/2)}_{l-m}(z) = P^{(m,m)}_{l-m}(z),
-}
-where the Ultraspherical polynomials satisfy the relations \cite[18.9.7, 18.9.8]{DLMF}:
-\bseqn{
-	C^{(\lambda)}_n(z) &= {\lambda \over n + \lambda} \: \big[ C^{(\lambda+1)}_n(z) - C^{(\lambda+1)}_{n-2}(z) \big]  \\
-	(1-z^2) \, C^{(\lambda)}_n(z) &= {1 \over 4(\lambda-1)(n+\lambda)} \: \big[ (n+2\lambda-2)(n+2\lambda-1) \: C^{(\lambda-1)}_n(z) \\
-	&\quad \quad \quad \quad \quad \quad \quad \quad \quad \quad - (n+1)(n+2) \: C^{(\lambda-1)}_{n+2}(z) \big] ,
-}
-for $m \in \No$ where $\lambda > -\half$ is some parameter. Thus, combining these, we can write three-term recurrences for the Jacobi polynomials as:
-\bseqn{
-	P^{(m,m)}_{l-m}(z) &= \tilde \alpha_{l,m,4} P^{(m+1,m+1)}_{l-m}(z) + \tilde \alpha_{l,m,2} P^{(m+1,m+1)}_{l-m-2}(z) \\
-	(1-z^2) \, P^{(m,m)}_{l-m}(z) &= \tilde \alpha_{l,m,3} P^{(m-1,m-1)}_{l-m+2}(z) + \tilde \alpha_{l,m,1} P^{(m-1,m-1)}_{l-m}(z),
-}
-for $l, m \in \No$ s.t. $0 \le m \le l$. Hence, the expressions for multiplication of the spherical harmonic $\Ylm$ by $x$ and $y$ are then:
+Combining this with the results in \bsrefcor{corollary:incrementjacparams}, the expressions for multiplication of the spherical harmonic $\Ylm$ by $x$ and $y$ are then:
 \bseqn{
 	x \,\Ylmxyz &= \clm \costheta \: \eimtheta \: \rho(z)^{|m|+1} P^{(|m|,|m|)}_{l-|m|}(z) \\
 	&= \half \clm (e^{i(m+1)\theta} + e^{i(m-1)\theta}) \rho(z)^{|m|+1} P^{(|m|,|m|)}_{l-|m|}(z) \\
 	&= \half \clm e^{i(m+1)\theta} \rho(z)^{|m|+1} \: \big[ \tilde \alpha_{l,m,4} P^{(|m|+1,|m|+1)}_{l-|m|}(z) + \tilde \alpha_{l,m,2} P^{(|m|+1,|m|+1)}_{l-|m|-2}(z) \big] \\
 	&\quad \quad + \half \clm e^{i(m-1)\theta} \rho(z)^{|m|-1} \: \big[ \tilde \alpha_{l,m,3} P^{(|m|-1,|m|-1)}_{l-|m|+2}(z) + \tilde \alpha_{l,m,1} P^{(|m|-1,|m|-1)}_{l-|m|}(z) \big] \\
 	&= \alpha_{l,m,1} Y^{m-1}_{l-1}(x,y,z) +  \alpha_{l,m,2} Y^{m+1}_{l-1}(x,y,z) \\
-	&\quad \quad + \alpha_{l,m,3} Y^{m-1}_{l+1}(x,y,z) + \alpha_{l,m,4} Y^{m+1}_{l+1}(x,y,z), \\
+	&\quad \quad + \alpha_{l,m,3} Y^{m-1}_{l+1}(x,y,z) + \alpha_{l,m,4} Y^{m+1}_{l+1}(x,y,z),
+}
+and
+\bseqn{
 	y \,\Ylmxyz &= \clm \sintheta \: \eimtheta \: \rho(z)^{|m|+1} P^{(|m|,|m|)}_{l-|m|}(z) \\
 	&= -\half i \: \clm (e^{i(m+1)\theta} - e^{i(m-1)\theta}) \: \rho(z)^{|m|+1} P^{(|m|,|m|)}_{l-|m|}(z) \\
 	&= i \: \Big\{ \alpha_{l,m,1} Y^{m-1}_{l-1}(x,y,z) - \alpha_{l,m,2} Y^{m+1}_{l-1}(x,y,z) \\
 	&\quad \quad \quad + \alpha_{l,m,3} Y^{m-1}_{l+1}(x,y,z) - \alpha_{l,m,4} Y^{m+1}_{l+1}(x,y,z) \Big\}.
 }
-
 \end{proof}
 
 These recurrences lead to Jacobi operators that correspond to multiplication by $x,y,z$. Define for $l \in \No$:
@@ -480,36 +499,12 @@ and
 	&\int_{-1}^1 \: \jaclmabs{l}{m}(z) \: \jaclmabs{l'}{m}(z) \: \rho(z)^{2\abs{m}} \: \D z = \delta_{l',l} \: {1 \over 2\pi (\clm)^2} \label{eqn:normjac} \\
 	&\jaclmabsdz{l}{m}(z) = d_{l,m} \: \jaclmbracket{l}{\abs{m} + 1} \quad \text{where } d_{l,m} := \half (l + \abs{m} + 1), \label{eqn:diffjac},
 }
-where \bsrefeqn{eqn:normjac} and \bsrefeqn{eqn:normjac} are consequences of the definition of the Jacobi polynomials, see \cite[Table 18.3.1, 18.9.15]{DLMF}. One final relation we will need is that for incrementing the Jacobi parameters, which we will present in the following Lemma.
-\begin{lemma}
-	Let $\alpha, \beta \in \R$ be general parameters. Let $z \in [-1,1]$ and define $P_{-2}^{(\alpha+1, \beta+1)}(z) \equiv P_{-1}^{(\alpha+1, \beta+1)}(z) \equiv 0$. Then, for any $n \in \N_0$:
-\bseqn{
-	P_{n}^{(\alpha, \beta)}(z) =
-		{1 \over 2n + \alpha + \beta + 1} \Big\{ & {(n+\alpha+\beta+1)(n+\alpha+\beta+2) \over 2n+\alpha+\beta+2} \: P_{n}^{(\alpha+1, \beta+1)}(z) \\
-									  & + \big[{(n+\alpha+\beta+1)(n+\alpha) \over 2n+\alpha+\beta} \\
-									  		& \quad \quad - {(n+\alpha+\beta+1)(n+\beta+1) \over 2n+\alpha+\beta+2}\big] \: P_{n-1}^{(\alpha+1, \beta+1)}(z) \\
-									  & + {(n+\alpha)(n+\beta) \over 2n+\alpha+\beta} \: P_{n-2}^{(\alpha+1, \beta+1)}(z) \Big\}.
-}
-\end{lemma}
-\begin{proof}
-	This is simply as consequence of the relationships established for incrementing the parameters of Jacobi polynomials detailed in \cite[18.9.5]{DLMF}, along with the symmetry relation that $P_{n}^{(\alpha, \beta)}(-z) \equiv (-1)^n P_{n}^{(\beta, \alpha)}(z)$.
-\end{proof}
-We thus can present a useful corollary specific for our needs.
-\begin{corollary}\label{corollary:incrementjacparams}
-	Let $l, m \in \N_0$ s.t. $0 \le m \le l$ and let $z \in [-1,1]$. Then:
-\bseqn{
-	\jaclm{l}{m}(z) = \mu_{l,m,1} \: P_{l-m}^{(m+1, m+1)}(z) + \mu_{l,m,2} \: P_{l-m-2}^{(m+1, m+1)}(z),
-}
-where
-\bseqn{
-	\mu_{l,m,1} &:= {(l+m+1)(l+m+2) \over 2(2l + 1)(l+1)} \\
-	\mu_{l,m,2} &:= {l \over 2(2l + 1)}.
-}
-\end{corollary}
+where \bsrefeqn{eqn:normjac} and \bsrefeqn{eqn:diffjac} are consequences of the definition of the Jacobi polynomials, see \cite[Table 18.3.1, 18.9.15]{DLMF}. 
 
 The expressions for the VSHs as given in \bsrefeqn{eqn:VSHs} together with the above allow us to be able to find the coefficients for our desired expressions for $x \gradYlm$, $y \gradYlm$, $z \gradYlm$, $x \gradpYlm$, $y \gradpYlm$ and $z \gradpYlm$. 
+
 \begin{lemma}\label{lemma:VSHrecurrences}
-	For $l \in \No$, $-l \le m \le l$ the vector spherical harmonics satisfy the relationships:
+	For $l \in \N$ and $m \in \Z$ s.t. $-l \le m \le l$, the vector spherical harmonics satisfy the relationships:
 \bseqn{
 	x \gradYlm &= A_{l,m,1} \gradY^{m-1}_{l-1} + A_{l,m,2} \gradY^{m+1}_{l-1} + A_{l,m,3} \gradY^{m-1}_{l+1} + A_{l,m,4} \gradY^{m+1}_{l+1} \\
 & \quad \quad \quad + A_{l,m,5} \gradpY^{m-1}_{l} + A_{l,m,6} \gradpY^{m+1}_{l}, \\
@@ -559,7 +554,7 @@ where,
 	\Gamma_{l,m,2} &:= \clm c_{l+1}^{m} \Big[ \abs{m}(\abs{m} + 2) {\tilde \gamma_{l,\abs{m},2} \over (c_{l+1}^{\abs{m}})^2} + d_{l,\abs{m}} d_{l+1,\abs{m}} {\tilde \gamma_{l,\abs{m}+1,2} \over (c_{l+1}^{\abs{m}+1})^2} \Big] \\
 	\Gamma_{l,m,3} &:= (-1)^m \: i \: m
 }
-and
+where the $c_{l'}^{m'}$, $d_{l',m'}$ are defined in \bsrefeqnslist{eqn:clmdef}{eqn:diffjac}{} respectively, and
 \bseqn{
 	\tilde A_{l,m,1} &:= \Big( (m^2 - 1) \mu_{l-1,m-1,2} - d_{l-1,m-1} \tilde \gamma_{l-1,m,2} \Big) {1 \over (\clm)^2} + d_{l,m} d_{l-1,m-1} {\mu_{l-1,m,2} \over (c_{l}^{m+1})^2} \\
 	\tilde A_{l,m,2} &:= \Big( m(m+2) \mu_{l,m,1} - d_{l,m} \tilde \gamma_{l,m+1,1} \Big) {1 \over (c_{l-1}^{m+1})^2} + d_{l,m} d_{l-1,m+1} {\mu_{l,m+1,1} \over (c_{l-1}^{m+2})^2} \\
@@ -572,7 +567,7 @@ and
 
 \begin{proof}[Proof of \bsreflemma{lemma:VSHrecurrences}]
 
-Fix $l \in \N, m\in\{-l,\dots,l\}$.
+Fix $l \in \N$ and $m \in \Z$ s.t. $-l \le m \le l$.
 
 \end{proof}
 
