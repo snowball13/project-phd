@@ -79,27 +79,24 @@ First though, we require a few results concerning the incrementing and decrement
 	Let $\alpha, \beta \in \R$ be general parameters. Let $z \in [-1,1]$ and define $P_{-2}^{(\alpha+1, \beta+1)}(z) \equiv P_{-1}^{(\alpha+1, \beta+1)}(z) \equiv 0$. Then, for any $n \in \N_0$:
 \bseqn{
 	P_{n}^{(\alpha, \beta)}(z) =
-		{1 \over 2n + \alpha + \beta + 1} \Big\{ & {(n+\alpha+\beta+1)(n+\alpha+\beta+2) \over 2n+\alpha+\beta+2} \: P_{n}^{(\alpha+1, \beta+1)}(z) \\
-									  & + \big[{(n+\alpha+\beta+1)(n+\alpha) \over 2n+\alpha+\beta} \\
-									  		& \quad \quad - {(n+\alpha+\beta+1)(n+\beta+1) \over 2n+\alpha+\beta+2}\big] \: P_{n-1}^{(\alpha+1, \beta+1)}(z) \\
-									  & + {(n+\alpha)(n+\beta) \over 2n+\alpha+\beta} \: P_{n-2}^{(\alpha+1, \beta+1)}(z) \Big\}, \\
-	P_{n}^{(\alpha, \beta)}(z) =
-		{1 \over 2n + \alpha + \beta + 1} \Big\{ & {(n+\alpha+\beta+1)(n+\alpha+\beta+2) \over 2n+\alpha+\beta+2} \: P_{n}^{(\alpha+1, \beta+1)}(z) \\
-									  & + \big[{(n+\alpha+\beta+1)(n+\alpha) \over 2n+\alpha+\beta} \\
-									  		& \quad \quad - {(n+\alpha+\beta+1)(n+\beta+1) \over 2n+\alpha+\beta+2}\big] \: P_{n-1}^{(\alpha+1, \beta+1)}(z) \\
-									  & + {(n+\alpha)(n+\beta) \over 2n+\alpha+\beta} \: P_{n-2}^{(\alpha+1, \beta+1)}(z) \Big\}, \\
+		{1 \over 2n + \alpha + \beta + 1} \Big\{ & - {(n+\alpha)(n+\beta) \over 2n+\alpha+\beta} \: P_{n-2}^{(\alpha+1, \beta+1)}(z) \\
+									  & + (n+\alpha+\beta+1) \Big[{n+\alpha \over 2n+\alpha+\beta} - {n+\beta+1 \over 2n+\alpha+\beta+2}\Big] \: P_{n-1}^{(\alpha+1, \beta+1)}(z) \\
+									  & {(n+\alpha+\beta+1)(n+\alpha+\beta+2) \over 2n+\alpha+\beta+2} \: P_{n}^{(\alpha+1, \beta+1)}(z) \Big\}, \\
+	(1-z^2) \, P_{n}^{(\alpha, \beta)}(z) =
+		{4 \over 2n + \alpha + \beta + 1} \Big\{ & + {(n+\alpha)(n+\beta) \over 2n+\alpha+\beta} \: P_{n}^{(\alpha-1, \beta-1)}(z) \\
+									  & + (n+1) \Big[{n+\alpha+1 \over 2n+\alpha+\beta+2} - {n+\beta \over 2n+\alpha+\beta}\Big] \: P_{n+1}^{(\alpha-1, \beta-1)}(z) \\
+									  & - {(n+1)(n+2) \over 2n+\alpha+\beta+2} \: P_{n+2}^{(\alpha-1, \beta-1)}(z) \Big\}, \\
 	z \, P_{n}^{(\alpha, \beta)}(z) = 
-		\Big\{ & {2(n+\alpha)(n+\beta) \over (2n + \alpha + \beta)(2n + \alpha + \beta + 1)} \: P_{n-1}^{(\alpha, \beta)}(z) \\
-			 & {(\beta^2 - \alpha^2) \over (2n + \alpha + \beta)(2n + \alpha + \beta + 2)} \: P_{n}^{(\alpha, \beta)}(z) \\
-			 & {2(n+1)(n + \alpha + \beta + 1) \over 2(2n + \alpha + \beta + 1)(2n + \alpha + \beta + 2)} \: P_{n+1}^{(\alpha, \beta)}(z).
+		& {2(n+\alpha)(n+\beta) \over (2n + \alpha + \beta)(2n + \alpha + \beta + 1)} \: P_{n-1}^{(\alpha, \beta)}(z) \\
+		& {(\beta^2 - \alpha^2) \over (2n + \alpha + \beta)(2n + \alpha + \beta + 2)} \: P_{n}^{(\alpha, \beta)}(z) \\
+		& {2(n+1)(n + \alpha + \beta + 1) \over 2(2n + \alpha + \beta + 1)(2n + \alpha + \beta + 2)} \: P_{n+1}^{(\alpha, \beta)}(z).
 }
 \end{lemma}
 \begin{proof}
-	\bstodoinline{Do the second result (i.e. $(1-z^2)P_n$ relationship).}
 	The first two results are simply consequences of the relationships established for incrementing and decrementing the parameters of Jacobi polynomials detailed in \cite[18.9.5, 18.9.6]{DLMF}, along with the symmetry relation that $P_{n}^{(\alpha, \beta)}(-z) \equiv (-1)^n P_{n}^{(\beta, \alpha)}(z)$. The final one is simply a rearranging of the established three-term recurrence detailed in \cite[18.9.1, 18.9.2]{DLMF}
 \end{proof}
 We thus can present a useful corollary specific for our needs.
-\begin{corollary}\label{corollary:incrementjacparams}
+\begin{corollary}\label{corollary:jacobirelations}
 	Let $l, m \in \N_0$ s.t. $0 \le m \le l$ and let $z \in [-1,1]$. Then:
 \bseqn{
 	(1-z^2) \, \jaclm{l}{m}(z) &=  \tilde \alpha_{l,m,1} P^{(m-1,m-1)}_{l-m}(z) + \tilde \alpha_{l,m,3} P^{(m-1,m-1)}_{l-m+2}(z) \\
@@ -124,7 +121,7 @@ where
 }
 \end{corollary}
 
-\bsrefcor{corollary:incrementjacparams} allows us to easily determine the aforementioned coefficients, that we will formalise in the following Lemma.
+\bsrefcor{corollary:jacobirelations} allows us to easily determine the aforementioned coefficients, that we will formalise in the following Lemma.
 
 \begin{lemma}\label{lemma:shxyzrelations}
 	For $l \in \No$, $m \in \Z$ s.t. $0 \le |m| \le l$, the spherical harmonics satisfy the relationships:
@@ -166,7 +163,7 @@ where
 \end{lemma}
 
 \begin{proof}
-	The expression for multiplication of the spherical harmonic $\Ylm$ by $z$ is simply a consequence of the third result in \bsrefcor{corollary:incrementjacparams}:
+	The expression for multiplication of the spherical harmonic $\Ylm$ by $z$ is simply a consequence of the third result in \bsrefcor{corollary:jacobirelations}:
 \bseqn{
 	z\,\Ylmxyz &= \clm \eimtheta \rho(z)^{|m|} z P^{(|m|,|m|)}_{l-|m|}(z)  \\
 		     &= \clm \eimtheta \rho(z)^{|m|} \big[ \tilde \gamma_{l,m,1} P^{(|m|,|m|)}_{l-|m|-1}(z) + \tilde \gamma_{l,m,2} P^{(|m|,|m|)}_{l-|m|+1}(z) \big] \\
@@ -178,7 +175,7 @@ For multiplication by $x$ and $y$, note that the complex exponential satisfies
 	\costheta \, \eimtheta &= \frac{1}{2} (e^{i\theta} + e^{-i\theta}) \eimtheta =  \frac{1}{2} (e^{i(m+1)\theta} + e^{i(m-1)\theta}) \\
 	\sintheta \, \eimtheta &= \frac{1}{2i} (e^{i\theta} - e^{-i\theta}) \eimtheta =  \frac{-i}{2} (e^{i(m+1)\theta} - e^{i(m-1)\theta})
 }
-Combining this with the results in \bsrefcor{corollary:incrementjacparams}, the expressions for multiplication of the spherical harmonic $\Ylm$ by $x$ and $y$ are then:
+Combining this with the results in \bsrefcor{corollary:jacobirelations}, the expressions for multiplication of the spherical harmonic $\Ylm$ by $x$ and $y$ are then:
 \bseqn{
 	x \,\Ylmxyz &= \clm \costheta \: \eimtheta \: \rho(z)^{|m|+1} P^{(|m|,|m|)}_{l-|m|}(z) \\
 	&= \half \clm (e^{i(m+1)\theta} + e^{i(m-1)\theta}) \rho(z)^{|m|+1} P^{(|m|,|m|)}_{l-|m|}(z) \\
@@ -472,7 +469,7 @@ where at each iteration, $\vec{\xi}_n$ is a vector of matrices (note that we are
 
 
 
-%%%
+%%% TANGENT SPACE ----- VECTOR SHs
 \section{Vector spherical harmonics as orthogonal vectors in three variables}
 
 
@@ -486,8 +483,6 @@ A simple calculation shows that such orthogonal vectors must still have block-tr
 
 
 \subsection{Jacobi matrices}
-
-% REMOVED SPIN harmonics and Clebsch Gorden coeff stuff as its much neater to use an inner product argument I have found.
 
 We start as before for the scalar case by finding $x \,\gradYlm (x,y,z)$, $x \,\gradpYlm (x,y,z)$ etc. in terms of $\gradY^{m'}_{l'} (x,y,z)$, $\gradpY^{m'}_{l'} (x,y,z)$. A lovely consequence of our definitions of the scalar and vector spherical harmonics is that we can once again find explicit expressions for the coefficients in the aforementioned relations. To this end, we recall and derive some important relations of the complex exponential and Jacobi polynomials that are a part of the spherical harmonics definitions. In particular we first note that:
 \bseqnnumber{
@@ -554,13 +549,14 @@ where,
 	\Gamma_{l,m,2} &:= \clm c_{l+1}^{m} \Big[ \abs{m}(\abs{m} + 2) {\tilde \gamma_{l,\abs{m},2} \over (c_{l+1}^{\abs{m}})^2} + d_{l,\abs{m}} d_{l+1,\abs{m}} {\tilde \gamma_{l,\abs{m}+1,2} \over (c_{l+1}^{\abs{m}+1})^2} \Big] \\
 	\Gamma_{l,m,3} &:= (-1)^m \: i \: m
 }
-where the $c_{l'}^{m'}$, $d_{l',m'}$ are defined in \bsrefeqnslist{eqn:clmdef}{eqn:diffjac}{} respectively, and
+where the $c_{l'}^{m'}$, $d_{l',m'}$, $\tilde \gamma_{l',m',j}$ are defined in \bsrefeqn{eqn:clmdef}, \bsrefeqn{eqn:diffjac} and \bsrefcor{corollary:jacobirelations} respectively, and
 \bseqn{
-	\tilde A_{l,m,1} &:= \Big( (m^2 - 1) \mu_{l-1,m-1,2} - d_{l-1,m-1} \tilde \gamma_{l-1,m,2} \Big) {1 \over (\clm)^2} + d_{l,m} d_{l-1,m-1} {\mu_{l-1,m,2} \over (c_{l}^{m+1})^2} \\
-	\tilde A_{l,m,2} &:= \Big( m(m+2) \mu_{l,m,1} - d_{l,m} \tilde \gamma_{l,m+1,1} \Big) {1 \over (c_{l-1}^{m+1})^2} + d_{l,m} d_{l-1,m+1} {\mu_{l,m+1,1} \over (c_{l-1}^{m+2})^2} \\
-	\tilde A_{l,m,3} &:= \Big( (m^2 - 1) \mu_{l+1,m-1,1} - d_{l+1,m-1} \tilde \gamma_{l+1,m,1} \Big) {1 \over (\clm)^2} + d_{l,m} d_{l+1,m-1} {\mu_{l+1,m,1} \over (c_{l}^{m+1})^2} \\
-	\tilde A_{l,m,4} &:= \Big( m(m+2) \mu_{l,m,2} - d_{l,m} \tilde \gamma_{l,m+1,2} \Big) {1 \over (c_{l+1}^{m+1})^2} + d_{l,m} d_{l+1,m+1} {\mu_{l,m+1,2} \over (c_{l+1}^{m+2})^2}.
+	\tilde A_{l,m,1} &:= \Big( (m^2 - 1) \tilde \alpha_{l-1,m-1,4} - d_{l-1,m-1} \tilde \gamma_{l-1,m,2} \Big) {1 \over (\clm)^2} + d_{l,m} d_{l-1,m-1} {\tilde \alpha_{l,m+1,1} \over (c_{l-1}^{m})^2} \\
+	\tilde A_{l,m,2} &:= \Big( m(m+2) \tilde \alpha_{l,m,2} - d_{l,m} \tilde \gamma_{l,m+1,1} \Big) {1 \over (c_{l-1}^{m+1})^2} + d_{l,m} d_{l-1,m+1} {\tilde \alpha_{l-1,m+2,3} \over (c_{l}^{m+1})^2} \\
+	\tilde A_{l,m,3} &:= \Big( (m^2 - 1) \tilde \alpha_{l+1,m-1,2} - d_{l+1,m-1} \tilde \gamma_{l+1,m,1} \Big) {1 \over (\clm)^2} + d_{l,m} d_{l+1,m-1} {\tilde \alpha_{l,m+1,3} \over (c_{l+1}^{m})^2} \\
+	\tilde A_{l,m,4} &:= \Big( m(m+2) \tilde \alpha_{l,m,4} - d_{l,m} \tilde \gamma_{l,m+1,2} \Big) {1 \over (c_{l+1}^{m+1})^2} + d_{l,m} d_{l+1,m+1} {\tilde \alpha_{l+1,m+2,1} \over (c_{l}^{m+1})^2}.
 }
+where again the $\tilde \alpha_{l',m',j}$ are defined in \bsrefcor{corollary:jacobirelations} too.
 \end{lemma}
 
 \remark We emphasise again that it is due to the unique relationships that the Jacobi polynomials possess that we are able to explicitly write down these coefficients.
