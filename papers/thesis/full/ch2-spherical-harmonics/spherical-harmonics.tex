@@ -475,16 +475,23 @@ where at each iteration, $\vec{\xi}_n$ is a vector of matrices (note that we are
 
 Since the spherical harmonics are a basis for the surface of the sphere, and the tangent space of the sphere is spanned by the gradient and perpendicular gradient of a scalar function, we have that the gradients and perpendicular gradients of the spherical harmonics 
 \bseqnnumber{
-	\gradYlm, \quad \gradpYlm := \rvec \times \gradYlm, \label{eqn:VSHs}
+	\gradYlm &:= \nabla \Ylm = \ppx{\phi} \Ylm \phivec + {1 \over \sinphi} \ppx{\theta} \Ylm \thetavec, \nonumber \\
+	\gradpYlm &:= \nabla^\perp \Ylm \equiv \rvec \times \nabla \Ylm = \ppx{\phi} \Ylm \thetavec - {1 \over \sinphi} \ppx{\theta} \Ylm \phivec, \label{eqn:VSHs}
 }
-span the tangent space. Here, $\rvec$ is simply the outward unit normal vector to the surface of the sphere at the point $(x,y,z)$. Importantly, the set $\{\gradYlm, \gradpYlm\}$ form a complete and orthogonal basis for vector valued functions in the tangent space of the sphere and are known as \textit{vector spherical harmonics (VSHs)} \cite{barrera1985vector}, orthogonal with respect to the inner product $\ip<\vec{A}, \vec{B}> = \iint_\Omega \vec{A} \cdot \vec{B}^* \: \sinphi \: \D\varphi \: \D\theta$. Vector spherical harmonics have been widely used in electrostatics (e.g. \cite{barrera1985vector}), electrodynamics (e.g. \cite{carrascal1991vector}), and of course fluid dynamics including weather and climate modelling (e.g. \cite{moses1974use, fengler2005nonlinear, swarztrauber1996spectral}). Other definitions for VSHs are used (e.g. \cite{hill1954theory}), however it is convenient for deriving explicit sparse relations and operators to use the one described here.
+span the tangent space. Here, $\rvec$ is simply the outward unit normal vector to the surface of the sphere at the point $(x,y,z)$, while $\phivec, \thetavec$ are the standard spherical coordinate unit vectors, i.e. $\phivec := [\costheta \cosphi, \sintheta \cosphi, -\sinphi]^\top$, $\thetavec := [-\sintheta, \costheta, 0]^\top$. Importantly, the set $\{\gradYlm, \gradpYlm\}$ form a complete and orthogonal basis for vector valued functions in the tangent space of the sphere and are known as \textit{vector spherical harmonics (VSHs)} \cite{barrera1985vector}, orthogonal with respect to the inner product $\ip<\vec{A}, \vec{B}> = \iint_\Omega \vec{A} \cdot \vec{B}^* \: \sinphi \: \D\varphi \: \D\theta$ -- in particular, for any $l, l' \in \N$, $m, m' \in \Z$ s.t. $-l \le m \le l$, $-l' \le m' \le l'$,
+\bseqn{
+	\ip<\gradYlm, \gradYlmprime> &= \iint_\Omega \gradYlm \cdot {\gradYlmprime}^* \: \sinphi \: \D\varphi \: \D\theta = \delta_{l,l'} \delta_{m,m'} \: l (l+1), \\
+	\ip<\gradpYlm, \gradpYlmprime> &= \iint_\Omega \gradpYlm \cdot {\gradpYlmprime}^* \: \sinphi \: \D\varphi \: \D\theta = \delta_{l,l'} \delta_{m,m'} \: l (l+1), \\
+	\ip<\gradYlm, \gradpYlmprime> &= \iint_\Omega \gradpYlm \cdot {\gradpYlmprime}^* \: \sinphi \: \D\varphi \: \D\theta = 0.
+}
+Vector spherical harmonics have been widely used in electrostatics (e.g. \cite{barrera1985vector}), electrodynamics (e.g. \cite{carrascal1991vector}), and of course fluid dynamics including weather and climate modelling (e.g. \cite{moses1974use, fengler2005nonlinear, swarztrauber1996spectral}). Other definitions for VSHs are used (e.g. \cite{hill1954theory}), however it is convenient for deriving explicit sparse relations and operators to use the one described here.
 
 A simple calculation shows that such orthogonal vectors must still have block-tridiagonal Jacobi operators, as multiplication by $x, y$, or $z$ remains inside the ideal.
 
 
 \subsection{Jacobi matrices}
 
-We start as before for the scalar case by finding $x \,\gradYlm (x,y,z)$, $x \,\gradpYlm (x,y,z)$ etc. in terms of $\gradY^{m'}_{l'} (x,y,z)$, $\gradpY^{m'}_{l'} (x,y,z)$. A lovely consequence of our definitions of the scalar and vector spherical harmonics is that we can once again find explicit expressions for the coefficients in the aforementioned relations. To this end, we recall and derive some important relations of the complex exponential and Jacobi polynomials that are a part of the spherical harmonics definitions. In particular we first note that:
+We start as before for the scalar case by finding $x \, \gradYlm (x,y,z)$, $x \,\gradpYlm (x,y,z)$ etc. in terms of $\gradYlmprime (x,y,z)$, $\gradpYlmprime (x,y,z)$. A lovely consequence of our definitions of the scalar and vector spherical harmonics is that we can once again find explicit expressions for the coefficients in the aforementioned relations. To this end, we recall and derive some important relations of the complex exponential and Jacobi polynomials that are a part of the spherical harmonics definitions. In particular we first note that:
 \bseqnnumber{
 	\int_0^{2\pi} \: \eimtheta \: e^{-im'\theta} \: \cos(\theta) \D\theta &= \pi (\delta_{m',m-1} + \delta_{m',m+1}) \label{eqn:intcomplexexpcos} \\
 	\int_0^{2\pi} \: \eimtheta \: e^{-im'\theta} \: \sin(\theta) \D\theta &= i \; \pi (\delta_{m',m-1} - \delta_{m',m+1}) \label{eqn:intcomplexexpsin}
@@ -514,40 +521,40 @@ The expressions for the VSHs as given in \bsrefeqn{eqn:VSHs} together with the a
 }
 where,
 \bseqn{
-	A_{l,m,1} &:= {\clm c_{l-1}^{m-1} \over 2}
+	A_{l,m,1} &:= {\clm c_{l-1}^{m-1} \over 2 l (l-1)}
 		\begin{cases}
 			\tilde A_{l,m,1} & \text{if } m > 0 \\
 			\tilde A_{l,\abs{m},2} & \text{if } m \le 0
 		\end{cases} \\
-	A_{l,m,2} &:= {\clm c_{l-1}^{m+1} \over 2}
+	A_{l,m,2} &:= {\clm c_{l-1}^{m+1} \over 2 l (l-1)}
 		\begin{cases}
 			\tilde A_{l,m,2} & \text{if } m \ge 0 \\
 			\tilde A_{l,\abs{m},1} & \text{if } m < 0
 		\end{cases} \\
-	A_{l,m,3} &:= {\clm c_{l-1}^{m-1} \over 2}
+	A_{l,m,3} &:= {\clm c_{l-1}^{m-1} \over 2 (l+1)(l+2)}
 		\begin{cases}
 			\tilde A_{l,m,3} &\text{if } m > 0 \\
 			\tilde A_{l,\abs{m},4} &\text{if } m \le 0
 		\end{cases} \\
-	A_{l,m,4} &:= {\clm c_{l-1}^{m+1} \over 2}
+	A_{l,m,4} &:= {\clm c_{l-1}^{m+1} \over 2 (l+1)(l+2)}
 		\begin{cases}
 			\tilde A_{l,m,4} &\text{if } m \ge 0 \\
 			\tilde A_{l,\abs{m},3} &\text{if } m < 0
 		\end{cases} \\
-	A_{l,m,5} &:=
+	A_{l,m,5} &:= {1 \over l(l+1)}
 		\begin{cases}
 			- i \: d_{l,m - 1} \: {c_l^{m-1} \over 2 \clm} &\text{if } m > 0 \\
 			(-1)^m \: i \: d_{l,\abs{m}} \: {\clm \over 2 c_l^{m-1}} &\text{if } m \le 0
 		\end{cases} \\
-	A_{l,m,6} &:=
+	A_{l,m,6} &:= {1 \over l(l+1)}
 		\begin{cases}
 			- i \: d_{l,m} \: {\clm \over 2 c_l^{m+1}} &\text{if } m \ge 0 \\
 			(-1)^{m+1} \: i \: d_{l,\abs{m} - 1} \: {c_l^{m+1} \over 2 \clm} &\text{if } m < 0
 		\end{cases} \\
 	B_{l,m,j} &:= i (-1)^{j+1} A_{l,m,j} \quad \text{for } j = 1,\dots,6, \\
-	\Gamma_{l,m,1} &:= \clm c_{l-1}^{m} \Big[ \abs{m}(\abs{m} + 2) {\tilde \gamma_{l,\abs{m},1} \over (c_{l-1}^{\abs{m}})^2} + d_{l,\abs{m}} d_{l-1,\abs{m}} {\tilde \gamma_{l,\abs{m}+1,1} \over (c_{l-1}^{\abs{m}+1})^2} \Big] \\
-	\Gamma_{l,m,2} &:= \clm c_{l+1}^{m} \Big[ \abs{m}(\abs{m} + 2) {\tilde \gamma_{l,\abs{m},2} \over (c_{l+1}^{\abs{m}})^2} + d_{l,\abs{m}} d_{l+1,\abs{m}} {\tilde \gamma_{l,\abs{m}+1,2} \over (c_{l+1}^{\abs{m}+1})^2} \Big] \\
-	\Gamma_{l,m,3} &:= (-1)^m \: i \: m
+	\Gamma_{l,m,1} &:= {\clm c_{l-1}^{m} \over l(l-1)} \Big[ \abs{m}(\abs{m} + 2) {\tilde \gamma_{l,\abs{m},1} \over (c_{l-1}^{\abs{m}})^2} + d_{l,\abs{m}} d_{l-1,\abs{m}} {\tilde \gamma_{l,\abs{m}+1,1} \over (c_{l-1}^{\abs{m}+1})^2} \Big] \\
+	\Gamma_{l,m,2} &:= {\clm c_{l+1}^{m} \over (l+1)(l+2)} \Big[ \abs{m}(\abs{m} + 2) {\tilde \gamma_{l,\abs{m},2} \over (c_{l+1}^{\abs{m}})^2} + d_{l,\abs{m}} d_{l+1,\abs{m}} {\tilde \gamma_{l,\abs{m}+1,2} \over (c_{l+1}^{\abs{m}+1})^2} \Big] \\
+	\Gamma_{l,m,3} &:= {(-1)^m \: i \: m \over l(l+1)}
 }
 where the $c_{l'}^{m'}$, $d_{l',m'}$, $\tilde \gamma_{l',m',j}$ are defined in \bsrefeqn{eqn:clmdef}, \bsrefeqn{eqn:diffjac} and \bsrefcor{corollary:jacobirelations} respectively, and
 \bseqn{
@@ -563,8 +570,86 @@ where again the $\tilde \alpha_{l',m',j}$ are defined in \bsrefcor{corollary:jac
 
 \begin{proof}[Proof of \bsreflemma{lemma:VSHrecurrences}]
 
-Fix $l \in \N$ and $m \in \Z$ s.t. $-l \le m \le l$.
+	Fix $l \in \N$ and $m \in \Z$ s.t. $-l \le m \le l$. The proof we will use is to directly calculate the nonzero coefficients in each expansion using inner products. To this end, note that
+\bseqn{
+	x \gradYlm = \sum_{l'=1}^{l+1} \sum_{m'=-l'}^{l'} \calA_{l',m'} \gradYlmprime + \calA^\perp_{l',m'} \gradpYlmprime
+}
+where the coefficients are give by
+\bseqn{
+	\calA_{l',m'} = {\ip<x \gradYlm, \gradYlmprime> \over \norm{\gradYlmprime}^2} = {1 \over l'(l'+1)} \ip<x \gradYlm, \gradYlmprime> \\
+	\calA^\perp_{l',m'} = {\ip<x \gradYlm, \gradpYlmprime> \over \norm{\gradpYlmprime}^2} = {1 \over l'(l'+1)} \ip<x \gradYlm, \gradpYlmprime>.
+}
+The aim will be to show that the only nonzero coefficients $\calA_{l',m'}$, $\calA^\perp_{l',m'}$ match the $A_{l,m,j}$ for $j=1,\dots,6$ in the Lemma. Now, using a change of variable, we have that
+\bseqnnumber{
+	&\ip<x \gradYlm, \gradYlmprime> \nonumber \\
+	&= \iint_\Omega \costheta \sinphi \: \gradYlm \cdot {\gradYlmprime}^* \sinphi \: \D\phi \: \D\theta \nonumber \\
+	&= \clm \clmprime \Big( \int_0^{2pi} \eimtheta \eimthetaprime \costheta \: \D\theta \Big) \nonumber \\
+	&\quadfour \cdot \Big( \int_{-1}^{1} \Big\{ \big[ \abs{m} z \jaclmabs{l}{m}(z) - \rho(z)^2 \jaclmabsdz{l}{m}(z) \big] \big[ \abs{m'} z \jaclmabs{l'}{m'}(z) - \rho(z)^2 \jaclmabs{l'}{m'}(z) \big] \rho(z)^{\abs{m}+\abs{m'}-1} \nonumber \\
+	&\quadeight + mm' \jaclmabs{l}{m}(z) \jaclmabs{l'}{m'}(z) \Big\} \: \D z \Big) \nonumber \\
+	&= \clm \clmprime \pi (\delta_{m',m-1} + \delta_{m',m+1}) \nonumber \\
+	&\quadfour \cdot \Big( \int_{-1}^{1} \Big\{ \jaclmabs{l}{m} \jaclmabs{l'}{m'} \rho^{\abs{m}+\abs{m'}-1} \big(mm' + \abs{m}\abs{m'} z^2 \big) \nonumber \\
+	&\quadeight - \abs{m} z \jaclmabs{l}{m} \jaclmabsdz{l'}{m'} \rho^{\abs{m}+\abs{m'}+1} \nonumber \\
+	&\quadeight - \abs{m'} z \jaclmabsdz{l}{m} \jaclmabs{l'}{m'} \rho^{\abs{m}+\abs{m'}+1} \nonumber  \\
+	&\quadeight + \jaclmabsdz{l}{m} \jaclmabsdz{l'}{m'} \rho^{\abs{m}+\abs{m'}+3} \Big\} \: \D z \Big). \label{eqn:lemmaVSHrecurrencesproof}
+}
+We can conclude that the only possible nonzero coefficients are when $m' = m \pm 1$, and so it is left to evaluate the integral that is left at $(\star)$ when $m'$ takes either value. Since we need to take account of the fact that $m$ can be negative, to simplify our argument we note that the case $m' = m - 1$ for $m < 0$ is analogous to the case $m' = m+1$ for $m > 0$, and vice versa. 
 
+On that note, we will first consider the case that $m > 0$ and $m' = m - 1$, and calculate the integral in \bsrefeqn{eqn:lemmaVSHrecurrencesproof}:
+\bseqnnumber{
+	&\int_{-1}^{1} \Big\{ m(m-1) \jaclm{l}{m} \jaclmbracket{l'}{m-1} \rho^{2m-2} (1 + z^2) - m z \jaclm{l}{m} \jaclmbracketdz{l'}{m-1} \rho^{2m} \nonumber \\
+	&\quadtwo \quad - (m-1) z \jaclmdz{l}{m} \jaclmbracket{l'}{m-1} \rho^{2m} + \jaclmdz{l}{m} \jaclmbracketdz{l'}{m-1} \rho^{2m+2} \Big\} \: \D z \nonumber \\
+	&= \int_{-1}^{1} \Big\{ m(m-1) \jaclm{l}{m} \jaclmbracket{l'}{m-1} \rho^{2m-2} (1 + z^2) - m z \jaclm{l}{m} \jaclmbracketdz{l'}{m-1} \rho^{2m} \nonumber \\
+	&\quadfour + (m-1) \jaclm{l}{m} \rho^{2m-2} \big( - 2m z^2 \jaclmbracket{l'}{m-1} + \jaclmbracket{l'}{m-1} \rho^{2} - z \jaclmbracketdz{l'}{m-1} \rho^{2} \big) \nonumber \\
+	&\quadfour + \jaclmdz{l}{m} \jaclmbracketdz{l'}{m-1} \rho^{2m+2} \Big\} \: \D z \nonumber \\
+	&= \int_{-1}^{1} \Big\{ (m-1)(m+1) \jaclm{l}{m} \jaclmbracket{l'}{m-1} \rho^{2m} - z \jaclm{l}{m} \jaclmbracketdz{l'}{m-1} \rho^{2m} \nonumber \\
+	&\quadfour + \jaclmdz{l}{m} \jaclmbracketdz{l'}{m-1} \rho^{2m+2} \Big\} \: \D z \nonumber \\
+	&= \int_{-1}^{1} \Big\{ (m-1)(m+1) \jaclm{l}{m} \jaclmbracket{l'}{m-1} \rho^{2m} - d_{l',m-1} z \jaclm{l}{m} \jaclm{l'}{m} \rho^{2m} \nonumber \\
+	&\quadfour + d_{l,m} d_{l',m-1} \jaclmbracket{l}{m+1} \jaclm{l'}{m} \rho^{2m+2} \Big\} \: \D z \nonumber \\
+	&= \int_{-1}^{1} \Big\{ (m^2 - 1) \jaclm{l}{m} \big( \tilde \alpha_{l', m-1, 2} \jaclm{l'-1}{m} + \tilde \alpha_{l', m-1, 4} \jaclm{l'+1}{m} \big) \rho^{2m} \nonumber \\
+	&\quadfour - d_{l',m-1} \jaclm{l}{m} \big( \tilde \gamma_{l',m,1} \jaclm{l'-1}{m} + \tilde \gamma_{l',m,2} \jaclm{l'+1}{m} \big) \rho^{2m} \nonumber \\
+	&\quadfour + d_{l,m} d_{l',m-1} \jaclm{l'}{m} \big( \tilde \alpha_{l, m+1, 1} \jaclm{l-1}{m} + \tilde \alpha_{l, m+1, 3} \jaclm{l+1}{m} \big) \rho^{2m} \Big\} \: \D z \nonumber \\
+	&= \delta_{l',l-1} \Big( \big[ (m^2 - 1) \tilde \alpha_{l-1, m-1, 4} - d_{l-1,m-1} \tilde \gamma_{l-1,m,2} \big] {1\over2\pi(\clm)^2} + d_{l,m} d_{l-1,m-1} {\tilde \alpha_{l-1, m-1, 1} \over 2\pi (c_{l-1}^m)^2} \Big) \nonumber \\
+	&\quadtwo + \delta_{l',l+1} \Big( \big[ (m^2 - 1) \tilde \alpha_{l+1, m-1, 2} - d_{l+1,m-1} \tilde \gamma_{l+1,m,1} \big] {1\over2\pi(\clm)^2} + d_{l,m} d_{l+1,m-1} {\tilde \alpha_{l-1, m-1, 3} \over 2\pi (c_{l+1}^m)^2} \Big). \label{eqn:lemmaVSHrecurrencesproof2}
+}
+As we can see, the coefficients are then also only possibly nonzero for $l' = l \pm 1$. Combining the above with the \bsrefeqn{eqn:lemmaVSHrecurrencesproof}, we have that our two coefficients for $\calA_{l-1,m-1}, \calA_{l+1,m-1}$ are those stated in the Lemma as $A_{l,m,1}$ and $A_{l,m,3}$, for $m > 0$. 
+
+Next, assume $m \ge 0$ and consider the case $m' = m + 1$. The integral in \bsrefeqn{eqn:lemmaVSHrecurrencesproof} is then:
+\bseqnnumber{
+	&\int_{-1}^{1} \Big\{ m(m+1) \jaclm{l}{m} \jaclmbracket{l'}{m+1} \rho^{2m} (1 + z^2) - m z \jaclm{l}{m} \jaclmbracketdz{l'}{m+1} \rho^{2m+2} \nonumber \\
+	&\quadtwo \quad - (m+1) z \jaclmdz{l}{m} \jaclmbracket{l'}{m+1} \rho^{2m+2} + \jaclmdz{l}{m} \jaclmbracketdz{l'}{m+1} \rho^{2m+4} \Big\} \: \D z \nonumber \\
+	&= \int_{-1}^{1} \Big\{ m(m+1) \jaclm{l}{m} \jaclmbracket{l'}{m+1} \rho^{2m} (1 + z^2) - (m+1) z \jaclmdz{l}{m} \jaclmbracket{l'}{m+1} \rho^{2m+2} \nonumber \\
+	&\quadfour + m \jaclmbracket{l'}{m+1} \rho^{2m} \big( - 2(m+1) z^2 \jaclm{l}{m} + \jaclm{l}{m} \rho^{2} - z \jaclmdz{l}{m} \rho^{2} \big) \nonumber \\
+	&\quadfour + \jaclmdz{l}{m} \jaclmbracketdz{l'}{m+1} \rho^{2m+2} \Big\} \: \D z \nonumber \\
+	&= \int_{-1}^{1} \Big\{ m(m+2) \jaclm{l}{m} \jaclmbracket{l'}{m+1} \rho^{2m+2} - z \jaclmdz{l}{m} \jaclmbracket{l'}{m+1} \rho^{2m+2} \nonumber \\
+	&\quadfour + \jaclmdz{l}{m} \jaclmbracketdz{l'}{m+1} \rho^{2m+4} \Big\} \: \D z \nonumber \\
+	&= \int_{-1}^{1} \Big\{ m(m+2) \jaclm{l}{m} \jaclmbracket{l'}{m+1} \rho^{2m+2} - d_{l,m} z \jaclmbracket{l}{m+1} \jaclmbracket{l'}{m+1} \rho^{2m+2} \nonumber \\
+	&\quadfour + d_{l,m} d_{l',m+1} \jaclmbracket{l}{m+1} \jaclmbracket{l'}{m+2} \rho^{2m+4} \Big\} \: \D z \nonumber \\
+	&= \int_{-1}^{1} \Big\{ m(m+2) \jaclmbracket{l'}{m+1} \big( \tilde \alpha_{l, m, 2} \jaclmbracket{l-1}{m+1} + \tilde \alpha_{l, m, 4} \jaclmbracket{l+1}{m+1} \big) \rho^{2m+2} \nonumber \\
+	&\quadfour - d_{l,m} \jaclmbracket{l'}{m+1} \big( \tilde \gamma_{l,m+1,1} \jaclmbracket{l-1}{m+1} + \tilde \gamma_{l,m+1,2} \jaclmbracket{l+1}{m+1} \big) \rho^{2m+2} \nonumber \\
+	&\quadfour + d_{l,m} d_{l',m+1} \jaclmbracket{l}{m+1} \big( \tilde \alpha_{l', m+2, 1} \jaclmbracket{l'-1}{m+1} + \tilde \alpha_{l', m+2, 3} \jaclmbracket{l'+1}{m+1}  \big) \rho^{2m+2} \Big\} \: \D z \nonumber \\
+	&= \delta_{l',l-1} \Big( \big[ m(m+2) \tilde \alpha_{l, m, 2} - d_{l,m} \tilde \gamma_{l,m+1,1} \big] {1 \over 2 \pi (c_{l-1}^{m+1})^2} + d_{l,m} d_{l-1,m+1} {\tilde \alpha_{l-1, m+2, 3} \over 2\pi (c_{l}^{m+1})^2} \Big) \nonumber \\
+	&\quadtwo + \delta_{l',l+1} \Big( \big[ m(m+2) \tilde \alpha_{l, m, 4} - d_{l,m} \tilde \gamma_{l,m+1,2} \big] {1 \over 2 \pi (c_{l-1}^{m+1})^2} + d_{l,m} d_{l+1,m+1} {\tilde \alpha_{l+1, m+2, 1} \over 2\pi (c_{l}^{m+1})^2} \Big). \label{eqn:lemmaVSHrecurrencesproof3}
+}
+Once again, we can see that the coefficients are then also only possibly nonzero for $l' = l \pm 1$. Combining the above with the \bsrefeqn{eqn:lemmaVSHrecurrencesproof}, we have that our two coefficients for $\calA_{l-1,m-1}, \calA_{l+1,m-1}$ are those stated in the Lemma as $A_{l,m,2}$ and $A_{l,m,4}$, for $m \ge 0$.
+
+We still have to account for the remaining $m = 0$ cases and $m$ negative cases. Thankfully, as noted earlier, the case of $m \le 0$, $m' = m-1$ is the same as replacing $m$ with $\abs{m}$ in \bsrefeqn{eqn:lemmaVSHrecurrencesproof3}. Thus, our two coefficients for $\calA_{l-1,m-1}, \calA_{l+1,m-1}$ are those stated in the Lemma as $A_{l,m,1}$ and $A_{l,m,3}$, for $m \le 0$. Similarly the case of $m < 0$, $m' = m+1$ is the same as replacing $m$ with $\abs{m}$ in \bsrefeqn{eqn:lemmaVSHrecurrencesproof2}, and thus our two coefficients for $\calA_{l-1,m+1}, \calA_{l+1,m+1}$ are those stated in the Lemma as $A_{l,m,2}$ and $A_{l,m,4}$ for $m < 0$.
+
+The remaining coefficients we need to determine are $\calA^\perp_{l',m'}$. To this end, we have that %make this lemmaVSHrecurrencesproof4
+\bseqnnumber{
+	&\ip<x \gradYlm, \gradpYlmprime> \nonumber \\
+}
+
+
+An almost identical argument holds for multiplication by $y$, since
+\bseqn{
+	 \int_0^{2pi} \eimtheta \eimthetaprime \sintheta \: \D\theta = i \pi (\delta_{m',m-1} - \delta_{m',m+1})
+}
+replaces the integrals over $\theta$ in \bsrefeqn{eqn:lemmaVSHrecurrencesproof} and \bsrefeqn{eqn:lemmaVSHrecurrencesproof4}.
+
+Finally, mult by z...
+
+Finally, for multiplication by $x,y,z$ of $\gradpYlm$, simply take the cross product by $\unitvec{r}$ of $x \gradYlm$, etc. noting that $\rvec \times \gradYlm = \gradpYlm$ and $\rvec \times \gradpYlm = - \norm{\rvec} \gradYlm = - \gradYlm$ by the triple vector product and orthogonality.
+	
 \end{proof}
 
 
