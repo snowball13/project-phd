@@ -2,6 +2,11 @@
 
 %%%%%%
 % General
+\newcommand{\quadtwo}{\quad \quad}
+\newcommand{\quadfour}{\quadtwo \quadtwo}
+\newcommand{\quadsix}{\quadtwo \quadtwo \quadtwo}
+\newcommand{\quadeight}{\quadfour \quadfour}
+
 \newcommand{\bigO}{\mathcal{O}}
 \newcommand{\half}{\frac{1}{2}}
 \newcommand{\R}{\mathbb{R}}
@@ -22,6 +27,7 @@
 \newcommand{\sinphi}{\sin\varphi}
 \newcommand{\eimphi}{e^{im\varphi}}
 \newcommand{\eimtheta}{e^{im\theta}}
+\newcommand{\eimthetaprime}{e^{im'\theta}}
 \newcommand{\phivec}{\hat{\bm{\phi}}}
 \newcommand{\thetavec}{\hat{\bm{\theta}}}
 
@@ -58,10 +64,19 @@
 
 % SH
 \newcommand{\Ylm}{Y^m_l}
-\newcommand{\Ylmfull}{Y^m_l(\theta,\varphi)}
+\newcommand{\Ylmprime}{Y_{l'}^{m'}}
+\newcommand{\Ylmxyz}{\Ylm(x,y,z)}
+\newcommand{\Ylmfull}{\Ylm(\varphi, \theta)}
 \newcommand{\Plm}{\jac^m_l}
+\newcommand{\jaclm}[2]{P^{(#2,#2)}_{#1-#2}}
+\newcommand{\jaclmbracket}[2]{P^{(#2,#2)}_{#1-(#2)}}
+\newcommand{\jaclmabs}[2]{P^{(\abs{#2},\abs{#2})}_{#1-\abs{#2}}}
+\newcommand{\jaclmdz}[2]{P^{(#2,#2) \; \prime}_{#1-#2}}
+\newcommand{\jaclmbracketdz}[2]{P^{(#2,#2) \; \prime}_{#1-(#2)}}
+\newcommand{\jaclmabsdz}[2]{P^{(\abs{#2},\abs{#2}) \; \prime}_{#1-\abs{#2}}}
 \newcommand{\alphalm}{\alpha^m_l}
 \newcommand{\clm}{c^m_l}
+\newcommand{\clmprime}{c_{l'}^{m'}}
 \newcommand{\ctilde}{\tilde{c}^m_l}
 \newcommand{\ctildemod}{\tilde{c}^{|m|}_l}
 \newcommand{\chat}{\hat{c}^m_l}
@@ -101,9 +116,15 @@
 \newcommand{\VSHvecperpl}{\VSHvecperp_l}
 \newcommand{\VSHvecfulll}{\VSHvecfull_l}
 \newcommand{\gradY}{\nabla Y}
-\newcommand{\gradYlm}{\nabla Y^m_l}
+%\newcommand{\gradYlm}{\nabla \Ylm}
+%\newcommand{\gradYlmprime}{\nabla \Ylmprime}
+\newcommand{\gradYlm}{\vec{\Psi}_l^m}
+\newcommand{\gradYlmprime}{\vec{\Psi}_{l'}^{m'}}
 \newcommand{\gradpY}{\nabla^\perp Y}
-\newcommand{\gradpYlm}{\nabla^\perp Y^m_l}
+%\newcommand{\gradpYlm}{\nabla^\perp \Ylm}
+%\newcommand{\gradpYlmprime}{\nabla^\perp \Ylmprime}
+\newcommand{\gradpYlm}{\vec{\Phi}_l^m}
+\newcommand{\gradpYlmprime}{\vec{\Phi}_{l'}^{m'}}
 
 \newcommand{\Dlt}{D^\top_l}
 
