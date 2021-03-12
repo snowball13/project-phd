@@ -109,14 +109,6 @@
 \newcommand{\xifour}{\xi^{(4)}_{n, \lambda}}
 
 
-\newcommand{\SHvec}{\bigP}
-\newcommand{\SHvecl}{\SHvec_l}
-\newcommand{\VSHvec}{\bigT}
-\newcommand{\VSHvecperp}{\VSHvec^\perp}
-\newcommand{\VSHvecfull}{\tilde{\bigT}}
-\newcommand{\VSHvecl}{\VSHvec_l}
-\newcommand{\VSHvecperpl}{\VSHvecperp_l}
-\newcommand{\VSHvecfulll}{\VSHvecfull_l}
 \newcommand{\gradY}{\vec{\Psi}}
 %\newcommand{\gradYlm}{\nabla \Ylm}
 %\newcommand{\gradYlmprime}{\nabla \Ylmprime}
@@ -127,6 +119,15 @@
 %\newcommand{\gradpYlmprime}{\nabla^\perp \Ylmprime}
 \newcommand{\gradpYlm}{\gradpY_l^m}
 \newcommand{\gradpYlmprime}{\gradpY_{l'}^{m'}}
+
+\newcommand{\SHvec}{\bigP}
+\newcommand{\SHvecl}{\SHvec_l}
+\newcommand{\VSHvec}{\bigT^{\gradY}}
+\newcommand{\VSHvecperp}{\bigT^{\gradpY}}
+\newcommand{\VSHvecl}{\VSHvec_l}
+\newcommand{\VSHvecperpl}{\VSHvecperp_l}
+\newcommand{\VSHvecfull}{\tilde{\bigT}}
+\newcommand{\VSHvecfulll}{\VSHvecfull_l}
 
 \newcommand{\Dlt}{D^\top_l}
 
@@ -320,20 +321,21 @@
 \newcommand{\uvec}{\bm{u}}
 \newcommand{\fvec}{\bm{f}}
 \newcommand{\hvec}{\bm{h}}
-\newcommand{\uvecc}{\uvec^c}
 \newcommand{\fvecc}{\fvec^c}
 \newcommand{\hvecc}{\hvec^c}
 \newcommand{\uvecn}{\uvec_n}
 \newcommand{\hvecn}{\hvec_n}
 \newcommand{\uvecnpi}{\uvec_{n+1}}
 \newcommand{\hvecnpi}{\hvec_{n+1}}
-\newcommand{\uvecnc}{\uvecc_n}
 \newcommand{\hvecnc}{\hvecc_n}
 \newcommand{\uvecnpic}{\uvecnpi^c}
 \newcommand{\hvecnpic}{\hvecnpi^c}
 \newcommand{\href}{\mathcal{H}}
 \newcommand{\tangentjacobi}{{}^T\!J}
-\newcommand{\uveccperp}{\uvec^{\perp c}}
+
+\newcommand{\uvecc}{\uvec^{\gradY c}}
+\newcommand{\uvecnc}{\uvecc_n}
+\newcommand{\uveccperp}{\uvec^{\gradpY c}}
 \newcommand{\uvecncperp}{\uveccperp_n}
 
 
