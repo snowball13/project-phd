@@ -28,7 +28,7 @@ where $P^{(a,b)}_l (x)$ is the $l$ degree \textit{Jacobi polynomial}, and $P_l(x
 	\int_{-1}^1 {P^{(a,b)}_l(x)}^2 \:(1-x)^a(1+x)^b \: \D x &=: \omega_{P,l}^{(a,b)} \\
 	\int_{-1}^1 P^{(a,b)}_l(x) \: P^{(a,b)}_{l'}(x) \:(1-x)^a(1+x)^b \: \D x &= \omega_{P,l}^{(a,b)} \: \delta_{l, l'}.
 }
-Further, the \textit{associated Legendre polynomials} are a set of polynomials orthogonal with respect to unit weight on the unit interval, and can be defined as the $m^{\text{th}}$ derivative of a Jacobi polynomial: \bstodo{Add citation for associated legendre polys}
+Further, the \textit{associated Legendre polynomials} are a set of polynomials orthogonal with respect to unit weight on the unit interval, and can be defined as the $m^{\text{th}}$ derivative of a Jacobi polynomial: \bstodo{Sheehan - do you know what citation I can use for the definition of the Associated Legendre Polynomials (as the mth derivative of the ordinary Legendre Polynomials)?}
 \bseqn{
 	\Plm(x) &:= (-1)^m (1-x^2)^\frac{m}{2} \dmdxm{x}{m} P_l(x) = (-1)^m \; {(l+m)! \over 2^m \; l!} \; (1-x^2)^\frac{m}{2} \; P^{(m,m)}_{l-m}(x),
 }
@@ -433,7 +433,7 @@ where $\SHvecl (x,y,z), \fvec_l \in \C^{2l+1}$ for each $l \in \{0,\dots,N\}$, f
 
 \subsection{Obtaining coefficients}
 
-\bstodoinline{Is this para enough? coeffs/ transform}
+\bstodoinline{Is this paragraph enough? Or do I need to put more detail into explaining these methods, or derive my own?}
 In spectral space, we wish to work only with vectors of coefficients for the expansion of a function, to which we can apply operator matrices to that represent differential or other operations. Naturally, we of course need a way to obtain the coefficients $f_{l,m}$. The coefficients can be calculated via the integral
 \bseqn{
 	f_{l,m} = \int_\Omega f(\costheta \sinphi, \sintheta \sinphi, \cosphi) \: \Ylmfull^* \: \sinphi \: \D \varphi \: \D \theta
@@ -1052,7 +1052,7 @@ for some scalar functions $u^\varphi, u^\theta$ where $\phivec, \thetavec$ are t
 
 
 \subsubsection{Obtaining coefficients}
-\bstodoinline{Do I need to say more here? VSH Transform}
+\bstodoinline{As for the scalar case, do I need to say more here about the transforms?}
 Just like for the scalar case, we would like to be able to obtain the coefficients for the expansion of a vector valued function in the VSH basis up to a given degree. To do this, we can use a vector spherical harmonic transform. The development of vector spherical harmonic transforms is well established \cite{swarztrauber1993vector}, and continues today (see \cite{gia2019favest}). 
 
 
@@ -1251,7 +1251,7 @@ $\iff$
 }
 Here, it is clear that the matrix $I + \Delta t^2 \calH \calG \calD - \Delta t^2 \calF \calF^\perp$ is sparse with banded-block-banded structure, and hence this system will be efficient to solve. Doing so at each iteration provides us with the coefficients vectors $\uvecc_{n+1}, \uveccperp_{n+1}, \vec{h}^{c}_{n+1}$ if we know $\uvecc_{n}, \uveccperp_{n}, \vec{h}^{c}_{n}$. 
 
-\bstodo{Image}
+\bstodo{It would be nice to have some images here. However I need to update/fix/tidy my SH code as its probably got a few bugs in it having now gone back over the derivations that I have done.}
 
 
 
