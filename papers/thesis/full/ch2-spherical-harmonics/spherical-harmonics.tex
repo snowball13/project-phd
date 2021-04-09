@@ -913,7 +913,7 @@ Finally, $\tangentjacobi_z$ has subblock-bandwidths $(2,2)$, as for $l \in \No$:
 
 
 
-\subsection{Three-term recurrence relation for $\VSHvecfull(x,y,z)$}
+\subsection{Three-term recurrence relation for $\VSHvecfull(x,y,z)$}\label{subsection:VSHrecurrence}
 
 We can combine each system in \bsrefeqn{eqn:tangentjacobimatdef} into a block-tridiagonal system for any $(x,y,z) \in \Omega$:
 \bseqn{
@@ -969,7 +969,7 @@ Just like for the scalar case, for each $l = 0,1,2\dots$ let $\Dlt$ be any matri
 \bseqn{
 	\begin{cases}
 		\VSHvecfull_{0}(x,y,z) := 0_{2,3} \\
-		\VSHvecfull_{l+1}(x,y,z) = -\Dlt (B_l-G_l(x,y,z)) \SHvec_l(x,y,z) - \Dlt C_l  \,\SHvec_{l-1}(x,y,z), \quad l \in \N.
+		\VSHvecfull_{l+1}(x,y,z) = -\Dlt (B_l-G_l(x,y,z)) \VSHvecfull_l(x,y,z) - \Dlt C_l  \, \VSHvecfull_{l-1}(x,y,z), \quad l \in \N.
 	\end{cases}
 }
 For $l \in \N$, we can set
@@ -1041,39 +1041,13 @@ where
 
 \subsection{Computational aspects}
 
-Let $\uvec$ be a vector-valued function on $\Omega$ whose values are of the form
+It will be useful to be able to describe the coefficients of a vector-valued function on the tangent space of $\Omega$ in multiple ways, and as such we will introduce some more notation for the \enquote{splitting} of the basis vectors into the two groups stemming from the gradient and perpendicular gradient directions. Let's explain what we mean by this. Let $\uvec$ be a vector-valued function on $\Omega$ whose values are of the form
 \bseqn{
 	\uvec(x,y,z) = u_\varphi(x,y,z) \: \phivec + u_\theta(x,y,z) \: \thetavec, \quad (x,y,z) \in \Omega
 }
-for some scalar functions $u^\varphi, u^\theta$ where $\phivec, \thetavec$ are the standard non-radial unit basis vectors on the sphere defined by $\phivec := (\cos \theta \sin \varphi, \sin \theta \sin \varphi, \cos \varphi)^\top$, $\thetavec := (-\sin \theta, \cos \theta, 0)^\top$. Such a function $\uvec$ we refer to as a \textit{vector-valued function in the tangent space of $\Omega$}. We can then approximate this function by its expansion in the VSH basis, i.e. for some large enough $N \in \N$:
-\bseqn{
-	\uvec(x,y,z) \approx \VSHvecfull(x,y,z)^\top \uvec^c := \sum^N_{l=0} \sum^l_{m=-l} \big[u^{\gradY}_{l,m} \, \gradYlm(x,y,z)  + u^{\gradpY}_{l,m} \, \gradpYlm(x,y,z) \big].
-}
+for some scalar functions $u^\varphi, u^\theta$ where $\phivec, \thetavec$ are the standard non-radial unit basis vectors on the sphere defined by $\phivec := (\cos \theta \sin \varphi, \sin \theta \sin \varphi, \cos \varphi)^\top$, $\thetavec := (-\sin \theta, \cos \theta, 0)^\top$. Such a function $\uvec$ we refer to as a \textit{vector-valued function in the tangent space of $\Omega$}.
 
-
-\subsubsection{Obtaining coefficients}
-\bstodoinline{As for the scalar case, do I need to say more here about the transforms?}
-Just like for the scalar case, we would like to be able to obtain the coefficients for the expansion of a vector valued function in the VSH basis up to a given degree. To do this, we can use a vector spherical harmonic transform. The development of vector spherical harmonic transforms is well established \cite{swarztrauber1993vector}, and continues today (see \cite{gia2019favest}). 
-
-
-\subsubsection{Function evaluation}
-The Clenshaw algorithm presented in \bsrefsection{subsubsection:clenshaw} can also be used to evaluate a vector-valued function in the tangent space for a point $(x,y,z) \in \Omega$:
-\bseqn{
-	\quad &\text{1) } \text{Set } \vec{\xi}_{N+2} = \bold{0}, \: \vec{\xi}_{N+2} = \bold{0}. \\
-	\quad &\text{2) } \text{For } n = N:-1:1 \\
-	\quad & \quad \quad \quad \text{set } \vec{\xi}_{n}^\top = (\mathbf{u}^c_n)^\top - \vec{\xi}_{n+1}^\top \Dnt (B_n - G_n) -  \vec{\xi}_{n+2}^\top D^\top_{n+1} C_{n+1} \\
-	\quad &\text{3) } \text{Output: } \uvec(x,y,z) \approx \VSHvecfull_1(x,y,z)^\top \vec{\xi}_{1} \\
-	&\quad \quad \quad \quad \quad \quad \quad \quad \quad = (\vec{\xi}_{1})_1 \gradY_1^{-1} + (\vec{\xi}_{1})_2 \gradpY_1^{-1} + (\vec{\xi}_{1})_3 \gradY_1^{0} \\
-	&\quad \quad \quad \quad \quad \quad \quad \quad \quad \quad \quad + (\vec{\xi}_{1})_4 \gradpY_1^{0} + (\vec{\xi}_{1})_5 \gradY_1^{1} + (\vec{\xi}_{1})_6 \gradpY_1^{1}.
-}
-
-
-
-\subsection{Sparse partial differential operators}
-
-The framework we have outlined for the spherical harmonics and the vector spherical harmonics allows us to easily and explicitly derive sparse operator matrices for partial differential operators such as the spherical gradient, divergence and Laplacian, as well as other key operators useful in examples such as the linearised shallow water equations. These operators will take coefficients of a function's expansion in either the SSH or VSH basis, to coefficients in either basis. 
-
-In order to ensure we fully capitalise on the natural sparsity of the relationships so that we yield banded-block-banded operators, we will \enquote{split} coefficient vectors of a vector-valued function on the tangent space of $\Omega$ into two. On that note, define $\VSHvec, \VSHvecperp$ by
+Define $\VSHvec, \VSHvecperp$ by
 \bseqnnumber{
 	\VSHvec &:= 
 		\begin{pmatrix} 
@@ -1092,47 +1066,122 @@ In order to ensure we fully capitalise on the natural sparsity of the relationsh
 			(\gradpY^{-l}_l)^\top \\ \vdots \\ (\gradpY^{l}_l)^\top
 		\end{pmatrix} \in \C^{(2l+1) \times 3} \quad \forall \: l \in \No. \label{eqn:VSHperpdef}
 }
+If $\uvec$ is a vector-valued function on the tangent space of $\Omega$, it will have the coefficients vectors $\uvec^c, \uvecc, \uveccperp$ for its expansion in the VSH basis up to order $N \in \N$, defined such that
+\bseqn{
+	\uvec(x,y,z) &\approx \VSHvecfull(x,y,z)^\top \: \uvec^c \\
+	&\equiv \VSHvec(x,y,z)^\top \: \uvecc + \VSHvecperp(x,y,z)^\top \: \uveccperp \\
+	&:=  \sum^N_{l=0} \sum^l_{m=-l} \big[u^{\gradY}_{l,m} \, \gradYlm(x,y,z)  + u^{\gradpY}_{l,m} \, \gradpYlm(x,y,z) \big].
+}
+Of course, just like for the scalar case, we can use transforms to compute the coefficients of such a known function, and further evaluate, and apply differential operators to, a function knowing just its coefficients.
+
+
+\subsubsection{Obtaining coefficients}
+\bstodoinline{As for the scalar case, do I need to say more here about the transforms?}
+As eluded to, we would like to be able to obtain the coefficients for the expansion of a vector valued function in the VSH basis up to a given degree, similar to how we approach the scalar case. To do this, we can use a vector spherical harmonic transform. The development of vector spherical harmonic transforms is well established \cite{swarztrauber1993vector}, and continues today (see \cite{gia2019favest}). 
+
+
+\subsubsection{Function evaluation}
+The Clenshaw algorithm presented in \bsrefsection{subsubsection:clenshaw} can also be used to evaluate a vector-valued function in the tangent space for a point $(x,y,z) \in \Omega$, where the matrices $C_n, B_n, \Dnt, G_n(x,y,z)$ are all defined in \bsrefsection{subsection:VSHrecurrence}:
+\bseqn{
+	\quad &\text{1) } \text{Set } \vec{\xi}_{N+2} = \bold{0}, \: \vec{\xi}_{N+2} = \bold{0}. \\
+	\quad &\text{2) } \text{For } n = N:-1:1 \\
+	\quad & \quad \quad \quad \text{set } \vec{\xi}_{n}^\top = (\uvec^c_n)^\top - \vec{\xi}_{n+1}^\top \Dnt \big(B_n - G_n(x,y,z)\big) -  \vec{\xi}_{n+2}^\top D^\top_{n+1} C_{n+1} \\
+	\quad &\text{3) } \text{Output: } \uvec(x,y,z) \approx \VSHvecfull_1(x,y,z)^\top \vec{\xi}_{1} \\
+	&\quad \quad \quad \quad \quad \quad \quad \quad \quad = (\vec{\xi}_{1})_1 \gradY_1^{-1} + (\vec{\xi}_{1})_2 \gradpY_1^{-1} + (\vec{\xi}_{1})_3 \gradY_1^{0} \\
+	&\quad \quad \quad \quad \quad \quad \quad \quad \quad \quad \quad + (\vec{\xi}_{1})_4 \gradpY_1^{0} + (\vec{\xi}_{1})_5 \gradY_1^{1} + (\vec{\xi}_{1})_6 \gradpY_1^{1}.
+}
+Here, at each iteration, the vector $\uvec^c_n$ is given by the merging of the two order $n$ subvector of $\uvec^c$:
+\bseqn{
+	\uvec^c_n := 
+		\begin{pmatrix} 
+			u^{\gradY}_{n,-n} \\
+			u^{\gradpY}_{n,-n} \\
+			\vdots \\
+			u^{\gradY}_{n,n} \\
+			u^{\gradpY}_{n,n} \\
+		\end{pmatrix}.
+}
+Notice how the iteration also ends at $n=1$ (not $n=0$) here, since the VSHs in our tangent space basis (and hence coefficients) for degree $n=0$ are zero.
+
+
+\subsection{Sparse partial differential operators}\label{section:SHdiffoperators}
+
+The framework we have outlined for the spherical harmonics and the vector spherical harmonics allows us to easily and explicitly derive sparse operator matrices for partial differential operators such as the spherical gradient, divergence and Laplacian, as well as other key operators useful in examples such as the linearised shallow water equations. These operators will take coefficients of a function's expansion in either the SSH or VSH basis, to coefficients in either basis. 
+
 Let $\uvec$ be a vector-valued function on the tangent space of $\Omega$ with coefficients vectors $\uvecc, \uveccperp$ for its expansion in the VSH basis up to order $N \in \N$, and let $f$ be a scalar function on $\Omega$ with coefficients vector $\fvecc$ for its expansion in the SSH basis also up to order $N$, i.e.
 \bseqn{
-	\uvec(x,y,z) &\approx \VSHvec(x,y,z)^\top \: \uvecc + \VSHvecperp(x,y,z)^\top \: \uveccperp \\
+	\uvec(x,y,z) &\approx \VSHvecfull(x,y,z)^\top \: \uvec^c \\
+	&\equiv \VSHvec(x,y,z)^\top \: \uvecc + \VSHvecperp(x,y,z)^\top \: \uveccperp \\
 	&:=  \sum^N_{l=0} \sum^l_{m=-l} \big[u^{\gradY}_{l,m} \, \gradYlm(x,y,z)  + u^{\gradpY}_{l,m} \, \gradpYlm(x,y,z) \big], \\
-	f(x,y,z) &\approx \SHvec(x,y,z)^\top \: \fvecc :=  \sum^N_{l=0} \sum^l_{m=-l} f_{l,m} \, \Ylm(x,y,z)
+	f(x,y,z) &\approx \SHvec(x,y,z)^\top \: \fvecc :=  \sum^N_{l=0} \sum^l_{m=-l} f_{l,m} \, \Ylm(x,y,z).
 }
-We are now in a position to derive the sparse differential operators that can be applied to the functions $\uvec, f$.
+In order to fully exploit the sparsity of the relationships and ensure we are using banded-block-banded operators, in problems where we have an interdependency of scalar and vector-valued functions it can be useful to \enquote{expand} the scalar function's coefficients vector $\fvecc$ to be the length of the vector-valued one $\uvec^c$, with zeros being inserted after each entry, i.e. define the \textit{expanded coefficients for a scalar function on $\Omega$ in the SH basis} by
+\bseqn{
+	\fveccexp :=
+		\begin{pmatrix}
+			\fveccexp_0 \\
+			\vdots \\
+			\fveccexp_N
+		\end{pmatrix} \in \R^{2(N+1)^2}, \quad
+	\fveccexp_l := 
+		\begin{pmatrix}
+			f_{l,-l} \\
+			0 \\
+			f_{l,-l+1} \\
+			0 \\
+			\vdots \\
+		 	f_{l,l} \\
+			0
+		\end{pmatrix} \in \R^{4(l+1)}.
+}
+To help with the definitions of the operators we will discuss, let $\calE_s, \calE_v$ be (severely) rectangular matrices defined such that $\calE_s \fveccexp = \fvecc$ and $\calE_v \fvecc = \fveccexp$. We are now in a position to derive the sparse differential operators that can be applied to the functions $\uvec, f$.
 
 \begin{definition}\label{def:SHoperators}
-	We define the operator matrices $\cal{D}, \calG, \calL$ according to:
+	We define the operator matrices $\calD, \tilde \calD, \calG, \tilde \calG \calL$ according to:
 \bseqn{
 	\divergence \uvec(x,y,z) &= \SHvec(x,y,z)^\top \: \calD \: \uvecc, \\
+	\divergence \uvec(x,y,z) &= \SHvec(x,y,z)^\top \: \calE_s \: \big(\tilde \calD \: \uvec^c), \\
 	\gradS f(x,y,z) &= \VSHvec(x,y,z)^\top \: \calG \: \fvecc, \\
+	\gradS f(x,y,z) &= \VSHvecfull(x,y,z)^\top \: \tilde \calG \: \fveccexp, \\
 	\DeltaS f(x,y,z) &= \SHvec(x,y,z)^\top \: \calL \: \fvecc.
 }
 \end{definition}
+\begin{remark}
+	The operators $\tilde \calD, \tilde \calG$ would be used when vectors of the resulting length are required for the problem you are wishing to solve.
+\end{remark}
 
 \begin{theorem}
 	The operator matrices defined in \bsrefdef{def:SHoperators} are diagonal, and are given by:
 \bseqn{
-	\calG &= I_{(N+1)^2}, \quad
-	\calD \equiv \calL := 
+	\calD &\equiv \calL := 
 		\begin{pmatrix}
 			\calL_0 & & \\
 			& \ddots & \\
 			& & \calL_N
-		\end{pmatrix},
-}
-where
-\bseqn{
-	\calL_l &:= 
+		\end{pmatrix} \in \R^{(N+1)^2}, \quad
+	\tilde \calD = 
 		\begin{pmatrix}
-			-l(l+1) & & \\
-			& \ddots & \\
-			& & -l(l+1)
-		\end{pmatrix} \in \R^{(2l+1) \times (2l+1)}.
+			\calL_0 & & & & \\
+			& 0 & & & \\
+			& & \ddots & & \\
+			& & & \calL_N & \\
+			& & & & 0
+		\end{pmatrix} \in \R^{2(N+1)^2}, \\
+	\calG &= I_{(N+1)^2}, \quad
+	\tilde \calG = 
+		\begin{pmatrix}
+			1 & & & & \\
+			& 0 & & & \\
+			& & \ddots & & \\
+			& & & 1 & \\
+			& & & & 0
+		\end{pmatrix}  \in \R^{2(N+1)^2},
 }
+where $\calL_l := -l(l+1) \: I_{2l+1}$.
 \end{theorem}
 
 \begin{proof}
-	The argument for $\calG$ is trivial by definition. Now, the spherical harmonics, as the name eludes to, satisfy a harmonic relationship $\DeltaS \Ylm = \: l(l+1) \Ylm$ (see e.g. \cite{humi1987factorisation}). Thus, for the proof for $\calD$, consider
+	The arguments for $\calG$ and $\tilde \calG$ are trivial by definition. The spherical harmonics, as the name eludes to, satisfy a harmonic relationship $\DeltaS \Ylm = \: l(l+1) \Ylm$ (see e.g. \cite{humi1987factorisation}). Thus, for the proof for $\calD$ and $\tilde \calD$, consider
 \bseqn{
 	\divergence \uvec &= \divergence \Big( \sum_{l=0}^N \sum_{m=-l}^{l} [ u^{\gradY}_{l,m} \gradYlm + u^{\gradpY}_{l,m} \gradpYlm ] \Big) \\
 	&= \sum_{l=0}^N \sum_{m=-l}^{l} u^{\gradY}_{l,m} \: \DeltaS \Ylm \\
@@ -1150,6 +1199,7 @@ using the fact that $\divergence (\grad^\perp f )\equiv 0$ for any function $f$.
 Now that we have our differential operators, let's apply them in an example. 
 
 
+
 \section{Example: linear shallow water equations}
 
 The linearised shallow water equations allow us to showcase the differential operators that we defined in \bsrefdef{def:SHoperators} (namely the divergence and gradient operators) and demonstrate how the natural sparsity that our framework brings to the problem leads to a simple sparse linear system to solve.
@@ -1161,97 +1211,76 @@ Let $\uvec(x,y,z)$ be the tangential velocity of a flow and $h(x,y,z)$ be the he
 The linear SWEs are
 \bseqn{
 	\begin{cases}
-		\pfpx{t}{\uvec} + f \rvec \times \uvec - \nabla h = \mathbf{0} \\
-		\pfpx{t}{h} + \calH \nabla \cdot \uvec = 0
+		\pfpx{t}{\uvec} + f \rvec \times \uvec - \gradS h = \mathbf{0} \\
+		\pfpx{t}{h} + \calH \gradS \cdot \uvec = 0
 	\end{cases}
 }
-where $f = 2 \rotrate \cos(\varphi) =  2 \rotrate z$ is the Coriolis parameter, and $\rotrate = 7.2921 × 10^{-5}$ rad s$^{-1}$ is the rotation rate of the Earth (note that $\varphi = {\pi \over 2} - \text{latitude}$).
+where $f = 2 \rotrate \cos(\varphi) =  2 \rotrate z$ is the Coriolis parameter, and $\rotrate$ is the rotation rate of the Earth (note that $\varphi = {\pi \over 2} - \text{latitude}$ \bstodo{make a footnote}). On a full scale Earth, the rotation rate is $\rotrate = 7.2921 × 10^{-5}$ rad s$^{-1}$ \bstodo{make a footnote}.
 
-A keen eye may notice that we require one more operator not yet defined -- one for the Coriolis parameter cross product (i.e. $f \: \rvec \times \uvec$). 
-\begin{definition}\label{def:coriolisoperator}
-	Define the operator matrices $\calF, \calF^\perp$ according to:
+A keen eye may notice that -- while we have operators for the multiplication by z, the spherical gradient and divergence -- we require one more operator not yet defined for the unit vector cross product $\rvec \times \uvec$.
+\begin{definition}\label{def:unitveccrossproduct}
+	Define the operator matrix $\calR$ according to:
 \bseqn{
-	f \: \rvec \times \uvec(x,y,z) &= \VSHvec(x,y,z)^\top \: \calF \: \uveccperp + \Big(\VSHvecperp(x,y,z)\Big)^\top \: \calF^\perp \: \uvecc
+	\rvec(x,y,z) \times \uvec(x,y,z) &= \VSHvecfull(x,y,z)^\top \: \calR \uvec^c.
 }
 \end{definition}
 \begin{lemma}
-	The operators $\calF, \calF^\perp$ defined in \bsrefdef{def:coriolisoperator} are sparse with banded-block-banded structure. More specifically,
-\begin{itemize}
-	\item $\calF$ has block-bandwidths $(1,1)$, and sub-block-bandwidths $(1,1)$
-	\item $\calF^\perp$ has block-bandwidths $(1,1)$, and sub-block-bandwidths $(1,1)$
-\end{itemize}
+	The operator $\calR$ defined in \bsrefdef{def:unitveccrossproduct} is sparse with banded-block-banded structure. More specifically, $\calR$ has block-bandwidths $(0,0)$, and sub-block-bandwidths $(1,1)$ (i.e. is tridiagonal).
 \end{lemma}
 \begin{proof}
-	Using \bsreflemma{lemma:VSHrecurrences}, we have that:
+	Using the relations that $\gradYlm = \gradS \Ylm$ and $\gradpYlm = \rvec \times \gradS \Ylm$ for each $l \in \N$, $m \in \Z$ s.t. $-l \le m \le l$, we have that:
 \bseqn{
-	f \: \rvec \times \bold{u} &= f \: \rvec \times \sum_{l=0}^{N} \sum_{m=-l}^{l} [ u^{\gradY}_{l,m} \gradYlm + u^{\gradpY}_{l,m} \gradpYlm ] \\
-	&= 2 \: \rotrate \: z \: \sum_{l=0}^{N} \sum_{m=-l}^{l} [ u^{\gradY}_{l,m} \rvec \times \gradYlm + u^{\gradpY}_{l,m} \rvec \times ( \rvec \times \gradYlm ) ] \\
-	&= 2 \: \rotrate \: \sum_{l=0}^{N} \sum_{m=-l}^{l} [ u^{\gradY}_{l,m} z \: \gradpYlm - u^{\gradpY}_{l,m} z \: \gradYlm ) ] \\
-	&= 2 \: \rotrate \: \sum_{l=0}^{N} \sum_{m=-l}^{l} \Big[ u^{\gradY}_{l,m} \: \Big( \Gamma_{l,m,1}^* \gradpY^{m}_{l-1} + \Gamma_{l,m,3}^* \gradpY^{m}_{l+1} + \Gamma_{l,m,2} \gradY^{m}_{l} \Big) \\
-	&\quad \quad \quad \quad \quad \quad \quad \quad - u^{\gradpY}_{l,m} \: \Big( \Gamma_{l,m,1} \gradY^{m}_{l-1} + \Gamma_{l,m,3} \gradY^{m}_{l+1} + \Gamma_{l,m,2}^* \gradpY^{m}_{l} \Big) \Big].
+	\rvec \times \bold{u} &= \rvec \times \sum_{l=0}^{N} \sum_{m=-l}^{l} [ u^{\gradY}_{l,m} \gradYlm + u^{\gradpY}_{l,m} \gradpYlm ] \\
+	&= \sum_{l=0}^{N} \sum_{m=-l}^{l} [ u^{\gradY}_{l,m} \rvec \times \gradYlm + u^{\gradpY}_{l,m} \rvec \times ( \rvec \times \gradYlm ) ] \\
+	&= \sum_{l=0}^{N} \sum_{m=-l}^{l} [ u^{\gradY}_{l,m} \: \gradpYlm - u^{\gradpY}_{l,m} \: \gradYlm ) ].
 }
-We can then write down the operators $\calF, \calF^\perp$ as follows:
+We can then write down the operator $\calR$ as follows:
 \bseqn{
-	\calF &= \bar{\calF^\perp} = 2 \: \rotrate \: 
+	\calR &=
 		\begin{pmatrix}
-			\calF_{0,2} & \calF_{1,1} & & & & \\
-			\calF_{0,3} & \calF_{1,2} & \calF_{2,1} & & & \\
-			& \calF_{1,3} & \calF_{2,2} & \calF_{3,1}  & & & \\
-			& & \calF_{2,3} & \ddots & \ddots & \\
-			& & & \ddots & \ddots & \ddots \\
-		\end{pmatrix}
+			R & & & \\
+			& R & & \\
+			& & & \ddots
+		\end{pmatrix} \in \R^{2(N+1)^2 \times 2(N+1)^2},
 }
-where $\bar{A}$ denotes the conjugate matrix of $A$ (i.e. where the entries of $\bar{A}$ are simply the complex conjugates of the entries of $A$) \cite[p.10]{courant1953methods}, and for $l = 0,\dots,N$
+where the blocks $R$ are simply given by
 \bseqn{
-	\calF_{l,1} &:= 
+	R &:= 
 		\begin{pmatrix}
-			0 & \Gamma_{l,-l+1,1} & & \\
-			& & \ddots & & \\
-			& & & \Gamma_{l,l-1,1} & 0 \\
-		\end{pmatrix} \in \R^{(2l-1)\times(2l+1)}, \quad (l \ne 0), \\
-	\calF_{l,2} &:= 
-		\begin{pmatrix}
-			\Gamma_{l,-l,2} & & \\
-			& \ddots & \\
-			& & \Gamma_{l,l,2} \\
-		\end{pmatrix}  \in \R^{(2l+1)\times(2l+1)}, \\
-	\calF_{l,3} &:= 
-		\begin{pmatrix}
-			0 \\
-			\Gamma_{l,-l,3} \\
-			& & \ddots \\
-			& & & & \Gamma_{l,l,3} \\
-			& & & & 0 \\
-		\end{pmatrix} \in \R^{(2l+3)\times(2l+1)}.
+			0 & 1 \\
+			-1 & 0
+		\end{pmatrix} \in \R^{2\times2}.
 }
 \end{proof}
 
-For simplicity, we implement a backward Euler timestepping method to solve the linear SWEs with timestep $\Delta t$:
+For simplicity, we will implement a backward Euler timestepping method to solve the linear SWEs with timestep $\Delta t$:
 \bseqn{
-	\uvec_{n+1} &= \uvec_{n} + \Delta t \: (\nabla h_{n+1} - f \rvec \times \uvec_{n+1}) \\
-	h_{n+1} &= h_n - \Delta t \: \calH \nabla \cdot \uvec_{n+1}
+	\uvec_{n+1} &= \uvec_{n} + \Delta t \: (\gradS h_{n+1} - f \rvec \times \uvec_{n+1}) \\
+	h_{n+1} &= h_n - \Delta t \: \calH \gradS \cdot \uvec_{n+1}
 }
-In coefficient space, this system becomes:
+Let's write this in coefficient space. Firstly, our coefficients vectors for the functions $\uvec, h$ we will denote $\uvec^c, \vec{h}^c$ -- that is:
 \bseqn{
-	\uvecc_{n+1} &= \uvecnc + \Delta t \: (\calG \vec{h}^c_{n+1} - \calF \uveccperp_{n+1}) \\
-	\uveccperp_{n+1} &=  - \Delta t \: \calF^\perp \uvecc_{n+1} \\
-	\vec{h}^c_{n+1} &= \vec{h}^c_n - \Delta t \: \calH D \uvecc_{n+1}
+	\uvec(x,y,z) &\approx \VSHvecfull(x,y,z)^\top \: \uvec^c \\
+	h(x,y,z) &\approx \SHvec(x,y,z)^\top \: \vec{h}^c.
 }
-$\iff$
+As eluded to earlier, we will \enquote{extend} the scalar function's coefficients vector, writing $\tilde{\vec{h}}^c = E_v \vec{h}^c$, as described in \bsrefsection{section:SHdiffoperators}. Thus, our system can be written as a matrix-vector system:
 \bseqn{
-	\uvecc_{n+1} &= \uvecc_{n} + \Delta t \: (\calG \vec{h}^c_n - \Delta t \: \calH \calG \calD \uvecc_{n+1} + \Delta t \calF \calF^\perp \uvecc_{n+1}) \\
-	\uveccperp_{n+1} &=  - \Delta t \: \calF^\perp \uvecc_{n+1} \\
-	\vec{h}^c_{n+1} &= \vec{h}^c_n - \Delta t \: \calH D \uvecc_{n+1}
+	\uvec^c_{n+1} &= \uvec^c_n + \Delta t \: (\tilde \calG \tilde{\vec{h}}^c_{n+1} - 2 \rotrate J_z \calR \uvec^c_{n+1}) \\
+	\tilde{\vec{h}}^c_{n+1} &= \tilde{\vec{h}}^c_n - \Delta t \: \calH \tilde \calD \uvec^c_{n+1}
 }
 $\iff$
 \bseqn{
-	\uvecc_{n+1} &= (I + \Delta t^2 \calH \calG \calD - \Delta t^2 \calF \calF^\perp)^{-1} \: (\uvecc_{n} + \Delta t \: \calG \vec{h}^c_n) \\
-	\uveccperp_{n+1} &=  - \Delta t \: \calF^\perp \uvecc_{n+1} \\
-	\vec{h}^c_{n+1} &= \vec{h}^c_n - \Delta t \: \calH \calD \uvecc_{n+1}.
+	\uvec^c_{n+1} &= \uvec^c_n + \Delta t \: (\tilde \calG \tilde{\vec{h}}^c_{n} - \Delta t \: \calH \tilde \calG \tilde \calD \uvecc_{n+1} - 2 \rotrate J_z \calR \uvec^c_{n+1}) \\
+	\tilde{\vec{h}}^c_{n+1} &= \tilde{\vec{h}}^c_n - \Delta t \: \calH \tilde \calD \uvec^c_{n+1}
 }
-Here, it is clear that the matrix $I + \Delta t^2 \calH \calG \calD - \Delta t^2 \calF \calF^\perp$ is sparse with banded-block-banded structure, and hence this system will be efficient to solve. Doing so at each iteration provides us with the coefficients vectors $\uvecc_{n+1}, \uveccperp_{n+1}, \vec{h}^{c}_{n+1}$ if we know $\uvecc_{n}, \uveccperp_{n}, \vec{h}^{c}_{n}$. 
+$\iff$
+\bseqn{
+	\Big[ I + \Delta t^2 \calH \tilde \calG \tilde \calD - 2 \rotrate \Delta t \: J_z \calR \Big] \: \uvec^c_{n+1} &= \uvec^c_n + \Delta t \tilde \calG \tilde{\vec{h}}^c_{n} \\
+	\tilde{\vec{h}}^c_{n+1} &= \tilde{\vec{h}}^c_n - \Delta t \: \calH \tilde \calD \uvec^c_{n+1}.
+}
+Here, it is clear that the matrix $I + \Delta t^2 \calH \tilde \calG \tilde \calD - 2 \rotrate \Delta t \: J_z \calR$ is sparse with banded-block-banded structure, and hence this system will be efficient to solve. Doing so at each iteration provides us with the coefficients vectors $\uvec^c_{n+1}, \tilde{\vec{h}}^c_{n+1}$ if we know $\uvec^c_{n}, \tilde{\vec{h}}^c_{n}$. Of course, when evaluating the function $h$, we can simply gather back the coefficients vector $\vec{h}^c$ by $\vec{h}^c = E_s \tilde{\vec{h}}^c$.
 
-\bstodo{It would be nice to have some images here. However I need to update/fix/tidy my SH code as its probably got a few bugs in it having now gone back over the derivations that I have done.}
+\bstodo{Images}
 
 
 
