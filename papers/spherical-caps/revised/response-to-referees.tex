@@ -1,0 +1,155 @@
+\documentclass[10pt]{letter}
+
+\usepackage[papersize={8.5in,11in},margin=1in]{geometry}
+\usepackage[final,stretch=10,shrink=10]{microtype} % default of stretch=shrink=20 is a little too much
+\usepackage{amsmath,amsfonts,amsxtra,amssymb}
+\usepackage{url}
+\usepackage{bm}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{xcolor}
+
+\definecolor{bluey}{rgb}{0.0,0.2,0.5}
+\newcommand{\comment}[1]{\textit{\color{bluey}#1}}
+
+%\definecolor{rev1}{HTML}{cb270f}
+%\definecolor{rev2}{HTML}{1c8235}
+
+
+\usepackage{todonotes}
+\newcommand{\sotodo}{\todo[color=green]}
+\newcommand{\sotodoinline}{\todo[color=green,inline=true]}
+\newcommand{\bstodo}{\todo[color=pink]}
+\newcommand{\bstodoinline}{\todo[color=pink,inline=true]}
+
+\newcommand{\half}{\frac{1}{2}}
+\newcommand{\genjac}{R}
+
+
+\begin{document}
+
+\thispagestyle{empty}
+
+\hfill
+\begin{flushright}
+Correspondence to: \\
+Sheehan Olver \\
+s.olver@imperial.ac.uk \\
+\end{flushright}
+
+\vspace{1em}
+\hfill\today
+
+Dear Jose Bautista Francisco III
+
+Thank you for forwarding the reviews of our article. We greatly appreciate your time as well as that of the referees.  We have made changes to reflect the comments and suggestions of the referees. Below we detail our response to the referees' reports. 
+
+Ben Snowball and Sheehan Olver
+
+\bigskip 
+
+\centerline{\textbf{Response to Referee 1}}
+
+\begin{itemize}[parsep=1em,leftmargin=1em]
+
+\item \comment{The authors spend an inadaquate amount of time discussing other approaches for solving this problem and comparing their methodology (e.g., closest point method, radial basis functions). What is the complexity convergence behavior of other approaches that can handle spherical caps?}
+
+\bstodoinline{write comment}
+
+
+\item \comment{Definition 2: It should be mentioned somewhere that OPs should defined by the condition that they are orthogonal to all lower degree polynomials.}
+
+Added a comment before Definition 2 to explain this, as well as an extra line in Definition 2.
+
+
+\item \comment{Above eq 7: These are not Jacobi matrices in the classical sense, but they are block Jacobi matrices.}
+
+Addressed.
+
+
+\item \comment{Beginning of Section 2.3: What is the "triangle case"?}
+
+Explained via a comment in the relevant place. Typo has also been corrected in one equation in the section (missing z from $Q(x,y,z)$).
+
+
+\item \comment{Remark at the bottom of page 7: I do not know what it means for z to be rotionally invariant. But the z coordinate is invariant under any rotation involving only the $\theta$ variable.}
+
+Addressed.
+
+
+\item \comment{Definition 6: Since $\tilde a \ge 2$, it only needs to be stated that $\tilde a$ is an integer.}
+
+Fixed.
+
+
+\item \comment{Figure 1: Extra the in the the}
+
+Fixed.
+
+
+\item \comment{All figures: They should be larger with larger font sizes.}
+
+\bstodoinline{Fix this}
+
+
+\item \comment{About Section 4.3: Is it possible to leverage the DCT to speed up the expansion of functions in the basis?}
+
+\bstodoinline{Reference Michael Slavinsky paper on Transforms, say it's an open problem.}
+
+
+\item \comment{Figure 4: 'N is the the degree' is ambiguous. How does N relate to the number of unknowns?}
+
+This is mentioned in the body of the text, but now explained in the caption.
+
+
+\end{itemize}
+
+
+
+
+\bigskip 
+
+\centerline{\textbf{Response to Referee 2}}
+
+\begin{itemize}[parsep=1em,leftmargin=1em]
+
+\item \comment{One shortcoming of this paper is that it has no discussion of the condition number of the linear systems to be solved. I suspect that the condition numbers can get large, but if so, can the matrices be preconditioned in a similar way the Olver?Townsend ultraspherical spectral method (so that it has bounded condition number)?}
+
+\bstodoinline{Plot condition number of each m-block of Laplacian. Also do plot of preconditioned Laplacian (where preconditioner P is the inverse of the diagonal of the Laplacian) which should mean bounded condition numbers.}
+
+
+\item \comment{If the condition numbers do not get large, can you prove it, indicate why, or give numerical evidence?}
+
+The evidence we can provide is that which addresses the first question.
+
+
+\item \comment{The paper only includes numerical experiments involving zero Dirichlet boundary conditions. Please could the authors clarify in the manuscript if there are any roadblocks to boundary conditions beyond the zero Dirichlet ones demonstrated in Section 5?}
+
+Added comment a small subsection to Section 5 to address this. \bstodoinline{Is this enough?}
+
+
+\item \comment{Is the code used to produce the numerical experiments going to be made publicly available? For example in the ApproxFun Julia package?}
+
+The package that makes up the framework for expanding functions, obtaining the operator matrices etc. is purely experimental at this stage, but is publicly available. This fact and where it can be found has been added to the paper.
+
+
+
+
+\end{itemize}
+
+\end{document}
+
+
+
+
+
+
+
+
+
+
+
+
+
+  

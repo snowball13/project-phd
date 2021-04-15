@@ -84,7 +84,10 @@ An overview of the paper is as follows:
 
 \noindent\secref{Examples}: We demonstrate the proposed technique for solving differential equations on the spherical cap such as the Poisson equation, variable coefficient Helmholtz equation, and Biharmonic equation.  
 
+The code that allows one to produce the numerical examples in this paper is publicly available as a Julia package\footnote{https://github.com/snowball13/OrthogonalPolynomialFamilies} to partner the ApproxFun package \cite{ApproxFun} -- however, it is strongly warned that the package is purely experimental at this stage.
+
 \noindent{\bf Acknowledgments}: The first author was supported by the Engineering and Physical Sciences Research Council Mathematics of Planet Earth Centre for Doctoral Training at Imperial College London and the University of Reading, with grant number EP/L016613/1.The second author was supported by the Leverhulme Trust Research Project Grant RPG-2019-144 ``Constructive approximation theory on and inside algebraic curves and surfaces''.
+
 
 
 \section{Orthogonal polynomials on spherical caps}\label{Section:OPs}
@@ -124,6 +127,7 @@ for $i \in {0,1}, \: 0 \le k \le n, \: n = 0,1,2,\dots$ are orthogonal polynomia
 \end{align*}
 on $\Omega$, where $\D A = \sinphi \: \D \theta \: \D \varphi$ is the uniform spherical measure on $\Omega$. 
 \end{proposition}
+Of course, \enquote{orthogonal polynomials} are defined as such by the condition that each polynomial is orthogonal to each other, with respect to the given inner product.
 
 For the spherical cap, we can use Proposition \ref{prop:construction} to create our one-parameter family of OPs. We first introduce notation for our family of non-classical univariate OPs that will be used as the $r_n$ polynomials above.
 \begin{definition}[\cite{snowball2019sparse}]\label{def:OPconstruction}
@@ -140,7 +144,10 @@ where
 	\normgenjac^{(a,b)} := \int_\alpha^1 \: \genjacw^{(a,b)}(x) \: \D x \label{eqn:ipnormalisation}
 \end{align}
 is a normalising constant.
-Denote the two-parameter family of orthonormal polynomials on $[\alpha,\beta]$ by $\{\genjac_n^{(a,b)}\}$, orthonormal with respect to the inner product defined in (\ref{eqn:ipgenjac}).
+Denote the two-parameter family of orthonormal polynomials on $[\alpha,\beta]$ by $\{\genjac_n^{(a,b)}\}$, orthonormal with respect to the inner product defined in (\ref{eqn:ipgenjac}). That is,
+\begin{align}
+	\ip< \genjac_n^{(a,b)}, \: \genjac_m^{(a,b)} >_{\genjacw^{(a,b)}} = \delta_{n,m}.
+\end{align}
 \end{definition}
 
 We can now define the 3D OPs for the spherical cap.
@@ -230,10 +237,10 @@ for $(x,y,z) \in \Omega$, where
 \end{align*}
 \end{lemma}
 \begin{remark}
-For $z$ multiplication, note that different Fourier modes do not interact. This is because $z$ is rotationally invariant. 
+	For $z$ multiplication, note that different Fourier modes do not interact. This is because multiplication by $z$ is invariant with respect to rotation around the $z$-axis. 
 \end{remark}
 \begin{proof}
-The 3-term recurrence for multiplication by $z$ follows from (\ref{eqn:Rrecurrence}). For the recurrence for multiplication by $x$, since $\{\scopmjha\}$ for $m = 0,\dots,n+1$, $j = 0,\dots,m$, $h = 0,1$ is an orthogonal basis for any degree $n+1$ polynomial on $\Omega$, we can expand 
+	The 3-term recurrence for multiplication by $z$ follows from (\ref{eqn:Rrecurrence}). For the recurrence for multiplication by $x$, since $\{\scopmjha\}$ for $m = 0,\dots,n+1$, $j = 0,\dots,m$, $h = 0,1$ is an orthogonal basis for any degree $n+1$ polynomial on $\Omega$, we can expand 
 \begin{align*}
 	x \: \scopnkia(x,y,z) = \sum_{m=0}^{n+1} \sum_{j=0}^m \sum_{h=0}^1 c_{m,j} \: \scopmjha(x,y,z).
 \end{align*}
@@ -307,7 +314,7 @@ where
 			& & & \ddots & \ddots & \ddots \\
 		\end{pmatrix}.
 \end{align*}
-Note that $J_x^{(a)}, J_y^{(a)}, J_z^{(a)}$ are \textit{banded-block-banded matrices}:
+While $J_x^{(a)}, J_y^{(a)}, J_z^{(a)}$ are not Jacobi matrices in the classical sense, they are block Jacobi matrices. However, it is useful to simply label them as such. In fact, note that they are in fact \textit{banded-block-banded matrices}:
 
 \begin{definition}
 	A block matrix $A$ with blocks $A_{i,j}$ has block-bandwidths $(L,U)$ if $A_{i,j} = 0$ for $- L \leq j-i \leq U$, and sub-block-bandwidths $(\lambda, \mu)$ if all blocks $A_{i,j}$ are banded with bandwidths $(\lambda,\mu)$. A matrix where the block-bandwidths and sub-block-bandwidths are small compared to the dimensions is referred to as a banded-block-banded matrix. 
@@ -436,7 +443,7 @@ Note that the sparsity of the Jacobi matrices (in particular the sparsity of the
 
 \subsection{Building the OPs} 
 
-Following the triangle case \cite{olver2019triangle}, we use a multivariate analogue of Clenshaw's algorithm for evaluation, where we  combine each system in (\ref{eqn:jacobimatricesdefinitionalt}) into a block-tridiagonal system, for any $(x,y,z) \in \Omega$:
+A multivariate analogue of Clenshaw's algorithm for recursive evaluation of the OPs has been established for methods on other domains in 2D such as the triangle \cite{olver2019triangle} and the disk-slice \cite{snowball2019sparse}, and we proceed similarly here. Combining each system in (\ref{eqn:jacobimatricesdefinitionalt}) into a block-tridiagonal system, for any $(x,y,z) \in \Omega$, yeilds:
 \begin{align*}
 	\renewcommand\arraystretch{1.3}
 	\begin{pmatrix}
@@ -483,8 +490,8 @@ For each $n = 0,1,2\dots$ let $\Dnt$ be any matrix that is a left inverse of $A_
 \begin{align*}
 	\begin{cases}
 		\bigscopta_{-1}(x,y,z) := 0 \\
-		\bigscopta_{0}(x,y) := \scopa_0 \\
-		\bigscopta_{n+1}(x,y) = -\Dnt (B_n-G_n(x,y,z)) \bigscopta_n(x,y,z) - \Dnt C_n  \, \bigscopta_{n-1}(x,y,z), \quad n = 0,1,2,\dots.
+		\bigscopta_{0}(x,y,z) := \scopa_0 \\
+		\bigscopta_{n+1}(x,y,z) = -\Dnt (B_n-G_n(x,y,z)) \bigscopta_n(x,y,z) - \Dnt C_n  \, \bigscopta_{n-1}(x,y,z), \quad n = 0,1,2,\dots.
 	\end{cases}
 \end{align*}
 
@@ -570,7 +577,7 @@ The operator matrices we derive here act on coefficient vectors, that represent 
 where $\vec f = (f_{n,k,i})$ is the coefficients vector for the function $f$.
 
 \begin{definition}\label{def:differentialoperators}
-	Let $a$ be a nonnegative parameter, and $\tilde a \ge 2$ be a positive integer. Define the operator matrices $D_\varphi^{(a)}, \: W_\varphi^{(a)}, \: D_\theta, \: \calL^{(a)\to(a+\tilde a)}, \: \calL_W^{(a)\to(a-\tilde a)}, \: \Delta^{(1)}_W$ according to:
+	Let $a$ be a nonnegative parameter, and $\tilde a \ge 2$ be an integer. Define the operator matrices $D_\varphi^{(a)}, \: W_\varphi^{(a)}, \: D_\theta, \: \calL^{(a)\to(a+\tilde a)}, \: \calL_W^{(a)\to(a-\tilde a)}, \: \Delta^{(1)}_W$ according to:
 \begin{align*}
 	\rho \pfpx{\varphi}{f} (x,y,z)&= \bigscop_N^{(a+1)}(x,y,z)^\top \: D_\varphi^{(a)} \: \mathbf{f}, \\
 	\rho \ppx{\varphi}[\genjacw^{(a,0)}(z) \: f(x,y,z)] &= \bigW_N^{(a-1)}(x,y)^\top \: W_\varphi^{(a)}\: \mathbf{f}, \\
@@ -822,7 +829,7 @@ which is zero for $n > m + \tilde a \iff m < n - \tilde a$. The sparsity argumen
 		\centering
 		\caption{The Biharmonic operator $\calB_W^{(2)}$} 
 	\end{subfigure}\hfil % <-- added
-	\caption{\enquote{Spy} plots of (differential) operator matrices, showing their sparsity. For (c), the the weighted variable coefficient Helmholtz operator is $\Delta^{(1)}_W + k^2 \: T^{(0)\to(1)} \: V({J_x^{(0)}}^\top, {J_y^{(0)}}^\top, {J_z^{(0)}}^\top) \: T_W^{(1)\to(0)}$ for $v(x,y,z) = 1 - (3(x-x_0)^2 + 5(y-y_0)^2 + 2(z-z_0)^2)$ where $(x_0, z_0) := (0.7, 0.2)$, $y_0 := \sqrt{1 - x_0^2 - z_0^2}$ and $k = 200$.}
+	\caption{\enquote{Spy} plots of (differential) operator matrices, showing their sparsity. For (c), the weighted variable coefficient Helmholtz operator is $\Delta^{(1)}_W + k^2 \: T^{(0)\to(1)} \: V({J_x^{(0)}}^\top, {J_y^{(0)}}^\top, {J_z^{(0)}}^\top) \: T_W^{(1)\to(0)}$ for $v(x,y,z) = 1 - (3(x-x_0)^2 + 5(y-y_0)^2 + 2(z-z_0)^2)$ where $(x_0, z_0) := (0.7, 0.2)$, $y_0 := \sqrt{1 - x_0^2 - z_0^2}$ and $k = 200$.}
 	\label{fig:sparsity}
 \end{figure}
 
@@ -1059,7 +1066,7 @@ We now demonstrate how the sparse linear systems constructed as above can be use
 \begin{figure}[t]
 	\centering % <-- added
 	\includegraphics[scale=0.35]{complexity-Nend=1000}
-	\caption{Time in seconds to build and solve the system $\big[\DeltaS + v(x,y,z) \big] \: u(x,y,z) = f(x,y,z)$, for a rotationally invariant $v(x,y,z) = v(z)$. This demonstrates that the approach is roughly of order $\bigO(N^2)$, where $N$ is the degree to which we approximate the solution. Here, we used $f = -2e^{x}yz(2+x) + (z - \alpha) e^{x} (y^3 + z^2 y - 4xy - 2y)$ and $v(x,y,z) = v(z) = \cos(z)$.}
+	\caption{Time in seconds to build and solve the system $\big[\DeltaS + v(x,y,z) \big] \: u(x,y,z) = f(x,y,z)$, for a rotationally invariant $v(x,y,z) = v(z)$. This demonstrates that the approach is roughly of order $\bigO(N^2)$, where $N$ is the degree to which we approximate the solution (the number of unknowns is then $(N+1)^2$). Here, we used $f = -2e^{x}yz(2+x) + (z - \alpha) e^{x} (y^3 + z^2 y - 4xy - 2y)$ and $v(x,y,z) = v(z) = \cos(z)$.}
 	\centering
 	\label{fig:complexity}
 \end{figure}
@@ -1161,6 +1168,11 @@ Our last erxample is the biharmonic equation: find $u(x,y,z)$ given a function $
 	\label{eqn:biharmonic}
 \end{align}
 where $\DeltaS^2$ is the Biharmonic operator, noting the imposition of zero Dirichlet and Neumann boundary conditions on $u$. For clarity, we reiterate that the unit normal vector in this sense is simply $\unitvec{n}(x,y,z) = \unitvec{n}(\vec x) := {\vec x \over \norm{\vec x}} = \vec x$ (see Section \ref{subsection:furtherdiffoperators}). In Figure \ref{fig:biharmonic} we see the solution to the Biharmonic equation (\ref{eqn:biharmonic}) in the spherical cap $\Omega$. In Figure \ref{fig:biharmonic} we also show the norms of each block of calculated coefficients of the approximation for four more complex right-hand sides of the biharmonic equation with $N = 200$, that is, $(N+1)^2 = 40,401$ unknowns. Once again, the rate of decay in the coefficients is a proxy for the rate of convergence of the computed solution, and we see that we achieve exponential convergence for these more complex functions.
+
+
+\subsection{Other boundary conditions}
+
+Other boundary conditions beyond those already presented here are beyond the scope of this paper. However, the approach established for the case of a triangle domain in 2D shows how Neumann conditions can be done by writing these as a system of equations in partial derivatives \cite{olver2019triangle}. This approach may also work here for the spherical cap. Ideally, one would properly tackle the tangent space (which again is beyond the scope of this paper) which would lower the degrees of freedom.
 
 
 
