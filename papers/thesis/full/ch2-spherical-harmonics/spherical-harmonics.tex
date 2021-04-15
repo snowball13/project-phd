@@ -2,6 +2,7 @@
 
 \chapter{Spherical harmonics as orthogonal polynomials}
 
+\bstodoinline{Summarise the ECMWF approach, and how this work is then a stepping stone to understanding more about multi dim OPs on complex domains.}
 
 To introduce ourselves to the world of multidimensional orthogonal polynomials for solving PDEs on the sphere, we can naturally choose to look at the famous spherical harmonics. Our aim here is to express the spherical harmonics as polynomials in three variables $x, y, z$ to evaluate functions and solve PDEs on the whole sphere. More precisely, we desire the solution to partial differential equations on the domain
 \bseqn{
@@ -502,12 +503,17 @@ We start as before for the scalar case by finding $x \, \gradYlm (x,y,z)$, $x \,
 	\int_0^{2\pi} \: \eimtheta \: e^{-im'\theta} \: \cos(\theta) \D\theta &= \pi (\delta_{m',m-1} + \delta_{m',m+1}) \label{eqn:intcomplexexpcos} \\
 	\int_0^{2\pi} \: \eimtheta \: e^{-im'\theta} \: \sin(\theta) \D\theta &= i \; \pi (\delta_{m',m-1} - \delta_{m',m+1}) \label{eqn:intcomplexexpsin}
 }
-and
+and, for $l \in \No, m \in \Z$ s.t. $-l \le m \le l$,
 \bseqnnumber{
 	&\int_{-1}^1 \: \jaclmabs{l}{m}(z) \: \jaclmabs{l'}{m}(z) \: \rho(z)^{2\abs{m}} \: \D z = \delta_{l',l} \: {1 \over 2\pi (\clm)^2} \label{eqn:normjac} \\
-	&\jaclmabsdz{l}{m}(z) = d_{l,m} \: \jaclmbracket{l}{\abs{m} + 1} \quad \text{where } d_{l,m} := \half (l + \abs{m} + 1), \label{eqn:diffjac},
+	&\jaclmabsdz{l}{m}(z) = d_{l,m} \: \jaclmbracket{l}{\abs{m} + 1} \quad \text{where } 
+	d_{l,m} := 
+		\begin{cases}
+			\half (l + \abs{m} + 1) & l > \abs{m} \\
+			0 & l = \abs{m}
+		\end{cases}. \label{eqn:diffjac}
 }
-where \bsrefeqn{eqn:normjac} and \bsrefeqn{eqn:diffjac} are consequences of the definition of the Jacobi polynomials, see \cite[Table 18.3.1, 18.9.15]{DLMF}. 
+\bsrefeqncapital{eqn:normjac} and \bsrefeqn{eqn:diffjac} are simply consequences of the definition of the Jacobi polynomials -- see \cite[Table 18.3.1]{DLMF} and \cite[18.9.15]{DLMF}. 
 
 The expressions for the VSHs as given in \bsrefeqn{eqn:VSHs} together with the above allow us to be able to find the coefficients for our desired expressions for $x \gradYlm$, $y \gradYlm$, $z \gradYlm$, $x \gradpYlm$, $y \gradpYlm$ and $z \gradpYlm$. 
 
@@ -537,12 +543,12 @@ where,
 			\tilde A_{l,m,2} & \text{if } m \ge 0 \\
 			\tilde A_{l,\abs{m},1} & \text{if } m < 0
 		\end{cases} \\
-	A_{l,m,3} &:= {\clm c_{l-1}^{m-1} \over 2 (l+1)(l+2)}
+	A_{l,m,3} &:= {\clm c_{l+1}^{m-1} \over 2 (l+1)(l+2)}
 		\begin{cases}
 			\tilde A_{l,m,3} &\text{if } m > 0 \\
 			\tilde A_{l,\abs{m},4} &\text{if } m \le 0
 		\end{cases} \\
-	A_{l,m,4} &:= {\clm c_{l-1}^{m+1} \over 2 (l+1)(l+2)}
+	A_{l,m,4} &:= {\clm c_{l+1}^{m+1} \over 2 (l+1)(l+2)}
 		\begin{cases}
 			\tilde A_{l,m,4} &\text{if } m \ge 0 \\
 			\tilde A_{l,\abs{m},3} &\text{if } m < 0
@@ -1004,7 +1010,7 @@ and where $\vec{\eta}_{0}, \vec{\eta}_{1}, \vec{\eta}_{2}, \vec{\eta}_{3} \in \R
 		\end{cases}, \\
 	\big(\vec{\eta}_{1}\big)_j &= 
 		\begin{cases}
-			\big(\vec{\eta}_{0}\big)_j & j = 2, 4(2l+1) + 4 \\
+			\big(\vec{\eta}_{0}\big)_{j-1} & j = 2, 4(2l+1) + 4 \\
 			0 & o/w
 		\end{cases}, \\
 	\big(\vec{\eta}_{2}\big)_j &= 
@@ -1015,7 +1021,7 @@ and where $\vec{\eta}_{0}, \vec{\eta}_{1}, \vec{\eta}_{2}, \vec{\eta}_{3} \in \R
 		\end{cases}, \\
 	\big(\vec{\eta}_{3}\big)_j &= 
 		\begin{cases}
-			\big(\vec{\eta}_{2}\big)_j & j = 2(2l+1), 6(2l+1) - 4 \\
+			\big(\vec{\eta}_{2}\big)_{j-1} & j = 2(2l+1), 6(2l+1) - 4 \\
 			0 & o/w
 		\end{cases}.
 }
@@ -1158,15 +1164,13 @@ To help with the definitions of the operators we will discuss, let $\calE_s, \ca
 			\calL_0 & & \\
 			& \ddots & \\
 			& & \calL_N
-		\end{pmatrix} \in \R^{(N+1)^2}, \quad
+		\end{pmatrix} \in \R^{(N+1)^2 \times (N+1)^2}, \quad
 	\tilde \calD = 
 		\begin{pmatrix}
-			\calL_0 & & & & \\
-			& 0 & & & \\
-			& & \ddots & & \\
-			& & & \calL_N & \\
-			& & & & 0
-		\end{pmatrix} \in \R^{2(N+1)^2}, \\
+			\tilde \calD_0 & & \\
+			& \ddots & \\
+			& & \tilde \calD_N
+		\end{pmatrix} \in \R^{2(N+1)^2 \times 2(N+1)^2}, \\
 	\calG &= I_{(N+1)^2}, \quad
 	\tilde \calG = 
 		\begin{pmatrix}
@@ -1175,9 +1179,19 @@ To help with the definitions of the operators we will discuss, let $\calE_s, \ca
 			& & \ddots & & \\
 			& & & 1 & \\
 			& & & & 0
-		\end{pmatrix}  \in \R^{2(N+1)^2},
+		\end{pmatrix}  \in \R^{2(N+1)^2 \times 2(N+1)^2},
 }
-where $\calL_l := -l(l+1) \: I_{2l+1}$.
+where
+\bseqn{
+	\calL_l := -l(l+1) \: I_{2l+1}, \quad
+	\tilde \calD_l := \begin{pmatrix}
+			-l(l+1) & & & & \\
+			& 0 & & & \\
+			& & \ddots & & \\
+			& & & -l(l+1) & \\
+			& & & & 0
+		\end{pmatrix} \in \R^{2(2l+1) \times 2(2l+1)}.
+}.
 \end{theorem}
 
 \begin{proof}
@@ -1194,7 +1208,6 @@ using the fact that $\divergence (\grad^\perp f )\equiv 0$ for any function $f$.
 	&= \sum_{l=0}^N \sum_{m=-l}^{l} - f_{l,m} \: l(l+1) \Ylm.
 }
 \end{proof}
-
 
 Now that we have our differential operators, let's apply them in an example. 
 
@@ -1275,10 +1288,10 @@ $\iff$
 }
 $\iff$
 \bseqn{
-	\Big[ I + \Delta t^2 \calH \tilde \calG \tilde \calD - 2 \rotrate \Delta t \: J_z \calR \Big] \: \uvec^c_{n+1} &= \uvec^c_n + \Delta t \tilde \calG \tilde{\vec{h}}^c_{n} \\
+	\Big[ I + \Delta t^2 \calH \tilde \calG \tilde \calD + 2 \rotrate \Delta t \: J_z \calR \Big] \: \uvec^c_{n+1} &= \uvec^c_n + \Delta t \tilde \calG \tilde{\vec{h}}^c_{n} \\
 	\tilde{\vec{h}}^c_{n+1} &= \tilde{\vec{h}}^c_n - \Delta t \: \calH \tilde \calD \uvec^c_{n+1}.
 }
-Here, it is clear that the matrix $I + \Delta t^2 \calH \tilde \calG \tilde \calD - 2 \rotrate \Delta t \: J_z \calR$ is sparse with banded-block-banded structure, and hence this system will be efficient to solve. Doing so at each iteration provides us with the coefficients vectors $\uvec^c_{n+1}, \tilde{\vec{h}}^c_{n+1}$ if we know $\uvec^c_{n}, \tilde{\vec{h}}^c_{n}$. Of course, when evaluating the function $h$, we can simply gather back the coefficients vector $\vec{h}^c$ by $\vec{h}^c = E_s \tilde{\vec{h}}^c$.
+Here, it is clear that the matrix $I + \Delta t^2 \calH \tilde \calG \tilde \calD + 2 \rotrate \Delta t \: J_z \calR$ is sparse with banded-block-banded structure, and hence this system will be efficient to solve. Doing so at each iteration provides us with the coefficients vectors $\uvec^c_{n+1}, \tilde{\vec{h}}^c_{n+1}$ if we know $\uvec^c_{n}, \tilde{\vec{h}}^c_{n}$. Of course, when evaluating the function $h$, we can simply gather back the coefficients vector $\vec{h}^c$ by $\vec{h}^c = E_s \tilde{\vec{h}}^c$.
 
 \bstodo{Images}
 
