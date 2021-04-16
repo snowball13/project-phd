@@ -807,27 +807,27 @@ where
 which is zero for $n > m + \tilde a \iff m < n - \tilde a$. The sparsity argument for the weighted parameter transformation operator follows similarly.
 \end{proof}
 
-\begin{figure}[t]
+\begin{figure}[tp]
 	\centering % <-- added
-	\begin{subfigure}{0.45\textwidth}
-		\includegraphics[scale=0.3]{sparsity-of-laplacian}
+	\begin{subfigure}{0.5\textwidth}
+		\includegraphics[scale=0.5]{sparsity-of-laplacian}
 		\centering
 		\caption{The Laplace-Beltrami operator $\Delta^{(1)}_W$}
 	\end{subfigure}\hfil % <-- added
-	\begin{subfigure}{0.45\textwidth}
-		\includegraphics[scale=0.3]{sparsity-of-rho2laplacian}
+	\begin{subfigure}{0.5\textwidth}
+		\includegraphics[scale=0.5]{sparsity-of-rho2laplacian}
 		\centering
 		\caption{The $\rho^2$-factored Laplace-Beltrami operator $D_\varphi^{(0)} \: W_\varphi^{(1)} + T^{(0)\to(1)} \: T_W^{(1)\to(0)} \: (D_\theta)^2$}
 	\end{subfigure}\hfil % <-- added
 
 	\medskip
-	\begin{subfigure}{0.45\textwidth}
-		\includegraphics[scale=0.3]{sparsity-of-helmholtz}
+	\begin{subfigure}{0.5\textwidth}
+		\includegraphics[scale=0.5]{sparsity-of-helmholtz}
 		\centering
 		\caption{A variable coefficient Helmholtz operator}
 	\end{subfigure}\hfil % <-- added
-	\begin{subfigure}{0.45\textwidth}
-		\includegraphics[scale=0.3]{sparsity-of-biharmonic}
+	\begin{subfigure}{0.5\textwidth}
+		\includegraphics[scale=0.5]{sparsity-of-biharmonic}
 		\centering
 		\caption{The Biharmonic operator $\calB_W^{(2)}$} 
 	\end{subfigure}\hfil % <-- added
@@ -852,6 +852,30 @@ where $\partial\Omega$ is the $z=\alpha$ boundary, and $\unitvec{n}(x,y,z)$ is t
 	\calB^{(2)}_W := \calL^{(0)\to(2)} \: \calL_W^{(2)\to(0)}.
 \end{align*}
 Since the operator $\calL_W^{(2)\to(0)}$ acts on coefficients in the $\bigW^{(2)}(x,y,z)$ space, we ensure that we satisfy the zero Dirichlet and Neumann boundary conditions -- such a function could be written $u(x,y,z) = \genjacw^{(2,0)}(z) \: \tilde u(x,y,z)$ and thus its spherical gradient would be zero on the boundary $z = \alpha$. This allows us to apply the $\calL^{(0)\to(2)}$ operator after, safe in the knowledge that boundary conditions have been accounted for. The sparsity and structure of this biharmonic operator are seen in Figure \ref{fig:sparsity}.
+
+
+\subsection{Stability of the Laplacian operator}
+
+\begin{figure}[tp]
+	\centering
+	\begin{subfigure}[b]{0.55\textwidth}
+		\includegraphics[scale=0.4]{condition-numbers-laplacian-N=200}
+	\end{subfigure}
+	\hfill%
+	
+	\begin{subfigure}[b]{0.55\textwidth}
+		\includegraphics[scale=0.4]{condition-numbers-max-laplacian}
+	\end{subfigure}
+	\hfill%
+	\caption{Plots of the condition number for the Laplacian operator matrix $\Delta^{(1)}_W$ and the preconditioned matrix $P^{-1} \; \Delta^{(1)}_W$ where $P$ is the matrix of the diagonal of $\Delta^{(1)}_W$. Left: The condition numbers of each diagonal block of $\Delta^{(1)}_W$ for $N = 200$, as well as those for $P^{-1} \; \Delta^{(1)}_W$. Right: The maximum condition number of all diagonal blocks of the Laplacian and the preconditioned Laplacian operators, as the degree $N$ increases.}
+	\label{fig:conditionnumbers}
+\end{figure}
+
+For a given problem $A\vec{x} = \vec{b}$, the condition number is a measure of how accurate solving the system will be (ignoring any numerical rounding errors), and is given as the condition number of the matrix $A$: 
+\begin{align*}
+	\kappa(A) := \norm{A}_2 \norm{A^{-1}}_2.
+\end{align*}
+Recall that the Laplacian operator is block-diagonal. One can therefore look at the condition numbers of each block on the diagonal as proxy for the condition number of the Laplacian (and hence the Poisson equation), where graphical representations are seen in \ref{fig:conditionnumbers} for the $\Delta^{(1)}_W$ operator matrix. As the degree $N$ increases, the condition numbers of these blocks becomes increasingly large (at least, the condition number for the first block where $m=0$ does, which will be the largest for each $N$). Fortunately however, by applying a trivial preconditioning matrix similar to that seen for the ultraspherical method \cite{olver2013fast}, we can significantly bound the condition numbers -- this is also seen in \ref{fig:conditionnumbers}. The preconditioning matrix chosen is $P^{-1}$, where $P$ is the matrix of the diagonal of $\Delta^{(1)}_W$.
 
 
 
@@ -1039,61 +1063,21 @@ We now demonstrate how the sparse linear systems constructed as above can be use
 
 % FIGURES
 
-\begin{figure}[t]
-	\begin{subfigure}{0.5\textwidth}
-	\includegraphics[scale=0.25]{poisson-u=wyexpx-N=60}
+\begin{figure}[tp]
 	\centering
-	%\label{fig:solution-poisson}
+	\begin{subfigure}{0.85\textwidth}
+		\includegraphics[scale=0.4]{poisson-u=wyexpx-N=60}
 	\end{subfigure}
-	\begin{subfigure}{0.5\textwidth}
-	\centering
-	\includegraphics[scale=0.3]{solutionblocknorms-poisson-epsilonfun-N=200}
-        	%\label{fig:solutionblocknorms-poisson}
+	\hfill%
+	
+	\begin{subfigure}{0.55\textwidth}
+		\includegraphics[scale=0.4]{solutionblocknorms-poisson-epsilonfun-N=200}
 	\end{subfigure}
-	\caption{Left: The computed solution to $\Delta u = f$ with zero boundary conditions with $f(x,y,z) = - 2 e^x y z (2+x) + \genjacw^{(1,0)}(z) e^x (y^3 + z^2 y - 4xy - 2y)$. Right: The norms of each block of the computed solution of the Poisson equation with right hand side function $f(x,y,z) = \norm{\xvec - (\epsilon + 1 / \sqrt{3}) \; (1,1,1)^\top }$ for different $\epsilon$ values. This indicates spectral convergence.}
-	\centering
+	\hfill%
+	\caption{Top: The computed solution to $\Delta u = f$ with zero boundary conditions with $f(x,y,z) = - 2 e^x y z (2+x) + \genjacw^{(1,0)}(z) e^x (y^3 + z^2 y - 4xy - 2y)$. Bottom: The norms of each block of the computed solution of the Poisson equation with right hand side function $f(x,y,z) = \norm{\xvec - (\epsilon + 1 / \sqrt{3}) \; (1,1,1)^\top }$ for different $\epsilon$ values. This indicates spectral convergence.}
 	\label{fig:poisson}
 \end{figure}
 
-\begin{figure}[t]
-	\begin{subfigure}{0.5\textwidth}
-	\includegraphics[scale=0.25]{helmholtz-f=wyexpx-N=60-n=300}
-	\centering
-	%\label{fig:solution-poisson}
-	\end{subfigure}
-	\begin{subfigure}{0.5\textwidth}
-	\centering
-	\includegraphics[scale=0.3]{solutionblocknorms-helmholtz-varyingk-N=200}
-        	%\label{fig:solutionblocknorms-poisson}
-	\end{subfigure}
-	\caption{Left: The computed solution to $\Delta u + k^2 \: v \: u = f$ with zero boundary conditions with $f(x,y,z) = y e^x (z - \alpha) $, $v(x,y,z) = 1 - (3(x-x_0)^2 + 5(y-y_0)^2 + 2(z-z_0)^2)$ where $(x_0, z_0) := (0.7, 0.2)$, $y_0 := \sqrt{1 - x_0^2 - z_0^2}$ and $k = 100$. Right: The norms of each block of the computed solution of the Helmholtz equation with the right hand side function $f(x,y,z) = 1$ and the same function $v(x,y,z)$, for various $k$ values. This indicates spectral convergence.}
-	\centering
-	\label{fig:helmholtz}
-\end{figure}
-
-\begin{figure}[t]
-	\centering % <-- added
-	\includegraphics[scale=0.35]{complexity-Nend=1000}
-	\caption{Time in seconds to build and solve the system $\big[\DeltaS + v(x,y,z) \big] \: u(x,y,z) = f(x,y,z)$, for a rotationally invariant $v(x,y,z) = v(z)$. This demonstrates that the approach is roughly of order $\bigO(N^2)$, where $N$ is the degree to which we approximate the solution (the number of unknowns is then $(N+1)^2$). Here, we used $f = -2e^{x}yz(2+x) + (z - \alpha) e^{x} (y^3 + z^2 y - 4xy - 2y)$ and $v(x,y,z) = v(z) = \cos(z)$.}
-	\centering
-	\label{fig:complexity}
-\end{figure}
-
-\begin{figure}[t]
-	\begin{subfigure}{0.5\textwidth}
-	\includegraphics[scale=0.15]{biharmonic-f=erf-N=80-n=50}
-	\centering
-	%\label{fig:solution-biharmonic}
-	\end{subfigure}
-	\begin{subfigure}{0.5\textwidth}
-	\includegraphics[scale=0.3]{solutionblocknorms-biharmonic-expfun-N=200}
-	\centering
-        	%\label{fig:solutionblocknorms-biharmonic}
-	\end{subfigure}
-	\caption{Left: The computed solution to $\Delta^2 u = f$ with zero Dirichlet and Neumann boundary conditions with $f(x,y,z) = (1 + \text{erf}(5(1 - 10((x - 0.5)^2 + y^2)))) \rho(z)^2$. Right: The norms of each block of the computed solution of the biharmonic equation with the right hand side function $f(x,y,z) = \exp(-\epsilon((x-x_0)^2 + (y-y_0)^2 + (z-z_0)^2))$ where  $(x_0, z_0) := (0.7, 0.2)$, $y_0 := \sqrt{1 - x_0^2 - z_0^2}$, for various $\epsilon$ values. This demonstrates algebraic convergence.}
-	\centering
-	\label{fig:biharmonic}
-\end{figure}
 % END FIGURES
 
 The Poisson equation is the classic problem of finding $u(x,y,z)$ given a function $f(x,y,z)$ such that:
@@ -1119,6 +1103,26 @@ for differing choices of $\epsilon$ -- this parameter serves to alter the distan
 
 
 \subsection{Inhomogeneous variable-coefficient Helmholtz}
+
+\begin{figure}[tp]
+	\centering
+	\begin{subfigure}{0.85\textwidth}
+		\includegraphics[scale=0.4]{helmholtz-f=wyexpx-N=60-n=300}
+	\end{subfigure}
+	
+	\begin{subfigure}{0.55\textwidth}
+		\includegraphics[scale=0.4]{solutionblocknorms-helmholtz-varyingk-N=200}
+	\end{subfigure}
+	\caption{Top: The computed solution to $\Delta u + k^2 \: v \: u = f$ with zero boundary conditions with $f(x,y,z) = y e^x (z - \alpha) $, $v(x,y,z) = 1 - (3(x-x_0)^2 + 5(y-y_0)^2 + 2(z-z_0)^2)$ where $(x_0, z_0) := (0.7, 0.2)$, $y_0 := \sqrt{1 - x_0^2 - z_0^2}$ and $k = 100$. Bottom: The norms of each block of the computed solution of the Helmholtz equation with the right hand side function $f(x,y,z) = 1$ and the same function $v(x,y,z)$, for various $k$ values. This indicates spectral convergence.}
+	\label{fig:helmholtz}
+\end{figure}
+
+\begin{figure}[tp]
+	\centering % <-- added
+	\includegraphics[scale=0.4]{complexity-Nend=1000}
+	\caption{Time in seconds to build and solve the system $\big[\DeltaS + v(x,y,z) \big] \: u(x,y,z) = f(x,y,z)$, for a rotationally invariant $v(x,y,z) = v(z)$. This demonstrates that the approach is roughly of order $\bigO(N^2)$, where $N$ is the degree to which we approximate the solution (the number of unknowns is then $(N+1)^2$). Here, we used $f = -2e^{x}yz(2+x) + (z - \alpha) e^{x} (y^3 + z^2 y - 4xy - 2y)$ and $v(x,y,z) = v(z) = \cos(z)$.}
+	\label{fig:complexity}
+\end{figure}
 
 Find $u(x,y)$ given functions $v$, $f : \Omega \to \R$ such that:
 \begin{align}
@@ -1166,6 +1170,21 @@ since the coefficients $\{c_{n,k,i}\}$ for such a function are zero for $k < n$ 
 
 
 \subsection{Biharmonic equation}
+
+\begin{figure}[tp]
+	\centering
+	\begin{subfigure}{0.85\textwidth}
+		\includegraphics[scale=0.4]{biharmonic-f=erf-N=80-n=50}
+	\end{subfigure}
+	\hfill%
+	
+	\begin{subfigure}{0.55\textwidth}
+		\includegraphics[scale=0.4]{solutionblocknorms-biharmonic-expfun-N=200}
+	\end{subfigure}
+	\hfill%
+	\caption{Left: The computed solution to $\Delta^2 u = f$ with zero Dirichlet and Neumann boundary conditions with $f(x,y,z) = (1 + \text{erf}(5(1 - 10((x - 0.5)^2 + y^2)))) \rho(z)^2$. Right: The norms of each block of the computed solution of the biharmonic equation with the right hand side function $f(x,y,z) = \exp(-\epsilon((x-x_0)^2 + (y-y_0)^2 + (z-z_0)^2))$ where  $(x_0, z_0) := (0.7, 0.2)$, $y_0 := \sqrt{1 - x_0^2 - z_0^2}$, for various $\epsilon$ values. This demonstrates algebraic convergence.}
+	\label{fig:biharmonic}
+\end{figure}
 
 Our last erxample is the biharmonic equation: find $u(x,y,z)$ given a function $f(x,y,z)$ such that:
 \begin{align}
