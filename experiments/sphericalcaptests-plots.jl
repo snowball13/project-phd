@@ -1,3 +1,4 @@
+using Plots
 using BandedMatrices
 using Revise
 using ApproxFun
@@ -18,11 +19,11 @@ import OrthogonalPolynomialFamilies: points, pointswithweights, getopptseval,
                     differentiatespacephi, increasedegreeoperator,
                     getptsevalforop, getderivptsevalforop, laplacianoperator,
                     rho2laplacianoperator, gettangentspace,
-                    rhogradoperator, coriolisoperator, rho2operator,
-                    rhodivminusgradrhodotoperator, gradrhooperator, weightoperator,
-                    squareoperator
+                    coriolisoperator, rho2operator, gradrhooperator,
+                    weightoperator, squareoperator
+using LinearAlgebra
 using JLD
-using Makie
+# using Makie
 
 
 isindomain(pt, D::SphericalCapFamily) = D.α ≤ pt[3] ≤ D.β && norm(pt) == 1.0
@@ -183,7 +184,10 @@ c = randn(10)
 d = randn(10)
 (a' * b) * (c' * d) - a' * (b * d') * c
 
+
 #=======#
+# Examples
+
 # Poisson
 using SpecialFunctions
 # f = (x,y,z) -> 1 + erf(5(1 - 10((x - p[1])^2 + (y - p[2])^2 + (z - p[3])^2)))
@@ -215,12 +219,12 @@ vs = vbox(scene, cl)
 Makie.save("experiments/saved/sphericalcap/images/poisson-f=erf-N=$N-n=$n.png", vs)
 
 # Helmholtz
-N = 60
+N = 100
 k = 100
 z1 = S.family.α; x1 = 0.7; vpt = [x1; sqrt(1 - x1^2 - z1^2); z1]
 v = (x,y,z) -> 1 - (3(x - vpt[1])^2 + 5(y - vpt[2])^2 + 2(z - vpt[3])^2)
 V = operatorclenshaw(Fun(v, S, 100), S, N)
-Δw = laplacianoperator(S, N; square=true)
+Δw = squareoperator(S, laplacianoperator(S, S, N), N)
 tw = transformparamsoperator(S, S0, N; weighted=true)
 t = transformparamsoperator(S0, S, N+1; weighted=false)
 A = Δw + k^2 * V * squareoperator(S, t * tw, N)
@@ -230,10 +234,11 @@ F = Fun(f, S, 2(N+1)^2); F.coefficients
 ucfs = A \ F.coefficients
 u = Fun(S, ucfs)
 u(p)
-n = 300
+n = 600
 ϕmax = (acos(S.family.α)/π)
 ϕ = [0; (0.5:n*ϕmax-0.5)/n; ϕmax]
 θ = [(0:2n-2) * 2 / (2n-1); 2]
+using Makie
 scene = Scene()
 scene, s = plot_on_domain_scalar!(scene, S, u, ϕ, θ)
 center!(scene)
@@ -248,7 +253,7 @@ N = 80
 Bw = biharmonicoperator(S2, N; square=false)
 using SpecialFunctions
 f = (x,y,z)->(1 + erf(5(1 - 10((x - 0.5)^2 + y^2))))
-F = Fun(f, S2, 5000)
+F = Fun(f, S2, 10000)
 resizecoeffs!(S2, F, N+2)
 # f = (x,y,z) -> (- 2exp(x)*y*z*(2+x)
 #                 + (weight(S,x,y,z)
@@ -527,12 +532,79 @@ savefig("experiments/saved/sphericalcap/images/complexity-belapsed-new-Nend=$Nen
 
 #====#
 
+
 T = Float64; B = T#BigFloat
 α = 0.2
 SCF = SphericalCapFamily(B, T, B(α * 1000) / 1000)
 a = 1.0
 S = SCF(a, 0.0); S2 = SCF(2.0, 0.0); S0 = SCF(0.0, 0.0)
 
+#=
+Condition numbers of Laplacian
+=#
+
+using Plots
+
+# For given N
+N = 200
+Δw = squareoperator(S, laplacianoperator(S, S, N), N)
+P = Diagonal([1/Δw[i,i] for i=1:(N+1)^2])
+PΔw = P * Δw
+conditionnumbers_un = zeros(N+1)
+conditionnumbers_pre = zeros(N+1)
+for m = 0:N
+    conditionnumbers_un[m+1] = LinearAlgebra.cond(view(Δw, Block(m+1, m+1)))
+    conditionnumbers_pre[m+1] = LinearAlgebra.cond(view(PΔw, Block(m+1, m+1)))
+end
+conditionnumbers_un, conditionnumbers_pre
+Plots.plot([i for i=0:N], conditionnumbers_un; line=(3, :dash),
+            legend=:topright, label="Unconditioned")
+Plots.plot!([i for i=0:N], conditionnumbers_pre; line=(3, :dot), label="Preconditioned")
+Plots.xlabel!("Fourier mode block")
+Plots.ylabel!("Condition number")
+savefig("experiments/saved/sphericalcap/images/condition-numbers-laplacian-N=$N.pdf")
+
+# Max block cond no. as we increase N
+function conditionnumberplot(S::SphericalCapSpace, Ns)
+    """ Returns the (max) condition numbers for the Laplacian and preconditioned
+    Laplacian operator matrix blocks for increasing N's.
+    """
+    maxconditionnumber_un = zeros(length(Ns))
+    maxconditionnumber_pre = zeros(length(Ns))
+    i = 1
+    for N in Ns
+        @show N
+        Δw = squareoperator(S, laplacianoperator(S, S, N), N)
+        P = Diagonal([1/Δw[i,i] for i=1:(N+1)^2])
+        PΔw = P * Δw
+        conditionnumbers_un = zeros(N+1)
+        conditionnumbers_pre = zeros(N+1)
+        for m = 0:N
+            conditionnumbers_un[m+1] = LinearAlgebra.cond(view(Δw, Block(m+1, m+1)))
+            conditionnumbers_pre[m+1] = LinearAlgebra.cond(view(PΔw, Block(m+1, m+1)))
+        end
+        maxconditionnumber_un[i] = maximum(conditionnumbers_un)
+        maxconditionnumber_pre[i] = maximum(conditionnumbers_pre)
+        i += 1
+    end
+    maxconditionnumber_un, maxconditionnumber_pre
+end
+Ns = 10:10:200
+maxconditionnumber_un, maxconditionnumber_pre = conditionnumberplot(S, Ns)
+Plots.plot(Ns, maxconditionnumber_un; line=(3, :dash),
+            legend=:topleft, label="Unconditioned")
+Plots.plot!(Ns, maxconditionnumber_pre; line=(3, :dot), label="Preconditioned")
+Plots.xlabel!("Degree")
+Plots.ylabel!("Max condition number of all blocks")
+savefig("experiments/saved/sphericalcap/images/condition-numbers-max-laplacian.pdf")
+
+
+
+
+
+
+
+#--------------------------------------
 
 
 #====#
