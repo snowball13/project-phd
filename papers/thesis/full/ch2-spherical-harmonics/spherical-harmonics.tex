@@ -29,7 +29,11 @@ where $P^{(a,b)}_l (x)$ is the $l$ degree \textit{Jacobi polynomial}, and $P_l(x
 	\int_{-1}^1 {P^{(a,b)}_l(x)}^2 \:(1-x)^a(1+x)^b \: \D x &=: \omega_{P,l}^{(a,b)} \\
 	\int_{-1}^1 P^{(a,b)}_l(x) \: P^{(a,b)}_{l'}(x) \:(1-x)^a(1+x)^b \: \D x &= \omega_{P,l}^{(a,b)} \: \delta_{l, l'}.
 }
-Further, the \textit{associated Legendre polynomials} are a set of polynomials orthogonal with respect to unit weight on the unit interval, and can be defined as the $m^{\text{th}}$ derivative of a Legendre polynomial \cite[14.21.1]{DLMF}:
+Legendre polynomials are special cases of \textit{Legendre functions} when $l$ is a non-negative integer. Legendre functions are a class of univariate functions that are solutions to the differential equation
+\bseqn{
+	(1 - x^2) \dmdxm{x}{2}y - 2x \ddx{x} y + l(l+1)y = 0
+}
+which is helpfully known as the \textit{Legendre equation} \cite[14.2.1]{DLMF}. Further, the \textit{associated Legendre polynomials} are a set of polynomials orthogonal with respect to unit weight on the unit interval, and can be defined as the $m^{\text{th}}$ derivative of a Legendre polynomial \cite[p5]{belousov1962tables}:
 \bseqn{
 	\Plm(x) &:= (-1)^m (1-x^2)^\frac{m}{2} \dmdxm{x}{m} P_l(x) = (-1)^m \; {(l+m)! \over 2^m \; l!} \; (1-x^2)^\frac{m}{2} \; P^{(m,m)}_{l-m}(x),
 }
@@ -37,7 +41,15 @@ for $m = 0,1,2,\dots,l$. It is also standard to include a further definition for
 \bseqn{
 	\Plm(x) &:= (-1)^m \; {(l+m)! \over (l-m)!} \; P_l^{\abs{m}}(x) = {(l+m)! \over 2^{\abs{m}} \; l!} \; (1-x^2)^{\abs{m} \over 2} \; \jaclmabs{l}{m}(x)
 }
-for $m = -l, \dots, -1$. Although often referred to as the associated Legendre \enquote{polynomials} as we do here, they are not strictly polynomials when $m$ is odd, and as such some authors refer to them as associated Legendre functions instead. Moreover, it should be noted too that the inclusion of the $(-1)^m$ factor in the definition for $m > 0$, known as the \textit{Condon-Shortley phase} in physics, is sometimes omitted.  \bstodoinline{I have cited DLMF on ALFs equation that defines the ALFs. Now need to explain how that relates to the definition in terms of mth derivative of normal Legendre poly when l,m are integers}
+for $m = -l, \dots, -1$.
+
+Once again, associated Legendre polynomials are special cases of \textit{associated Legendre functions} when $l$ is a non-negative integer and $m \in \{0,\dots,l\}$, which are also a class of univariate functions that are solutions to a modified version of the Legendre equation
+\bseqn{
+	(1 - x^2) \dmdxm{x}{2}y - 2x \ddx{x}y + \Big[l(l+1) - {m^2 \over 1-x^2} \Big] y = 0
+}
+which is also helpfully known as the \textit{associated Legendre equation} (\cite[p2]{belousov1962tables}, \cite[14.2.2]{DLMF}). We can see that Legendre functions (and polynomials) are just special cases of the associated versions when $m = 0$.
+
+Although often referred to as the associated Legendre \enquote{polynomials} as we do here when $l$ is a non-negative integer and $m \in \{0,\dots,l\}$, $\Plm$ are not strictly polynomials when $m$ is odd, and as such some authors refer to them as associated Legendre functions regardless instead. Moreover, it should be noted too that the inclusion of the $(-1)^m$ factor in the definition for $m > 0$, known as the \textit{Condon-Shortley phase} in physics, is sometimes omitted.
 
 These relationships for the Jacobi polynomials and associated Legendre polynomials allow us to explicitly see where the normalising constants that we shall be using for our definition of the spherical harmonics come from. 
 
