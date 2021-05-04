@@ -41,9 +41,8 @@ s.olver@imperial.ac.uk \\
 \vspace{1em}
 \hfill\today
 
-Dear Jose Bautista Francisco III
 
-Thank you for forwarding the reviews of our article. We greatly appreciate your time as well as that of the referees.  We have made changes to reflect the comments and suggestions of the referees. Below we detail our response to the referees' reports. 
+We greatly appreciate the thorough comments from the editor and referees, and have made changes as requested. Below we detail our response to the referees' reports. 
 
 Ben Snowball and Sheehan Olver
 
@@ -55,8 +54,7 @@ Ben Snowball and Sheehan Olver
 
 \item \comment{The authors spend an inadaquate amount of time discussing other approaches for solving this problem and comparing their methodology (e.g., closest point method, radial basis functions). What is the complexity convergence behavior of other approaches that can handle spherical caps?}
 
-We have added in a discussion of the closest point method. We have chosen to omit discussion on radial basis functions as we do not feel there is particularly suitable to reference and appropriate to discuss.
-
+We have added in a discussion of the closest point method. We have chosen to omit discussion on radial basis functions as we are not aware of references that consider their usage on spherical caps.
 
 \item \comment{Definition 2: It should be mentioned somewhere that OPs should defined by the condition that they are orthogonal to all lower degree polynomials.}
 
@@ -116,7 +114,7 @@ This is mentioned in the body of the text, but now explained in the caption.
 
 \item \comment{One shortcoming of this paper is that it has no discussion of the condition number of the linear systems to be solved. I suspect that the condition numbers can get large, but if so, can the matrices be preconditioned in a similar way the Olver-Townsend ultraspherical spectral method (so that it has bounded condition number)?}
 
-Added small subsection and plots to show the condition numbers of each m-block of Laplacian operator, along with a preconditioned Laplacian (where the preconditioner $P$ is the inverse of the diagonal of the Laplacian). While the Laplacian does not have bounded condition number, the trivial preconditioning keeps it bounded.
+Added small subsection and plots to show the condition numbers of each m-block of Laplacian operator, along with a preconditioned Laplacian (where the preconditioner $P$ is the inverse of the diagonal of the Laplacian). While the Laplacian does not have bounded condition number, the trivial preconditioning keeps it bounded. 
 
 
 \item \comment{If the condition numbers do not get large, can you prove it, indicate why, or give numerical evidence?}
@@ -126,7 +124,7 @@ The evidence we can provide is that which addresses the first question.
 
 \item \comment{The paper only includes numerical experiments involving zero Dirichlet boundary conditions. Please could the authors clarify in the manuscript if there are any roadblocks to boundary conditions beyond the zero Dirichlet ones demonstrated in Section 5?}
 
-Added comment a small subsection to Section 5 to address this. \bstodoinline{Is this enough?}
+Added comment a small subsection to Section 5 to address this. 
 
 
 \item \comment{Is the code used to produce the numerical experiments going to be made publicly available? For example in the ApproxFun Julia package?}
