@@ -28,7 +28,7 @@
 \maketitle
 
 \begin{abstract}
-In recent years, sparse spectral methods for solving partial differential equations have been derived using hierarchies of classical orthogonal polynomials on intervals, disks, disk-slices and triangles. In this work we extend the methodology to a hierarchy of non-classical multivariate orthogonal polynomials on spherical caps. The entries of discretisations of partial differential operators can be effectively computed using formulae in terms of (non-classical) univariate orthogonal polynomials. We demonstrate the results on partial differential equations involving the spherical Laplacian and biharmonic operators, showing spectral convergence. 
+In recent years, sparse spectral methods for solving partial differential equations have been derived using hierarchies of classical orthogonal polynomials on intervals, disks, disk-slices and triangles. In this work we extend the methodology to a hierarchy of non-classical multivariate orthogonal polynomials on spherical caps. The entries of discretisations of partial differential operators can be effectively computed using formulae in terms of (non-classical) univariate orthogonal polynomials. We demonstrate the results on partial differential equations involving the spherical Laplacian and biharmonic operators, showing spectral convergence with  discretisations that can be made well-conditioned using a simple preconditioner. 
 \end{abstract}
 
 
@@ -42,12 +42,12 @@ This paper develops sparse spectral methods for solving linear partial different
 where $\alpha \in (-1,1)$ and $\beta := 1$.
 
 \begin{remark}
-For simplicity we focus on the case of a spherical cap, though there is an extension to a spherical band by taking $\beta \in (\alpha,1)$. The methods presented here translate to the spherical band case by including the necessary adjustments to the weights and recurrence relations we present in this paper. These adjustments make the mathematics more involved, which is why they are omitted here, but the approach is the same.
+For simplicity we focus on the case of a spherical cap, though there is an extension to a spherical band by taking $\beta \in (\alpha,1)$. The methods presented here translate to the spherical band case by including the necessary adjustments to the weights and recurrence relations we present in this paper. These adjustments make the construction more involved, which is why they are omitted here, but the approach is essentially the same.
 \end{remark}
 
 We advocate using a basis that is polynomial in cartesian coordinates, that is, polynomial in $x$, $y$, and $z$, and orthogonal with respect to a prescribed weight: that is, multivariate orthogonal polynomials, whose construction was considered in \cite{olver2020orthogonal}. Equivalently, we can think of these as polynomials modulo the vanishing ideal $\{ x^2 + y^2 + z^2 = 1 \}$, or simply as a linear recombination of spherical harmonics that are orthogonalised on a subset of the sphere. This is in contrast to more standard approaches based on mapping the geometry to a simpler one (e.g., a rectangle or disk) and using orthogonal polynomials in the mapped coordinates (e.g., a basis that is polynomial in the spherical coordinates $\varphi$ and $\theta$). The benefit of the new approach is that we do not need to resolve Jacobians, and thereby we can achieve sparse discretisations for partial differential operators, including those with polynomial variable coefficients. Further, we avoid the singular nature at the poles or  as $\alpha$ approaches $0$ that such a projection may give, since our new approach yields a smooth polynomial basis for all $\alpha \in [-1,1)$. 
 
-There are of course other approaches for solving PDEs on surfaces, such as the closest point method \cite{macdonald2010implicit, macdonald2008level}. This involves solving the PDE inside a 3D volume that acts as a \enquote{shell} for the surface, and using a \enquote{closest point} to as the solution on the surface. While such an approach is useful for other geometries, it is of low order and does not achieve spectral convergence with sparse discretisations. Further, for our interest of the sphere, it would not take advantage of any rotational symmetry.
+There are of course other approaches for solving PDEs on surfaces, such as the closest point method \cite{macdonald2010implicit, macdonald2008level}. This involves recasting the PDE as one involving a \enquote{closest point} operator in a 3D volume that acts as a \enquote{shell} for the surface. While such an approach is useful for other geometries, it is of low order and does not achieve spectral convergence with sparse discretisations. Further, for our interest of the sphere, it would not take advantage of any rotational symmetry to achieve optimal complexity with a direct solver.
 
 On the spherical cap, the family of weights we consider are of the form
 \begin{align*}
@@ -70,11 +70,11 @@ where $ \rho(z) := \sqrt{1-z^2}$, we have
 \begin{align*}
 	\DeltaS &= {1 \over \sinphi} \ppphi \Big( \sinphi \ppphi \Big) + {1 \over \sin^2 \varphi} \ppthetatwo = {1 \over \rho} \ppphi \Big( \rho \ppphi \Big) + {1 \over \rho^2} \ppthetatwo
 \end{align*}
-i.e. $\DeltaS f(\xvec) = \Delta f({\xvec \over \norm{\xvec}})$ for $\xvec := (x,y,z) \in \R^3$. We do so by considering the component operators $\rho {\partial \over \partial \varphi}$ and ${\partial \over \partial \theta}$ applied to OPs with a specific choices of weight so that their discretisation is sparse, see Theorem~\ref{theorem:sparsityofdifferentialoperators}.  Sparsity comes from expanding the domain and range of an operator using different choices of the parameter $a$, a la the ultraspherical spectral method for intervals \cite{olver2013fast}, triangles \cite{olver2019triangle} and disk-slices and trapeziums \cite{snowball2019sparse}, and the related work on sparse discretisations on disks \cite{vasil2016tensor} and spheres \cite{vasil2019tensor,lecoanet2019tensor}.  As in the  disk-slice case in 2D \cite{snowball2019sparse}, we use an integration-by-parts argument to deduce the sparsity structure.
+i.e. $\DeltaS f(\xvec) = \Delta f({\xvec \over \norm{\xvec}})$ for $\xvec := (x,y,z) \in \R^3$. We do so by considering the component operators $\rho {\partial \over \partial \varphi}$ and ${\partial \over \partial \theta}$ applied to OPs with a specific choices of weight so that their discretisation is sparse, see Theorem~\ref{theorem:sparsityofdifferentialoperators}.  Sparsity comes from expanding the domain and range of an operator using different choices of the parameter $a$, a la the ultraspherical spectral method for intervals \cite{olver2013fast}, triangles \cite{olver2019triangle} and disk-slices and trapeziums \cite{snowball2019sparse}, and the related work on sparse discretisations involving Jacobi polynomials on disks \cite{vasil2016tensor} and spheres \cite{vasil2019tensor,lecoanet2019tensor}.  As in the  disk-slice case in 2D \cite{snowball2019sparse}, we use an integration-by-parts argument to deduce the sparsity structure.
 
  The three-dimensional orthogonal polynomials defined here involve the same non-classical (in fact, semi-classical \cite[\S5]{magnus1995painleve}) 1D OPs as those outlined for the disk-slice, and so methods for calculating these 1D OP recurrence coefficients and integrals have already been outlined \cite{snowball2019sparse}. In particular, by exploiting the connection with these 1D OPs we can construct discretizations of general partial differential operators of size $(p+1)^2 \times (p+1)^2$ in $O(p^3)$ operations, where $p$ is the total polynomial degree. This clearly compares favourably to proceeding in a na\"ive approach where one would require $O(p^6)$ operations.
 
-Note that we consider partial differential operators that are not necessarily rotational invariant:  for example, one can use these techniques for  Schr\"odinger operators $\DeltaS + v(x,y,z)$ where $v$ is first approximated by a polynomial. A nice feature though is that if the partial differential operator is invariant with respect to rotation around the $z$ axis (e.g., a Schr\"odinger operator with potential $v(z)$) the discretisation decouples, and can be reordered as a block-diagonal matrix. This improves the complexity further to an optimal $O(p^2$), which is demonstrated in Figure~\ref{fig:complexity} with $v(x,y,z) = \cos z$.
+Note that we consider partial differential operators that are not necessarily rotational invariant:  for example, one can use these techniques for  Schr\"odinger operators $\DeltaS + v(x,y,z)$ where $v$ is first approximated by a polynomial. A nice feature  is that if the partial differential operator is invariant with respect to rotation around the $z$ axis (e.g., a Schr\"odinger operator with potential $v(z)$) the discretisation decouples, and can be reordered as a block-diagonal matrix. This improves the complexity further to an optimal $O(p^2$), which is demonstrated in Figure~\ref{fig:complexity} with $v(x,y,z) = \cos z$.
 
 An overview of the paper is as follows:  
 
@@ -86,7 +86,7 @@ An overview of the paper is as follows:
 
 \noindent\secref{Examples}: We demonstrate the proposed technique for solving differential equations on the spherical cap such as the Poisson equation, variable coefficient Helmholtz equation, and Biharmonic equation.  
 
-The code that allows one to produce the numerical examples in this paper is publicly available as a Julia package\footnote{https://github.com/snowball13/OrthogonalPolynomialFamilies} to partner the ApproxFun package \cite{ApproxFun} -- however, it is strongly warned that the package is purely experimental at this stage.
+The code that allows one to produce the numerical examples in this paper is publicly available as a Julia package\footnote{https://github.com/snowball13/OrthogonalPolynomialFamilies.jl} to partner the ApproxFun package \cite{ApproxFun} -- however, this package is purely experimental at this stage.
 
 \noindent{\bf Acknowledgments}: The first author was supported by the Engineering and Physical Sciences Research Council Mathematics of Planet Earth Centre for Doctoral Training at Imperial College London and the University of Reading, with grant number EP/L016613/1.The second author was supported by the Leverhulme Trust Research Project Grant RPG-2019-144 ``Constructive approximation theory on and inside algebraic curves and surfaces''.
 
@@ -129,7 +129,7 @@ for $i \in {0,1}, \: 0 \le k \le n, \: n = 0,1,2,\dots$ are orthogonal polynomia
 \end{align*}
 on $\Omega$, where $\D A = \sinphi \: \D \theta \: \D \varphi$ is the uniform spherical measure on $\Omega$. 
 \end{proposition}
-Of course, \enquote{orthogonal polynomials} are defined as such by the condition that each polynomial is orthogonal to each other, with respect to the given inner product.
+\enquote{Orthogonal polynomials} are defined as such by the condition that each polynomial is orthogonal to each other, with respect to the given inner product. In particular, they are orthogonal with respect to all lower degree polynomials. 
 
 For the spherical cap, we can use Proposition \ref{prop:construction} to create our one-parameter family of OPs. We first introduce notation for our family of non-classical univariate OPs that will be used as the $r_n$ polynomials above.
 \begin{definition}[\cite{snowball2019sparse}]\label{def:OPconstruction}
@@ -279,7 +279,7 @@ where again $\delta_{k, j}$ is the standard Kronecker delta function, and we hav
 
 \end{proof}
 
-The recurrences in Lemma \ref{lemma:Qrecurrence} lead to Jacobi operators that correspond to multiplication by $x$, $y$ and $z$. In later sections we will use an ordering of the OPs so that they are grouped by Fourier mode $k$, which is convenient for the application of differential and other operators to the vector of coefficients of a given function's expansion (some operators will exploit this ordering for operators where Fourier modes do not interact, and thus will be block-diagonal). Before that though, the ordering we will use in the remainder of this section is convenient for establishing Jacobi operators for multiplication by $x$, $y$ and $z$, and hence building the OPs and importantly obtaining the associated \textit{recurrence coefficient matrices} necessary for efficient function evaluation using the Clenshaw algorithm. In practice, it is simply a matter of converting coefficients between the two orderings. To this end, we define our OP-building ordering as follows. For $n=0,1,2,\dots$:
+The recurrences in Lemma \ref{lemma:Qrecurrence} lead to (block) Jacobi matrices that correspond to multiplication by $x$, $y$ and $z$. In later sections we will use an ordering of the OPs so that they are grouped by Fourier mode $k$, which is convenient for the application of differential and other operators to the vector of coefficients of a given function's expansion (some operators will exploit this ordering for operators where Fourier modes do not interact, and thus will be block-diagonal). Before that, the ordering we will use in the remainder of this section is convenient for establishing Jacobi operators for multiplication by $x$, $y$ and $z$, and hence building the OPs and importantly obtaining the associated \textit{recurrence coefficient matrices} necessary for efficient function evaluation using the Clenshaw algorithm. In practice, it is simply a matter of converting coefficients between the two orderings. To this end, we define our OP-building ordering as follows. For $n=0,1,2,\dots$:
 \begin{align*}
 	\bigscoptna := 
 		\begin{pmatrix}
@@ -445,7 +445,7 @@ Note that the sparsity of the Jacobi matrices (in particular the sparsity of the
 
 \subsection{Building the OPs} 
 
-A multivariate analogue of Clenshaw's algorithm for recursive evaluation of the OPs has been established for methods on other domains in 2D such as the triangle \cite{olver2019triangle} and the disk-slice \cite{snowball2019sparse}, and we proceed similarly here. Combining each system in equation (\ref{eqn:jacobimatricesdefinitionalt}) into a block-tridiagonal system, for any $(x,y,z) \in \Omega$, yeilds:
+A multivariate analogue of Clenshaw's algorithm for recursive evaluation of the OPs has been established for methods on other domains in 2D such as the triangle \cite{olver2019triangle} and the disk-slice \cite{snowball2019sparse}, and we proceed similarly here. Combining each system in equation (\ref{eqn:jacobimatricesdefinitionalt}) into a block-tridiagonal system, for any $(x,y,z) \in \Omega$, yields:
 \begin{align*}
 	\renewcommand\arraystretch{1.3}
 	\begin{pmatrix}
@@ -662,7 +662,7 @@ where the coefficients are
 Now, note that:
 \begin{align*}
 	\genjacw^{(a,b) \: \prime}(z) &= a \: \genjacw^{(a-1,b)}(z) + c \: \rho(z) \: \rho'(z) \:\genjacw^{(a,b-2)}(z), \\
-	\rho(z) \: \rho'(z) &= -z \\
+	\rho(z) \: \rho'(z) &= -z, \\
 	\ppphi \scopnkia(x,y,z) &= -\rho(z) \: \ddz \Big[ \rho(z)^k \: \genjacnmk^{(a,2k)}(z) \Big] \chki(\theta), \\
 	\ppphi \Big[ \genjacw^{(a,0)}(z) \: \scopnkia(x,y,z) \Big] &= -\rho(z) \: \ddz \Big[ \genjacw^{(a,k)}(z) \: \genjacnmk^{(a,2k)}(z) \Big] \chki(\theta).
 \end{align*}
@@ -777,7 +777,7 @@ Using \bsrefeqn{eqn:woplaplacian} with $a = 1$, and \bsreflemma{lemma:Rsecondder
 where the $c_{n-1,k}, c_{n,k}, c_{n+1,k}$ are those derived in \bsreflemma{lemma:Rsecondderivative}.
 \end{proof}
 
-By applying these differential operators, we are (in some cases) incrementing or decrementing the parameter value $a$. It is therefore necessary to also be able to raise or lower the parameter by way of an independent operator. There exist conversion matrix operators that do exactly this, transforming the OPs from one (weighted or non-weighted) parameter space to another.
+By applying these differential operators, we are (in some cases) incrementing or decrementing the parameter value $a$. It is therefore necessary to also be able to raise or lower the parameter by way of an independent operator. There exist conversion  operators that do exactly this, transforming the OPs from one (weighted or non-weighted) parameter space to another.
 \begin{definition}\label{def:parametertransformationoperators}
 Define the operator matrices $T^{(a)\to(a+\tilde a)}, \quad T_W^{(a)\to(a-\tilde a)}$ for conversion between non-weighted spaces and weighted spaces respectively according to
 \begin{align*}
@@ -871,11 +871,12 @@ Since the operator $\calL_W^{(2)\to(0)}$ acts on coefficients in the $\bigW^{(2)
 	\label{fig:conditionnumbers}
 \end{figure}
 
-For a given problem $A\vec{x} = \vec{b}$, the condition number is a measure of how accurate solving the system will be (ignoring any numerical rounding errors), and is given as the condition number of the matrix $A$: 
+Denote the condition number of the matrix $A$: 
 \begin{align*}
-	\kappa(A) := \norm{A}_2 \norm{A^{-1}}_2.
+	\kappa(A) := \norm{A}_2 \norm{A^{-1}}_2,
 \end{align*}
-Recall that the Laplacian operator is block-diagonal. One can therefore look at the condition numbers of each block on the diagonal as proxy for the condition number of the Laplacian (and hence the Poisson equation), where graphical representations are seen in Figure~\ref{fig:conditionnumbers} for the $\Delta^{(1)}_W$ operator matrix. As the degree $N$ increases, the condition numbers of these blocks becomes grows fast algebraically (at least, the condition number for the first block where $m=0$ does, which will be the largest for each $N$). Fortunately however, by applying a trivial preconditioning matrix similar to that seen for the ultraspherical method \cite{olver2013fast}, we can significantly bound this growth of the condition numbers -- this is also seen in Figure Figure~\ref{fig:conditionnumbers}. The preconditioning matrix chosen is $P^{-1}$, where $P$ is the matrix of the diagonal of $\Delta^{(1)}_W$.
+which encodes how accurate the solution to $A \vc x = \vc b$ is under perturbation.
+Since the Laplacian operator is block-diagonal one can determine the condition number from the condition numbers of each block on the diagonal,  and hence deduce the accuracy in solving the Poisson equation, where graphical representations are seen in Figure~\ref{fig:conditionnumbers} for the $\Delta^{(1)}_W$ operator matrix. As the degree $N$ increases, the condition numbers of these blocks becomes grows  algebraically fast (at least, the condition number for the first block where $m=0$ does, which will be the largest for each $N$). Fortunately however, by applying a trivial diagonal preconditioning matrix similar to that seen for the ultraspherical method \cite{olver2013fast}, we can significantly bound this growth of the condition numbers -- this is also seen in Figure Figure~\ref{fig:conditionnumbers}. The preconditioning matrix chosen is $P^{-1}$, where $P$ is the matrix of the diagonal of $\Delta^{(1)}_W$. 
 
 
 
@@ -892,7 +893,7 @@ It is possible to recursively obtain the recurrence coefficients for the $\{\gen
 
 \subsection{Quadrature rule on the spherical cap}\label{subsection:quadrule}
 
-In this section we construct a quadrature rule exact for polynomials on the spherical cap $\Omega$ that can be used to expand functions in the OPs $\scopnkia(x,y,z)$ for a given parameter $a$.
+In this section we construct a quadrature rule that is exact for polynomials on the spherical cap $\Omega$ that can be used to expand functions in the OPs $\scopnkia(x,y,z)$ for a given parameter $a$.
 
 \begin{theorem}\label{Theorem:quadrule}
 	Let $M_1, M_2 \in \N$ and denote the $M_1$ Gauss quadrature nodes and weights on $[\alpha,1]$ with weight $(t - \alpha)^a$ as $(t_j, w_j^{(t)})$. Further, denote the $M_2$ Gauss quadrature nodes and weights $[-1,1]$ with weight $(1 - x^2)^{-\half}$ as $(s_j, w_j^{(s)})$.
@@ -996,7 +997,7 @@ Recall from equation (\ref{eqn:normscop}) that $\norm{\scopnkia}^2_{\scopa} = \n
 \end{align*}
 where the quadrature nodes and weights are those from Theorem \ref{Theorem:quadrule}, and $M = M_1 M_2$ with $2M_1 - 1 \ge N, M_2 - 1 \ge N$ (i.e. we can choose $M_2 := N + 1$ and $M_1 := \ceil{\frac{N+1}{2}}$).
 
-\remark{While it may be possible to leverage a discrete cosine transform (DCT) to speed up the calculation of the coefficients  \cite{slevinsky2018use}, this is an open question.}
+\remark{While it may be possible to leverage fast transforms, as in \cite{slevinsky2018use,slevinsky2019fast}, to speed up the calculation of the coefficients, this remains an open question.}
 
 
 
@@ -1048,7 +1049,7 @@ To this end, let $\tilde{\bm{v}}$ be the coefficients for expansion up to order 
 	\quad &\text{1) } \text{Set } \bm{\xi}_{N+2} = \bold{0}, \: \bm{\xi}_{N+2} = \bold{0}. \\
 	\quad &\text{2) } \text{For } n = N:-1:0 \\
 	\quad & \quad \quad \quad \text{set } \bm{\xi}_{n}^T = {\tilde{\bm{v}}_n}^T - \bm{\xi}_{n+1}^T D^T_n \big(B_n - G_n(X, Y, Z)\big) -  \bm{\xi}_{n+2}^T D^T_{n+1}C_{n+1} \\
-	\quad &\text{3) } \text{Output: } V(X, Y, Z) \approx \bm{\xi}_{0} \: \bigscopta_{0}  = \xi_{0} \: \scopa_0
+	\quad &\text{3) } \text{Output: } V = v(X, Y, Z) \approx \bm{\xi}_{0} \: \bigscopta_{0}  = \xi_{0} \: \scopa_0
 \end{align*}
 where at each iteration, $\bm{\xi}_n$ is a vector of matrices.
 
@@ -1166,7 +1167,7 @@ for $(x,y,z) \in \Omega$. Notice that the spherical Laplacian applied to $c(x,y)
 \begin{align*}
 	\DeltaS \: c(x,y) = {1 \over \rho(z)^2} \sum_{n=0}^N \sum_{i=0}^1 c_{n,n,i} \: \pmpxm{\theta}{2} \ch_{n,i}(\theta) = - {1 \over \rho(z)^2} \sum_{n=0}^N \sum_{i=0}^1 n^2 \: c_{n,n,i} \: \ch_{n,i}(\theta)
 \end{align*}
-since the coefficients $\{c_{n,k,i}\}$ for such a function are zero for $k < n$ due to the dependence on $x$ and $y$ only, which are precisely the Fourier coefficients of $c(\cos \theta, \sin \theta)$. Thus, since the function $c(x,y)$ is known, it is simple to evaluate $\pmpxm{\theta}{2} c(x,y)$ and hence one can obtain the coefficients for the expansion of $g(x,y,z)$ in the $\bigscopN^{(1)}$ basis in the usual manor.
+since the coefficients $\{c_{n,k,i}\}$ for such a function are zero for $k < n$ due to the dependence on $x$ and $y$ only, which are precisely the Fourier coefficients of $c(\cos \theta, \sin \theta)$. Thus, since the function $c(x,y)$ is known, it is simple to evaluate $\pmpxm{\theta}{2} c(x,y)$ and hence one can obtain the coefficients for the expansion of $g(x,y,z)$ in the $\bigscopN^{(1)}$ basis in the usual manner.
 
 
 \subsection{Biharmonic equation}
@@ -1186,7 +1187,7 @@ since the coefficients $\{c_{n,k,i}\}$ for such a function are zero for $k < n$ 
 	\label{fig:biharmonic}
 \end{figure}
 
-Our last erxample is the biharmonic equation: find $u(x,y,z)$ given a function $f(x,y,z)$ such that:
+Our last example is the biharmonic equation: find $u(x,y,z)$ given a function $f(x,y,z)$ such that:
 \begin{align}
 	\begin{cases}
     		\DeltaS^2 u(x,y,z) = f(x,y,z) &\quad \text{in } \Omega \\
@@ -1208,9 +1209,9 @@ Other boundary conditions beyond those already presented here are beyond the sco
 
 We have shown that trivariate orthogonal polynomials can lead to sparse discretizations of general linear PDEs on spherical cap domains, with Dirichlet boundary conditions on the $z = \alpha \in (0,1)$ boundary. We have provided a detailed practical framework for the application of the methods described for quadratic surfaces of revolution \cite{olver2020orthogonal}, by utilising the non-classical 1D OPs on the interval $[\alpha, 1]$ with the weight $(z - \alpha)^a \: (1-z^2)^{b/2}$ defined for the disk-slice case \cite{snowball2019sparse}. Generalisation to spherical bands ($\alpha \leq z \leq \beta$) is straightforward.  This work thus forms a building block in developing an $hp-$finite element method to solve PDEs on the sphere by using spherical band and spherical cap shaped elements.
 
-This work also serves as a stepping stone to constructing similar methods to solve partial differential equations on other 3D sub-domains of the sphere---it is clear from the construction in this paper that discretizations of spherical gradients and Laplacian's are sparse on other suitable sub-components of the sphere. The resulting sparsity in high-polynomial degree discretizations presents an attractive alternative to methods based on bijective mappings (e.g., \cite{DGShallowWater,FEMShallowWater,boyd2005sphere}). Constructing these sparse spectral methods for surface PDEs on  spherical triangles is future work, and has applications in weather prediction \cite{staniforth2012horizontal}, though it is not yet clear how to directly construct the necessary orthogonal polynomials. 
+This work also serves as a stepping stone to constructing similar methods to solve partial differential equations on other 3D sub-domains of the sphere such as spherical triangles. It is clear from the construction in this paper that discretizations of spherical gradients and Laplacian's are sparse on other suitable sub-components of the sphere. The resulting sparsity in high-polynomial degree discretizations presents an attractive alternative to methods based on bijective mappings (e.g., \cite{DGShallowWater,FEMShallowWater,boyd2005sphere}). Constructing these sparse spectral methods for surface PDEs on  spherical triangles is future work, and has applications in weather prediction \cite{staniforth2012horizontal}, though it is not yet clear how to directly construct, or perhaps {\it compute}, the necessary orthogonal polynomials. 
 
-The next stage is to develop an orthogonal basis for the tangent space of the spherical cap (or band), and obtain sparse differential operators for gradient, divergence etc. On the complete sphere, the vector spherical harmonics that form the orthogonal basis are simply the gradients and perpendicular gradients of the scalar spherical harmonics \cite{barrera1985vector} which has been used effectively for solving PDEs on the sphere \cite{vasil2019tensor,lecoanet2019tensor} -- however, we do not have that luxury for the spherical cap or band, and hence the choice of basis will not be as straightforward.
+The next stage is to develop an orthogonal basis for the tangent space of the spherical cap (or band), and obtain sparse differential operators for gradient, divergence etc. On the complete sphere, the vector spherical harmonics that form the orthogonal basis are simply the gradients and perpendicular gradients of the scalar spherical harmonics \cite{barrera1985vector} which has been used effectively for solving PDEs on the sphere \cite{vasil2019tensor,lecoanet2019tensor} -- however, we do not have that luxury for the spherical cap or band, and hence the construction of a basis will not be as straightforward.
 
 
 
