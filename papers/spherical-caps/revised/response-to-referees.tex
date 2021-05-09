@@ -52,13 +52,17 @@ Ben Snowball and Sheehan Olver
 
 \begin{itemize}[parsep=1em,leftmargin=1em]
 
+\item\comment{If there is a key technical issue that the authors overcome to allow this construction to proceed it is not obvious from the paper, meaning that the reader is left with the impression that, of course, the previously developed sparse spectral methods on 2D planar domains should extend}
+
+Handling partial differential operators on the sphere is significantly more challenging than partial differential operators in Euclidean space. This is similar to the significantly increased challenge faced in solving PDEs on spheres (e.g.  [22]) compared with disks (e.g. [21]). Note further that the construction for 2D planar domains did not take advantage of rotational symmetry. 
+
 \item \comment{The authors spend an inadaquate amount of time discussing other approaches for solving this problem and comparing their methodology (e.g., closest point method, radial basis functions). What is the complexity convergence behavior of other approaches that can handle spherical caps?}
 
-We have added in a discussion of the closest point method. We have chosen to omit discussion on radial basis functions as we are not aware of references that consider their usage on spherical caps.
+We have added  a brief discussion of the closest point method. Note that the closest point method does not achieve spectral accuracy so is not really comparable to our approach. Further it does not take advantage of rotational symmetry which means that direct solvers will not have optimal complexity.   We have chosen to omit discussion on radial basis functions: while they have been used with great success on a full sphere, we are not aware of references that consider their usage on spherical caps. If the referee can point us to relevant references that would be very much  appreciated.
 
 \item \comment{Definition 2: It should be mentioned somewhere that OPs should defined by the condition that they are orthogonal to all lower degree polynomials.}
 
-Added a comment before Definition 2 to explain this, as well as an extra line in Definition 2.
+Added a comment before Definition 2 to explain this, as well as an extra line in Definition 2. Please note that in more than 1D this condition on its  own is only sufficient to define the span of the degree $n$ polynomials: the choice of basis for the degree $n$ polynomials is not unique. Definition 2 therefore determines our choice of basis.
 
 
 \item \comment{Above eq 7: These are not Jacobi matrices in the classical sense, but they are block Jacobi matrices.}
@@ -114,22 +118,22 @@ This is mentioned in the body of the text, but now explained in the caption.
 
 \item \comment{One shortcoming of this paper is that it has no discussion of the condition number of the linear systems to be solved. I suspect that the condition numbers can get large, but if so, can the matrices be preconditioned in a similar way the Olver-Townsend ultraspherical spectral method (so that it has bounded condition number)?}
 
-Added small subsection and plots to show the condition numbers of each m-block of Laplacian operator, along with a preconditioned Laplacian (where the preconditioner $P$ is the inverse of the diagonal of the Laplacian). While the Laplacian does not have bounded condition number, the trivial preconditioning keeps it bounded. 
+Added small subsection and plots to show the condition numbers of each m-block of Laplacian operator, along with a preconditioned Laplacian (where the preconditioner $P$ is the inverse of the diagonal of the Laplacian). While the Laplacian itself has a growing condition number, the trivial preconditioning makes it well-conditioned. 
 
 
 \item \comment{If the condition numbers do not get large, can you prove it, indicate why, or give numerical evidence?}
 
-The evidence we can provide is that which addresses the first question.
+We have added numerical evidence demonstrating that the discretisation is well-conditioned under a simple preconditioner. To prove this rigorously is likely to be quite involved as we believe it would involve determining the asymptotics of the operators. Even in the case of the full disk [21], where the entries of operators are known explicitly, full condition number analysis is still open, as one needs to handle singularly perturbed operators for the large $m$ modes.
 
 
 \item \comment{The paper only includes numerical experiments involving zero Dirichlet boundary conditions. Please could the authors clarify in the manuscript if there are any roadblocks to boundary conditions beyond the zero Dirichlet ones demonstrated in Section 5?}
 
-Added comment a small subsection to Section 5 to address this. 
+Added comment a small subsection to Section 5 to address this. Neumann conditions should be doable by writing the equation as a system of PDEs, as shown in [13] on the triangle.
 
 
 \item \comment{Is the code used to produce the numerical experiments going to be made publicly available? For example in the ApproxFun Julia package?}
 
-The package that makes up the framework for expanding functions, obtaining the operator matrices etc. is purely experimental at this stage, but is publicly available. This fact and where it can be found has been added to the paper.
+The package that makes up the framework for expanding functions, obtaining the operator matrices etc. is purely experimental at this stage, but is publicly available, and a link has been added to the paper.
 
 
 \end{itemize}
