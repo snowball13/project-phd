@@ -2,7 +2,7 @@
 
 \chapter{Spherical harmonics as orthogonal polynomials}
 
-To introduce ourselves to the world of multidimensional orthogonal polynomials for solving PDEs on the sphere, we can naturally choose to look at the famous spherical harmonics. Our aim here is to express the spherical harmonics as polynomials in three variables $x, y, z$ to evaluate functions and solve PDEs on the whole sphere. More precisely, we desire the solution to partial differential equations on the domain
+To introduce ourselves to the world of multidimensional orthogonal polynomials for solving PDEs on the sphere, we can naturally choose to look at the famous spherical harmonics. Our aim here is to express the Spherical Harmonics as polynomials in three variables $x, y, z$ to evaluate functions and solve PDEs on the whole sphere. More precisely, we desire the solution to partial differential equations on the domain
 \bseqn{
 	\Omega := \bsset{(x,y,z) \in \R^3}{x^2 + y^2 = \rho(z)^2}
 }
@@ -11,6 +11,10 @@ where
 	\rho(z) := \sqrt{1-z^2}.
 }
 While it may seem somewhat odd, it should hopefully become apparent why this is a useful way to define our domain. 
+
+In this chapter, we demonstrate how one can write the Spherical Harmonics as polynomials in $(x, y, z)$, and how the relationships between them can be used to obtain sparse \enquote{Jacobi operators} for multiplication by $x,y,z$. We demonstrate how these in turn lead to an algorithm for evaluating the Spherical Harmonics, and further an efficient algorithm for evaluating functions when expanded in the SH OP basis. The techniques used here are done so with the aim of applying them to other OP families of other domains (and we do so in later chapters). We will finally demonstrate a proof-of-concept via the examples of the heat equation and the linearised shallow water equations on the unit sphere.
+
+The code that allows one to produce the numerical examples in this chapter is publicly available as a Julia package\footnote{https://github.com/snowball13/SphericalHarmonics.jl} that partners the ApproxFun package \cite{ApproxFun} ? however, this package is purely experimental at this stage.
 
 
 \section{Defining the spherical harmonics in three variables}
