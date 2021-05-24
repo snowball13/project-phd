@@ -14,14 +14,14 @@ While it may seem somewhat odd, it should hopefully become apparent why this is 
 
 In this chapter, we demonstrate how one can write the Spherical Harmonics as polynomials in $(x, y, z)$, and how the relationships between them can be used to obtain sparse \enquote{Jacobi operators} for multiplication by $x,y,z$. We demonstrate how these in turn lead to an algorithm for evaluating the Spherical Harmonics, an efficient algorithm for evaluating functions when expanded in the SH OP basis, and sparse \enquote{banded-block-banded} differential operator matrices. The techniques used here are done so with the aim of applying them to other OP families of other domains (and we do so in later chapters). We will finally demonstrate a proof-of-concept via the examples of the heat equation and the linearised shallow water equations on the unit sphere.
 
-The code that allows one to produce the numerical examples in this chapter is publicly available as a Julia package\footnote{https://github.com/snowball13/SphericalHarmonics.jl} that partners the ApproxFun package \cite{ApproxFun} ? however, this package is purely experimental at this stage.
+The code that allows one to produce the numerical examples in this chapter is publicly available as a Julia package\footnote{https://github.com/snowball13/SphericalHarmonics.jl} that partners the ApproxFun package \cite{ApproxFun} -- however, this package is purely experimental at this stage.
 
 
 \section{Defining the spherical harmonics in three variables}
 
-Before we proceed further, let's build up to our definition of the spherical harmonics. We first need to introduce a few classical orthogonal polynomials.
+Before we proceed further, let's build up to our definition of the spherical harmonics. We first need to introduce a few classical orthogonal polynomials. \enquote{Orthogonal polynomials} (OPs) are defined as such by the condition that each polynomial is orthogonal to each other, with respect to a given inner product. In particular, they are orthogonal with respect to all lower degree polynomials. 
 
-On the unit interval, $[-1,1]$, we note that there is a hierarchy of orthogonal polynomials (OPs) in the sense that \cite[table 18.3.1, eqn 18.9.15]{DLMF}:
+On the unit interval, $[-1,1]$, we note that there is a hierarchy of OPs in the sense that \cite[table 18.3.1, eqn 18.9.15]{DLMF}:
 \bseqn{
 	& \ddx{x} P^{(a,b)}_l (x) = \half \: (l + a + b + 1) \: P^{(a+1,b+1)}_{l-1}(x) \\
 	\implies & \dmdxm{x}{m} P_l(x) = {(l+m)! \over 2^m \: l!} \: P^{(m,m)}_{l-m}(x)
