@@ -2,11 +2,33 @@
 
 \chapter{Disk slices and trapeziums}
 
-The contents of the previous chapter on spherical harmonics can allow us to use similar techniques for developing sparse spectral methods for solving linear partial differential equations on other domains. Before we can return to the 3D surface realm, let's first achieve a foundation in two-dimensions, by looking at a special class of geometries that includes disk slices and trapeziums.  
+The contents of the previous chapter on spherical harmonics can allow us to use similar techniques for developing sparse spectral methods for solving linear partial differential equations on other domains. Before we can return to the 3D surface realm, let us first achieve a foundation in two-dimensions by looking at a special class of geometries that includes disk slices and trapeziums.
+
+
+
+
+\bstodoinline{Background on multivariate OPs on the disk and triangle. Give whole disk OP formula and triangle OP formula as reference points (and refer back to it when defining the disk slice OPs and trapezium OPs respectively). Mention there are other choices for OPs on these domains too.}
+
+There has been some really interesting work in the area of mutlivariate orthogonal polynomials in 2D domains \bstodo{list some domains and cite references for them}, in particular spectral methods have been established on the disk \cite{} and the triangle \cite{}. For the triangle, the OPs have been chosen as a three-parameter family of polynomials in $(x,y)$ with differential operators acting in such a way so as to increment or decrement the parameter values:
+\bseqnnumber{
+	P^{(a,b,c)}(x,y) := define, \quad (x,y) \in \bsset{(x,y) \in \R^2}{0 < x < 1, \: 0 < y < 1-x} \label{eqn:triangleops}
+}
+while for the disk, so-and-so choose the OPs to be:
+\bseqnnumber{
+	define \label{eqn:diskops}.
+}
+We use the word \enquote{choose} here deliberately, as naturally there is more than one way to define an OP basis on these domains, including the generalisations that we will discuss in this chapter. \bstodo{Give one?}
+
+We will see that the full unit disk and triangle cases are special cases of the spectral methods we investigate here.
+
+
+
+
+
 
 More precisely, we will consider the solution of partial differential equations on the domain
 \bseqn{
-	\Omega := \bsset{(x,y) \in \R^2}{\alpha < x < \beta, \: \gamma \rho(x) < y < \delta \rho(x)} 
+	\Omega := \bsset{(x,y) \in \R^2}{\alpha \le x \le \beta, \: \gamma \rho(x) \le y \le \delta \rho(x)} 
 }
 where  either of the following conditions hold:
 
@@ -14,20 +36,20 @@ where  either of the following conditions hold:
 	$\rho$ is a degree 1 polynomial.
 \end{condition}
 \begin{condition}\label{cond:disk}
-	$\rho$ is the square root of a non-negative degree \(\le\) 2 polynomial, \(-\gamma = \delta > 0\).
+	$\rho$ is the square root of a non-negative degree $\le 2$ polynomial, $-\gamma = \delta > 0$.
 \end{condition}
 
-For simplicity of presentation we focus on the disk-slice in this chapter, where $\rho(x) = \sqrt{1-x^2}$, $(\alpha,\beta) \subset (0, 1)$, and $(\gamma, \delta)  = (-1,1)$. However, we will discuss an extension to other geometries, including the half-disk and trapeziums. 
+For simplicity of presentation we focus on the disk-slice in this chapter, where $\rho(x) = \sqrt{1-x^2}$, $(\alpha,\beta) \subset (0, 1)$, and $(\gamma, \delta)  = (-1,1)$. However, we will discuss an extension to other geometries, including the half-disk and trapeziums, by choosing the function $\rho$ and constants $\alpha, \beta, \gamma, \delta$ appropriately. Moreover, one should be able to see that the full disk and triangle can also be obtained in such a way.
 
-We show that partial differential equations become sparse linear systems when viewed as acting on expansions involving a family of orthogonal polynomials (OPs) that  generalise Jacobi polynomials, mirroring the ultraspherical spectral method for ordinary differential equations \cite{olver2013fast} and its analogue on the disk \cite{vasil2016tensor} and triangle \cite{olver2018recurrence,olver2019triangle}.  On the disk-slice the family of weights we consider are of the form
+We will show that partial differential equations become sparse linear systems when viewed as acting on expansions involving a family of orthogonal polynomials (OPs) that  generalise Jacobi polynomials, mirroring the ultraspherical spectral method for ordinary differential equations \cite{olver2013fast} and its analogue on the disk \cite{vasil2016tensor} and triangle \cite{olver2018recurrence,olver2019triangle}.  On the disk-slice the family of weights we consider are of the form
 \bseqn{
-	\Wabc(x,y) = (\beta - x)^a \: (x - \alpha)^b \: (1-x^2-y^2)^c, \qfor \alpha \leq x \leq \beta,\quad -\rho(x) \leq y \leq \rho(x).
+	\Wabc(x,y) = (\beta - x)^a \: (x - \alpha)^b \: (1-x^2-y^2)^c
 }
-The corresponding OPs denoted $\hdopnkabc(x,y)$, where $n$ denotes the polynomial degree, and $0 \le k \le n$. We define these to be orthogonalised lexicographically, that is,
+for $\alpha \leq x \leq \beta,$ $-\rho(x) \leq y \leq \rho(x)$. The corresponding OPs denoted $\hdopnkabc(x,y)$, where $n$ denotes the polynomial degree, and $0 \le k \le n$. We define these to be orthogonalised lexicographically, that is,
 \bseqn{
 	\hdopnkabc(x,y) = C_{n,k} x^{n-k} y^k + (\hbox{lower order terms})
 }
-where $C_{n,k} \neq 0$ and ``lower order terms''   includes degree $n$ polynomials of the form $x^{n-j} y^j$ where $j < k$. The precise normalization arises from their definition in terms of one-dimensional OPs in Definition~\ref{def:OPconstruction}. 
+where $C_{n,k} \neq 0$ and \enquote{lower order terms'} includes degree $n$ polynomials of the form $x^{n-j} y^j$ where $j < k$. The precise normalization arises from their definition in terms of one-dimensional OPs in \bsrefdef{def:OPconstruction}.
 
 Sparsity comes from expanding the domain and range of an operator using different choices of the parameters $a$, $b$ and $c$. Whereas the sparsity pattern and entries derived in \cite{olver2018recurrence,olver2019triangle} for equations on the triangle and \cite{vasil2016tensor} for equations on the disk results from manipulations of Jacobi polynomials, in the present work we use a more general integration-by-parts argument to deduce the sparsity structure, alongside careful use of the Christoffel--Darboux formula \cite[18.2.2]{DLMF} and quadrature rules to determine the entries. In particular, by exploiting the connection with one-dimensional orthogonal polynomials we can construct discretizations of general partial differential operators of size $p(p-1)/2 \times p(p-1)/2$ in $O(p^3)$ operations, where $p$ is the total polynomial degree. This compares favourably to $O(p^6)$ operations if one proceeds na\"ively. Furthermore, we use this framework to derive sparse $p$-finite element methods that are analogous to those of Beuchler and Sch\"oberl on tetrahedra \cite{beuchler2006new}, see also work by Li and Shen \cite{li2010optimal}.  
 
