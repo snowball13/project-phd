@@ -1115,17 +1115,19 @@ What about other boundary conditions? One simple extension is the case where the
 is equivalent to letting $u(x,y,z) = \tilde{u}(x,y,z)+ c(x,y)$ and solving
 \bseqn{
 	\begin{cases}
-    		\DeltaS \tilde{u}(x,y,z) + k^2 \: v(x,y,z) \; \tilde{u}(x,y,z) = f(x,y,z) - k^2 \: v(x,y,z) \: c(x,y) - \DeltaS \: c(x,y)  \quad \text{in } \Omega \\
+    		\DeltaS \tilde{u}(x,y,z) + k^2 \; v(x,y,z) \tilde{u}(x,y,z) = g(x,y,z) \quad \text{in } \Omega \\
 		\tilde{u}(x,y,z) = 0 \quad \text{on } \partial \Omega
 	\end{cases}
 }
-for $\tilde u$. This new problem is then a zero boundary condition Helmholtz problem with right hand side 
+for $\tilde u$, where 
 \bseqn{
 	g(x,y,z) &:= f(x,y,z) - k^2 \: v(x,y,z) \: c(x,y) - \DeltaS \: c(x,y)
 }
-for $(x,y,z) \in \Omega$. Notice that the spherical Laplacian applied to $c(x,y)$, expanded in the $\bigscopN^{(1)}$ basis with coefficients vector $\vec c = (c_{n,k,i})$, is just
+for $(x,y,z) \in \Omega$. This new problem is then a zero boundary condition Helmholtz problem with right hand side $g$. Notice that the spherical Laplacian applied to $c(x,y)$, expanded in the $\bigscopN^{(1)}$ basis with coefficients vector $\vec c = (c_{n,k,i})$, is just
 \bseqn{
-	\DeltaS \: c(x,y) = {1 \over \rho(z)^2} \sum_{n=0}^N \sum_{i=0}^1 c_{n,n,i} \: \pmpxm{\theta}{2} \ch_{n,i}(\theta) = - {1 \over \rho(z)^2} \sum_{n=0}^N \sum_{i=0}^1 n^2 \: c_{n,n,i} \: \ch_{n,i}(\theta)
+	\DeltaS \: c(x,y) &= {1 \over \rho(z)^2} \pmpxm{\theta}{2} c(x,y) \\
+	&= {1 \over \rho(z)^2} \sum_{n=0}^N \sum_{i=0}^1 c_{n,n,i} \: \pmpxm{\theta}{2} \ch_{n,i}(\theta) \\
+	&= - {1 \over \rho(z)^2} \sum_{n=0}^N \sum_{i=0}^1 n^2 \: c_{n,n,i} \: \ch_{n,i}(\theta)
 }
 since the coefficients $\{c_{n,k,i}\}$ for such a function are zero for $k < n$ due to the dependence on $x$ and $y$ only, which are precisely the Fourier coefficients of $c(\cos \theta, \sin \theta)$. Thus, since the function $c(x,y)$ is known, it is simple to evaluate $\pmpxm{\theta}{2} c(x,y)$ and hence one can obtain the coefficients for the expansion of $g(x,y,z)$ in the $\bigscopN^{(1)}$ basis in the usual manner.
 
