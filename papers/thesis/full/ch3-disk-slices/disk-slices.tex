@@ -4,27 +4,19 @@
 
 The contents of the previous chapter on spherical harmonics can allow us to use similar techniques for developing sparse spectral methods for solving linear partial differential equations on other domains. Before we can return to the 3D surface realm, let us first achieve a foundation in two-dimensions by looking at a special class of geometries that includes disk slices and trapeziums.
 
-
-
-
-\bstodoinline{Background on multivariate OPs on the disk and triangle. Give whole disk OP formula and triangle OP formula as reference points (and refer back to it when defining the disk slice OPs and trapezium OPs respectively). Mention there are other choices for OPs on these domains too.}
-
-There has been some really interesting work in the area of mutlivariate orthogonal polynomials in 2D domains \bstodo{list some domains and cite references for them}, in particular spectral methods have been established on the disk \cite{} and the triangle \cite{}. For the triangle, the OPs have been chosen as a three-parameter family of polynomials in $(x,y)$ with differential operators acting in such a way so as to increment or decrement the parameter values:
+In recent years, there has been some interesting work in the area of multivariate orthogonal polynomials in two-dimensional domains (see \cite{dunkl2014orthogonal}), such as for a Chebychev-based spectral method on the rectangle \cite{julien2009efficient} \bstodo{list some domains and cite references for them}. In particular, spectral methods have been established on the disk \cite{boyd2011comparing, vasil2016tensor} and the triangle \cite{olver2019triangle}. Jacobi polynomials are extremely useful for solving a number of problems in not just 1D but 2D also, since one can utilise the sparsity of the relations that they hold to yield operator matrices that are efficient to solve \cite{doha2006efficient}. In a similar vein to the ultraspherical method for the unit interval \cite{olver2013fast, doha2009efficient}, for the triangle a choice of OPs are the Jacobi polynomials on the triangle, which are a three-parameter family of polynomials in $(x,y)$ with differential operators acting in such a way so as to increment or decrement the parameter values \cite{dunkl2014orthogonal, koornwinder1975two, olver2019triangle}:
 \bseqnnumber{
-	P^{(a,b,c)}(x,y) := define, \quad (x,y) \in \bsset{(x,y) \in \R^2}{0 < x < 1, \: 0 < y < 1-x} \label{eqn:triangleops}
+	P^{(a,b,c)}_{n,k}(x,y) := \tilde P^{(2k+b+c+1,a)}_{n-k}(x) \; (1-x)^k \; \tilde P^{(c,b)}_k\fpr({y \over 1-x}) \label{eqn:triangleops}
 }
-while for the disk, so-and-so choose the OPs to be:
+for $(x,y) \in \bsset{(x,y) \in \R^2}{0 < x < 1, \: 0 < y < 1-x}$, where $\tilde P_k^{(a,b)}$ is the degree $k$ \textit{shifted Jacobi polynomial}\footnote{The shifted Jacobi polynomials are orthogonal on the interval $[0,1]$ and given by $\tilde P_k^{(a,b)}(x) = P_k^{(a,b)}(2x - 1)$ where $P_k^{(a,b)}$ is the standard degree $k$ Jacobi polynomial.} with $a,b,c$ being parameter values. 
+
+For the disk, a review of spectral methods on the disk for solving the Poisson equation has been completed \cite{boyd2011comparing}, that looks at methods involving various bases for expanding functions in the disk including Zernike polynomials and Chebyshev polynomials. It is concluded that using Chebyshev polynomials yields mixed results, but that there is also no single advised basis to use. While Zernike polynomials yield accurate results, there is a lack of radial fast transform, which is a disadvantage. However, ideas for how to overcome this have progressed \cite{slevinsky2018use, sakai2009application, wilber2017computing}. One solution proposed is a radial basis defined in terms of Jacobi polynomials \cite{vasil2016tensor}:
 \bseqnnumber{
-	define \label{eqn:diskops}.
+	Q_n^{k,m}(r) := C_n^{k,m} r^m P^{(k,m)}_n(2r^2 - 1), \label{eqn:diskops}.
 }
-We use the word \enquote{choose} here deliberately, as naturally there is more than one way to define an OP basis on these domains, including the generalisations that we will discuss in this chapter. \bstodo{Give one?}
+where $C_n^{k,m}$ is some normalising constant so that they are orthonormal with respect to $\int_0^1 Q_n^{k,m}(r) \; Q_{n'}^{k,m}(r) \; (1-r^2)^k \; r \; \D r = \delta_{n,n'}$. $\{Q_n^{k,m}\}$ are therefore a two-parameter family of orthogonal polynomials. Again, the idea here is that differential and other operators, as well as basis (parameter) conversion operators, can be represented as banded matrices.
 
-We will see that the full unit disk and triangle cases are special cases of the spectral methods we investigate here.
-
-
-
-
-
+In this chapter, we aim to present a basis and develop a sparse spectral method on generalisations of these domains, namely the disk-slice and trapezium. The full unit disk and triangle cases are special cases of the spectral methods we investigate here too. We will show that the operators for multiplication by $x$ and $y$, as well as differential and parameter conversion, will be banded-block-banded.
 
 More precisely, we will consider the solution of partial differential equations on the domain
 \bseqn{
@@ -39,9 +31,9 @@ where  either of the following conditions hold:
 	$\rho$ is the square root of a non-negative degree $\le 2$ polynomial, $-\gamma = \delta > 0$.
 \end{condition}
 
-For simplicity of presentation we focus on the disk-slice in this chapter, where $\rho(x) = \sqrt{1-x^2}$, $(\alpha,\beta) \subset (0, 1)$, and $(\gamma, \delta)  = (-1,1)$. However, we will discuss an extension to other geometries, including the half-disk and trapeziums, by choosing the function $\rho$ and constants $\alpha, \beta, \gamma, \delta$ appropriately. Moreover, one should be able to see that the full disk and triangle can also be obtained in such a way.
+For simplicity of presentation we focus on the disk-slice in this chapter, where $\rho(x) = \sqrt{1-x^2}$, $(\alpha,\beta) \subset (0, 1)$, and $(\gamma, \delta)  = (-1,1)$. However, we will discuss an extension to other geometries, including the half-disk and trapeziums, by choosing the function $\rho$ and constants $\alpha, \beta, \gamma, \delta$ appropriately (for example, choosing $\rho(x) = 1-\xi x$ and $(\alpha,\beta) = (\gamma, \delta) = (0, 1)$ for some constant $\xi > 0$ returns the trapezium case). Moreover, one should be able to see that the full disk and triangle can also be obtained in such a way.
 
-We will show that partial differential equations become sparse linear systems when viewed as acting on expansions involving a family of orthogonal polynomials (OPs) that  generalise Jacobi polynomials, mirroring the ultraspherical spectral method for ordinary differential equations \cite{olver2013fast} and its analogue on the disk \cite{vasil2016tensor} and triangle \cite{olver2018recurrence,olver2019triangle}.  On the disk-slice the family of weights we consider are of the form
+We will show that partial differential equations become sparse linear systems when viewed as acting on expansions involving a family of orthogonal polynomials (OPs) that generalise Jacobi polynomials, mirroring the ultraspherical spectral method for ordinary differential equations on the interval \cite{olver2013fast}, and its analogues on the disk \cite{vasil2016tensor} and triangle \cite{olver2018recurrence,olver2019triangle}. On the disk-slice the family of weights we consider are of the form
 \bseqn{
 	\Wabc(x,y) = (\beta - x)^a \: (x - \alpha)^b \: (1-x^2-y^2)^c
 }
@@ -49,9 +41,9 @@ for $\alpha \leq x \leq \beta,$ $-\rho(x) \leq y \leq \rho(x)$. The correspondin
 \bseqn{
 	\hdopnkabc(x,y) = C_{n,k} x^{n-k} y^k + (\hbox{lower order terms})
 }
-where $C_{n,k} \neq 0$ and \enquote{lower order terms'} includes degree $n$ polynomials of the form $x^{n-j} y^j$ where $j < k$. The precise normalization arises from their definition in terms of one-dimensional OPs in \bsrefdef{def:OPconstruction}.
+where $C_{n,k} \neq 0$ and \enquote{lower order terms'} includes degree $n$ polynomials of the form $x^{n-j} y^j$ where $j < k$. The precise normalization arises from their definition in terms of one-dimensional OPs we will see in \bsrefdef{def:OPconstruction}.
 
-Sparsity comes from expanding the domain and range of an operator using different choices of the parameters $a$, $b$ and $c$. Whereas the sparsity pattern and entries derived in \cite{olver2018recurrence,olver2019triangle} for equations on the triangle and \cite{vasil2016tensor} for equations on the disk results from manipulations of Jacobi polynomials, in the present work we use a more general integration-by-parts argument to deduce the sparsity structure, alongside careful use of the Christoffel--Darboux formula \cite[18.2.2]{DLMF} and quadrature rules to determine the entries. In particular, by exploiting the connection with one-dimensional orthogonal polynomials we can construct discretizations of general partial differential operators of size $p(p-1)/2 \times p(p-1)/2$ in $O(p^3)$ operations, where $p$ is the total polynomial degree. This compares favourably to $O(p^6)$ operations if one proceeds na\"ively. Furthermore, we use this framework to derive sparse $p$-finite element methods that are analogous to those of Beuchler and Sch\"oberl on tetrahedra \cite{beuchler2006new}, see also work by Li and Shen \cite{li2010optimal}.  
+Sparsity comes from expanding the domain and range of an operator using different choices of the parameters $a$, $b$ and $c$. Whereas the sparsity pattern and entries derived for equations on the triangle \cite{olver2018recurrence, olver2019triangle} and for equations on the disk \cite{vasil2016tensor} with the frameworks discussed earlier both result from manipulations of Jacobi polynomials, in the present work we use a more general integration-by-parts argument to deduce the sparsity structure, alongside careful use of the Christoffel-Darboux formula \cite[18.2.2]{DLMF} and quadrature rules to determine the entries. In particular, by exploiting the connection with one-dimensional orthogonal polynomials we can construct discretizations of general partial differential operators of size $p(p-1)/2 \times p(p-1)/2$ in $O(p^3)$ operations, where $p$ is the total polynomial degree. This compares favourably to $O(p^6)$ operations if one proceeds na\"ively. Furthermore, we use this framework to derive sparse $p$-finite element methods that are analogous to those of Beuchler and Sch\"oberl on tetrahedra \cite{beuchler2006new}, see also work by Li and Shen \cite{li2010optimal}.
 
 
 
@@ -65,11 +57,11 @@ We can construct 2D orthogonal polynomials on $\Omega$ from 1D orthogonal polyno
 
 \begin{proposition}[{\cite[p55--56]{dunkl2014orthogonal}}]\label{prop:construction}
 	Let $w_1 : (\alpha,\beta) \: \to \R$, $w_2 : (\gamma,\delta) \: \to \R$ be weight functions with $\alpha,\beta,\gamma,\delta \in \R$, and let $\rho \: : \: (\alpha,\beta) \: \to (0,\infty)$ be such that either \bsrefcondition{cond:trap} or \bsrefcondition{cond:disk} with $w_2$ being an even function hold.
-$\forall$, $n = 0,1,2,\dots, $ let $\{p_{n,k}\}$ be polynomials orthogonal with respect to the weight $\rho(x)^{2k+1} w_1(x)$ where $0 \le k \le n$, and $\{q_{n}\}$ be polynomials orthogonal with respect to the weight $w_2(x)$. Then the 2D polynomials defined on $\Omega$
+$\forall$, $n = 0,1,2,\dots, $ let $\{p_{n,k}\}$ be polynomials orthogonal with respect to the weight $\rho(x)^{2k+1} w_1(x)$ where $0 \le k \le n$, and $\{q_{n}\}$ be polynomials orthogonal with respect to the weight $w_2(x)$. Then, for $n = 0,1,2,\dots$, $k = 0,\dots,n$, the 2D polynomials defined on $\Omega$ given by
 \bseqn{
-	\hdopnk(x,y) := p_{n-k,k}(x) \: \rho(x)^k \: q_k\fpr(\frac{y}{\rho(x)}) \qquad\hbox{for} \qquad 0 \le k \le n, \: n = 0,1,2,\dots
+	\hdopnk(x,y) := p_{n-k,k}(x) \: \rho(x)^k \: q_k\fpr(\frac{y}{\rho(x)})
 }
-are orthogonal polynomials with respect to the weight \(W(x,y) := w_1(x) \: w_2\fpr(\frac{y}{\rho(x)}) \) on $\Omega$. 
+are orthogonal polynomials with respect to the weight $W(x,y) := w_1(x) \: w_2\fpr(\frac{y}{\rho(x)})$ on $\Omega$. 
 \end{proposition}
 
 
@@ -96,7 +88,7 @@ Denote the three-parameter family of orthonormal polynomials on $[\alpha,\beta]$
 
 We can now write down our 2D OP family.
 \begin{definition}\label{def:constuction}
-	Define the four-parameter 2D orthogonal polynomials via:
+	For parameters $a,b,c,d \in \R$, define the four-parameter 2D orthogonal polynomials as the set $\{\hdopnk^{(a,b,c,d)}\}$ where:
 \bseqn{
 	\hdopnk^{(a,b,c,d)}(x,y) := \genjacnmk^{(a, b, c+d+2k+1)}(x) \: \rho(x)^k \: \jac_k^{(d,c)}\fpr(\frac{y}{\rho(x)}), \quad (x,y) \in \Omega, 
 }
@@ -108,10 +100,9 @@ $\{\hdopnk^{(a,b,c,d)}\}$ are orthogonal with respect to the weight
 \bseqn{
 	W^{(a,b,c,d)}(x,y) := \genjacw^{(a,b,c+d)}(x) \: \jacw^{(d,c)}\fpr(\frac{y}{\rho(x)}), \quad (x,y) \in \Omega,
 }
-assuming that either \bsrefcondition{cond:disk} or \bsrefcondition{cond:disk} with  \(\jacw^{(a,b)}\) being an even function (i.e. $a = b$, and we can hence denote the weight as $\jacw^{(a)}(x) = w^{(a,a)}_P(x) =  (\delta-x^2)^a$) hold.
-That is,
+assuming that either \bsrefcondition{cond:trap} holds, or \bsrefcondition{cond:disk} holds with $\jacw^{(a,b)}$ being an even function (i.e. $a = b$, and we can hence denote the weight as $\jacw^{(a)}(x) = w^{(a,a)}_P(x) = (\delta-x^2)^a$). That is,
 \bseqn{
-	\ip< \hdopnk^{(a,b,c,d)}, \: \hdopmj^{(a,b,c,d)} >_{W^{(a,b,c,d)}} &= \normgenjac^{(a,b,c+d+2k+1)} \: \normjac^{(d,c)} \: \delta_{n,m} \: \delta_{k,j},
+	\ip< \hdopnk^{(a,b,c,d)}, \: \hdopmj^{(a,b,c,d)} >_{W^{(a,b,c,d)}} &= \normgenjac^{(a,b,c+d+2k+1)} \: \normjac^{(d,c)} \: \delta_{n,m} \: \delta_{k,j}
 }
 where for $f, g : \Omega \to \R$ the inner product is defined as 
 \bseqn{
@@ -160,15 +151,17 @@ Recall that Jacobi matrices are an important piece of the puzzle for using these
 	x \genjac_n^{(a,b,c)}(x) &= \beta_n^{(a,b,c)} \genjac_{n+1}^{(a,b,c)}(x) + \alpha_n^{(a,b,c)} \genjac_n^{(a,b,c)}(x) + \beta_{n-1}^{(a,b,c)} \genjac_{n-1}^{(a,b,c)}(x) \label{eqn:Hrecurrence} \\
 	y \jac_n^{(d,c)}(y) &= \delta_n^{(d,c)} \jac_{n+1}^{(d,c)}(y) + \gamma_{n}^{(d,c)} \jac_{n}^{(d,c)}(y) + \delta_{n-1}^{(d,c)} \jac_{n-1}^{(d,c)}(y). \label{eqn:Precurrence}
 }
-Of course, for the disk-slice case, we have that $c = d$ and $\gamma_{n}^{(c,c)} = 0$ $\forall n=0,1,2,\dots$. We can use (\ref{eqn:Hrecurrence}) and (\ref{eqn:Precurrence}) to determine the 2D recurrences for $\hdopnkabcd(x,y)$. Importantly, we can deduce sparsity in the recurrence relationships:
+Of course, for the disk-slice case, we have that $c = d$ and $\gamma_{n}^{(c,c)} = 0$ $\forall n=0,1,2,\dots$. We can use (\ref{eqn:Hrecurrence}) and (\ref{eqn:Precurrence}) to determine the 2D recurrences for $\hdopnkabcd(x,y)$. Importantly, we can deduce sparsity in the recurrence relationships.
 
 \begin{lemma}
 	$\hdopnkabcd(x,y)$ satisfy the following 3-term recurrences:
 \bseqn{
-x \hdopnkabcd(x,y) &= \alphaabcd_{n,k,1} \: \hdop_{n-1, k}^{(a,b,c,d)}(x, y) + \alphaabcd_{n,k,2} \: \hdop_{n, k}^{(a,b,c,d)}(x, y) + \alphaabcd_{n+1,k,1} \: \hdop_{n+1, k}^{(a,b,c)}(x, y), \\
-y \hdopnkabcd(x,y) &= \betaabcd_{n,k,1} \: \hdop_{n-1, k-1}^{(a,b,c,d)}(x, y) + \betaabcd_{n,k,2} \: \hdop_{n-1, k}^{(a,b,c,d)}(x, y) + \betaabcd_{n,k,3} \: \hdop_{n-1, k+1}^{(a,b,c,d)}(x, y) \nonumber \\
-		& \quad \quad + \betaabcd_{n,k,4} \: \hdop_{n, k-1}^{(a,b,c,d)}(x, y) + \betaabcd_{n,k,5} \: \hdop_{n, k}^{(a,b,c,d)}(x, y) + \betaabcd_{n,k,6} \: \hdop_{n, k+1}^{(a,b,c,d)}(x, y) \nonumber \\
-		& \quad \quad + \betaabcd_{n,k,7} \: \hdop_{n+1, k-1}^{(a,b,c,d)}(x, y) + \betaabcd_{n,k,8} \: \hdop_{n+1, k}^{(a,b,c,d)}(x, y) + \betaabcd_{n,k,9} \: \hdop_{n+1, k+1}^{(a,b,c,d)}(x, y),
+	&x \hdopnkabcd(x,y) \\
+	&\quadtwo = \alphaabcd_{n,k,1} \hdop_{n-1, k}^{(a,b,c,d)}(x, y) + \alphaabcd_{n,k,2} \hdop_{n, k}^{(a,b,c,d)}(x, y) + \alphaabcd_{n+1,k,1} \hdop_{n+1, k}^{(a,b,c)}(x, y), \\
+	&y \hdopnkabcd(x,y) \\
+	&\quadtwo = \betaabcd_{n,k,1} \hdop_{n-1, k-1}^{(a,b,c,d)}(x, y) + \betaabcd_{n,k,2} \hdop_{n-1, k}^{(a,b,c,d)}(x, y) + \betaabcd_{n,k,3} \hdop_{n-1, k+1}^{(a,b,c,d)}(x, y) \\
+		&\quadfour + \betaabcd_{n,k,4} \hdop_{n, k-1}^{(a,b,c,d)}(x, y) + \betaabcd_{n,k,5} \hdop_{n, k}^{(a,b,c,d)}(x, y) + \betaabcd_{n,k,6} \hdop_{n, k+1}^{(a,b,c,d)}(x, y) \\
+		&\quadfour + \betaabcd_{n,k,7} \hdop_{n+1, k-1}^{(a,b,c,d)}(x, y) + \betaabcd_{n,k,8} \hdop_{n+1, k}^{(a,b,c,d)}(x, y) + \betaabcd_{n,k,9} \hdop_{n+1, k+1}^{(a,b,c,d)}(x, y),
 }
 for $(x,y) \in \Omega$, where
 \bseqn{

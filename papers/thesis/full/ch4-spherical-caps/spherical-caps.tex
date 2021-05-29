@@ -53,29 +53,39 @@ The code that allows one to produce the numerical examples in this chapter is pu
 
 The spherical cap can be thought of as higher dimensional version of the circle arc (a one-dimensional \enquote{surface} in two-dimensional space). One can define OPs on the circle in terms of Fourier series, which we write here as orthogonal polynomials in $x$ and $y$:
 \begin{definition}\label{def:sc:Ydefinition}
-	Define the unit circle $\omega := \{ \mathbf{x} = (x,y) \in \R^2 \: | \: x^2 + y^2 = 1\}$, and define the parameter $\theta$ for each $(x,y) \in \omega$ by $x = \cos\theta$, $y = \sin\theta$. Define the polynomials $\{\chki\}$ for $k = 0, 1, \dots$, $i = 0, 1$ on $(x,y) \in \omega$ by
+	Define the unit circle $\omega := \bsset{\vec{x} = (x,y) \in \R^2}{x^2 + y^2 = 1}$, and define the parameter $\theta$ for each $(x,y) \in \omega$ by $x = \cos\theta$, $y = \sin\theta$. Define the polynomials $\{\chki\}$ for $k = 0, 1, \dots$, $i = 0, 1$ on $(x,y) \in \omega$ by
 \bseqn{
 	\ch_{0,0}(\xvec) \equiv \ch_{0,0}(x, y) &:= \ch_{0} =: \ch_{0,0}(\theta) \\
-	\ch_{k,0}(\xvec) \equiv \ch_{k,0}(x, y) \ &:= T_k(x) = \cos k \theta =: \ch_{k,0}(\theta), \quad k = 1,2,3,\dots \\
-	\ch_{k,1}(\xvec) \equiv \ch_{k,1}(x, y) &:= y \: U_{k-1}(x) = \sin k \theta =: \ch_{k,1}(\theta), \quad k = 1,2,3,\dots
+	\ch_{k,0}(\xvec) \equiv \ch_{k,0}(x, y) &:= T_k(x) = \cos k \theta =: \ch_{k,0}(\theta) \\
+	\ch_{k,1}(\xvec) \equiv \ch_{k,1}(x, y) &:= y \: U_{k-1}(x) = \sin k \theta =: \ch_{k,1}(\theta)
 }
-where $\ch_{0} := \frac{\sqrt{2}}{2}$ and $T_k$, $U_{k-1}$ are the standard Chebyshev polynomials on the interval $[-1,1]$. The $\{Y_{k,i}\}$ are orthonormal with respect to the inner product
+for $k = 1,2,3,\dots$ where $\ch_{0} := {\sqrt{2} \over 2}$ and $T_k$, $U_{k-1}$ are the standard Chebyshev polynomials on the interval $[-1,1]$. The $\{Y_{k,i}\}$ are orthonormal with respect to the inner product
 \bseqn{
 	\ip< p, \: q >_{\ch} &:= \frac{1}{\pi} \: \int_0^{2\pi} p(\xvec(\theta)) \: q(\xvec(\theta)) \: \D \theta.
 }
 Note that $\ch_0$ is defined so as to ensure orthonormality. 
 \end{definition}
 
-However, for an arc of the unit circle $\{ define arc \}$ (note we can orientate the arc as we please without loss of generality), we would need to make a modification so that the polynomials are orthogonal with respect to an inner product integral with the truncated domain of the arc:
+However, for an arc of the unit circle $\bsset{\vec{x} = (x,y) \in \R^2}{x \ge h, \: x^2 + y^2 = 1}$ for some $h \in (-1, 1)$ (note we can orientate the arc as we please without loss of generality), we would need to make a modification so that the polynomials are orthonormal with respect to a different inner product accounting for the truncated domain of the arc:
 \bseqn{
-	give arc ops (T^h, yU^h) and the inner product.
+	\ip< p, \: q >_{\ch^h} &:= c^h \: \int_{-\arccos{h}}^{\arccos{h}} p(\xvec(\theta)) \: q(\xvec(\theta)) \: \D \theta \\
+	&= c^h \: \int_h^1 \Big\{ p(x,\sqrt{1-x^2}) \; q(x,\sqrt{1-x^2}) \\
+	&\quadfour \quadtwo + p(x,-\sqrt{1-x^2}) \; q(x,-\sqrt{1-x^2}) \Big\} {\D x \over \sqrt{1-x^2}}
 }
+for some normalising constant $c^h$. In the same vein, we can choose to construct the arc OPs in the same way as the whole circle OPs -- that is, define $\{T_k^h\}$, $\{U_k^h\}$ as two sets of univariate orthogonal polynomials on the interval $[h,1]$, orthogonal with respect to the weight functions $(1-x^2)^{-\half}$ and $(1-x^2)^{\half}$ respectively, and then define
+\bseqn{
+	\ch^h_{0,0}(\xvec) \equiv \ch^h_{0,0}(x, y) &:= \ch^h_{0} =: \ch^h_{0,0}(\theta) \\
+	\ch^h_{k,0}(\xvec) \equiv \ch^h_{k,0}(x, y) &:= T^h_k(x) =: \ch^h_{k,0}(\theta) \\
+	\ch^h_{k,1}(\xvec) \equiv \ch^h_{k,1}(x, y) &:= y \: U^h_{k-1}(x) =: \ch^h_{k,1}(\theta)
+}
+where $Y_0^h$ is chosen so that $\ip< Y_0^h, \: Y_0^h >_{\ch^h} = 1$.
+
 \bstodoinline{Expand on this. Read the Olver Xu "OPs on quadratic curves paper." where the arc might apply??? Either way, cite this paper in intro (CH1).}
 
 
 \section{Orthogonal polynomials on algebraic curves}
 
-This idea of using 1D OPs on a shortened interval to create the modified OPs for an arc has be generalised to higher dimensional domains, where a way of constructing orthogonal polynomials on algebraic curves has been presented \cite{olver2020orthogonal}. \bstodoinline{Expand on this. Summarise the "on" surfaces approach. Use references in the paper.}
+This idea of using 1D OPs on a shortened interval to create the modified OPs for a circle arc has be generalised to higher dimensional domains, where a way of constructing orthogonal polynomials on algebraic curves has been presented \cite{olver2020orthogonal}. \bstodoinline{Expand on this. Summarise the "on" surfaces approach. Use references in the paper.}
 
 
 
@@ -83,7 +93,10 @@ This idea of using 1D OPs on a shortened interval to create the modified OPs for
 
 \subsection{Explicit construction}
 
-Using the approach presented for constructing OPs on algebraic curves, we can construct the 3D orthogonal polynomials on the spherical cap or band $\Omega$ from 1D orthogonal polynomials on the interval \([\alpha,\beta]\), and from Fourier series written as orthogonal polynomials in $x$ and $y$:
+Using the approach presented for constructing OPs on algebraic curves, we can construct the 3D orthogonal polynomials on the spherical cap or band $\Omega$ from 1D orthogonal polynomials on the interval $[\alpha,\beta]$, and from Fourier series written as orthogonal polynomials in $x$ and $y$. Recall that the spherical cap is defined by 
+\bseqn{
+	\Omega := \bsset{(x,y,z) \in \R^3}{\alpha < z < \beta, \: x^2 + y^2 + z^2 = 1}.
+}
 \begin{proposition}[\cite{olver2020orthogonal}]\label{prop:sc:construction}
 	Let $w : (\alpha,\beta) \to \R$ be a weight function. For $n = 0,1,2,\dots, $ let $\{r_{n,k}\}$ be polynomials orthogonal with respect to the weight $\rho(x)^{2k} w(x)$ where $0 \le k \le n$. Then the 3D polynomials defined on $\Omega$ given by
 \bseqn{
@@ -91,9 +104,9 @@ Using the approach presented for constructing OPs on algebraic curves, we can co
 }
 for $i \in {0,1}, \: 0 \le k \le n, \: n = 0,1,2,\dots$ are orthogonal polynomials with respect to the inner product
 \bseqn{
-	\ip< p, \: q > &:= \int_\Omega p(x,y,z) \: q(x,y,z) \: w(z) \: \D A \\
-	&= \int_0^{\cos^{-1}(\alpha)} \int_0^{2\pi} p\big(\sinphi \costheta, \sinphi \sintheta, \cosphi \big) \: q\big(\sinphi \costheta, \sinphi \sintheta, \cosphi \big) \: \times \\
-	&\qquad w(\cosphi) \: \sinphi \: \D \theta \: \D \varphi \\
+	&\ip< p, \: q > := \int_\Omega p(x,y,z) \: q(x,y,z) \: w(z) \: \D A \\
+	&= \int_0^{\cos^{-1}(\alpha)} \int_0^{2\pi} \Big\{ p\big(\sinphi \costheta, \sinphi \sintheta, \cosphi \big) \: q\big(\sinphi \costheta, \sinphi \sintheta, \cosphi \big) \\
+	&\quadeight \quad \cdot w(\cosphi) \: \sinphi \Big\} \: \D \theta \: \D \varphi \\
 	&= \int_\alpha^1 \int_0^{2\pi} p\big(\rho(z) \costheta, \rho(z) \sintheta, z\big) \: q\big(\rho(z) \costheta, \rho(z) \sintheta, z\big) \: w(z) \: \D \theta \: \D z
 }
 on $\Omega$, where $\D A = \sinphi \: \D \theta \: \D \varphi$ is the uniform spherical measure on $\Omega$. 
