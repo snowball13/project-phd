@@ -424,12 +424,12 @@ where we note $Y_0^0(x,y,z) \equiv Y_0 := c_0^0 \: P_0^{(0,0)} \equiv \half {1 \
 		\end{pmatrix}  \in \C^{3(2l+1)\times(2l+1)}. \label{eqn:clenshawmats2}
 }
  
-For each $l = 0,1,2\dots$ let $\Dlt$ be any matrix that is a left inverse of $A_l$, i.e. such that $\Dlt A_l = \idmat{2l+3}$. Multiplying our system by the preconditioner matrix that is given by the block diagonal matrix of the $\Dlt$'s, we obtain a lower triangular system \cite[Section 3.2]{dunkl2014orthogonal}, which can be expanded to obtain the three-term recurrence:
+For each $l = 0,1,2\dots$ let $\Dlt$ be any matrix that is a left inverse of $A_l$, i.e. such that $\Dlt A_l = \idmat{2l+3}$. Multiplying our system by the preconditioner matrix that is given by the block diagonal matrix of the $\Dlt$'s, we obtain a lower triangular system \cite[Section 3.2]{dunkl2014orthogonal}, which can be expanded to obtain the three-term recurrence, for $l = 0,1,2,\dots$:
 \bseqn{
 	\begin{cases}
 		\SHvec_{-1}(x,y,z) := 0 \\
 		\SHvec_{0}(x,y,z) := Y_0 \\
-		\SHvec_{l+1}(x,y,z) = -\Dlt (B_l-G_l(x,y,z)) \SHvec_l(x,y,z) - \Dlt C_l  \,\SHvec_{l-1}(x,y,z), \quad l = 0,1,2,\dots.
+		\SHvec_{l+1}(x,y,z) = -\Dlt (B_l-G_l(x,y,z)) \SHvec_l(x,y,z) - \Dlt C_l  \,\SHvec_{l-1}(x,y,z)
 	\end{cases}
 }
 
@@ -658,7 +658,8 @@ The aim will be to show that the only nonzero coefficients $\calA_{l',m'}$, $\ca
 	&\ip<x \gradYlm, \gradYlmprime> \nonumber \\
 	&= \iint_\Omega \costheta \sinphi \: \gradYlm \cdot {\gradYlmprime}^* \sinphi \: \D\phi \: \D\theta \nonumber \\
 	&= \clm \clmprime \Big( \int_0^{2pi} \eimtheta \eimthetaprime \costheta \: \D\theta \Big) \nonumber \\
-	&\quadfour \cdot \Big( \int_{-1}^{1} \Big\{ \big[ \abs{m} z \jaclmabs{l}{m}(z) - \rho(z)^2 \jaclmabsdz{l}{m}(z) \big] \big[ \abs{m'} z \jaclmabs{l'}{m'}(z) - \rho(z)^2 \jaclmabs{l'}{m'}(z) \big] \nonumber \\
+	&\quadfour \cdot \Big( \int_{-1}^{1} \Big\{ \big[ \abs{m} z \jaclmabs{l}{m}(z) - \rho(z)^2 \jaclmabsdz{l}{m}(z) \big] \nonumber \\
+	&\quadeight \quadtwo \cdot \big[ \abs{m'} z \jaclmabs{l'}{m'}(z) - \rho(z)^2 \jaclmabs{l'}{m'}(z) \big] \nonumber \\
 	&\quadeight + mm' \jaclmabs{l}{m}(z) \jaclmabs{l'}{m'}(z) \Big\} \: \rho(z)^{\abs{m}+\abs{m'}-1} \: \D z \Big) \nonumber \\
 	&= \clm \clmprime \pi (\delta_{m',m-1} + \delta_{m',m+1}) \nonumber \\
 	&\quadfour \cdot \Big( \int_{-1}^{1} \Big\{ \jaclmabs{l}{m} \jaclmabs{l'}{m'} \rho^{\abs{m}+\abs{m'}-1} \big(mm' + \abs{m}\abs{m'} z^2 \big) \nonumber \\
@@ -673,8 +674,8 @@ On that note, we will first consider the case that $m > 0$ and $m' = m - 1$, and
 	&\int_{-1}^{1} \Big\{ m(m-1) \jaclm{l}{m} \jaclmbracket{l'}{m-1} \rho^{2m-2} (1 + z^2) - m z \jaclm{l}{m} \jaclmbracketdz{l'}{m-1} \rho^{2m} \nonumber \\
 	&\quadtwo \quad - (m-1) z \jaclmdz{l}{m} \jaclmbracket{l'}{m-1} \rho^{2m} + \jaclmdz{l}{m} \jaclmbracketdz{l'}{m-1} \rho^{2m+2} \Big\} \: \D z \nonumber \\
 	&= \int_{-1}^{1} \Big\{ m(m-1) \jaclm{l}{m} \jaclmbracket{l'}{m-1} \rho^{2m-2} (1 + z^2) - m z \jaclm{l}{m} \jaclmbracketdz{l'}{m-1} \rho^{2m} \nonumber \\
-	&\quadfour + (m-1) \jaclm{l}{m} \rho^{2m-2} \big( - 2m z^2 \jaclmbracket{l'}{m-1} + \jaclmbracket{l'}{m-1} \rho^{2} - z \jaclmbracketdz{l'}{m-1} \rho^{2} \big) \nonumber \\
-	&\quadfour + \jaclmdz{l}{m} \jaclmbracketdz{l'}{m-1} \rho^{2m+2} \Big\} \: \D z \nonumber \\
+	&\quadtwo + (m-1) \jaclm{l}{m} \rho^{2m-2} \big(\jaclmbracket{l'}{m-1} \rho^{2} - z \jaclmbracketdz{l'}{m-1} \rho^{2} - 2m z^2 \jaclmbracket{l'}{m-1} \big) \nonumber \\
+	&\quadtwo + \jaclmdz{l}{m} \jaclmbracketdz{l'}{m-1} \rho^{2m+2} \Big\} \: \D z \nonumber \\
 	&= \int_{-1}^{1} \Big\{ (m-1)(m+1) \jaclm{l}{m} \jaclmbracket{l'}{m-1} \rho^{2m} - z \jaclm{l}{m} \jaclmbracketdz{l'}{m-1} \rho^{2m} \nonumber \\
 	&\quadfour + \jaclmdz{l}{m} \jaclmbracketdz{l'}{m-1} \rho^{2m+2} \Big\} \: \D z \nonumber \\
 	&= \int_{-1}^{1} \Big\{ (m-1)(m+1) \jaclm{l}{m} \jaclmbracket{l'}{m-1} \rho^{2m} - d_{l',m-1} z \jaclm{l}{m} \jaclm{l'}{m} \rho^{2m} \nonumber \\
@@ -682,8 +683,9 @@ On that note, we will first consider the case that $m > 0$ and $m' = m - 1$, and
 	&= \int_{-1}^{1} \Big\{ (m^2 - 1) \jaclm{l}{m} \big( \tilde \alpha_{l', m-1, 2} \jaclm{l'-1}{m} + \tilde \alpha_{l', m-1, 4} \jaclm{l'+1}{m} \big) \rho^{2m} \nonumber \\
 	&\quadfour - d_{l',m-1} \jaclm{l}{m} \big( \tilde \gamma_{l',m,1} \jaclm{l'-1}{m} + \tilde \gamma_{l',m,2} \jaclm{l'+1}{m} \big) \rho^{2m} \nonumber \\
 	&\quadfour + d_{l,m} d_{l',m-1} \jaclm{l'}{m} \big( \tilde \alpha_{l, m+1, 1} \jaclm{l-1}{m} + \tilde \alpha_{l, m+1, 3} \jaclm{l+1}{m} \big) \rho^{2m} \Big\} \: \D z \nonumber \\
-	&= \delta_{l',l-1} \Big( \big[ (m^2 - 1) \tilde \alpha_{l-1, m-1, 4} - d_{l-1,m-1} \tilde \gamma_{l-1,m,2} \big] {1\over2\pi(\clm)^2} + d_{l,m} d_{l-1,m-1} {\tilde \alpha_{l-1, m-1, 1} \over 2\pi (c_{l-1}^m)^2} \Big) \nonumber \\
-	&\quadtwo + \delta_{l',l+1} \Big( \big[ (m^2 - 1) \tilde \alpha_{l+1, m-1, 2} - d_{l+1,m-1} \tilde \gamma_{l+1,m,1} \big] {1\over2\pi(\clm)^2} + d_{l,m} d_{l+1,m-1} {\tilde \alpha_{l-1, m-1, 3} \over 2\pi (c_{l+1}^m)^2} \Big). \label{eqn:lemmaVSHrecurrencesproof2}
+	&= {\delta_{l',l-1} \over 2\pi} \Big\{ \big[ (m^2 - 1) \tilde \alpha_{l-1, m-1, 4} - d_{l-1,m-1} \tilde \gamma_{l-1,m,2} \big] {1 \over (\clm)^2} + d_{l,m} d_{l-1,m-1} {\tilde \alpha_{l-1, m-1, 1} \over (c_{l-1}^m)^2} \Big\} \nonumber \\
+	&\quadtwo + {\delta_{l',l+1} \over 2\pi} \Big\{ \big[ (m^2 - 1) \tilde \alpha_{l+1, m-1, 2} - d_{l+1,m-1} \tilde \gamma_{l+1,m,1} \big] {1 \over (\clm)^2} \nonumber \\
+	&\quadeight + d_{l,m} d_{l+1,m-1} {\tilde \alpha_{l-1, m-1, 3} \over (c_{l+1}^m)^2} \Big\}. \label{eqn:lemmaVSHrecurrencesproof2}
 }
 As we can see, the coefficients are then also only possibly nonzero for $l' = l \pm 1$. Combining the above with the \bsrefeqn{eqn:lemmaVSHrecurrencesproof}, we have that our two coefficients for $\calA_{l-1,m-1}, \calA_{l+1,m-1}$ are those stated in the Lemma as $A_{l,m,1}$ and $A_{l,m,3}$, for $m > 0$. 
 
@@ -691,7 +693,8 @@ Next, assume $m \ge 0$ and consider the case $m' = m + 1$. The integral in \bsre
 \bseqnnumber{
 	&\int_{-1}^{1} \Big\{ m(m+1) \jaclm{l}{m} \jaclmbracket{l'}{m+1} \rho^{2m} (1 + z^2) - m z \jaclm{l}{m} \jaclmbracketdz{l'}{m+1} \rho^{2m+2} \nonumber \\
 	&\quadtwo \quad - (m+1) z \jaclmdz{l}{m} \jaclmbracket{l'}{m+1} \rho^{2m+2} + \jaclmdz{l}{m} \jaclmbracketdz{l'}{m+1} \rho^{2m+4} \Big\} \: \D z \nonumber \\
-	&= \int_{-1}^{1} \Big\{ m(m+1) \jaclm{l}{m} \jaclmbracket{l'}{m+1} \rho^{2m} (1 + z^2) - (m+1) z \jaclmdz{l}{m} \jaclmbracket{l'}{m+1} \rho^{2m+2} \nonumber \\
+	&= \int_{-1}^{1} \Big\{ m(m+1) \jaclm{l}{m} \jaclmbracket{l'}{m+1} \rho^{2m} (1 + z^2) \nonumber \\
+	&\quadfour - (m+1) z \jaclmdz{l}{m} \jaclmbracket{l'}{m+1} \rho^{2m+2} \nonumber \\
 	&\quadfour + m \jaclmbracket{l'}{m+1} \rho^{2m} \big( - 2(m+1) z^2 \jaclm{l}{m} + \jaclm{l}{m} \rho^{2} - z \jaclmdz{l}{m} \rho^{2} \big) \nonumber \\
 	&\quadfour + \jaclmdz{l}{m} \jaclmbracketdz{l'}{m+1} \rho^{2m+2} \Big\} \: \D z \nonumber \\
 	&= \int_{-1}^{1} \Big\{ m(m+2) \jaclm{l}{m} \jaclmbracket{l'}{m+1} \rho^{2m+2} - z \jaclmdz{l}{m} \jaclmbracket{l'}{m+1} \rho^{2m+2} \nonumber \\
@@ -699,10 +702,10 @@ Next, assume $m \ge 0$ and consider the case $m' = m + 1$. The integral in \bsre
 	&= \int_{-1}^{1} \Big\{ m(m+2) \jaclm{l}{m} \jaclmbracket{l'}{m+1} \rho^{2m+2} - d_{l,m} z \jaclmbracket{l}{m+1} \jaclmbracket{l'}{m+1} \rho^{2m+2} \nonumber \\
 	&\quadfour + d_{l,m} d_{l',m+1} \jaclmbracket{l}{m+1} \jaclmbracket{l'}{m+2} \rho^{2m+4} \Big\} \: \D z \nonumber \\
 	&= \int_{-1}^{1} \Big\{ m(m+2) \jaclmbracket{l'}{m+1} \big( \tilde \alpha_{l, m, 2} \jaclmbracket{l-1}{m+1} + \tilde \alpha_{l, m, 4} \jaclmbracket{l+1}{m+1} \big) \rho^{2m+2} \nonumber \\
-	&\quadfour - d_{l,m} \jaclmbracket{l'}{m+1} \big( \tilde \gamma_{l,m+1,1} \jaclmbracket{l-1}{m+1} + \tilde \gamma_{l,m+1,2} \jaclmbracket{l+1}{m+1} \big) \rho^{2m+2} \nonumber \\
-	&\quadfour + d_{l,m} d_{l',m+1} \jaclmbracket{l}{m+1} \big( \tilde \alpha_{l', m+2, 1} \jaclmbracket{l'-1}{m+1} + \tilde \alpha_{l', m+2, 3} \jaclmbracket{l'+1}{m+1}  \big) \rho^{2m+2} \Big\} \: \D z \nonumber \\
-	&= \delta_{l',l-1} \Big( \big[ m(m+2) \tilde \alpha_{l, m, 2} - d_{l,m} \tilde \gamma_{l,m+1,1} \big] {1 \over 2 \pi (c_{l-1}^{m+1})^2} + d_{l,m} d_{l-1,m+1} {\tilde \alpha_{l-1, m+2, 3} \over 2\pi (c_{l}^{m+1})^2} \Big) \nonumber \\
-	&\quadtwo + \delta_{l',l+1} \Big( \big[ m(m+2) \tilde \alpha_{l, m, 4} - d_{l,m} \tilde \gamma_{l,m+1,2} \big] {1 \over 2 \pi (c_{l-1}^{m+1})^2} + d_{l,m} d_{l+1,m+1} {\tilde \alpha_{l+1, m+2, 1} \over 2\pi (c_{l}^{m+1})^2} \Big). \label{eqn:lemmaVSHrecurrencesproof3}
+	&\quadtwo - d_{l,m} \jaclmbracket{l'}{m+1} \big( \tilde \gamma_{l,m+1,1} \jaclmbracket{l-1}{m+1} + \tilde \gamma_{l,m+1,2} \jaclmbracket{l+1}{m+1} \big) \rho^{2m+2} \nonumber \\
+	&\quadtwo + d_{l,m} d_{l',m+1} \jaclmbracket{l}{m+1} \big( \tilde \alpha_{l', m+2, 1} \jaclmbracket{l'-1}{m+1} + \tilde \alpha_{l', m+2, 3} \jaclmbracket{l'+1}{m+1}  \big) \rho^{2m+2} \Big\} \: \D z \nonumber \\
+	&= {\delta_{l',l-1} \over 2\pi} \Big\{ \big[ m(m+2) \tilde \alpha_{l, m, 2} - d_{l,m} \tilde \gamma_{l,m+1,1} \big] {1 \over (c_{l-1}^{m+1})^2} + d_{l,m} d_{l-1,m+1} {\tilde \alpha_{l-1, m+2, 3} \over (c_{l}^{m+1})^2} \Big\} \nonumber \\
+	&\quadtwo + {\delta_{l',l+1} \over 2\pi} \Big\{ \big[ m(m+2) \tilde \alpha_{l, m, 4} - d_{l,m} \tilde \gamma_{l,m+1,2} \big] {1 \over (c_{l-1}^{m+1})^2} + d_{l,m} d_{l+1,m+1} {\tilde \alpha_{l+1, m+2, 1} \over (c_{l}^{m+1})^2} \Big\}. \label{eqn:lemmaVSHrecurrencesproof3}
 }
 Again, we can see that the coefficients are then also only possibly nonzero for $l' = l \pm 1$. Combining the above with the \bsrefeqn{eqn:lemmaVSHrecurrencesproof}, we have that our two coefficients for $\calA_{l-1,m-1}, \calA_{l+1,m-1}$ are those stated in the Lemma as $A_{l,m,2}$ and $A_{l,m,4}$, for $m \ge 0$.
 
@@ -713,14 +716,14 @@ The remaining coefficients we need to determine are $\calA^\perp_{l',m'}$. To th
 	&\ip<x \gradYlm, \gradpYlmprime> \nonumber \\
 	&= \iint_\Omega \costheta \sinphi \: \gradYlm \cdot {\gradpYlmprime}^* \sinphi \: \D\phi \: \D\theta \nonumber \\
 	&= \clm \clmprime \Big( \int_0^{2pi} \eimtheta \eimthetaprime \costheta \: \D\theta \Big) \nonumber \\
-	&\quadfour \cdot \Big( \int_{-1}^{1} \Big\{ i m' \jaclmabs{l'}{m'}(z) \rho(z)^{\abs{m} + \abs{m'} - 1} \big[ \abs{m} z \jaclmabs{l}{m}(z) - \rho(z)^2 \jaclmabsdz{l}{m}(z) \big] \nonumber \\
-	&\quadeight + i m \jaclmabs{l}{m}(z) \rho(z)^{\abs{m} + \abs{m'} - 1} \big[ \abs{m'} z \jaclmabs{l'}{m'}(z) - \rho(z)^2 \jaclmabs{l'}{m'}(z) \big] \Big\} \: \D z \Big) \nonumber \\
+	&\quadtwo \cdot \Big( \int_{-1}^{1} \rho(z)^{\abs{m} + \abs{m'} - 1} \Big\{ i m' \jaclmabs{l'}{m'}(z) \big[ \abs{m} z \jaclmabs{l}{m}(z) - \rho(z)^2 \jaclmabsdz{l}{m}(z) \big] \nonumber \\
+	&\quadfour + i m \jaclmabs{l}{m}(z) \big[ \abs{m'} z \jaclmabs{l'}{m'}(z) - \rho(z)^2 \jaclmabs{l'}{m'}(z) \big] \Big\} \: \D z \Big) \nonumber \\
 	&= \clm \clmprime \pi (\delta_{m',m-1} + \delta_{m',m+1}) \nonumber \\
-	&\quadfour \cdot \Big( \int_{-1}^{1} \Big\{ \sgn{m} 2 i \, m \, m' \, z \jaclmabs{l}{m} \jaclmabs{l'}{m'} \rho^{\abs{m} + \abs{m'} - 1} \nonumber \\
+	&\quadfour \cdot \Big( \int_{-1}^{1} \Big\{ \signfunc{m} 2 i \, m \, m' \, z \jaclmabs{l}{m} \jaclmabs{l'}{m'} \rho^{\abs{m} + \abs{m'} - 1} \nonumber \\
 	&\quadeight - i m \jaclmabsdz{l}{m} \jaclmabs{l'}{m'} \rho^{\abs{m} + \abs{m'} + 1} \nonumber \\
 	&\quadeight - i m' \jaclmabs{l}{m} \jaclmabsdz{l'}{m'} \rho^{\abs{m} + \abs{m'} +1} \Big\} \: \D z \Big), \label{eqn:lemmaVSHrecurrencesproof4}
 }
-since when the above is nonzero, $m, m'$ will have the same sign (or one is zero) and so $\abs{m}m' + \abs{m'}m = \sgn{m}mm'$. Once again, we can conclude that $\calA^\perp_{l',m'}$ are zero for $m' \notin \{m-1, m+1\}$. It is left to evaluate the integral that is left at \bsrefeqn{eqn:lemmaVSHrecurrencesproof4} when $m'$ takes either $m\pm 1$ value. First, consider the case that $m > 0$ and $m' = m - 1$. The integral is then, using integration by parts:
+since when the above is nonzero, $m, m'$ will have the same sign (or one is zero) and so $\abs{m}m' + \abs{m'}m = \signfunc{m}m\:m'$. Once again, we can conclude that $\calA^\perp_{l',m'}$ are zero for $m' \notin \{m-1, m+1\}$. It is left to evaluate the integral that is left at \bsrefeqn{eqn:lemmaVSHrecurrencesproof4} when $m'$ takes either $m\pm 1$ value. First, consider the case that $m > 0$ and $m' = m - 1$. The integral is then, using integration by parts:
 \bseqnnumber{
 	&= \int_{-1}^{1} \Big\{ 2 i \, m(m-1) \, z \jaclm{l}{m} \jaclmbracket{l'}{m - 1} \rho^{2m - 2} - i m \jaclm{l}{m} \jaclmbracketdz{l'}{m - 1} \rho^{2m} \nonumber \\
 	&\quadfour - i (m-1) \jaclmdz{l}{m} \jaclmbracket{l'}{m - 1} \rho^{2m} \Big\} \: \D z \nonumber \\
@@ -732,9 +735,11 @@ since when the above is nonzero, $m, m'$ will have the same sign (or one is zero
 }
 Combining \bsrefeqn{eqn:lemmaVSHrecurrencesproof5} with \bsrefeqn{eqn:lemmaVSHrecurrencesproof4} means we retrieve the correct values for our coefficients $\calA^\perp_{l,m-1}$ when $m > 0$, i.e. they are $A_{l,m,5}$ as stated in the Lemma for $m > 0$. The case of $m < 0$ and $m' = m + 1$ is very similar with the integral becoming:
 \bseqnnumber{
-	&= \int_{-1}^{1} \Big\{ - 2 i \, m(m+1) \, z \jaclmabs{l}{m} \jaclmbracket{l'}{\abs{m} - 1} \rho^{2 \abs{m} - 2} - i m \jaclmabs{l}{m} \jaclmbracketdz{l'}{\abs{m} - 1} \rho^{2\abs{m}} \nonumber \\
+	&= \int_{-1}^{1} \Big\{ - 2 i \, m(m+1) \, z \jaclmabs{l}{m} \jaclmbracket{l'}{\abs{m} - 1} \rho^{2 \abs{m} - 2} \nonumber \\
+	&\quadfour - i m \jaclmabs{l}{m} \jaclmbracketdz{l'}{\abs{m} - 1} \rho^{2\abs{m}} \nonumber \\
 	&\quadfour - i (m+1) \jaclmabsdz{l}{m} \jaclmbracket{l'}{\abs{m} - 1} \rho^{2\abs{m}} \Big\} \: \D z \nonumber \\
-	&= \int_{-1}^{1} \Big\{ - 2 i \, m(m+1) \, z \jaclmabs{l}{m} \jaclmbracket{l'}{\abs{m} - 1} \rho^{2 \abs{m} - 2} - i m \jaclmabs{l}{m} \jaclmbracketdz{l'}{\abs{m} - 1} \rho^{2\abs{m}} \nonumber \\
+	&= \int_{-1}^{1} \Big\{ - 2 i \, m(m+1) \, z \jaclmabs{l}{m} \jaclmbracket{l'}{\abs{m} - 1} \rho^{2 \abs{m} - 2} \nonumber \\
+	&\quadfour - i m \jaclmabs{l}{m} \jaclmbracketdz{l'}{\abs{m} - 1} \rho^{2\abs{m}} \nonumber \\
 	&\quadfour + i (m+1) \jaclmabs{l}{m} \rho^{2\abs{m} - 2} \big[ \jaclmbracketdz{l'}{\abs{m} - 1} \rho^2 - 2\abs{m} z \jaclmbracket{l'}{\abs{m} - 1} \big] \Big\} \: \D z \nonumber \\
 	&= \int_{-1}^{1} i \jaclmabs{l}{m} \jaclmbracketdz{l'}{\abs{m} - 1} \rho^{2\abs{m}} \: \D z \nonumber \\
 	&= \int_{-1}^{1} i \; d_{l',\abs{m}-1} \; \jaclmabs{l}{m} \jaclmabs{l'}{m} \rho^{2\abs{m}} \: \D z \nonumber \\
@@ -754,9 +759,11 @@ Next, assume $m \ge 0$ and $m' = m + 1$. Then the integral in \bsrefeqn{eqn:lemm
 }
 Again, combining \bsrefeqn{eqn:lemmaVSHrecurrencesproof7} with \bsrefeqn{eqn:lemmaVSHrecurrencesproof4} means we retrieve the correct values for our coefficients $\calA^\perp_{l,m+1}$ when $m \ge 0$, i.e. they are $A_{l,m,6}$ as stated in the Lemma for $m \ge 0$. In a similar vein, the integral for the case $m \le 0$ and $m' = m - 1$ is:
 \bseqnnumber{
-	&= \int_{-1}^{1} \Big\{ - 2 i \, m(m-1) \, z \jaclmabs{l}{m} \jaclmbracket{l'}{\abs{m} + 1} \rho^{2 \abs{m}} - i m \jaclmabs{l}{m} \jaclmbracketdz{l'}{\abs{m} + 1}  \rho^{2\abs{m} + 2} \nonumber \\
+	&= \int_{-1}^{1} \Big\{ - 2 i \, m(m-1) \, z \jaclmabs{l}{m} \jaclmbracket{l'}{\abs{m} + 1} \rho^{2 \abs{m}} \nonumber \\
+	&\quadfour - i m \jaclmabs{l}{m} \jaclmbracketdz{l'}{\abs{m} + 1}  \rho^{2\abs{m} + 2} \nonumber \\
 	&\quadfour - i (m-1) \jaclmabsdz{l}{m} \jaclmbracket{l'}{\abs{m} + 1} \rho^{2\abs{m} + 2} \Big\} \: \D z \nonumber \\
-	&= \int_{-1}^{1} \Big\{ - 2 i \, m(m-1) \, z \jaclmabs{l}{m} \jaclmbracket{l'}{\abs{m} + 1} \rho^{2 \abs{m}} - i (m-1) \jaclmabsdz{l}{m} \jaclmbracket{l'}{\abs{m} + 1}  \rho^{2\abs{m} + 2} \nonumber \\
+	&= \int_{-1}^{1} \Big\{ - 2 i \, m(m-1) \, z \jaclmabs{l}{m} \jaclmbracket{l'}{\abs{m} + 1} \rho^{2 \abs{m}} \nonumber \\
+	&\quadfour - i (m-1) \jaclmabsdz{l}{m} \jaclmbracket{l'}{\abs{m} + 1}  \rho^{2\abs{m} + 2} \nonumber \\
 	&\quadfour + i m \jaclmbracket{l'}{\abs{m} + 1} \rho^{2\abs{m}} \big[\jaclmabsdz{l}{m} \rho^2 - 2 (\abs{m} + 1) z \jaclmabs{l}{m} \big] \Big\} \: \D z \nonumber \\
 	&= \int_{-1}^{1} i \jaclmabsdz{l}{m} \jaclmbracket{l'}{\abs{m} + 1}  \rho^{2\abs{m} + 2} \: \D z \nonumber \\
 	&= \int_{-1}^{1} i \; d_{l,\abs{m}} \; \jaclmbracket{l}{\abs{m} + 1} \jaclmbracket{l'}{\abs{m} + 1} \rho^{2\abs{m} + 2} \: \D z \nonumber \\
@@ -784,7 +791,8 @@ The aim once again will be to show that the only nonzero coefficients $\calC_{l'
 	&\ip<z \gradYlm, \gradYlmprime> \nonumber \\
 	&= \iint_\Omega \cosphi \: \gradYlm \cdot {\gradYlmprime}^* \sinphi \: \D\varphi \: \D\theta \nonumber \\
 	&= \clm \clmprime \Big( \int_0^{2pi} \eimtheta \eimthetaprime \: \D\theta \Big) \nonumber \\
-	&\quad \cdot \Big( \int_{-1}^{1} \Big\{ \big[ \abs{m} z \jaclmabs{l}{m}(z) - \rho(z)^2 \jaclmabsdz{l}{m}(z) \big] \big[ \abs{m'} z \jaclmabs{l'}{m'}(z) - \rho(z)^2 \jaclmabs{l'}{m'}(z) \big] \nonumber \\
+	&\quadtwo \cdot \Big( \int_{-1}^{1} \Big\{ \big[ \abs{m} z \jaclmabs{l}{m}(z) - \rho(z)^2 \jaclmabsdz{l}{m}(z) \big] \nonumber \\
+	&\quadeight \cdot \big[ \abs{m'} z \jaclmabs{l'}{m'}(z) - \rho(z)^2 \jaclmabs{l'}{m'}(z) \big] \nonumber \\
 	&\quadfour \quadtwo + mm' \jaclmabs{l}{m}(z) \jaclmabs{l'}{m'}(z) \Big\} \: z \; \rho(z)^{\abs{m}+\abs{m'}-2} \: \D z \Big) \label{eqn:lemmaVSHrecurrencesproofz1}
 }
 The integral over $\theta$ in \bsrefeqn{eqn:lemmaVSHrecurrencesproofz1} is simply $2 \pi \delta_{m',m}$ showing the above is zero when $m' \ne m$, and thus so will the coefficients $\calC_{l',m'}$ be when this is the case. Focusing on the second integral (over $z$) when $m' = m$, this becomes:
@@ -818,8 +826,8 @@ Next, we also have that
 	&\ip<z \gradYlm, \gradpYlmprime> \nonumber \\
 	&= \iint_\Omega \cosphi \: \gradYlm \cdot {\gradpYlmprime}^* \sinphi \: \D\varphi \: \D\theta \nonumber \\
 	&= \clm \clmprime \Big( \int_0^{2pi} \eimtheta \eimthetaprime \: \D\theta \Big) \nonumber \\
-	&\quadfour \cdot \Big( \int_{-1}^{1} \Big\{ i m' z \jaclmabs{l'}{m'}(z) \rho(z)^{\abs{m} + \abs{m'} - 2} \big[ \abs{m} z \jaclmabs{l}{m}(z) - \rho(z)^2 \jaclmabsdz{l}{m}(z) \big] \nonumber \\
-	&\quadeight + i m z \jaclmabs{l}{m}(z) \rho(z)^{\abs{m} + \abs{m'} - 2} \big[ \abs{m'} z \jaclmabs{l'}{m'}(z) - \rho(z)^2 \jaclmabs{l'}{m'}(z) \big] \Big\} \: \D z \Big) \nonumber \\
+	&\quadtwo \cdot \Big( \int_{-1}^{1} \rho(z)^{\abs{m} + \abs{m'} - 2} \Big\{ i m' z \jaclmabs{l'}{m'}(z) \big[ \abs{m} z \jaclmabs{l}{m}(z) - \rho(z)^2 \jaclmabsdz{l}{m}(z) \big] \nonumber \\
+	&\quadfour + i m z \jaclmabs{l}{m}(z) \big[ \abs{m'} z \jaclmabs{l'}{m'}(z) - \rho(z)^2 \jaclmabs{l'}{m'}(z) \big] \Big\} \: \D z \Big) \nonumber \\
 	&= \clm c_{l'}^{m} 2 \pi \delta_{m',m} \: \int_{-1}^{1} \Big\{ 2i m\abs{m} z^2 \jaclmabs{l}{m}(z) \jaclmabs{l'}{m}(z) \rho(z)^{2\abs{m} - 2} \nonumber \\
 	&\quadeight \quadtwo - i m z \jaclmabs{l}{m}(z) \jaclmabsdz{l'}{m}(z) \rho(z)^{2\abs{m}} \nonumber \\
 	&\quadeight \quadtwo - i m z \jaclmabsdz{l}{m}(z) \jaclmabs{l'}{m}(z) \rho(z)^{2\abs{m}} \Big\} \: \D z \nonumber \\
