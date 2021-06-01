@@ -38,9 +38,9 @@ where $ \rho(z) := \sqrt{1-z^2}$, we have
 \bseqn{
 	\DeltaS &= {1 \over \sinphi} \ppphi \Big( \sinphi \ppphi \Big) + {1 \over \sin^2 \varphi} \ppthetatwo = {1 \over \rho} \ppphi \Big( \rho \ppphi \Big) + {1 \over \rho^2} \ppthetatwo
 }
-i.e. $\DeltaS f(\xvec) = \Delta f({\xvec \over \norm{\xvec}})$ for $\xvec := (x,y,z) \in \R^3$. We do so by considering the component operators $\rho {\partial \over \partial \varphi}$ and ${\partial \over \partial \theta}$ applied to OPs with a specific choices of weight so that their discretisation is sparse, see \bsreftheorem{theorem:sc:sparsityofdifferentialoperators}. Sparsity comes from expanding the domain and range of an operator using different choices of the parameter $a$, a la the ultraspherical spectral method for intervals \cite{olver2013fast}, triangles \cite{olver2019triangle}, disk-slices and trapeziums \cite{snowball2019sparse}, and the related work on sparse discretisations involving Jacobi polynomials on disks \cite{vasil2016tensor} and spheres \cite{vasil2019tensor,lecoanet2019tensor}. Just as we proceeded in \bsrefchapter{chapter:diskslice} for the disk-slice case in 2D (see also \cite{snowball2019sparse}), we will use an integration-by-parts argument to deduce the sparsity structure.
+i.e. $\DeltaS f(\xvec) = \Delta f({\xvec \over \norm{\xvec}})$ for $\xvec := (x,y,z) \in \R^3$. We do so by considering the component operators $\rho {\partial \over \partial \varphi}$ and ${\partial \over \partial \theta}$ applied to OPs with a specific choices of weight so that their discretisation is sparse, see \bsreftheorem{theorem:sc:sparsityofdifferentialoperators}. Sparsity comes from expanding the domain and range of an operator using different choices of the parameter $a$, a la the ultraspherical spectral method for intervals \cite{olver2013fast}, triangles \cite{olver2019triangle}, disk-slices and trapeziums \cite{snowball2019sparse}, and the related work on sparse discretisations involving Jacobi polynomials on disks \cite{vasil2016tensor} and spheres \cite{vasil2019tensor,lecoanet2019tensor}. Just as we proceeded in \bsrefchapter{CHAPTER:diskslice} for the disk-slice case in 2D (see also \cite{snowball2019sparse}), we will use an integration-by-parts argument to deduce the sparsity structure.
 
-The three-dimensional orthogonal polynomials defined here involve the same non-classical (in fact, semi-classical \cite[\S5]{magnus1995painleve}) 1D OPs as those outlined for the disk-slice, and so methods for calculating these 1D OP recurrence coefficients and integrals have already been outlined in \bsrefchapter{chapter:diskslice} (see also \cite{snowball2019sparse}). In particular, by exploiting the connection with these 1D OPs we can construct discretizations of general partial differential operators of size $(p+1)^2 \times (p+1)^2$ in $O(p^3)$ operations, where $p$ is the total polynomial degree. This clearly compares favourably to proceeding in a na\"ive approach where one would require $O(p^6)$ operations.
+The three-dimensional orthogonal polynomials defined here involve the same non-classical (in fact, semi-classical \cite[\S5]{magnus1995painleve}) 1D OPs as those outlined for the disk-slice, and so methods for calculating these 1D OP recurrence coefficients and integrals have already been outlined in \bsrefchapter{CHAPTER:diskslice} (see also \cite{snowball2019sparse}). In particular, by exploiting the connection with these 1D OPs we can construct discretizations of general partial differential operators of size $(p+1)^2 \times (p+1)^2$ in $O(p^3)$ operations, where $p$ is the total polynomial degree. This clearly compares favourably to proceeding in a na\"ive approach where one would require $O(p^6)$ operations.
 
 Note that we consider partial differential operators that are not necessarily rotational invariant:  for example, one can use these techniques for Schr\"odinger operators $\DeltaS + v(x,y,z)$ where $v$ is first approximated by a polynomial. A nice feature is that if the partial differential operator is invariant with respect to rotation around the $z$ axis (e.g., a Schr\"odinger operator with potential $v(z)$) the discretisation decouples, and can be reordered as a block-diagonal matrix. This improves the complexity further to an optimal $O(p^2$), which is demonstrated in \bsreffig{fig:sc:complexity} with $v(x,y,z) = \cos z$.
 
@@ -142,7 +142,7 @@ with
 \bseqnnumber{
 	\norm{\scopnkia}_{\scopa}^2 &:= \ip< \scopnkia, \: \scopnkia >_{\scopa} = \pi \: \normgenjac^{(a, 2k)}. \label{eqn:sc:normscop}
 }
-A method for obtaining explicit recurrence coefficients and evaluating integrals for the weight function $\genjacw^{(a,b)}(x)$ was established in \bsrefchapter{chapter:diskslice} (see also \cite{snowball2019sparse}). The weight is in fact semi-classical, and is equivalent to a generalized Jacobi weight \cite[\S5]{magnus1995painleve}.
+A method for obtaining explicit recurrence coefficients and evaluating integrals for the weight function $\genjacw^{(a,b)}(x)$ was established in \bsrefchapter{CHAPTER:diskslice} (see also \cite{snowball2019sparse}). The weight is in fact semi-classical, and is equivalent to a generalized Jacobi weight \cite[\S5]{magnus1995painleve}.
 
 
 \subsection{Jacobi matrices}\label{section:sc:jacobimats}
@@ -151,7 +151,7 @@ Recall that we can express the three-term recurrences associated with $\genjac_n
 \bseqnnumber{
 	x \genjac_n^{(a,b)}(x) &= \beta_n^{(a,b)} \genjac_{n+1}^{(a,b)}(x) + \alpha_n^{(a,b)} \genjac_n^{(a,b)}(x) + \beta_{n-1}^{(a,b)} \genjac_{n-1}^{(a,b)}(x) \label{eqn:sc:Rrecurrence}
 }
-where the coefficients are calculable (see \bsrefchapter{chapter:diskslice}). We can use \bsrefeqn{eqn:sc:Rrecurrence} to determine the 3D recurrences for $\scopnkia(x,y,z)$. Importantly, we can deduce sparsity in the recurrence relationships.  We first require the following lemma.
+where the coefficients are calculable (see \bsrefchapter{CHAPTER:diskslice}). We can use \bsrefeqn{eqn:sc:Rrecurrence} to determine the 3D recurrences for $\scopnkia(x,y,z)$. Importantly, we can deduce sparsity in the recurrence relationships.  We first require the following lemma.
 
 \begin{lemma}\label{lemma:sc:Yrecurrence} 
 The following identities hold for $k = 2,3,\dots$, $j = 0,1,\dots$ and $i, h \in \{0,1\}$:
@@ -783,24 +783,24 @@ which is zero for $n > m + \tilde a \iff m < n - \tilde a$. The sparsity argumen
 \begin{figure}[tp]
 	\centering % <-- added
 	\begin{subfigure}{0.5\textwidth}
-		\includegraphics[scale=0.5]{sparsity-of-laplacian}
+		\centerline{\includegraphics[scale=0.5]{sparsity-of-laplacian}}
 		\centering
 		\caption{The Laplace-Beltrami operator $\Delta^{(1)}_W$}
 	\end{subfigure}\hfil % <-- added
 	\begin{subfigure}{0.5\textwidth}
-		\includegraphics[scale=0.5]{sparsity-of-rho2laplacian}
+		\centerline{\includegraphics[scale=0.5]{sparsity-of-rho2laplacian}}
 		\centering
 		\caption{The $\rho^2$-factored Laplace-Beltrami operator $D_\varphi^{(0)} \: W_\varphi^{(1)} + T^{(0)\to(1)} \: T_W^{(1)\to(0)} \: (D_\theta)^2$}
 	\end{subfigure}\hfil % <-- added
 
 	\medskip
 	\begin{subfigure}{0.5\textwidth}
-		\includegraphics[scale=0.5]{sparsity-of-helmholtz}
+		\centerline{\includegraphics[scale=0.5]{sparsity-of-helmholtz}}
 		\centering
 		\caption{A variable coefficient Helmholtz operator}
 	\end{subfigure}\hfil % <-- added
 	\begin{subfigure}{0.5\textwidth}
-		\includegraphics[scale=0.5]{sparsity-of-biharmonic}
+		\centerline{\includegraphics[scale=0.5]{sparsity-of-biharmonic}}
 		\centering
 		\caption{The Biharmonic operator $\calB_W^{(2)}$} 
 	\end{subfigure}\hfil % <-- added
@@ -832,12 +832,12 @@ Since the operator $\calL_W^{(2)\to(0)}$ acts on coefficients in the $\bigW^{(2)
 \begin{figure}[tp]
 	\centering
 	\begin{subfigure}[b]{0.55\textwidth}
-		\includegraphics[scale=0.4]{condition-numbers-laplacian-log-N=200}
+		\centerline{\includegraphics[scale=0.4]{condition-numbers-laplacian-log-N=200}}
 	\end{subfigure}
 	\hfill%
 	
 	\begin{subfigure}[b]{0.55\textwidth}
-		\includegraphics[scale=0.4]{condition-numbers-max-laplacian-log}
+		\centerline{\includegraphics[scale=0.4]{condition-numbers-max-laplacian-log}}
 	\end{subfigure}
 	\hfill%
 	\caption{Plots of the condition number for the Laplacian operator matrix $\Delta^{(1)}_W$ and the preconditioned matrix $P^{-1} \Delta^{(1)}_W$ where $P$ is the matrix of the diagonal of $\Delta^{(1)}_W$. Top: The condition numbers of each diagonal block of $\Delta^{(1)}_W$ for $N = 200$, as well as those for $P^{-1} \Delta^{(1)}_W$. Bottom: The maximum condition number of all diagonal blocks of the Laplacian and the preconditioned Laplacian operators, as the degree $N$ increases.}
@@ -908,9 +908,9 @@ for any function $g$, using a change of variables $x \to -x$ for the second term
 	&\quad \quad = \int_\alpha^1 \genjacw^{(a,0)}(z) \: \Big( \int_{-1}^1 \Big[ f_e\big(\rho(z)x,\rho(z)\sqrt{1-x^2}, z\big) \\
 	&\quad \quad \quad \quad \quad \quad \quad \quad \quad \quad \quad \quad + f_e\big(-\rho(z)x, - \rho(z)\sqrt{1-x^2}, z\big) \Big] \: \frac{\D x}{\sqrt{1-x^2}} \Big) \: \D z \\
 	&\quad \quad = 2 \int_\alpha^1 \genjacw^{(a,0)}(z) \: \Big( \int_{-1}^1 f_e\big(\rho(z)x,\rho(z)\sqrt{1-x^2}, z\big) \: \frac{\D x}{\sqrt{1-x^2}} \Big) \: \D z \\
-	&\quad \quad \approx \int_\alpha^1 \genjacw^{(a,0)}(z) \: \Big( \sum_{l=1}^{M_2} w_l^{(s)} f_e\big(\rho(z) s_l, \rho(z) \sqrt{1 - s_l^2}, z\big) \Big) \: \D z \quad (\star) \\
-	&\quad \quad \approx \sum_{j=1}^{M_1} w_j^{(t)} \sum_{l=1}^{M_2} w_l^{(s)} f_e\big(\rho(t_j) s_l, \rho(t_j) \sqrt{1 - s_l^2}, t_j\big) \quad (\star \star) \\
-	&\quad \quad = \sum_{k=1}^{M_1 M_2}  w_j \: f_e(x_j, y_j, z_j).
+	&\quad \quad \approx 2 \int_\alpha^1 \genjacw^{(a,0)}(z) \: \Big( \sum_{l=1}^{M_2} w_l^{(s)} f_e\big(\rho(z) s_l, \rho(z) \sqrt{1 - s_l^2}, z\big) \Big) \: \D z \quad (\star) \\
+	&\quad \quad \approx 2 \sum_{j=1}^{M_1} w_j^{(t)} \sum_{l=1}^{M_2} w_l^{(s)} f_e\big(\rho(t_j) s_l, \rho(t_j) \sqrt{1 - s_l^2}, t_j\big) \quad (\star \star) \\
+	&\quad \quad = 2 \sum_{k=1}^{M_1 M_2}  w_j \: f_e(x_j, y_j, z_j).
 }
 Suppose $f$ is a polynomial in $x,y,z$ of degree $N$, and hence that $f_e$ is a degree $\le N$ polynomial. It follows that $s \mapsto f_e\big(\rho(z)s,\rho(z)\sqrt{1-s^2}, z\big)$ for fixed $z$ is then a polynomial of degree $\le N$. We therefore achieve equality at $(\star)$ if $2M_2 - 1 \ge N$ and we achieve equality at $(\star \star)$ if also $2M_1 - 1 \ge N$.
 
@@ -939,7 +939,6 @@ Fix $a \in \R$. Then for any function $f : \Omega \to \R$ we can express $f$ by
 	f(x,y,z) \approx \sum_{k=0}^N \bigscopNka(x,y,z)^\top \: \bm{f}_k = \bigscopNa(x,y,z)^\top \: \bm{f}
 }
 for N sufficiently large, where $\bigscopNka, \bigscopNa$ is defined in \bsrefeqns{eqn:sc:OPdefNka}{eqn:sc:OPdefNa} and where
-
 \bseqn{
 	\bm{f}_k &:= 
 		\begin{pmatrix}
@@ -965,8 +964,10 @@ for N sufficiently large, where $\bigscopNka, \bigscopNa$ is defined in \bsrefeq
 }
 Recall from \bsrefeqn{eqn:sc:normscop} that $\norm{\scopnkia}^2_{\scopa} = \normgenjac^{(a,2k)} \: \pi$. Using the quadrature rule detailed in \bsrefsection{section:sc:quadrule} for the inner product, we can calculate the coefficients $f_{n,k,i}$ for each $n = 0,\dots,N$, $k = 0,\dots,n$, $i = 0,1$: 
 \bseqn{
-	f_{n,k,i} &= \frac{1}{2 \: \normgenjac^{(a,2k)} \: \pi} \sum_{j=1}^{M} w_j \big[ f(x_j, y_j, z_j) \scopnkia(x_j, y_j, z_j) +f(-x_j, -y_j, z_j) \scopnkia(-x_j, -y_j, z_j) \big] \\
-	&= \frac{1}{M_2 \: \normgenjac^{(a,2k)}} \sum_{j=1}^{M} \big[ f(x_j, y_j, z_j) \scopnkia(x_j, y_j, z_j) +f(-x_j, -y_j, z_j) \scopnkia(-x_j, -y_j, z_j) \big]
+	f_{n,k,i} &= \frac{1}{\normgenjac^{(a,2k)} \: \pi} \sum_{j=1}^{M} w_j \big[ f(x_j, y_j, z_j) \scopnkia(x_j, y_j, z_j) \\
+	&\quadeight \quad + f(-x_j, -y_j, z_j) \scopnkia(-x_j, -y_j, z_j) \big] \\
+	&= \frac{1}{M_2 \: \normgenjac^{(a,2k)}} \sum_{j=1}^{M_1} w^{(t)}_j \sum_{l=1}^{M_2} \big[ f(x_j, y_j, z_j) \scopnkia(x_j, y_j, z_j) \\
+	&\quadeight \quadfour + f(-x_j, -y_j, z_j) \scopnkia(-x_j, -y_j, z_j) \big]
 }
 where the quadrature nodes and weights are those from \bsreftheorem{theorem:sc:quadrule}, and $M = M_1 M_2$ with $2M_1 - 1 \ge N, M_2 - 1 \ge N$ (i.e. we can choose $M_2 := N + 1$ and $M_1 := \ceil{\frac{N+1}{2}}$).
 
@@ -1093,7 +1094,7 @@ for differing choices of $\epsilon$ -- this parameter serves to alter the distan
 
 \begin{figure}[tp]
 	\centering % <-- added
-	\includegraphics[scale=0.4]{complexity-Nend=1000}
+	\centerline{\includegraphics[scale=0.4]{complexity-Nend=1000}}
 	\caption{Time in seconds to build and solve the system $\big[\DeltaS + v(x,y,z) \big] \: u(x,y,z) = f(x,y,z)$, for a rotationally invariant $v(x,y,z) = v(z)$. This demonstrates that the approach is roughly of order $\bigO(N^2)$, where $N$ is the degree to which we approximate the solution (the number of unknowns is then $(N+1)^2$). Here, we used $f = -2e^{x}yz(2+x) + (z - \alpha) e^{x} (y^3 + z^2 y - 4xy - 2y)$ and $v(x,y,z) = v(z) = \cos(z)$.}
 	\label{fig:sc:complexity}
 \end{figure}

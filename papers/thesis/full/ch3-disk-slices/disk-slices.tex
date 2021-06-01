@@ -1,6 +1,6 @@
 
 
-\chapter{Disk slices and trapeziums}
+\chapter{Disk slices and trapeziums}\label{CHAPTER:diskslice}
 
 The contents of the previous chapter on spherical harmonics can allow us to use similar techniques for developing sparse spectral methods for solving linear partial differential equations on other domains. Before we can return to the 3D surface realm, let us first achieve a foundation in two-dimensions by looking at a special class of geometries that includes disk slices and trapeziums.
 
@@ -630,23 +630,23 @@ The sparsity argument for the weighted parameter transformation operators follow
 \begin{figure}[tp]
 	\centering % <-- added
 	\begin{subfigure}{0.5\textwidth}
-		\includegraphics[scale=0.5]{sparsityoflaplacian-w11-diskslice-alpha=0p2-beta=0p8}
+		\centerline{\includegraphics[scale=0.5]{sparsityoflaplacian-w11-diskslice-alpha=0p2-beta=0p8}}
 		\centering
-		\caption{The Laplacian operator $\laplacewiii$}
+		\caption{}
 	\end{subfigure}\hfil % <-- added
 	\begin{subfigure}{0.5\textwidth}
-		\includegraphics[scale=0.5]{sparsityofhelmholtz-diskslice-alpha=0p2-beta=0p8}
+		\centerline{\includegraphics[scale=0.5]{sparsityofhelmholtz-diskslice-alpha=0p2-beta=0p8}}
 		\centering
-		\caption{A variable coefficient Helmholtz operator}
+		\caption{}
 	\end{subfigure}\hfil % <-- added
 
 	\medskip
 	\begin{subfigure}{0.5\textwidth}
-		\includegraphics[scale=0.5]{sparsityofbiharmonic-diskslice-alpha=0p2-beta=0p8}
+		\centerline{\includegraphics[scale=0.5]{sparsityofbiharmonic-diskslice-alpha=0p2-beta=0p8}}
 		\centering
-		\caption{The biharmonic operator $\biharmonictwo$}
+		\caption{}
 	\end{subfigure}\hfil % <-- added
-    	\caption{"Spy" plots of (differential) operator matrices, showing their sparsity. For (b), the weighted variable coefficient Helmholtz operator is $\laplacewiii + k^2 \: T^{(0,0,0)\to(1,1,1)} \: V({J_x^{(0,0,0)}}^\top, {J_y^{(0,0,0)}}^\top) \: T_W^{(1,1,1)\to(0,0,0)}$ for $v(x,y) = 1 - (3(x-1)^2 + 5y^2)$ and $k = 200$.}
+    	\caption{"Spy" plots of (differential) operator matrices, showing their sparsity. (a) The Laplacian operator $\laplacewiii$. (b) The variable coefficient Helmholtz operator $\laplacewiii + k^2 \: T^{(0,0,0)\to(1,1,1)} \: V({J_x^{(0,0,0)}}^\top, {J_y^{(0,0,0)}}^\top) \: T_W^{(1,1,1)\to(0,0,0)}$ for $v(x,y) = 1 - (3(x-1)^2 + 5y^2)$ and $k = 200$. (c) The biharmonic operator $\biharmonictwo$}
 	\label{fig:sparsity}
 \end{figure}
 
@@ -1277,7 +1277,7 @@ Note that since we have sparse operator matrices for partial derivatives and bas
 
 \section{Conclusions}
 
-In this chapter we have shown that bivariate orthogonal polynomials can lead to sparse discretizations of general linear PDEs on specific domains whose boundary is specified by an algebraic curve -- notably here the disk-slice -- with Dirichlet boundary conditions. This work extends the triangle case \cite{beuchler2006new,li2010optimal,olver2019triangle} and whole disk case \cite{vasil2016tensor} \bstodo{cite more here} to non-classical geometries, and forms a building block in developing an $hp-$finite element method to solve PDEs on other polygonal domains by using suitably shaped elements (for example, by dividing the disk or a section of the disk into disk-slice elements, which has applications in turbulent pipe flow \cite{eggels1994fully, vasil2016tensor}).
+In this chapter we have shown that bivariate orthogonal polynomials can lead to sparse discretizations of general linear PDEs on specific domains whose boundary is specified by an algebraic curve -- notably here the disk-slice -- with Dirichlet boundary conditions. This work extends the triangle case \cite{beuchler2006new, li2010optimal, olver2019triangle} and whole disk case \cite{boyd2011comparing, vasil2016tensor} to non-classical geometries, and forms a building block in developing an $hp-$finite element method to solve PDEs on other polygonal domains by using suitably shaped elements (for example, by dividing the disk or a section of the disk into disk-slice elements, which has applications in turbulent pipe flow \cite{eggels1994fully, vasil2016tensor}).
 
 We have demonstrated how one can construct the three-or-four-parameter OP families (depending on the domain) that form the basis for our sparse spectral methods, and presented a procedure, utilising the Christoffel-Darboux formula \cite[18.2.2]{DLMF}, of explicitly calculating the recurrence coefficients for the univariate OPs that are part of the construction. These coefficients contribute to calculations of the entries in the Jacobi matrices and other differential operators. Moreover, we have defined a quadrature rule that can be used for expanding functions in our OP basis and for calculating said entries of important operators. We have looked at a few mathematical examples including the Poisson, variable coefficient Helmholtz, and biharmonic equations and shown that our method performs well. Importantly, all operator matrices used are shown to be sparse, and in fact banded-block-banded in structure.
 

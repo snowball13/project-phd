@@ -268,19 +268,19 @@ An important property of the Jacobi matrices is that they are sparse -- specific
 \begin{figure}[tp]
 	\centering % <-- added
 	\begin{subfigure}{0.5\textwidth}
-		\includegraphics[scale=0.5]{spy-of-Jx}
+		\centerline{\includegraphics[scale=0.5]{spy-of-Jx}}
 		\centering
 		\caption{$J_x$}
 	\end{subfigure}\hfil % <-- added
 	\begin{subfigure}{0.5\textwidth}
-		\includegraphics[scale=0.5]{spy-of-Jy}
+		\centerline{\includegraphics[scale=0.5]{spy-of-Jy}}
 		\centering
 		\caption{$J_y$}
 	\end{subfigure}\hfil % <-- added
 
 	\medskip
 	\begin{subfigure}{0.5\textwidth}
-		\includegraphics[scale=0.5]{spy-of-Jz}
+		\centerline{\includegraphics[scale=0.5]{spy-of-Jz}}
 		\centering
 		\caption{$J_z$}
 	\end{subfigure}\hfil % <-- added
@@ -855,19 +855,19 @@ As for the scalar case, these coefficients detailed above are then the nonzero e
 \begin{figure}[tp]
 	\centering % <-- added
 	\begin{subfigure}{0.5\textwidth}
-		\includegraphics[scale=0.5]{spy-of-Jx-tangent}
+		\centerline{\includegraphics[scale=0.5]{spy-of-Jx-tangent}}
 		\centering
 		\caption{$\tangentjacobi_x$}
 	\end{subfigure}\hfil % <-- added
 	\begin{subfigure}{0.5\textwidth}
-		\includegraphics[scale=0.5]{spy-of-Jy-tangent}
+		\centerline{\includegraphics[scale=0.5]{spy-of-Jy-tangent}}
 		\centering
 		\caption{$\tangentjacobi_y$}
 	\end{subfigure}\hfil % <-- added
 
 	\medskip
 	\begin{subfigure}{0.5\textwidth}
-		\includegraphics[scale=0.5]{spy-of-Jz-tangent}
+		\centerline{\includegraphics[scale=0.5]{spy-of-Jz-tangent}}
 		\centering
 		\caption{$\tangentjacobi_z$}
 	\end{subfigure}\hfil % <-- added
@@ -1295,14 +1295,21 @@ Now that we have our differential operators, let's apply them in some examples.
 
 \section{Examples}
 
-\subsection{Heat equation}
-
-\begin{figure}[tp]
+\begin{figure}[t]
 	\centering % <-- added
-	\centerline{\includegraphics[scale=0.6]{heat-eqn-alpha-0p0238-dt=0p01-nsteps=100}}
+	\centerline{\includegraphics[scale=0.5]{heat-eqn-alpha-0p0238-dt=0p01-nsteps=100}}
 	\caption{Four snapshots of the solution $u$ of the heat equation with $\alpha = 1/42$ and a step size of $\Delta t = 0.01$, solved using the BDF2 timestepping method. Top Left: Initial conditions (0 timesteps). Top Right: After 25 timesteps. Bottom Left: After 50 timesteps. Bottom Right: After 75 timesteps.}
 	\label{fig:heateqn}
 \end{figure}
+
+\begin{figure}[t]
+	\centering % <-- added
+	\centerline{\includegraphics[scale=0.5]{linear-swe-H=1-dt=0p01-nsteps=100}}
+	\caption{Four snapshots of the solution for the height $h$ of the linearised shallow water equations with $\rotrate = \calH = 1$ and a step size of $\Delta t = 0.01$, solved using the backwards Euler timestepping method. Top Left: Initial conditions (0 timesteps). Top Right: After 50 timesteps. Bottom Left: After 75 timesteps. Bottom Right: After 100 timesteps.}
+	\label{fig:swe}
+\end{figure}
+
+\subsection{Heat equation}
 
 To demonstrate proof of concept, we can apply the framework we have proposed to modelling the heat equation on the unit sphere. In doing so, we can demonstrate how our method allows us to expand and evaluate functions, and turn the differential equation into a matrix-vector problem at each timestep.
 
@@ -1337,13 +1344,6 @@ The snapshots of the solution $u$ in bsreffig{fig:heateqn} are taken of the init
 
 
 \subsection{Linearised shallow water equations}
-
-\begin{figure}[tp]
-	\centering % <-- added
-	\centerline{\includegraphics[scale=0.6]{linear-swe-H=1-dt=0p01-nsteps=100}}
-	\caption{Four snapshots of the solution for the height $h$ of the linearised shallow water equations with $\rotrate = \calH = 1$ and a step size of $\Delta t = 0.01$, solved using the backwards Euler timestepping method. Top Left: Initial conditions (0 timesteps). Top Right: After 50 timesteps. Bottom Left: After 75 timesteps. Bottom Right: After 100 timesteps.}
-	\label{fig:swe}
-\end{figure}
 
 The linearised shallow water equations allow us to showcase more of the differential operators that we defined in \bsrefdef{def:SHoperators} (namely the divergence and gradient operators) and demonstrate how the natural sparsity that our framework brings to the problem leads to a simple sparse linear system to solve.
 
