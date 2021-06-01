@@ -757,7 +757,7 @@ function jacobix(S::DiskSliceSpace, N)
     rows = cols = 1:N+1
     l, u = 1, 1
     λ, μ = 0, 0
-    J = BandedBlockBandedMatrix(0.0I, (rows, cols), (l, u), (λ, μ))
+    J = BandedBlockBandedMatrix(0.0I, rows, cols, (l, u), (λ, μ))
     J[1, 1] = S.B[1][1, 1]
     view(J, Block(1, 2)) .= S.A[1][1, :]'
     for n = 2:N
@@ -775,7 +775,7 @@ function jacobiy(S::DiskSliceSpace, N)
     rows = cols = 1:N+1
     l, u = 1, 1
     λ, μ = 1, 1
-    J = BandedBlockBandedMatrix(0.0I, (rows, cols), (l, u), (λ, μ))
+    J = BandedBlockBandedMatrix(0.0I, rows, cols, (l, u), (λ, μ))
     n = 1
     J[1, 1] = S.B[1][2, 1]
     view(J, Block(n, n+1)) .= S.C[n+1][Int(end/2)+1:end, :]'
@@ -1144,10 +1144,11 @@ function partialoperatorx(S::DiskSliceSpace{<:Any, B, T, <:Any}, N;
     band = S.family.nparams
     if transposed
         A = BandedBlockBandedMatrix(
-            Zeros{B}(sum(1:(N+1)), sum(1:N)), (1:N+1, 1:N), (band, -1), (2, 0))
+            Zeros{B}(sum(1:(N+1)), sum(1:N)), 1:N+1, 1:N, (band, -1), (2, 0))
     else
+        @show N, band
         A = BandedBlockBandedMatrix(
-            Zeros{B}(sum(1:N), sum(1:(N+1))), (1:N, 1:N+1), (-1, band), (0, 2))
+            Zeros{B}(sum(1:N), sum(1:(N+1))), 1:N, 1:N+1, (-1, band), (0, 2))
     end
 
     n, k = 1, 0
@@ -1201,10 +1202,10 @@ function partialoperatory(S::DiskSliceSpace{<:Any, B, T, <:Any}, N;
     # Takes the space H^{a,b,c} -> H^{a,b,c+1}
     if transposed
         A = BandedBlockBandedMatrix(
-            Zeros{B}(sum(1:(N+1)),sum(1:N)), (1:N+1, 1:N), (1,-1), (1,-1))
+            Zeros{B}(sum(1:(N+1)),sum(1:N)), 1:N+1, 1:N, (1,-1), (1,-1))
     else
         A = BandedBlockBandedMatrix(
-            Zeros{B}(sum(1:N),sum(1:(N+1))), (1:N, 1:N+1), (-1,1), (-1,1))
+            Zeros{B}(sum(1:N),sum(1:(N+1))), 1:N, 1:N+1, (-1,1), (-1,1))
     end
     Sy = differentiatespacey(S)
     P = getPspace(S)
@@ -1279,10 +1280,10 @@ function weightedpartialoperatorx(S::DiskSliceSpace{<:Any, B, T, <:Any}, N;
     band = S.family.nparams
     if transposed
         W = BandedBlockBandedMatrix(
-            Zeros{B}(sum(1:(N+1)),sum(1:(N+1+band))), (1:N+1, 1:N+1+band), (-1, band), (0, 2))
+            Zeros{B}(sum(1:(N+1)),sum(1:(N+1+band))), 1:N+1, 1:N+1+band, (-1, band), (0, 2))
     else
         W = BandedBlockBandedMatrix(
-            Zeros{B}(sum(1:(N+1+band)),sum(1:(N+1))), (1:N+1+band, 1:N+1), (band, -1), (2, 0))
+            Zeros{B}(sum(1:(N+1+band)),sum(1:(N+1))), 1:N+1+band, 1:N+1, (band, -1), (2, 0))
     end
     Sx = differentiateweightedspacex(S)
     P = getPspace(S)
@@ -1343,10 +1344,10 @@ function weightedpartialoperatory(S::DiskSliceSpace{<:Any, B, T, <:Any}, N;
     # Takes weighted space ∂/∂y(W^{a,b,c}) -> W^{a,b,c-1}
     if transposed
         W = BandedBlockBandedMatrix(
-            Zeros{B}(sum(1:(N+1)),sum(1:(N+2))), (1:N+1, 1:N+2), (-1,1), (-1,1))
+            Zeros{B}(sum(1:(N+1)),sum(1:(N+2))), 1:N+1, 1:N+2, (-1,1), (-1,1))
     else
         W = BandedBlockBandedMatrix(
-            Zeros{B}(sum(1:(N+2)),sum(1:(N+1))), (1:N+2, 1:N+1), (1,-1), (1,-1))
+            Zeros{B}(sum(1:(N+2)),sum(1:(N+1))), 1:N+2, 1:N+1, (1,-1), (1,-1))
     end
     Sy = differentiateweightedspacey(S)
     P = getPspace(S)
@@ -1399,10 +1400,10 @@ function transformparamsoperator(S::DiskSliceSpace{<:Any, B, T, <:Any},
             # Outputs the relevant sum(1:N+1) × sum(1:N+1) matrix operator
             if transposed
                 C = BandedBlockBandedMatrix(Zeros{B}(sum(1:(N+1)),sum(1:(N+1))),
-                                            (1:N+1, 1:N+1), (band,0), (0,0))
+                                            1:N+1, 1:N+1, (band,0), (0,0))
             else
                 C = BandedBlockBandedMatrix(Zeros{B}(sum(1:(N+1)),sum(1:(N+1))),
-                                            (1:N+1, 1:N+1), (0,band), (0,0))
+                                            1:N+1, 1:N+1, (0,band), (0,0))
             end
             P = getPspace(S)
             ptsr, wr = pointswithweights(B, getRspace(St, 0), N+1)
@@ -1443,10 +1444,10 @@ function transformparamsoperator(S::DiskSliceSpace{<:Any, B, T, <:Any},
             # Outputs the relevant sum(1:N+1) × sum(1:N+1) matrix operator
             if transposed
                 C = BandedBlockBandedMatrix(Zeros{B}(sum(1:(N+1)),sum(1:(N+1))),
-                                            (1:N+1, 1:N+1), (band,0), (2,0))
+                                            1:N+1, 1:N+1, (band,0), (2,0))
             else
                 C = BandedBlockBandedMatrix(Zeros{B}(sum(1:(N+1)),sum(1:(N+1))),
-                                            (1:N+1, 1:N+1), (0,band), (0,2))
+                                            1:N+1, 1:N+1, (0,band), (0,2))
             end
             P = getPspace(S)
             Pt = getPspace(St)
@@ -1503,10 +1504,10 @@ function transformparamsoperator(S::DiskSliceSpace{<:Any, B, T, <:Any},
             # Outputs the relevant sum(1:N+1+band) × sum(1:N+1) matrix operator
             if transposed
                 C = BandedBlockBandedMatrix(Zeros{B}(sum(1:(N+1)),sum(1:(N+1+band))),
-                                            (1:N+1, 1:N+1+band), (0,band), (0,0))
+                                            1:N+1, 1:N+1+band, (0,band), (0,0))
             else
                 C = BandedBlockBandedMatrix(Zeros{B}(sum(1:(N+1+band)),sum(1:(N+1))),
-                                            (1:N+1+band, 1:N+1), (band,0), (0,0))
+                                            1:N+1+band, 1:N+1, (band,0), (0,0))
             end
             P = getPspace(S)
             ptsr, wr = pointswithweights(B, getRspace(S, 0), N+1)
@@ -1541,10 +1542,10 @@ function transformparamsoperator(S::DiskSliceSpace{<:Any, B, T, <:Any},
             # Outputs the relevant sum(1:N+1+band) × sum(1:N+1) matrix operator
             if transposed
                 C = BandedBlockBandedMatrix(Zeros{B}(sum(1:(N+1)),sum(1:(N+1+band))),
-                                            (1:N+1, 1:N+1+band), (0,band), (0,2))
+                                            1:N+1, 1:N+1+band, (0,band), (0,2))
             else
                 C = BandedBlockBandedMatrix(Zeros{B}(sum(1:(N+1+band)),sum(1:(N+1))),
-                                            (1:N+1+band, 1:N+1), (band,0), (2,0))
+                                            1:N+1+band, 1:N+1, (band,0), (2,0))
             end
             P = getPspace(S)
             Pt = getPspace(St)
@@ -1618,17 +1619,10 @@ function laplaceoperator(S::DiskSliceSpace{<:Any, <:Any, T, <:Any},
         @show "laplaceoperator", "5 of 6 done"
         G = weightedpartialoperatory(S, N)
         @show "laplaceoperator", "6 of 6 done"
-        AAl, AAu = A.l + B.l, A.u + B.u
-        BBl, BBu = C.l + E.l + F.l + G.l, C.u + E.u + F.u + G.u
-        AAλ, AAμ = A.λ + B.λ, A.μ + B.μ
-        BBλ, BBμ = C.λ + E.λ + F.λ + G.λ, C.μ + E.μ + F.μ + G.μ
-        AA = sparse(A) * sparse(B)
-        BB = sparse(C) * sparse(E) * sparse(F) * sparse(G)
-        L = BandedBlockBandedMatrix(AA + BB, (1:nblocks(A)[1], 1:nblocks(B)[2]),
-                                    (max(AAl,BBl),max(AAu,BBu)), (max(AAλ,BBλ),max(AAμ,BBμ)))
+        L = A * B + C * E * F * G
         if square
             m = sum(1:(N+1))
-            Δ = BandedBlockBandedMatrix(L[1:m, 1:m], (1:N+1, 1:N+1), (L.l,L.u), (L.λ,L.μ))
+            Δ = BandedBlockBandedMatrix(L[1:m, 1:m], 1:N+1, 1:N+1, (L.l,L.u), (L.λ,L.μ))
         else
             L
         end
@@ -1646,19 +1640,10 @@ function laplaceoperator(S::DiskSliceSpace{<:Any, <:Any, T, <:Any},
         @show "laplaceoperator", "5 of 6 done"
         G = weightedpartialoperatory(S, N)
         @show "laplaceoperator", "6 of 6 done"
-        # NOTE: Multiplying the BlockBandedMatrices fails with an error, so
-        #       convert to sparse
-        AAl, AAu = A.l + B.l, A.u + B.u
-        BBl, BBu = C.l + E.l + F.l + G.l, C.u + E.u + F.u + G.u
-        AAλ, AAμ = A.λ + B.λ, A.μ + B.μ
-        BBλ, BBμ = C.λ + E.λ + F.λ + G.λ, C.μ + E.μ + F.μ + G.μ
-        AA = sparse(A) * sparse(B)
-        BB = sparse(C) * sparse(E) * sparse(F) * sparse(G)
-        L = BandedBlockBandedMatrix(AA + BB, (1:nblocks(A)[1], 1:nblocks(B)[2]),
-                                    (max(AAl,BBl),max(AAu,BBu)), (max(AAλ,BBλ),max(AAμ,BBμ)))
+        L = A * B + C * E * F * G
         if square
             m = sum(1:(N+1))
-            Δ = BandedBlockBandedMatrix(L[1:m, 1:m], (1:N+1, 1:N+1), (L.l, L.u), (L.λ, L.μ))
+            Δ = BandedBlockBandedMatrix(L[1:m, 1:m], 1:N+1, 1:N+1, (L.l, L.u), (L.λ, L.μ))
         else
             L
         end
@@ -1676,19 +1661,10 @@ function laplaceoperator(S::DiskSliceSpace{<:Any, <:Any, T, <:Any},
         @show "laplaceoperator", "5 of 6 done"
         G = partialoperatory(S, N+2)
         @show "laplaceoperator", "6 of 6 done"
-        # NOTE: Multiplying the BlockBandedMatrices fails with an error, so
-        #       convert to sparse
-        AAl, AAu = A.l + B.l, A.u + B.u
-        BBl, BBu = C.l + E.l + F.l + G.l, C.u + E.u + F.u + G.u
-        AAλ, AAμ = A.λ + B.λ, A.μ + B.μ
-        BBλ, BBμ = C.λ + E.λ + F.λ + G.λ, C.μ + E.μ + F.μ + G.μ
-        AA = sparse(A) * sparse(B)
-        BB = sparse(C) * sparse(E) * sparse(F) * sparse(G)
-        L = BandedBlockBandedMatrix(AA + BB, (1:N+1, 1:N+3),
-                                    (max(AAl,BBl),max(AAu,BBu)), (max(AAλ,BBλ),max(AAμ,BBμ)))
+        L = A * B + C * E * F * G
         if square
             m = sum(1:(N+1))
-            Δ = BandedBlockBandedMatrix(L[1:m, 1:m], (1:N+1, 1:N+1), (L.l,L.u), (L.λ,L.μ))
+            Δ = BandedBlockBandedMatrix(L[1:m, 1:m], 1:N+1, 1:N+1, (L.l,L.u), (L.λ,L.μ))
         else
             L
         end
@@ -1706,12 +1682,12 @@ function biharmonicoperator(S::DiskSliceSpace{<:Any, <:Any, T, <:Any}, N; square
         C = A * B
         if square
             m = sum(1:(N+1))
-            Δ2 = BandedBlockBandedMatrix(C[1:m, 1:m], (1:N+1, 1:N+1), (C.l, C.u), (C.λ, C.μ))
+            Δ2 = BandedBlockBandedMatrix(C[1:m, 1:m], 1:N+1, 1:N+1, (C.l, C.u), (C.λ, C.μ))
         else
             C
         end
     else
-        error("Invalid HalfDiskSpace for Laplacian operator")
+        error("Invalid DiskSliceSpace for Biharmonic operator")
     end
 end
 

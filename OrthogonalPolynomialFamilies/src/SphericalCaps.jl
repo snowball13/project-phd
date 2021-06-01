@@ -2121,7 +2121,8 @@ end
 # Uselful for SWE
 function convertcoeffssize(S::SphericalCapSpace{<:Any, B, T, <:Any},
                             cfs::AbstractArray{B};
-                            totangentspace::Bool=true) where {B,T}
+                            totangentspace::Bool=true,
+                            asfun::Bool=false) where {B,T}
     if totangentspace
         M = length(cfs)
         ret = zeros(B, 2M)
@@ -2131,6 +2132,7 @@ function convertcoeffssize(S::SphericalCapSpace{<:Any, B, T, <:Any},
             ret[it+1] = cfs[j]
             it += 2
         end
+        ret
     else
         M = Int(length(cfs) / 2)
         ret = zeros(B, M)
@@ -2139,8 +2141,12 @@ function convertcoeffssize(S::SphericalCapSpace{<:Any, B, T, <:Any},
             ret[j] = cfs[it]
             it += 2
         end
+        if asfun
+            Fun(S, ret)
+        else
+            ret
+        end
     end
-    ret
 end
 
 
@@ -2317,12 +2323,16 @@ end
 #===#
 # Resizing coeffs vectors
 
-function resizecoeffs!(S::SphericalCapSpace, f::Fun, N::Int)
+function resizecoeffs!(S::SphericalCapSpace, f::Fun, N::Int; force::Bool=false)
     ncfs = length(f.coefficients)
     m = (N+1)^2
     cfs = convertcoeffsvecorder(S, f.coefficients) # creates new cfs vec
     if ncfs > m && any(i -> abs(i) > 1e-16, cfs[m+1:end])
-        error("Trying to decrease degree of f")
+        if force
+            @show "Trying to decrease degree of f but force=true passed so continuing"
+        else
+            error("Trying to decrease degree of f")
+        end
     end
     cfs = convertcoeffsvecorder(S, f.coefficients) # creates new cfs vec
     resize!(cfs, m)
