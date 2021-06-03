@@ -2,7 +2,7 @@
 
 \chapter{Spherical harmonics as orthogonal polynomials}
 
-To introduce ourselves to the world of multidimensional orthogonal polynomials for solving PDEs on the sphere, we can naturally choose to look at the famous spherical harmonics. Our aim here is to express the Spherical Harmonics as polynomials in three variables $x, y, z$ to evaluate functions and solve PDEs on the whole sphere. More precisely, we desire the solution to partial differential equations on the domain
+To introduce ourselves to the world of multidimensional orthogonal polynomials for solving PDEs on the sphere, we can naturally choose to look at the famous spherical harmonics. Our aim here is to express the spherical harmonics as polynomials in three variables $x, y, z$ to evaluate functions and solve PDEs on the whole sphere. More precisely, we desire the solution to partial differential equations on the domain
 \bseqn{
 	\Omega := \bsset{(x,y,z) \in \R^3}{x^2 + y^2 = \rho(z)^2}
 }
@@ -12,7 +12,7 @@ where
 }
 While it may seem somewhat odd, it should hopefully become apparent why this is a useful way to define our domain. 
 
-In this chapter, we demonstrate how one can write the Spherical Harmonics as polynomials in $(x, y, z)$, and how the relationships between them can be used to obtain sparse \enquote{Jacobi operators} for multiplication by $x,y,z$. We demonstrate how these in turn lead to an algorithm for evaluating the Spherical Harmonics, an efficient algorithm for evaluating functions when expanded in the SH OP basis, and sparse \enquote{banded-block-banded} differential operator matrices. The techniques used here are done so with the aim of applying them to other OP families of other domains (and we do so in later chapters). We will finally demonstrate a proof-of-concept via the examples of the heat equation and the linearised shallow water equations on the unit sphere.
+In this chapter, we demonstrate how one can write the spherical harmonics as polynomials in $(x, y, z)$, and how the relationships between them can be used to obtain sparse \enquote{Jacobi operators} for multiplication by $x,y,z$. We demonstrate how these in turn lead to an algorithm for evaluating the spherical harmonics, an efficient algorithm for evaluating functions when expanded in the SH OP basis, and sparse \enquote{banded-block-banded} differential operator matrices. The techniques used here are done so with the aim of applying them to other OP families of other domains (and we do so in later chapters). We will finally demonstrate a proof-of-concept via the examples of the heat equation and the linearised shallow water equations on the unit sphere.
 
 The code that allows one to produce the numerical examples in this chapter is publicly available as a Julia package\footnote{https://github.com/snowball13/SphericalHarmonics.jl} that partners the ApproxFun package \cite{ApproxFun} -- however, this package is purely experimental at this stage.
 
@@ -95,9 +95,9 @@ where $\alpha^*$ denotes the complex conjugate of $\alpha \in \C$. Note how we c
 
 \section{Jacobi matrices}
 
-Jacobi operators are matrices that correspond to multiplication of the orthogonal polynomial basis, in this case the spherical harmonics, by our cartesian coordinates $x, y, z$. We can obtain the entries to these operator matrices by determining the coefficients of $x\,\Ylm(x,y,z)$, $y\,\Ylm(x,y,z)$, and $z\,\Ylm(x,y,z)$ in terms of $Y^{m'}_{l'}(x,y,z)$ for any point $(x,y,z)$ on the unit sphere. Relations concerning the products of Spherical Harmonics have already been established, and so the expressions we desire here could just be seen as special cases of these. More specifically, the coefficients of the expansion in the SH basis of the product of two SHs are composed of Clebsch-Gordan coefficients \cite[p231]{sakurai1995modern}. Clebsch-Gordan coefficients are important in quantum mechanics and angular momentum, with tables and algorithms existing to calculate them \cite{mcnamee1964tables}. By simply choosing appropriate combinations, one could gain the desired coefficients for the expansion of each of $x\,\Ylm(x,y,z)$, $y\,\Ylm(x,y,z)$, and $z\,\Ylm(x,y,z)$.
+Jacobi operators are matrices that correspond to multiplication of the orthogonal polynomial basis, in this case the spherical harmonics, by our cartesian coordinates $x, y, z$. We can obtain the entries to these operator matrices by determining the coefficients of $x\,\Ylm(x,y,z)$, $y\,\Ylm(x,y,z)$, and $z\,\Ylm(x,y,z)$ in terms of $Y^{m'}_{l'}(x,y,z)$ for any point $(x,y,z)$ on the unit sphere. Relations concerning the products of spherical harmonics have already been established, and so the expressions we desire here could just be seen as special cases of these. More specifically, the coefficients of the expansion in the SH basis of the product of two SHs are composed of Clebsch-Gordan coefficients \cite[p231]{sakurai1995modern}. Clebsch-Gordan coefficients are important in quantum mechanics and angular momentum, with tables and algorithms existing to calculate them \cite{mcnamee1964tables}. By simply choosing appropriate combinations, one could gain the desired coefficients for the expansion of each of $x\,\Ylm(x,y,z)$, $y\,\Ylm(x,y,z)$, and $z\,\Ylm(x,y,z)$.
 
-However we reiterate our goal here is to use techniques that can generalise to spectral methods on other domains using multidimensional OPs, and thus we proceed by exploiting the three-term recurrences and other relations of the univariate OPs that make up the Spherical Harmonics as we have defined them. With that being said, we require a few results concerning the incrementing and decrementing of the parameters for the Jacobi polynomials, and the three-term recurrence for the Jacobi polynomials, that will also prove useful later on in this chapter.
+However we reiterate our goal here is to use techniques that can generalise to spectral methods on other domains using multidimensional OPs, and thus we proceed by exploiting the three-term recurrences and other relations of the univariate OPs that make up the spherical harmonics as we have defined them. With that being said, we require a few results concerning the incrementing and decrementing of the parameters for the Jacobi polynomials, and the three-term recurrence for the Jacobi polynomials, that will also prove useful later on in this chapter.
 \begin{lemma}
 	Let $\alpha, \beta \in \R$ be general parameters. Let $z \in [-1,1]$ and define $P_{-2}^{(\alpha+1, \beta+1)}(z) \equiv P_{-1}^{(\alpha+1, \beta+1)}(z) \equiv 0$. Then, for any $n \in \N_0$ the following identities hold:
 \bseqn{
@@ -181,7 +181,7 @@ where
 }
 \end{lemma}
 
-\remark The results in \bsreflemma{lemma:shxyzrelations} are fairly involved and can be derived via the relationships established for products of Spherical Harmonics and Clebsch-Gordan coefficients as mentioned earlier \cite[p231]{sakurai1995modern} but we include this proof so as to generalise to other OPs later on in later chapters.
+\remark The results in \bsreflemma{lemma:shxyzrelations} are fairly involved and can be derived via the relationships established for products of spherical harmonics and Clebsch-Gordan coefficients as mentioned earlier \cite[p231]{sakurai1995modern} but we include this proof so as to generalise to other OPs later on in later chapters.
 
 \begin{proof}[Proof of \bsreflemma{lemma:shxyzrelations}]
 	The expression for multiplication of the spherical harmonic $\Ylm$ by $z$ is simply a consequence of the third result in \bsrefcor{corollary:jacobirelations}:
@@ -374,7 +374,7 @@ The sparsity and structure of the Jacobi matrices as we have defined them can be
 
 \section{Three-term recurrence relation for $\SHvec$}
 
-Three-term recurrence relations for orthogonal polynomials are well established (see for example \cite[Section 18.9]{DLMF}), including for multidimensional OPs \cite[Section 3.2]{dunkl2014orthogonal}. In a similar vein, we can obtain a recurrence relation for the Spherical Harmonics by combining each system in \bsrefeqn{eqn:jacobimatsdef} in a specific way. It should be emphasised at this point that this is not necessarily the optimal way of computing the Spherical Harmonics; various efficient methods and algorithms have been proposed (see e.g. \cite{guy1998efficient, sloan2013efficient, fukushima2012numerical}). We present this method in order to be able to generalise it to other multidimensional OP families later on in this thesis.
+Three-term recurrence relations for orthogonal polynomials are well established (see for example \cite[Section 18.9]{DLMF}), including for multidimensional OPs \cite[Section 3.2]{dunkl2014orthogonal}. In a similar vein, we can obtain a recurrence relation for the spherical harmonics by combining each system in \bsrefeqn{eqn:jacobimatsdef} in a specific way. It should be emphasised at this point that this is not necessarily the optimal way of computing the spherical harmonics; various efficient methods and algorithms have been proposed (see e.g. \cite{guy1998efficient, sloan2013efficient, fukushima2012numerical}). We present this method in order to be able to generalise it to other multidimensional OP families later on in this thesis.
 
 Rewriting \bsrefeqn{eqn:jacobimatsdef}, we have that:
 \bseqn{
@@ -530,7 +530,7 @@ where at each iteration, $\vec{\xi}_n$ is a vector of matrices (note that we are
 %%% TANGENT BUNDLE ----- VECTOR SHs
 \section{Vector spherical harmonics as orthogonal vectors in three variables}\label{Section:VSHs}
 
-We have established that the Spherical Harmonics can be viewed as a basis of orthonormal polynomials on the sphere. Specifically, given a function $f : \Omega \to \C$, we can write $f = \sum_{l = 0}^{N} \sum_{m = -l}^{l} f_{l,m} \; \Ylm$ where $\{f_{l,m}\}$ are coefficients and $N \in \N$ is sufficiently large. But what about vector-valued functions?
+We have established that the spherical harmonics can be viewed as a basis of orthonormal polynomials on the sphere. Specifically, given a function $f : \Omega \to \C$, we can write $f = \sum_{l = 0}^{N} \sum_{m = -l}^{l} f_{l,m} \; \Ylm$ where $\{f_{l,m}\}$ are coefficients and $N \in \N$ is sufficiently large. But what about vector-valued functions?
 \begin{definition}\label{def:tangentbundle}
 	Let $(x,y,z) \in \Omega$. We refer to the \textbf{tangent space} of the point $(x,y,z)$ as the space of all vectors that are orthogonal to the vector $\rvec := [x,y,x]^\top$. We further define the \textbf{tangent bundle} of $\Omega$ as the set of all such spaces for every point in $\Omega$.
 \end{definition}
@@ -871,7 +871,7 @@ As for the scalar case, these coefficients detailed above are then the nonzero e
 		\centering
 		\caption{$\tangentjacobi_z$}
 	\end{subfigure}\hfil % <-- added
-	\caption{\enquote{Spy} plots of the Jacobi operator matrices for the Vector Spherical Harmonic OP basis, showing their sparsity and structure, up to order $N=10$.}
+	\caption{\enquote{Spy} plots of the Jacobi operator matrices for the vector spherical harmonic OP basis, showing their sparsity and structure, up to order $N=10$.}
 	\label{fig:sh-spy-jacobi}
 \end{figure}
 
@@ -1295,21 +1295,14 @@ Now that we have our differential operators, let's apply them in some examples.
 
 \section{Examples}
 
+\subsection{Heat equation}
+
 \begin{figure}[t]
 	\centering % <-- added
 	\centerline{\includegraphics[scale=0.5]{heat-eqn-alpha-0p0238-dt=0p01-nsteps=100}}
 	\caption{Four snapshots of the solution $u$ of the heat equation with $\alpha = 1/42$ and a step size of $\Delta t = 0.01$, solved using the BDF2 timestepping method. Top Left: Initial conditions (0 timesteps). Top Right: After 25 timesteps. Bottom Left: After 50 timesteps. Bottom Right: After 75 timesteps.}
 	\label{fig:heateqn}
 \end{figure}
-
-\begin{figure}[t]
-	\centering % <-- added
-	\centerline{\includegraphics[scale=0.5]{linear-swe-H=1-dt=0p01-nsteps=100}}
-	\caption{Four snapshots of the solution for the height $h$ of the linearised shallow water equations with $\rotrate = \calH = 1$ and a step size of $\Delta t = 0.01$, solved using the backwards Euler timestepping method. Top Left: Initial conditions (0 timesteps). Top Right: After 50 timesteps. Bottom Left: After 75 timesteps. Bottom Right: After 100 timesteps.}
-	\label{fig:swe}
-\end{figure}
-
-\subsection{Heat equation}
 
 To demonstrate proof of concept, we can apply the framework we have proposed to modelling the heat equation on the unit sphere. In doing so, we can demonstrate how our method allows us to expand and evaluate functions, and turn the differential equation into a matrix-vector problem at each timestep.
 
@@ -1344,6 +1337,13 @@ The snapshots of the solution $u$ in bsreffig{fig:heateqn} are taken of the init
 
 
 \subsection{Linearised shallow water equations}
+
+\begin{figure}[t]
+	\centering % <-- added
+	\centerline{\includegraphics[scale=0.5]{linear-swe-H=1-dt=0p01-nsteps=100-arrows}}
+	\caption{Four snapshots of the solution for the height $h$ (surface colour) and the wave velocity $u$ (red arrows) of the linearised shallow water equations with $\rotrate = \calH = 1$ and a step size of $\Delta t = 0.01$, solved using the backwards Euler timestepping method (BDF1). The initial conditions are given in \bsrefeqn{eqn:sweics}. Top Left: Initial conditions (0 timesteps). Top Right: After 50 timesteps. Bottom Left: After 75 timesteps. Bottom Right: After 100 timesteps.}
+	\label{fig:swe}
+\end{figure}
 
 The linearised shallow water equations allow us to showcase more of the differential operators that we defined in \bsrefdef{def:SHoperators} (namely the divergence and gradient operators) and demonstrate how the natural sparsity that our framework brings to the problem leads to a simple sparse linear system to solve.
 
@@ -1424,15 +1424,15 @@ $\iff$
 Here, it is clear that the matrix $I + \Delta t^2 \calH \tilde \calG \tilde \calD + 2 \rotrate \Delta t \: \tangentjacobi_z \calR$ is sparse with banded-block-banded structure, and hence this system will be efficient to solve. Doing so at each iteration provides us with the coefficients vectors $\uvec^c_{n+1}, \tilde{\vec{h}}^c_{n+1}$ if we know $\uvec^c_{n}, \tilde{\vec{h}}^c_{n}$. Of course, when evaluating the function $h$, we can simply gather back the coefficients vector $\vec{h}^c$ by $\vec{h}^c = E_s \tilde{\vec{h}}^c$.
 
 As a demonstration, in \bsreffig{fig:swe} we see four snapshots of the solution to the system in \bsrefeqn{eqn:swe} on the unit sphere, with $\rotrate = \calH = 1$ and initial conditions given by
-\bseqn{
-	\uvec_0 := \phivec \mu \sinphi, \quad h_0 := \mu \sin^2\varphi,
+\bseqnnumber{
+	\uvec_0 := \phivec \mu \sinphi, \quad h_0 := \mu \sin^2\varphi, \label{eqn:sweics}
 }
 where $\mu = {\pi \over 6}$, with the solution order $N$ set large enough (here, $N=20$). This example is very similar to \enquote{test case 2} in the well-known standard test set for shallow water equations in spherical geometries \cite{williamson1992standard}. The snapshots of the wave height $h$ are taken of the initial conditions, plus after $50$, $75$ and $100$ timesteps respectively, using a step size of $\Delta t = 0.01$.
 
 
 \section{Conclusion}
 
-Spherical Harmonics have been widely used to solve PDEs, in particular a Spherical Harmonics approach is used as part of the Integrated Forecasting System (IFS) that ECMWF uses for their forecasts. In this chapter, we have chosen to view the Spherical Harmonics as orthogonal (in fact orthonormal) polynomials in $x$, $y$ and $z$ in order to illustrate and understand more about how the framework presented here for using multivariate OPs in a spectral method translate to the sphere. We have derived the entries of \textit{Jacobi matrices} that represent multiplication by the coordinates, showing how they are \textit{banded-block-banded} in structure. We have set out how one can find coefficients for the expansion of a function in the Spherical Harmonics basis using established transforms, and how one can evaluate a function given its coefficients vector using a multidimensional version of the Clenshaw algorithm. We extended our framework to include the \textit{tangent bundle} of the sphere -- that is, the space of vectors orthogonal to the unit outward normal for each point on the sphere -- where we can use the \textit{Vector Spherical Harmonics} as vector-valued orthogonal polynomials to be a basis, demonstrating how similar such Jacobi matrices, function expansion and evaluation can be derived. Further, by exploiting the natural sparsity of the relationships between the OPs in the bases, we have shown how matrices for differential and other operators will be sparse and banded-block-banded in structure too. In fact, for the Spherical Harmonics, these are simply diagonal. Finally, we presented a couple of simple examples of how one can put this all into practice, namely solving the heat equation and the linearised shallow water equations on the unit sphere.
+Spherical harmonics have been widely used to solve PDEs, in particular a spherical harmonics approach is used as part of the Integrated Forecasting System (IFS) that ECMWF uses for their forecasts. In this chapter, we have chosen to view the spherical harmonics as orthogonal (in fact orthonormal) polynomials in $x$, $y$ and $z$ in order to illustrate and understand more about how the framework presented here for using multivariate OPs in a spectral method translate to the sphere. We have derived the entries of \textit{Jacobi matrices} that represent multiplication by the coordinates, showing how they are \textit{banded-block-banded} in structure. We have set out how one can find coefficients for the expansion of a function in the spherical harmonics basis using established transforms, and how one can evaluate a function given its coefficients vector using a multidimensional version of the Clenshaw algorithm. We extended our framework to include the \textit{tangent bundle} of the sphere -- that is, the space of vectors orthogonal to the unit outward normal for each point on the sphere -- where we can use the \textit{vector spherical harmonics} as vector-valued orthogonal polynomials to be a basis, demonstrating how similar such Jacobi matrices, function expansion and evaluation can be derived. Further, by exploiting the natural sparsity of the relationships between the OPs in the bases, we have shown how matrices for differential and other operators will be sparse and banded-block-banded in structure too. In fact, for the spherical harmonics, these are simply diagonal. Finally, we presented a couple of simple examples of how one can put this all into practice, namely solving the heat equation and the linearised shallow water equations on the unit sphere.
 
 
 

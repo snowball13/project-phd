@@ -4,21 +4,21 @@
 
 The contents of the previous chapter on spherical harmonics can allow us to use similar techniques for developing sparse spectral methods for solving linear partial differential equations on other domains. Before we can return to the 3D surface realm, let us first achieve a foundation in two-dimensions by looking at a special class of geometries that includes disk slices and trapeziums.
 
-In recent years, there has been some interesting work in the area of multivariate orthogonal polynomials in two-dimensional domains (see \cite{dunkl2014orthogonal}), such as for a Chebychev-based spectral method on the rectangle \cite{julien2009efficient} \bstodo{list some domains and cite references for them}. In particular, spectral methods have been established on the disk \cite{boyd2011comparing, vasil2016tensor} and the triangle \cite{olver2019triangle}. Jacobi polynomials are extremely useful for solving a number of problems in not just 1D but 2D also, since one can utilise the sparsity of the relations that they hold to yield operator matrices that are efficient to solve \cite{doha2006efficient}. Applications for the disk include \bstodo{give applications and references} and for the triangle include solving Volterra integral equations \cite{gutleb2020sparse}, \bstodo{give more}. 
+In recent years, there has been some interesting work in the area of multivariate orthogonal polynomials in two-dimensional domains (see \cite{dunkl2014orthogonal}), such as for a Chebychev-based spectral method on the rectangle \cite{julien2009efficient}. In particular, spectral methods have been established on the disk \cite{boyd2011comparing, vasil2016tensor} and the triangle \cite{olver2019triangle}. Examples of applications for the disk include use in optics \cite{mahajan2007orthonormal}, astrophysics \cite{pringle1981accretion}, and fluid dynamics \cite{eggels1994fully, noll1976zernike, kerswell2005recent}, and for the triangle include solving Volterra integral equations \cite{gutleb2020sparse}. 
 
-In a similar vein to the ultraspherical method for the unit interval \cite{olver2013fast, doha2009efficient}, for the triangle a choice of OPs are the Jacobi polynomials on the triangle, which are a three-parameter family of polynomials in $(x,y)$ with differential operators acting in such a way so as to increment or decrement the parameter values \cite{dunkl2014orthogonal, koornwinder1975two, olver2019triangle}:
-\bseqnnumber{
-	P^{(a,b,c)}_{n,k}(x,y) := \tilde P^{(2k+b+c+1,a)}_{n-k}(x) \; (1-x)^k \; \tilde P^{(c,b)}_k\fpr({y \over 1-x}) \label{eqn:triangleops}
-}
-for $(x,y) \in \bsset{(x,y) \in \R^2}{0 < x < 1, \: 0 < y < 1-x}$, where $\tilde P_k^{(a,b)}$ is the degree $k$ \textit{shifted Jacobi polynomial}\footnote{The shifted Jacobi polynomials are orthogonal on the interval $[0,1]$ and given by $\tilde P_k^{(a,b)}(x) = P_k^{(a,b)}(2x - 1)$ where $P_k^{(a,b)}$ is the standard degree $k$ Jacobi polynomial.} with $a,b,c$ being parameter values. 
-
-For the disk, a review of spectral methods on the disk for solving the Poisson equation has been completed \cite{boyd2011comparing}, that looks at methods involving various bases for expanding functions in the disk including Zernike polynomials and Chebyshev polynomials. It is concluded that using Chebyshev polynomials yields mixed results, but that there is also no single advised basis to use. While Zernike polynomials yield accurate results, there is a lack of radial fast transform, which is a disadvantage. However, ideas for how to overcome this have progressed \cite{slevinsky2018use, sakai2009application, wilber2017computing}. One solution proposed is a radial basis defined in terms of Jacobi polynomials \cite{vasil2016tensor}:
+For the disk, a review of spectral methods on the disk for solving the Poisson equation has been completed \cite{boyd2011comparing}, that looks at methods involving various bases for expanding functions in the disk including Zernike polynomials and Chebyshev polynomials. It is concluded that using Chebyshev polynomials yields mixed results, but that there is also no single advised basis to use. While Zernike polynomials yield accurate results, there is a lack of radial fast transform, which is a disadvantage. However, ideas for how to overcome this have progressed \cite{slevinsky2018use, sakai2009application, wilber2017computing}. One solution proposed is pairing the Zernike disk OPs with a radial basis defined in terms of Jacobi polynomials \cite{vasil2016tensor}:
 \bseqnnumber{
 	Q_n^{k,m}(r) := C_n^{k,m} r^m P^{(k,m)}_n(2r^2 - 1), \label{eqn:diskops}.
 }
-where $C_n^{k,m}$ is some normalising constant so that they are orthonormal with respect to $\int_0^1 Q_n^{k,m}(r) \; Q_{n'}^{k,m}(r) \; (1-r^2)^k \; r \; \D r = \delta_{n,n'}$. $\{Q_n^{k,m}\}$ are therefore a two-parameter family of orthogonal polynomials. Again, the idea here is that differential and other operators, as well as basis (parameter) conversion operators, can be represented as banded matrices.
+where $C_n^{k,m}$ is some normalising constant so that they are orthonormal with respect to $\int_0^1 Q_n^{k,m}(r) \; Q_{n'}^{k,m}(r) \; (1-r^2)^k \; r \; \D r = \delta_{n,n'}$. $\{Q_n^{k,m}\}$ are therefore a two-parameter family of orthogonal polynomials. The use of polar coordinates here then allows for radially symmetric partial differential (and other) operators, as well as basis (parameter) conversion operators, to be represented as banded matrices by exploiting the relations of the Jacobi polynomials -- they are extremely useful for solving a number of problems in not just 1D but 2D also, since one can utilise the sparsity of the relations that they hold to yield operator matrices that are efficient to solve \cite{doha2006efficient}.
 
-In this chapter, we aim to present a basis and develop a sparse spectral method on generalisations of these domains, namely the disk-slice and trapezium. The full unit disk and triangle cases are special cases of the spectral methods we investigate here too. We will show that the operators for multiplication by $x$ and $y$, as well as differential and parameter conversion, will be banded-block-banded.
+Conversely, in a similar vein to the ultraspherical method for the unit interval \cite{olver2013fast, doha2009efficient}, a choice of OPs for the triangle are the \textit{Jacobi polynomials on the triangle}, which are a three-parameter family of polynomials in $(x,y)$ with differential operators acting in such a way so as to increment or decrement the parameter values \cite{dunkl2014orthogonal, koornwinder1975two, olver2019triangle}:
+\bseqnnumber{
+	P^{(a,b,c)}_{n,k}(x,y) := \tilde P^{(2k+b+c+1,a)}_{n-k}(x) \; (1-x)^k \; \tilde P^{(c,b)}_k\fpr({y \over 1-x}) \label{eqn:triangleops}
+}
+for $(x,y) \in \bsset{(x,y) \in \R^2}{0 < x < 1, \: 0 < y < 1-x}$, where $\tilde P_k^{(a,b)}$ is the degree $k$ \textit{shifted Jacobi polynomial}\footnote{The shifted Jacobi polynomials are orthogonal on the interval $[0,1]$ and given by $\tilde P_k^{(a,b)}(x) = P_k^{(a,b)}(2x - 1)$ where $P_k^{(a,b)}$ is the standard degree $k$ Jacobi polynomial.} with $a,b,c$ being parameter values. Since there is no radial symmetry, differential operators for the triangle (as will be the case for the domains we investigate in this chapter) will be more complex than those for the disk.
+
+In this chapter, we aim to present a basis and develop a sparse spectral method on generalisations of these domains, namely the disk-slice and trapezium. The full unit disk and triangle cases can be viewed as special cases of the spectral methods we investigate here too. We will show that the operators for multiplication by $x$ and $y$, as well as differential and parameter conversion, will be banded-block-banded.
 
 More precisely, we will consider the solution of partial differential equations on the domain
 \bseqn{
@@ -43,7 +43,7 @@ for $\alpha \leq x \leq \beta,$ $-\rho(x) \leq y \leq \rho(x)$. The correspondin
 \bseqn{
 	\hdopnkabc(x,y) = C_{n,k} x^{n-k} y^k + (\hbox{lower order terms})
 }
-where $C_{n,k} \neq 0$ and \enquote{lower order terms'} includes degree $n$ polynomials of the form $x^{n-j} y^j$ where $j < k$. The precise normalization arises from their definition in terms of one-dimensional OPs we will see in \bsrefdef{def:OPconstruction}.
+where $C_{n,k} \neq 0$ and \enquote{lower order terms'} includes degree $n$ polynomials of the form $x^{n-j} y^j$ where $j < k$. The precise normalization arises from their definition in terms of one-dimensional OPs we will see in \bsrefdef{def:ds:OPconstruction}.
 
 Sparsity comes from expanding the domain and range of an operator using different choices of the parameters $a$, $b$ and $c$. Whereas the sparsity pattern and entries derived for equations on the triangle \cite{olver2018recurrence, olver2019triangle} and for equations on the disk \cite{vasil2016tensor} with the frameworks discussed earlier both result from manipulations of Jacobi polynomials, in the present work we use a more general integration-by-parts argument to deduce the sparsity structure, alongside careful use of the Christoffel-Darboux formula \cite[18.2.2]{DLMF} and quadrature rules to determine the entries. In particular, by exploiting the connection with one-dimensional orthogonal polynomials we can construct discretizations of general partial differential operators of size $p(p-1)/2 \times p(p-1)/2$ in $O(p^3)$ operations, where $p$ is the total polynomial degree. This compares favourably to $O(p^6)$ operations if one proceeds na\"ively. Furthermore, we use this framework to derive sparse $p$-finite element methods that are analogous to those of Beuchler and Sch\"oberl on tetrahedra \cite{beuchler2006new}, see also work by Li and Shen \cite{li2010optimal}.
 
@@ -57,7 +57,7 @@ We can mirror the approach for the spherical harmonics, in that we will outline 
 
 We can construct 2D orthogonal polynomials on $\Omega$ from 1D orthogonal polynomials on the intervals \([\alpha,\beta]\) and \([\gamma,\delta]\). 
 
-\begin{proposition}[{\cite[p55--56]{dunkl2014orthogonal}}]\label{prop:construction}
+\begin{proposition}[{\cite[p55--56]{dunkl2014orthogonal}}]\label{prop:ds:construction}
 	Let $w_1 : (\alpha,\beta) \: \to \R$, $w_2 : (\gamma,\delta) \: \to \R$ be weight functions with $\alpha,\beta,\gamma,\delta \in \R$, and let $\rho \: : \: (\alpha,\beta) \: \to (0,\infty)$ be such that either \bsrefcondition{cond:trap} or \bsrefcondition{cond:disk} with $w_2$ being an even function hold.
 $\forall$, $n = 0,1,2,\dots, $ let $\{p_{n,k}\}$ be polynomials orthogonal with respect to the weight $\rho(x)^{2k+1} w_1(x)$ where $0 \le k \le n$, and $\{q_{n}\}$ be polynomials orthogonal with respect to the weight $w_2(x)$. Then, for $n = 0,1,2,\dots$, $k = 0,\dots,n$, the 2D polynomials defined on $\Omega$ given by
 \bseqn{
@@ -67,8 +67,8 @@ are orthogonal polynomials with respect to the weight $W(x,y) := w_1(x) \: w_2\f
 \end{proposition}
 
 
-For disk slices and trapeziums, we specialise Proposition \ref{prop:construction} in the following definitions. First we introduce notation for two families of univariate OPs.
-\begin{definition}\label{def:OPconstruction}
+For disk slices and trapeziums, we specialise \bsrefprop{prop:ds:construction} in the following definitions. First we introduce notation for two families of univariate OPs.
+\begin{definition}\label{def:ds:OPconstruction}
 	Let $\genjacw^{(a,b,c)}(x)$ and $\jacw^{(a,b)}(x)$ be two weight functions on the intervals $(\alpha, \beta)$ and $(\gamma, \delta)$ respectively, given by:
 \bseqn{
 	\begin{cases}
@@ -89,7 +89,7 @@ Denote the three-parameter family of orthonormal polynomials on $[\alpha,\beta]$
 \end{definition}
 
 We can now write down our 2D OP family.
-\begin{definition}\label{def:constuction}
+\begin{definition}\label{def:ds:constuction}
 	For parameters $a,b,c,d \in \R$, define the four-parameter 2D orthogonal polynomials as the set $\{\hdopnk^{(a,b,c,d)}\}$ where:
 \bseqn{
 	\hdopnk^{(a,b,c,d)}(x,y) := \genjacnmk^{(a, b, c+d+2k+1)}(x) \: \rho(x)^k \: \jac_k^{(d,c)}\fpr(\frac{y}{\rho(x)}), \quad (x,y) \in \Omega, 
@@ -240,7 +240,7 @@ J_x^{(a,b,c,d)} \: \bighdopabcd(x,y) = x \: \bighdopabcd(x,y), \quad J_y^{(a,b,c
 }
 The matrices $J_x^{(a,b,c,d)}, J_y^{(a,b,c,d)}$ act on the coefficients vector of a function's expansion in the $\{\hdopnkabcd\}$ basis. For example, let $a, b$ be general parameters and a function $f(x,y)$ defined on $\Omega$ be approximated by its expansion $f(x,y) = \bighdopabcd(x,y)^\top \mathbf{f}$. Then $x \: f(x,y)$ is approximated by $\bighdopabcd(x,y)^\top {J_x^{(a,b,c,d)\top}} \mathbf{f}$. In other words, ${J_x^{(a,b,c,d)\top}} \mathbf{f}$ is the coefficients vector for the expansion of the function $(x,y) \mapsto x \: f(x,y)$ in the  $\{\hdopnkabcd\}$ basis. 
 
-Further, note that $J_x^{(a,b,c,d)}, J_y^{(a,b,c,d)}$ are banded-block-banded matrices (see \bsrefdef{def:bandedblockbanded}). They are block-tridiagonal (block-bandwidths $(1,1)$):
+Further, note that $J_x^{(a,b,c,d)}, J_y^{(a,b,c,d)}$ are banded-block-banded matrices (see \bsrefdef{def:sh:bandedblockbanded}). They are block-tridiagonal (block-bandwidths $(1,1)$):
 \bseqn{
 J_{x/y}^{(a,b,c,d)} &= \begin{pmatrix}
 		B^{x/y}_0 & A^{x/y}_0 & & & & \\
@@ -403,7 +403,7 @@ For the disk-slice, $\betaabc_{n,k,2} = \betaabc_{n,k,5} = \betaabc_{n,k,8} \equ
 \end{tikzpicture} 
 \caption{The Laplace operator acting on vectors of $\smash{\hdopnk^{(0,0,0)}}$ coefficients has a sparse matrix representation if the range is represented as vectors of $\smash{\hdopnk^{(2,2,2)}}$ coefficients. Here, the arrows indicate that the corresponding operation has a sparse matrix representation when the domain is $\smash{\hdopnkabc}$ coefficients, where $(a,b,c)$ is at the tail of the arrow, and the range is $\smash{\hdopnk^{(\tilde{a},\tilde{b},\tilde{c})}}$ coefficients, where $(\tilde{a},\tilde{b},\tilde{c})$ is at the head of the arrow. %For example, $\smash{\frac{\partial}{\partial x}}$ has a sparse matrix representation when the domain is represented in $\smash{\hdop_{n,k}^{(0,0,0)}}$ (resp.~$\smash{\hdop_{n,k}^{(1,0,1)}}$) and the range in $\smash{\hdop_{n,k}^{(1,0,1)}}$ (resp.~$\smash{\hdop_{n,k}^{(2,0,2)}}$).
 }
-\label{fig:laplaceparameterconversion} 
+\label{fig:ds:laplaceparameterconversion} 
 \end{figure}
 
 
@@ -443,7 +443,7 @@ Denote the weighted OPs by
 }
 and recall that a function $f(x,y)$ defined on $\Omega$ is approximated by its expansion $f(x,y) = \bighdopabc(x,y)^\top \mathbf{f}$. 
 
-\begin{definition}\label{def:differentialoperators}
+\begin{definition}\label{def:ds:differentialoperators}
 Define the operator matrices $D_x^{(a,b,c)}, \: D_y^{(a,b,c)}, \: W_x^{(a,b,c)}, \: W_y^{(a,b,c)}$ according to:
 \bseqn{
 {\partial f \over \partial x}&= \bighdop^{(a+1,b+1,c+1)}(x,y)^\top \: D_x^{(a,b,c)} \: \mathbf{f}, \\
@@ -453,10 +453,10 @@ Define the operator matrices $D_x^{(a,b,c)}, \: D_y^{(a,b,c)}, \: W_x^{(a,b,c)},
 }
 \end{definition}
 
-The incrementing and decrementing of parameters as seen here is analogous to other well known orthogonal polynomial families' derivatives, for example the Jacobi polynomials on the interval, as seen in the DLMF \cite[(18.9.3)]{DLMF}, and on the triangle \cite{olver2018recurrence}. An illustration of how the non-weighted differential operators increment the parameters (a,b,c) is seen in Figure \ref{fig:laplaceparameterconversion}.
+The incrementing and decrementing of parameters as seen here is analogous to other well known orthogonal polynomial families' derivatives, for example the Jacobi polynomials on the interval, as seen in the DLMF \cite[(18.9.3)]{DLMF}, and on the triangle \cite{olver2018recurrence}. An illustration of how the non-weighted differential operators increment the parameters (a,b,c) is seen in \bsreffig{fig:ds:laplaceparameterconversion}.
 
-\begin{theorem}\label{theorem:sparsityofdifferentialoperators}
-The operator matrices $D_x^{(a,b,c)}, \: D_y^{(a,b,c)}, \: W_x^{(a,b,c)}, \: W_y^{(a,b,c)}$ from Definition \ref{def:differentialoperators} are sparse, with banded-block-banded structure. More specifically:
+\begin{theorem}\label{theorem:ds:sparsityofdifferentialoperators}
+The operator matrices $D_x^{(a,b,c)}, \: D_y^{(a,b,c)}, \: W_x^{(a,b,c)}, \: W_y^{(a,b,c)}$ from \bsrefdef{def:ds:differentialoperators} are sparse, with banded-block-banded structure. More specifically:
 \begin{itemize}
 	\item $D_x^{(a,b,c)}$ has  block-bandwidths $(-1,3)$, and sub-block-bandwidths $(0, 2)$.
   	\item $D_y^{(a,b,c)}$ has  block-bandwidths $(-1,1)$, and sub-block-bandwidths $(-1,1)$.
@@ -577,7 +577,7 @@ and also that
 
 There exist conversion matrix operators that increment/decrement the parameters, transforming the OPs from one (weighted or non-weighted) parameter space to another. 
 
-\begin{definition}\label{def:parametertransformationoperators}
+\begin{definition}\label{def:ds:parametertransformationoperators}
 Define the operator matrices 
 $$
 T^{(a,b,c)\to(a+1,b+1,c)}, \quad T^{(a,b,c)\to(a,b,c+1)}\qqand T^{(a,b,c)\to(a+1,b+1,c+1)}
@@ -597,8 +597,8 @@ for conversion between weighted spaces, according to:
 }
 \end{definition}
 
-\begin{lemma}\label{lemma:sparsityofparametertransformationoperators}
-The operator matrices in Definition \ref{def:parametertransformationoperators} are sparse, with banded-block-banded structure. More specifically:
+\begin{lemma}\label{lemma:ds:sparsityofparametertransformationoperators}
+The operator matrices in \bsrefdef{def:ds:parametertransformationoperators} are sparse, with banded-block-banded structure. More specifically:
 \begin{itemize}
 	\item $T^{(a,b,c)\to(a+1,b+1,c)}$ has block-bandwidth $(0,2)$, with diagonal blocks.
   	\item $T^{(a,b,c)\to(a,b,c+1)}$ has block-bandwidth $(0,2)$ and sub-block-bandwidth $(0,2)$.
@@ -647,7 +647,7 @@ The sparsity argument for the weighted parameter transformation operators follow
 		\caption{}
 	\end{subfigure}\hfil % <-- added
     	\caption{"Spy" plots of (differential) operator matrices, showing their sparsity. (a) The Laplacian operator $\laplacewiii$. (b) The variable coefficient Helmholtz operator $\laplacewiii + k^2 \: T^{(0,0,0)\to(1,1,1)} \: V({J_x^{(0,0,0)}}^\top, {J_y^{(0,0,0)}}^\top) \: T_W^{(1,1,1)\to(0,0,0)}$ for $v(x,y) = 1 - (3(x-1)^2 + 5y^2)$ and $k = 200$. (c) The biharmonic operator $\biharmonictwo$}
-	\label{fig:sparsity}
+	\label{fig:ds:sparsity}
 \end{figure}
 
 General linear partial differential operators with polynomial variable coefficients can be constructed by composing the sparse representations for partial derivatives, conversion between bases, and Jacobi operators. As a canonical example, we can obtain the matrix operator for the Laplacian $\Delta$, that will take us from coefficients for expansion in the weighted space
@@ -658,7 +658,7 @@ to coefficients in the non-weighted space $\bighdopiii(x,y)$. Note that this con
 \bseqn{
     \laplacewiii := D_x^{(0,0,0)} \: W_x^{(1,1,1)} + T^{(0,0,1)\to(1,1)} \: D_y^{(0,0,0)} \: T_W^{(1,1,0)\to(0,0,0)} \: W_y^{(1,1,1)}.
 }
-Importantly, this operator will have banded-block-banded structure, and hence will be sparse, as seen in Figure \ref{fig:sparsity}.
+Importantly, this operator will have banded-block-banded structure, and hence will be sparse, as seen in \bsreffig{fig:ds:sparsity}.
 
 Another important example is the Biharmonic operator $\Delta^2$, where we assume zero Dirichlet and Neumann conditions. To construct this operator, we first note that we can obtain the matrix operator for the Laplacian $\Delta$ that will take us from coefficients for expansion in the space $\bighdopooo(x,y)$ to coefficients in the space $\bighdop^{(2,2,2)}(x,y)$. We denote this matrix operator that acts on the coefficients vector as $\laplaceooo$, and is given by
 \bseqn{
@@ -672,7 +672,7 @@ We can then construct a matrix operator for $\Delta^2$ that will take coefficien
 \bseqn{
 	\biharmonictwo = \laplaceooo \: \laplacewttt.
 }
-The sparsity and structure of this biharmonic operator are seen in Figure \ref{fig:sparsity}.
+The sparsity and structure of this biharmonic operator are seen in \bsreffig{fig:ds:sparsity}.
 
 
 
@@ -686,7 +686,7 @@ In this section we discuss how to take advantage of the proposed basis and spars
 
 
 It is possible to obtain the recurrence coefficients for the $\{\genjac_n^{(a,b,c)}\}$ OPs in (\ref{eqn:Hrecurrence}), by careful application of the Christoffel--Darboux formula \cite[18.2.12]{DLMF}. We explain the process here for the disk-slice case, however we note that a similar but simpler argument holds for the trapezium case. We thus first need to define a new set of `interim' 1D OPs.
-\begin{definition}\label{def:InterimOPconstruction}
+\begin{definition}\label{def:ds:InterimOPconstruction}
 Let $\genjactw^{(a,b,c,d)}(x) := (\beta - x)^a \: (x - \alpha)^{b} \: (1-x)^{c} \: (1+x)^{d} $ be a weight function on the interval $(\alpha, \beta)$, and define the associated inner product by:
 \bseqnnumber{
 	\ip< p, \: q >_{\genjactw^{(a,b,c,d)}} &:= \frac{1}{\normgenjact^{(a,b,c,d)}} \: \int_\alpha^\beta p(x) \: q(x) \: \genjactw^{(a,b,c,d)}(x) \: \D x \label{eqn:ipgenjact}
@@ -900,7 +900,7 @@ where $M = \ceil{\half(N+1)}^2$.
 
 \subsection{Calculating non-zero entries of the operator matrices}\label{subsection:Computation-operatormatrices}
 
-The proofs of Theorem \ref{theorem:sparsityofdifferentialoperators} and Lemma \ref{lemma:sparsityofparametertransformationoperators} provide a way to calculate the non-zero entries of the operator matrices given in Definition \ref{def:differentialoperators} and Definition \ref{def:parametertransformationoperators}. We can simply use quadrature to calculate the 1D inner products, which has a complexity of $\bigO(N^3)$. This proves much cheaper computationally than using the 2D quadrature rule to calculate the 2D inner products, which has a complexity of $\bigO(N^4)$. 
+The proofs of \bsreftheorem{theorem:ds:sparsityofdifferentialoperators} and \bsreflemma{lemma:ds:sparsityofparametertransformationoperators} provide a way to calculate the non-zero entries of the operator matrices given in \bsrefdef{def:ds:differentialoperators} and \bsrefdef{def:ds:parametertransformationoperators}. We can simply use quadrature to calculate the 1D inner products, which has a complexity of $\bigO(N^3)$. This proves much cheaper computationally than using the 2D quadrature rule to calculate the 2D inner products, which has a complexity of $\bigO(N^4)$. 
 
 
 %
@@ -915,16 +915,16 @@ We now demonstrate how the sparse linear systems constructed as above can be use
 	\begin{subfigure}{0.3\textwidth}
 		\includegraphics[scale=0.35]{solution-poisson-diskslice-alpha=0p2-beta=0p8}
 		\centering
-		%\label{fig:solution-poisson}
+		%\label{fig:ds:solution-poisson}
 	\end{subfigure}
 	\begin{subfigure}{0.5\textwidth}
 		\centering
 		\includegraphics[scale=0.45]{solutionblocknorms-poisson-diskslice-alpha=0p2-beta=0p8-N=200}
-        		%\label{fig:solutionblocknorms-poisson}
+        		%\label{fig:ds:solutionblocknorms-poisson}
 	\end{subfigure}
 	\caption{Left: The computed solution to $\Delta u = f$ with zero boundary conditions with $f(x,y) = 1 + \text{erf}(5(1 - 10((x - 0.5)^2 + y^2)))$. Right: The norms of each block of the computed solution of the Poisson equation with the given right hand side functions. This demonstrates algebraic convergence with the rate dictated by the decay at the corners, with spectral convergence observed when the right-hand side vanishes to all orders.}
 	\centering
-	\label{fig:poisson}
+	\label{fig:ds:poisson}
 \end{figure}
 
 \begin{figure}[t]
@@ -944,39 +944,39 @@ We now demonstrate how the sparse linear systems constructed as above can be use
 	\centering
 	\caption{The computed solution to $\Delta u = f$ with zero boundary conditions compared with the exact solution $u(x,y) = \Wiii (x,y) y^3 \exp(x)$. Left: Computed. Centre: Exact. Right: Plot of the error (colourbar is shown to demonstrate magnitude of the error is of the order $10^{-17}$)}
 	\centering
-	\label{fig:poissonexact}
+	\label{fig:ds:poissonexact}
 \end{figure}
 
 \begin{figure}[t]
 	\begin{subfigure}{0.3\textwidth}
 	\centering
 	\includegraphics[scale=0.35]{solution-helmholtz-diskslice-alpha=0p2-beta=0p8-k=100-n=300}
-	%\label{fig:solution-helmholtz}
+	%\label{fig:ds:solution-helmholtz}
 	\end{subfigure}
 	\begin{subfigure}{0.5\textwidth}
 	\includegraphics[scale=0.45]{solutionblocknorms-helmholtz-diskslice-alpha=0p2-beta=0p8-N=196-k=20}
 	\centering
-        	%\label{fig:solutionblocknorms-helmholtz}
+        	%\label{fig:ds:solutionblocknorms-helmholtz}
 	\end{subfigure}
 	\caption{Left: The computed solution to $\Delta u + k^2 \: v \: u = f$ with zero boundary conditions with $f(x,y) = x(1-x^2-y^2)e^x$, $v(x,y) = 1 - (3(x-1)^2 + 5y^2)$ and $k = 100$. Right: The norms of each block of the computed solution of the Helmholtz equation with the given right hand side functions, with $k=20$ and $v(x,y) = 1 - (3(x-1)^2 + 5y^2)$.}
 	\centering
-	\label{fig:helmholtz}
+	\label{fig:ds:helmholtz}
 \end{figure}
 
 \begin{figure}[t]
 	\begin{subfigure}{0.3\textwidth}
 	\centering
 	\includegraphics[scale=0.35]{solution-biharmonic-diskslice-alpha=0p2-beta=0p8}
-	%\label{fig:solution-biharmonic}
+	%\label{fig:ds:solution-biharmonic}
 	\end{subfigure}
 	\begin{subfigure}{0.5\textwidth}
 	\includegraphics[scale=0.45]{solutionblocknorms-biharmonic-diskslice-alpha=0p2-beta=0p8-N=200}
 	\centering
-        	%\label{fig:solutionblocknorms-biharmonic}
+        	%\label{fig:ds:solutionblocknorms-biharmonic}
 	\end{subfigure}
 	\caption{Left: The computed solution to $\Delta^2 u = f$ with zero Dirichlet and Neumann boundary conditions with $f(x,y) = 1 + \text{erf}(5(1 - 10((x - 0.5)^2 + y^2)))$. Right: The norms of each block of the computed solution of the biharmonic equation with the given right hand side functions.}
 	\centering
-	\label{fig:biharmonic}
+	\label{fig:ds:biharmonic}
 \end{figure}
 % END FIGURES
 
@@ -995,10 +995,10 @@ We can tackle the problem as follows. Denote the coefficient vector for expansio
     \laplacewiii \mathbf{u} = \mathbf{f}
 }
 which can be solved to find $\mathbf{u}$.
-In Figure \ref{fig:poisson} we see the solution to the Poisson equation with zero boundary conditions given in (\ref{eqn:poisson}) in the disk-slice $\Omega$. In Figure \ref{fig:poisson} we also show the norms of each block of calculated coefficients of the approximation for four right-hand sides of the Poisson equation with $N = 990$, that is, $491,536$ unknowns. The rate of decay in the coefficients is a proxy for the rate of convergence of the computed solution: as typical of spectral methods, we expect the numerical scheme to converge at the same rate as the coefficients decay. We see that we achieve algebraic convergence for the first three examples, noting that for right hand-sides that vanish at the corners of our disk-slice ($x\in\{\alpha,\beta\}, \: y = \pm \rho(x)$) we observe faster convergence. 
+In \bsreffig{fig:ds:poisson} we see the solution to the Poisson equation with zero boundary conditions given in (\ref{eqn:poisson}) in the disk-slice $\Omega$. In \bsreffig{fig:ds:poisson} we also show the norms of each block of calculated coefficients of the approximation for four right-hand sides of the Poisson equation with $N = 990$, that is, $491,536$ unknowns. The rate of decay in the coefficients is a proxy for the rate of convergence of the computed solution: as typical of spectral methods, we expect the numerical scheme to converge at the same rate as the coefficients decay. We see that we achieve algebraic convergence for the first three examples, noting that for right hand-sides that vanish at the corners of our disk-slice ($x\in\{\alpha,\beta\}, \: y = \pm \rho(x)$) we observe faster convergence. 
 
 
-In Figure \ref{fig:poissonexact} we see an example where the solution calculated to the Poisson equation is shown together with a plot of the exact solution and the error. The example was chosen so that the exact solution was $u(x,y) = \Wiii (x,y) y^3 \exp(x)$, and thus the RHS function $f$ would be $f(x,y) = \Delta \big[\Wiii (x,y) y^3 \exp(x)\big]$. We see that the computed solution is almost exact. 
+In \bsreffig{fig:ds:poissonexact} we see an example where the solution calculated to the Poisson equation is shown together with a plot of the exact solution and the error. The example was chosen so that the exact solution was $u(x,y) = \Wiii (x,y) y^3 \exp(x)$, and thus the RHS function $f$ would be $f(x,y) = \Delta \big[\Wiii (x,y) y^3 \exp(x)\big]$. We see that the computed solution is almost exact. 
 
 
 \subsection{Inhomogeneous variable-coefficient Helmholtz}
@@ -1017,7 +1017,7 @@ We can tackle the problem as follows. Denote the coefficient vector for expansio
 \bseqn{
     (\laplacewiii + k^2 T^{(0,0,0)\to(1,1,1)} \: V({J_x^{(0,0,0)}}^\top, {J_y^{(0,0,0)}}^\top) \: T_W^{(1,1,1)\to(0,0,0)}) \mathbf{u} = \mathbf{f}
 }
-which can be solved to find $\mathbf{u}$. We can see the sparsity and structure of this matrix system in Figure \ref{fig:sparsity} with $v(x,y) = xy^2$ as an example. In Figure \ref{fig:helmholtz} we see the solution to the inhomogeneous variable-coefficient Helmholtz equation with zero boundary conditions given in (\ref{eqn:helmholtz}) in the half-disk $\Omega$, with $k=100$, $v(x,y) = 1 - (3(x-1)^2 + 5y^2)$ and $f(x,y) = x(1-x^2-y^2)e^x$. In Figure \ref{fig:helmholtz} we also show the norms of each block of calculated coefficients of the approximation for four right-hand sides of the inhomogeneous variable-coefficient Helmholtz equation with $k=20$ and $v(x,y) = 1 - (3(x-1)^2 + 5y^2)$ using $N = 500$, that is, $125,751$ unknowns. The rate of decay in the coefficients is a proxy for the rate of convergence of the computed solution. We see that we achieve algebraic convergence for the first three examples, noting that for right hand sides that vanish at the corners of our disk-slice ($x\in\{\alpha,\beta\}, \: y = \pm \rho(x)$) we see faster convergence.
+which can be solved to find $\mathbf{u}$. We can see the sparsity and structure of this matrix system in \bsreffig{fig:ds:sparsity} with $v(x,y) = xy^2$ as an example. In \bsreffig{fig:ds:helmholtz} we see the solution to the inhomogeneous variable-coefficient Helmholtz equation with zero boundary conditions given in (\ref{eqn:helmholtz}) in the half-disk $\Omega$, with $k=100$, $v(x,y) = 1 - (3(x-1)^2 + 5y^2)$ and $f(x,y) = x(1-x^2-y^2)e^x$. In \bsreffig{fig:ds:helmholtz} we also show the norms of each block of calculated coefficients of the approximation for four right-hand sides of the inhomogeneous variable-coefficient Helmholtz equation with $k=20$ and $v(x,y) = 1 - (3(x-1)^2 + 5y^2)$ using $N = 500$, that is, $125,751$ unknowns. The rate of decay in the coefficients is a proxy for the rate of convergence of the computed solution. We see that we achieve algebraic convergence for the first three examples, noting that for right hand sides that vanish at the corners of our disk-slice ($x\in\{\alpha,\beta\}, \: y = \pm \rho(x)$) we see faster convergence.
 
 % For the final Gaussian bump example, we see that we achieve spectral convergence.
 
@@ -1047,7 +1047,7 @@ Find $u(x,y)$ given a function $f(x,y)$ such that:
 	\end{cases}.
 	\label{eqn:biharmonic}
 }
-where $\Delta^2$ is the Biharmonic operator, noting the imposition of zero Dirichlet and Neumann boundary conditions on $u$. In Figure \ref{fig:biharmonic} we see the solution to the Biharmonic equation (\ref{eqn:biharmonic}) in the disk-slice $\Omega$. In Figure \ref{fig:biharmonic} we also show the norms of each block of calculated coefficients of the approximation for four right-hand sides of the biharmonic equation with $N = 500$, that is, $125,751$ unknowns.  We see that we achieve algebraic convergence for the first three examples, noting that for right hand sides that vanish at the corners of our disk-slice ($x\in\{\alpha,\beta\}, \: y = \pm \rho(x)$) we see faster convergence.
+where $\Delta^2$ is the Biharmonic operator, noting the imposition of zero Dirichlet and Neumann boundary conditions on $u$. In \bsreffig{fig:ds:biharmonic} we see the solution to the Biharmonic equation (\ref{eqn:biharmonic}) in the disk-slice $\Omega$. In \bsreffig{fig:ds:biharmonic} we also show the norms of each block of calculated coefficients of the approximation for four right-hand sides of the biharmonic equation with $N = 500$, that is, $125,751$ unknowns.  We see that we achieve algebraic convergence for the first three examples, noting that for right hand sides that vanish at the corners of our disk-slice ($x\in\{\alpha,\beta\}, \: y = \pm \rho(x)$) we see faster convergence.
 
 
 %%%%%
@@ -1087,9 +1087,9 @@ orthogonal with respect to the weight
 	&= (x - \alpha)^{a} \: (1 - x^2 -y^2)^b , \quad (x,y) \in \Omega.
 }
 
-The sparsity of operator matrices for partial differentiation by $x, y$ as well as for parameter transformations generalise to such end-disk-slice domains. For instance, if we inspect the proof of Lemma \ref{theorem:sparsityofdifferentialoperators}, we see that it can easily generalise to the weights and domain $\Omega$ for an end-disk-slice.
+The sparsity of operator matrices for partial differentiation by $x, y$ as well as for parameter transformations generalise to such end-disk-slice domains. For instance, if we inspect the proof of \bsreftheorem{theorem:ds:sparsityofdifferentialoperators}, we see that it can easily generalise to the weights and domain $\Omega$ for an end-disk-slice.
 
-In Figure \ref{fig:ds:trappfem} we see the solution to the Poisson equation with zero boundary conditions in the half-disk $\Omega$ with $(\alpha,\beta) := (0,1)$.
+In \bsreffig{fig:ds:trappfem} we see the solution to the Poisson equation with zero boundary conditions in the half-disk $\Omega$ with $(\alpha,\beta) := (0,1)$.
 
 
 \subsection{Trapeziums}\label{section:ds:trapezium}
@@ -1118,7 +1118,7 @@ orthogonal with respect to the weight
 	&= (1-x)^a \: x^b \: y^c \: (1- \xi x - y)^d, \quad (x,y) \in \Omega.
 }
 
-In Figure \ref{fig:ds:trappfem} we see the solution to the Helmholtz equation with zero boundary conditions in the trapezium $\Omega$ with $\xi := \half$. 
+In \bsreffig{fig:ds:trappfem} we see the solution to the Helmholtz equation with zero boundary conditions in the trapezium $\Omega$ with $\xi := \half$. 
 
 %\subsection{Quadrature rule on the trapezium}
 %
@@ -1165,17 +1165,17 @@ In Figure \ref{fig:ds:trappfem} we see the solution to the Helmholtz equation wi
 \begin{figure}[t]
 	\begin{subfigure}{0.3\textwidth}
 	\includegraphics[scale=0.35]{solution-pfem-poisson-diskslice-alpha=0p2-beta=0p8-f=Wycosx}
-        	%\label{fig:solutionblocknorms-poisson}
+        	%\label{fig:ds:solutionblocknorms-poisson}
 	\centering
 	\end{subfigure}
 	\begin{subfigure}{0.3\textwidth}
 	\includegraphics[scale=0.38]{solution-poisson}
 	\centering
-	%\label{fig:solution-poisson}
+	%\label{fig:ds:solution-poisson}
 	\end{subfigure}
 	\begin{subfigure}{0.3\textwidth}
 	\includegraphics[scale=0.38]{solution-trapezium-helmholtz-k=100-n=1500}
-	%\label{fig:solution-poisson}
+	%\label{fig:ds:solution-poisson}
 	\centering
 	\end{subfigure}
 	\centering
@@ -1277,7 +1277,7 @@ Note that since we have sparse operator matrices for partial derivatives and bas
 
 \section{Conclusions}
 
-In this chapter we have shown that bivariate orthogonal polynomials can lead to sparse discretizations of general linear PDEs on specific domains whose boundary is specified by an algebraic curve -- notably here the disk-slice -- with Dirichlet boundary conditions. This work extends the triangle case \cite{beuchler2006new, li2010optimal, olver2019triangle} and whole disk case \cite{boyd2011comparing, vasil2016tensor} to non-classical geometries, and forms a building block in developing an $hp-$finite element method to solve PDEs on other polygonal domains by using suitably shaped elements (for example, by dividing the disk or a section of the disk into disk-slice elements, which has applications in turbulent pipe flow \cite{eggels1994fully, vasil2016tensor}).
+In this chapter we have shown that bivariate orthogonal polynomials can lead to sparse discretizations of general linear PDEs on specific domains whose boundary is specified by an algebraic curve -- notably here the disk-slice -- with Dirichlet boundary conditions. This work extends the triangle case \cite{beuchler2006new, li2010optimal, olver2019triangle} and whole disk case \cite{boyd2011comparing, vasil2016tensor} to non-classical geometries, and forms a building block in developing an $hp-$finite element method to solve PDEs on other polygonal domains by using suitably shaped elements (for example, by dividing the disk or a section of the disk into disk-slice elements, which has applications in turbulent pipe flow \cite{eggels1994fully, kerswell2005recent, vasil2016tensor}).
 
 We have demonstrated how one can construct the three-or-four-parameter OP families (depending on the domain) that form the basis for our sparse spectral methods, and presented a procedure, utilising the Christoffel-Darboux formula \cite[18.2.2]{DLMF}, of explicitly calculating the recurrence coefficients for the univariate OPs that are part of the construction. These coefficients contribute to calculations of the entries in the Jacobi matrices and other differential operators. Moreover, we have defined a quadrature rule that can be used for expanding functions in our OP basis and for calculating said entries of important operators. We have looked at a few mathematical examples including the Poisson, variable coefficient Helmholtz, and biharmonic equations and shown that our method performs well. Importantly, all operator matrices used are shown to be sparse, and in fact banded-block-banded in structure.
 
