@@ -1,6 +1,6 @@
 
 
-\chapter{Spherical harmonics as orthogonal polynomials}
+\chapter{Spherical harmonics as orthogonal polynomials}\label{CHAPTER:sphericalharmonics}
 
 To introduce ourselves to the world of multidimensional orthogonal polynomials for solving PDEs on the sphere, we can naturally choose to look at the famous spherical harmonics. Our aim here is to express the spherical harmonics as polynomials in three variables $x, y, z$ to evaluate functions and solve PDEs on the whole sphere. More precisely, we desire the solution to partial differential equations on the domain
 \bseqn{
@@ -12,7 +12,19 @@ where
 }
 While it may seem somewhat odd, it should hopefully become apparent why this is a useful way to define our domain. 
 
-In this chapter, we demonstrate how one can write the spherical harmonics as polynomials in $(x, y, z)$, and how the relationships between them can be used to obtain sparse \enquote{Jacobi operators} for multiplication by $x,y,z$. We demonstrate how these in turn lead to an algorithm for evaluating the spherical harmonics, an efficient algorithm for evaluating functions when expanded in the SH OP basis, and sparse \enquote{banded-block-banded} differential operator matrices. The techniques used here are done so with the aim of applying them to other OP families of other domains (and we do so in later chapters). We will finally demonstrate a proof-of-concept via the examples of the heat equation and the linearised shallow water equations on the unit sphere.
+It is useful to be able to transform between these cartesian coordinates and the spherical coordinates ($\varphi, \theta$). Throughout this thesis we will use the convention that the spherical coordinate angles be defined by
+\bseqn{
+	x &= \sinphi \costheta = \rho(z) \costheta \\
+	y &= \sinphi \sintheta = \rho(z) \sintheta \\
+	z &= \cosphi
+}
+where $\rho(z) := \sqrt{1-z^2}$.
+
+In this chapter, we demonstrate how one can write the spherical harmonics as polynomials in $(x, y, z)$, and how the relationships between them can be used to obtain sparse \enquote{Jacobi operators} for multiplication by $x,y,z$. We demonstrate how these in turn lead to an algorithm for evaluating the spherical harmonics, an efficient algorithm for evaluating functions when expanded in the SH OP basis, and sparse \enquote{banded-block-banded} differential operator matrices. The techniques used here are done so with the aim of applying them to other OP families of other domains (and we do so in later chapters). We will finally demonstrate a proof-of-concept via the examples of the heat equation and the linearised shallow water equations on the unit sphere. These examples consider partial differential operators involving the spherical Laplacian (the Laplace--Beltrami operator): written in spherical coordinates this is
+\bseqnnumber{
+	\DeltaS &= {1 \over \sinphi} \ppphi \Big( \sinphi \ppphi \Big) + {1 \over \sin^2 \varphi} \ppthetatwo = {1 \over \rho} \ppphi \Big( \rho \ppphi \Big) + {1 \over \rho^2} \ppthetatwo \label{eqn:laplacebeltrami}
+}
+i.e. $\DeltaS f(\xvec) = \Delta f({\xvec \over \norm{\xvec}})$ for some function $f$ where $\xvec := (x,y,z) \in \R^3$.
 
 The code that allows one to produce the numerical examples in this chapter is publicly available as a Julia package\footnote{https://github.com/snowball13/SphericalHarmonics.jl} that partners the ApproxFun package \cite{ApproxFun} -- however, this package is purely experimental at this stage.
 
@@ -55,13 +67,7 @@ Although often referred to as the associated Legendre \enquote{polynomials} as w
 
 These relationships for the Jacobi polynomials and associated Legendre polynomials allow us to explicitly see where the normalising constants that we shall be using for our definition of the spherical harmonics come from. 
 
-On that note, we can now write down the spherical harmonics. Let $(x,y,z) \in \Omega$. It is useful to be able to transform between these cartesian coordinates and the spherical coordinates ($\varphi, \theta$). Throughout this document we will use the convention that the spherical coordinate angles be defined by
-\bseqn{
-	x &= \sinphi \costheta = \rho(z) \costheta \\
-	y &= \sinphi \sintheta = \rho(z) \sintheta \\
-	z &= \cosphi.
-}
-where $\rho(z) := \sqrt{1-z^2}$. We will use the standard definition -- that is, the spherical harmonics, orthonormal on the unit sphere, are \cite[14.30.1]{DLMF}:
+On that note, we can now write down the spherical harmonics. Let $(x,y,z) \in \Omega$. We will use the standard definition -- that is, the spherical harmonics, orthonormal on the unit sphere, are \cite[14.30.1]{DLMF}:
 \bseqnnumber{
 	\Ylmfull &:= \Bigg({(2l+1) \: (l-m)! \over 4 \pi \: (l+m)!}\Bigg)^\frac{1}{2} \: \eimtheta \Plm (\cosphi) \nonumber \\
 	&= \clm (1 - (\cosphi)^2)^\frac{|m|}{2} \eimtheta P^{(|m|,|m|)}_{l-|m|}(\cosphi) \nonumber \\
@@ -495,7 +501,7 @@ using the orthonormality of the spherical harmonics. As discussed in \bsrefsecti
 
 \subsection{Function evaluation}\label{subsubsection:clenshaw}
 
-We can use the Clenshaw algorithm to evaluate this function at a given point $(x,y,z)$ on $\Omega$ \cite{press2007numerical}. The \textit{Clenshaw algorithm} is then as follows:
+A multivariate analogue of Clenshaw's recursive algorithm for evaluation of a function expanded in an OP basis has been established for methods on other domains in 2D such as the triangle \cite{olver2019triangle}, and we proceed similarly here. We can use the Clenshaw algorithm to evaluate this function at a given point $(x,y,z)$ on $\Omega$ \cite{press2007numerical}. The multidimensional \textit{Clenshaw algorithm} is as follows:
 \bseqn{
 	\quad &\text{1) } \text{Set } \vec{\xi}_{N+2} = \bold{0}, \: \vec{\xi}_{N+2} = \bold{0}. \\
 	\quad &\text{2) } \text{For } n = N:-1:0 \\
@@ -528,7 +534,7 @@ where at each iteration, $\vec{\xi}_n$ is a vector of matrices (note that we are
 
 
 %%% TANGENT BUNDLE ----- VECTOR SHs
-\section{Vector spherical harmonics as orthogonal vectors in three variables}\label{Section:VSHs}
+\section{Vector spherical harmonics as orthogonal vectors in three variables}\label{section:VSHs}
 
 We have established that the spherical harmonics can be viewed as a basis of orthonormal polynomials on the sphere. Specifically, given a function $f : \Omega \to \C$, we can write $f = \sum_{l = 0}^{N} \sum_{m = -l}^{l} f_{l,m} \; \Ylm$ where $\{f_{l,m}\}$ are coefficients and $N \in \N$ is sufficiently large. But what about vector-valued functions?
 \begin{definition}\label{def:tangentbundle}
@@ -1192,7 +1198,7 @@ Notice how the iteration also ends at $n=1$ (not $n=0$) here, since the VSHs (an
 
 \subsection{Sparse partial differential operators}\label{section:SHdiffoperators}
 
-The framework we have outlined for the spherical harmonics and the vector spherical harmonics allows us to easily and explicitly derive sparse operator matrices for partial differential operators such as the spherical gradient, divergence and Laplacian, as well as other key operators useful in examples such as the linearised shallow water equations. These operators will take coefficients of a function's expansion in either the SSH or VSH basis, to coefficients in either basis. 
+The framework we have outlined for the spherical harmonics and the vector spherical harmonics allows us to easily and explicitly derive sparse operator matrices for partial differential operators such as the spherical gradient, divergence and Laplace--Beltrami, as well as other key operators useful in examples such as the linearised shallow water equations. These operators will take coefficients of a function's expansion in either the SSH or VSH basis, to coefficients in either basis. 
 
 Let $\uvec$ be a vector-valued function on the tangent bundle of $\Omega$ with coefficients vectors $\uvecc, \uveccperp$ for its expansion in the VSH basis up to order $N \in \N$, and let $f$ be a scalar function on $\Omega$ with coefficients vector $\fvecc$ for its expansion in the SSH basis also up to order $N$, i.e.
 \bseqn{
@@ -1223,7 +1229,7 @@ In order to fully exploit the sparsity of the relationships and ensure we are us
 To help with the definitions of the operators we will discuss, let $\calE_s, \calE_v$ be (severely) rectangular matrices defined such that $\calE_s \fveccexp = \fvecc$ and $\calE_v \fvecc = \fveccexp$. We are now in a position to derive the sparse differential operators that can be applied to the functions $\uvec, f$.
 
 \begin{definition}\label{def:SHoperators}
-	We define the operator matrices $\calD, \tilde \calD, \calG, \tilde \calG \calL$ according to:
+	We define the operator matrices $\calD, \tilde \calD, \calG, \tilde \calG, \calL$ according to:
 \bseqn{
 	\divergence \uvec(x,y,z) &= \SHvec(x,y,z)^\top \: \calD \: \uvecc, \\
 	\divergence \uvec(x,y,z) &= \SHvec(x,y,z)^\top \: \calE_s \: \big(\tilde \calD \: \uvec^c), \\
@@ -1235,6 +1241,13 @@ To help with the definitions of the operators we will discuss, let $\calE_s, \ca
 \begin{remark}
 	The operators $\tilde \calD, \tilde \calG$ would be used when vectors of the resulting length are required for the problem you are wishing to solve.
 \end{remark}
+
+For clarity, we note that $\DeltaS$ is defined in \bsrefeqn{eqn:laplacebeltrami}, and the spherical gradient and divergence operators are given by
+\bseqn{
+	 \gradS &= \ppx{\varphi} + {1 \over \sinphi} \ppx{\theta}, \\
+	 \divergence \uvec &= {1 \over \sinphi} \ppx{\varphi}\big( \sinphi u_\varphi \big) + {1 \over \sinphi} \ppx{\theta} u_\theta,
+}
+where $\uvec \equiv \phivec \: u_\varphi + \thetavec \: u_\theta$.
 
 \begin{theorem}
 	The operator matrices defined in \bsrefdef{def:SHoperators} are diagonal, and are given by:
