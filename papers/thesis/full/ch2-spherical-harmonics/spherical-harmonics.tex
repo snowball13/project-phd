@@ -10,7 +10,7 @@ where
 \bseqn{
 	\rho(z) := \sqrt{1-z^2}.
 }
-While it may seem somewhat odd, it should hopefully become apparent why this is a useful way to define our domain. 
+While it may seem somewhat odd, it should hopefully become apparent why this is a practical way to define our domain. 
 
 It is useful to be able to transform between these cartesian coordinates and the spherical coordinates ($\varphi, \theta$). Throughout this thesis we will use the convention that the spherical coordinate angles be defined by
 \bseqn{
@@ -26,12 +26,12 @@ In this chapter, we demonstrate how one can write the spherical harmonics as pol
 }
 i.e. $\DeltaS f(\xvec) = \Delta f({\xvec \over \norm{\xvec}})$ for some function $f$ where $\xvec := (x,y,z) \in \R^3$.
 
-The code that allows one to produce the numerical examples in this chapter is publicly available as a Julia package\footnote{https://github.com/snowball13/SphericalHarmonics.jl} that partners the ApproxFun package \cite{ApproxFun} -- however, this package is purely experimental at this stage.
+The code that allows one to produce the numerical examples in this chapter is publicly available as a Julia package\footnote{https://github.com/snowball13/SphericalHarmonics.jl} that partners with the ApproxFun package \cite{ApproxFun} -- however, this package is purely experimental at this stage.
 
 
 \section{Defining the spherical harmonics in three variables}
 
-Before we proceed further, let's build up to our definition of the spherical harmonics. We first need to introduce a few classical orthogonal polynomials. \enquote{Orthogonal polynomials} (OPs) are defined as such by the condition that each polynomial is orthogonal to each other, with respect to a given inner product. In particular, they are orthogonal with respect to all lower degree polynomials. 
+Before we proceed further, let us build up to our definition of the spherical harmonics. We first need to introduce a few classical orthogonal polynomials. \enquote{Orthogonal polynomials} (OPs) are defined as such by the condition that each polynomial is orthogonal to each other, with respect to a given inner product. In particular, they are orthogonal with respect to all lower degree polynomials. 
 
 On the unit interval, $[-1,1]$, we note that there is a hierarchy of OPs in the sense that \cite[table 18.3.1, eqn 18.9.15]{DLMF}:
 \bseqn{
@@ -89,7 +89,7 @@ which can be simplified to
 			1 &\text{if } m < 0
 		\end{cases}.
 }
-The spherical harmonics as defined are then orthonormal with respect to the inner product
+The spherical harmonics as defined are then orthonormal with respect to the inner product with uniform measure
 \bseqn{
 	&\int_0^{2\pi} \int_0^\pi \Ylmfull \: {Y_{l'}^{m'}(\varphi, \theta)}^{*} \: \sinphi \: \D \varphi \: \D \theta \\
 	& \quad = 2\pi \: \delta_{m, m'} \: \clm \: c_{l'}^{m'} \: \int_{-1}^1 P^{(|m|,|m|)}_{l-|m|}(z) \: P^{(|m|,|m|)}_{l'-|m|}(z) \: \rho(z)^{2|m|} \: \D z \\
@@ -121,7 +121,7 @@ However we reiterate our goal here is to use techniques that can generalise to s
 \begin{proof}
 	The first two results are simply consequences of the relationships established for incrementing and decrementing the parameters of Jacobi polynomials detailed in \cite[18.9.5, 18.9.6]{DLMF}, along with the symmetry relation that $P_{n}^{(\alpha, \beta)}(-z) \equiv (-1)^n P_{n}^{(\beta, \alpha)}(z)$. The final one is simply a rearranging of the established three-term recurrence detailed in \cite[18.9.1, 18.9.2]{DLMF}
 \end{proof}
-We thus can present a useful corollary specific for our needs.
+We thus can present a helpful corollary specific for our needs.
 \begin{corollary}\label{corollary:jacobirelations}
 	Let $l, m \in \N_0$ s.t. $0 \le m \le l$ and let $z \in [-1,1]$. Then:
 \bseqn{
@@ -183,11 +183,12 @@ where
 		\end{cases}, \\
 	\gamma_{l,m,1} &:= \frac{\clm}{c^{m}_{l-1}} \: \tilde \gamma_{l,m,1}, \quad
 	&&\gamma_{l,m,2} := \frac{\clm}{c^{m}_{l+1}} \: \tilde \gamma_{l,m,2}, \\
-	\beta_{l,m,j} &:= (-1)^{j+1} \: i \: \alpha_{l,m,j}, \quad j = 1,2,3,4.
+	\beta_{l,m,j} &:= (-1)^{j+1} \: i \: \alpha_{l,m,j}, \quad j = 1,2,3,4,
 }
+where the $\clmprime$ are defined in \bsrefeqn{eqn:clmdef}.
 \end{lemma}
 
-\remark The results in \bsreflemma{lemma:shxyzrelations} are fairly involved and can be derived via the relationships established for products of spherical harmonics and Clebsch-Gordan coefficients as mentioned earlier \cite[p231]{sakurai1995modern} but we include this proof so as to generalise to other OPs later on in later chapters.
+\remark The results in \bsreflemma{lemma:shxyzrelations} can be derived via the relationships established for products of spherical harmonics and Clebsch-Gordan coefficients as mentioned earlier \cite[p231]{sakurai1995modern} but we include this proof so as to generalise to other OPs later on in later chapters.
 
 \begin{proof}[Proof of \bsreflemma{lemma:shxyzrelations}]
 	The expression for multiplication of the spherical harmonic $\Ylm$ by $z$ is simply a consequence of the third result in \bsrefcor{corollary:jacobirelations}:
@@ -290,34 +291,18 @@ An important property of the Jacobi matrices is that they are sparse -- specific
 		\centering
 		\caption{$J_z$}
 	\end{subfigure}\hfil % <-- added
-	\caption{\enquote{Spy} plots of the Jacobi operator matrices, showing their sparsity and structure, up to order $N=10$.}
+	\caption{\enquote{Spy} plots of the Jacobi operator matrices, showing their sparsity and structure, up to order $N=10$. Each are block-tridiagonal, with the blocks corresponding to polynomial degree.}
 	\label{fig:sh-spy-jacobi}
 \end{figure}
 
 Using \bsrefeqns{eqn:shrecx}{eqn:shrecz}, we have that the Jacobi matrices take the following block-tridiagonal form (i.e. have block-bandwidths $(1,1)$):
 \bseqn{
-	J_x &= 
+	J_{x/y/z} &= 
 		\begin{pmatrix}
-			B_{x,0} & A_{x,0} & & & & \\
-			C_{x,1} & B_{x,1} & A_{x,1} & & & \\
-			& C_{x,2} & B_{x,2} & A_{x,2}  & & & \\
-			& & C_{x,3} & \ddots & \ddots & \\
-			& & & \ddots & \ddots & \ddots \\
-		\end{pmatrix}, \\
-	J_y &= 
-		\begin{pmatrix}
-			B_{y,0} & A_{y,0} & & & & \\
-			C_{y,1} & B_{y,1} & A_{y,1} & & & \\
-			& C_{y,2} & B_{y,2} & A_{y,2}  & & & \\
-			& & C_{y,3} & \ddots & \ddots & \\
-			& & & \ddots & \ddots & \ddots \\
-		\end{pmatrix}, \\
-	J_z &= 
-		\begin{pmatrix}
-			B_{z,0} & A_{z,0} & & & & \\
-			C_{z,1} & B_{z,1} & A_{z,1} & & & \\
-			& C_{z,2} & B_{z,2} & A_{z,2}  & & & \\
-			& & C_{z,3} & \ddots & \ddots & \\
+			B_{x/y/z,0} & A_{x/y/z,0} & & & & \\
+			C_{x/y/z,1} & B_{x/y/z,1} & A_{x/y/z,1} & & & \\
+			& C_{x/y/z,2} & B_{x/y/z,2} & A_{x/y/z,2}  & & & \\
+			& & C_{x/y/z,3} & \ddots & \ddots & \\
 			& & & \ddots & \ddots & \ddots \\
 		\end{pmatrix}.
 }
@@ -474,7 +459,7 @@ For $l = 0$ we can simply set
 			{\beta_{0,0,3} \over \alpha_{0,0,4} \beta_{0,0,3} - \alpha_{0,0,3} \beta_{0,0,4}} & {- \alpha_{0,0,3} \over \alpha_{0,0,4} \beta_{0,0,3} - \alpha_{0,0,3} \beta_{0,0,4}} & 0
 		\end{pmatrix}. \label{eqn:Dzerotdef}
 }
-It will be useful for us to give a formal name for these coefficient matrices above for a family of multidimensional orthogonal polynomials.
+It will be convenient for us to give a formal name for these coefficient matrices above for a family of multidimensional orthogonal polynomials.
 \begin{definition}\label{def:clenshawmats}
 	The matrices $-\Dlt (B_l-G_l(x,y,z))$, $\Dlt C_l$ for $l \in \No$ defined via \bsrefeqns{eqn:clenshawmats1}{eqn:Dzerotdef} are called the \textbf{recurrence coefficient matrices} for a given family of multidimensional orthogonal polynomials.
 \end{definition}
@@ -496,7 +481,7 @@ In spectral space, we wish to work only with vectors of coefficients for the exp
 \bseqn{
 	f_{l,m} = \int_\Omega f(\costheta \sinphi, \sintheta \sinphi, \cosphi) \: \Ylmfull^* \: \sinphi \: \D \varphi \: \D \theta
 }
-using the orthonormality of the spherical harmonics. As discussed in \bsrefsection{section:introduction}, methods to calculate these coefficients exist known as spectral transforms, and are well established for the spherical harmonics (see e.g. \cite{mohlenkamp1999fast, suda2002fast}). Additionally, packages are available for public use that implement efficient spherical harmonics transforms, for example the FastTransforms package \cite{slevinsky2019fast}.
+using the orthonormality of the spherical harmonics. As discussed in \bsrefchapter{CHAPTER:intro}, methods to calculate these coefficients exist known as spectral transforms, and are well established for the spherical harmonics (see e.g. \cite{mohlenkamp1999fast, suda2002fast}). Additionally, packages are available for public use that implement efficient spherical harmonics transforms, for example the FastTransforms package \cite{slevinsky2019fast}.
 
 
 \subsection{Function evaluation}\label{subsubsection:clenshaw}
@@ -514,7 +499,7 @@ A multivariate analogue of Clenshaw's recursive algorithm for evaluation of a fu
 
 The Clenshaw algorithm presented in \bsrefsection{subsubsection:clenshaw} can also be used with the Jacobi matrices replacing the point $(x,y,z)$, to yield an operator matrix. 
 
-Let's explain what we mean. Suppose $v : \Omega \to \C$ is a function, and we encounter the problem of finding the coefficients of the expansion for $v(x,y,z) f(x,y,z)$. We wish to therefore find an operator $V$ for $v$ so that
+Let us explain what we mean by this. Suppose $v : \Omega \to \C$ is a function, and we encounter the problem of finding the coefficients of the expansion for $v(x,y,z) f(x,y,z)$. We wish to therefore find an operator $V$ for $v$ so that
 \bseqn{
 	v(x,y,z) f(x,y,z) = v(x,y,z) \fvec^\top \SHvec(x,y,z) = (V \fvec)^\top \SHvec(x,y,z),
 }
@@ -663,7 +648,7 @@ The aim will be to show that the only nonzero coefficients $\calA_{l',m'}$, $\ca
 \bseqnnumber{
 	&\ip<x \gradYlm, \gradYlmprime> \nonumber \\
 	&= \iint_\Omega \costheta \sinphi \: \gradYlm \cdot {\gradYlmprime}^* \sinphi \: \D\phi \: \D\theta \nonumber \\
-	&= \clm \clmprime \Big( \int_0^{2pi} \eimtheta \eimthetaprime \costheta \: \D\theta \Big) \nonumber \\
+	&= \clm \clmprime \Big( \int_0^{2\pi} \eimtheta \eimthetaprime \costheta \: \D\theta \Big) \nonumber \\
 	&\quadfour \cdot \Big( \int_{-1}^{1} \Big\{ \big[ \abs{m} z \jaclmabs{l}{m}(z) - \rho(z)^2 \jaclmabsdz{l}{m}(z) \big] \nonumber \\
 	&\quadeight \quadtwo \cdot \big[ \abs{m'} z \jaclmabs{l'}{m'}(z) - \rho(z)^2 \jaclmabs{l'}{m'}(z) \big] \nonumber \\
 	&\quadeight + mm' \jaclmabs{l}{m}(z) \jaclmabs{l'}{m'}(z) \Big\} \: \rho(z)^{\abs{m}+\abs{m'}-1} \: \D z \Big) \nonumber \\
@@ -721,7 +706,7 @@ The remaining coefficients we need to determine are $\calA^\perp_{l',m'}$. To th
 \bseqnnumber{
 	&\ip<x \gradYlm, \gradpYlmprime> \nonumber \\
 	&= \iint_\Omega \costheta \sinphi \: \gradYlm \cdot {\gradpYlmprime}^* \sinphi \: \D\phi \: \D\theta \nonumber \\
-	&= \clm \clmprime \Big( \int_0^{2pi} \eimtheta \eimthetaprime \costheta \: \D\theta \Big) \nonumber \\
+	&= \clm \clmprime \Big( \int_0^{2\pi} \eimtheta \eimthetaprime \costheta \: \D\theta \Big) \nonumber \\
 	&\quadtwo \cdot \Big( \int_{-1}^{1} \rho(z)^{\abs{m} + \abs{m'} - 1} \Big\{ i m' \jaclmabs{l'}{m'}(z) \big[ \abs{m} z \jaclmabs{l}{m}(z) - \rho(z)^2 \jaclmabsdz{l}{m}(z) \big] \nonumber \\
 	&\quadfour + i m \jaclmabs{l}{m}(z) \big[ \abs{m'} z \jaclmabs{l'}{m'}(z) - \rho(z)^2 \jaclmabs{l'}{m'}(z) \big] \Big\} \: \D z \Big) \nonumber \\
 	&= \clm \clmprime \pi (\delta_{m',m-1} + \delta_{m',m+1}) \nonumber \\
@@ -779,11 +764,11 @@ and so combining \bsrefeqn{eqn:lemmaVSHrecurrencesproof8} with \bsrefeqn{eqn:lem
 
 An almost identical argument holds for multiplication by $y$, since
 \bseqn{
-	 \int_0^{2pi} \eimtheta \eimthetaprime \sintheta \: \D\theta = i \pi (\delta_{m',m-1} - \delta_{m',m+1})
+	 \int_0^{2\pi} \eimtheta \eimthetaprime \sintheta \: \D\theta = i \pi (\delta_{m',m-1} - \delta_{m',m+1})
 }
 replaces the integrals over $\theta$ in \bsrefeqn{eqn:lemmaVSHrecurrencesproof} and \bsrefeqn{eqn:lemmaVSHrecurrencesproof4}.
 
-For multiplication by z, we will use the same method to directly calculate the nonzero coefficients in each expansion using inner products. To this end, note that
+For multiplication by $z$, we will use the same method to directly calculate the nonzero coefficients in each expansion using inner products. To this end, note that
 \bseqn{
 	z \gradYlm = \sum_{l'=1}^{l+1} \sum_{m'=-l'}^{l'} \calC_{l',m'} \gradYlmprime + \calC^\perp_{l',m'} \gradpYlmprime
 }
@@ -796,7 +781,7 @@ The aim once again will be to show that the only nonzero coefficients $\calC_{l'
 \bseqnnumber{
 	&\ip<z \gradYlm, \gradYlmprime> \nonumber \\
 	&= \iint_\Omega \cosphi \: \gradYlm \cdot {\gradYlmprime}^* \sinphi \: \D\varphi \: \D\theta \nonumber \\
-	&= \clm \clmprime \Big( \int_0^{2pi} \eimtheta \eimthetaprime \: \D\theta \Big) \nonumber \\
+	&= \clm \clmprime \Big( \int_0^{2\pi} \eimtheta \eimthetaprime \: \D\theta \Big) \nonumber \\
 	&\quadtwo \cdot \Big( \int_{-1}^{1} \Big\{ \big[ \abs{m} z \jaclmabs{l}{m}(z) - \rho(z)^2 \jaclmabsdz{l}{m}(z) \big] \nonumber \\
 	&\quadeight \cdot \big[ \abs{m'} z \jaclmabs{l'}{m'}(z) - \rho(z)^2 \jaclmabs{l'}{m'}(z) \big] \nonumber \\
 	&\quadfour \quadtwo + mm' \jaclmabs{l}{m}(z) \jaclmabs{l'}{m'}(z) \Big\} \: z \; \rho(z)^{\abs{m}+\abs{m'}-2} \: \D z \Big) \label{eqn:lemmaVSHrecurrencesproofz1}
@@ -831,7 +816,7 @@ Next, we also have that
 \bseqnnumber{
 	&\ip<z \gradYlm, \gradpYlmprime> \nonumber \\
 	&= \iint_\Omega \cosphi \: \gradYlm \cdot {\gradpYlmprime}^* \sinphi \: \D\varphi \: \D\theta \nonumber \\
-	&= \clm \clmprime \Big( \int_0^{2pi} \eimtheta \eimthetaprime \: \D\theta \Big) \nonumber \\
+	&= \clm \clmprime \Big( \int_0^{2\pi} \eimtheta \eimthetaprime \: \D\theta \Big) \nonumber \\
 	&\quadtwo \cdot \Big( \int_{-1}^{1} \rho(z)^{\abs{m} + \abs{m'} - 2} \Big\{ i m' z \jaclmabs{l'}{m'}(z) \big[ \abs{m} z \jaclmabs{l}{m}(z) - \rho(z)^2 \jaclmabsdz{l}{m}(z) \big] \nonumber \\
 	&\quadfour + i m z \jaclmabs{l}{m}(z) \big[ \abs{m'} z \jaclmabs{l'}{m'}(z) - \rho(z)^2 \jaclmabs{l'}{m'}(z) \big] \Big\} \: \D z \Big) \nonumber \\
 	&= \clm c_{l'}^{m} 2 \pi \delta_{m',m} \: \int_{-1}^{1} \Big\{ 2i m\abs{m} z^2 \jaclmabs{l}{m}(z) \jaclmabs{l'}{m}(z) \rho(z)^{2\abs{m} - 2} \nonumber \\
@@ -877,8 +862,8 @@ As for the scalar case, these coefficients detailed above are then the nonzero e
 		\centering
 		\caption{$\tangentjacobi_z$}
 	\end{subfigure}\hfil % <-- added
-	\caption{\enquote{Spy} plots of the Jacobi operator matrices for the vector spherical harmonic OP basis, showing their sparsity and structure, up to order $N=10$.}
-	\label{fig:sh-spy-jacobi}
+	\caption{\enquote{Spy} plots of the Jacobi operator matrices for the vector spherical harmonic OP basis, showing their sparsity and structure, up to order $N=10$. These are block-tridiagonal, with sub-block bandwidths: (a) (4,4), (b) (4,4), (c) (2,2).}
+	\label{fig:sh-spy-jacobi-tangent}
 \end{figure}
 
 The Jacobi matrices are then defined according to the matrices $\tangentjacobi_x, \tangentjacobi_y, \tangentjacobi_z$ satisfying
@@ -898,7 +883,7 @@ for each $(x,y,z) \in \Omega$. The VSH Jacobi matrices are banded-block-banded d
 			& & & \ddots & \ddots & \ddots \\
 		\end{pmatrix}.
 }
-Let $0_2 \in \R^{2\times2}$ be the 2x2 zero matrix. $\tangentjacobi_x$ has subblock-bandwidths $(4,4)$ since for $l \in \No$:
+Let $0_2 \in \R^{2\times2}$ be the $2\times2$ zero matrix. $\tangentjacobi_x$ has subblock-bandwidths $(4,4)$ since for $l \in \No$:
 \bseqn{
 	A_{x,l} &:= 
 		\begin{pmatrix}
@@ -1005,7 +990,7 @@ Finally, $\tangentjacobi_z$ has subblock-bandwidths $(2,2)$, as for $l \in \No$:
 			& & & & 0 \\
 		\end{pmatrix} \in \R^{2(2l+1)\times2(2l-1)} \quad (l \ne 0).
 }
-The sparsity and structure of the Jacobi matrices for the VSHs as we have defined them can be seen visually in \bsreffig{fig:vsh-spy-jacobi}.
+The sparsity and structure of the Jacobi matrices for the VSHs as we have defined them can be seen visually in \bsreffig{fig:sh-spy-jacobi-tangent}.
 
 
 
@@ -1193,12 +1178,12 @@ Here, at each iteration, the vector $\uvec^c_n$ is given by the merging of the t
 			u^{\gradpY}_{n,n} \\
 		\end{pmatrix}.
 }
-Notice how the iteration also ends at $n=1$ (not $n=0$) here, since the VSHs (and hence the coefficients) for order $n=0$ are zero.
+Notice how the iteration also ends at $n=1$ (not $n=0$) here, since the VSHs for order $n=0$ are zero.
 
 
 \subsection{Sparse partial differential operators}\label{section:SHdiffoperators}
 
-The framework we have outlined for the spherical harmonics and the vector spherical harmonics allows us to easily and explicitly derive sparse operator matrices for partial differential operators such as the spherical gradient, divergence and Laplace--Beltrami, as well as other key operators useful in examples such as the linearised shallow water equations. These operators will take coefficients of a function's expansion in either the SSH or VSH basis, to coefficients in either basis. 
+The framework we have outlined for the spherical harmonics and the vector spherical harmonics allows us to easily and explicitly derive sparse operator matrices for partial differential operators such as the spherical gradient, divergence and Laplace--Beltrami, as well as other key operators found in examples such as the linearised shallow water equations. These operators will take coefficients of a function's expansion in either the SSH or VSH basis, to coefficients in either basis. 
 
 Let $\uvec$ be a vector-valued function on the tangent bundle of $\Omega$ with coefficients vectors $\uvecc, \uveccperp$ for its expansion in the VSH basis up to order $N \in \N$, and let $f$ be a scalar function on $\Omega$ with coefficients vector $\fvecc$ for its expansion in the SSH basis also up to order $N$, i.e.
 \bseqn{
@@ -1238,9 +1223,8 @@ To help with the definitions of the operators we will discuss, let $\calE_s, \ca
 	\DeltaS f(x,y,z) &= \SHvec(x,y,z)^\top \: \calL \: \fvecc.
 }
 \end{definition}
-\begin{remark}
-	The operators $\tilde \calD, \tilde \calG$ would be used when vectors of the resulting length are required for the problem you are wishing to solve.
-\end{remark}
+
+\remark The operators $\tilde \calD, \tilde \calG$ would be used when vectors of the resulting length are required for the problem you are wishing to solve.
 
 For clarity, we note that $\DeltaS$ is defined in \bsrefeqn{eqn:laplacebeltrami}, and the spherical gradient and divergence operators are given by
 \bseqn{
@@ -1302,11 +1286,10 @@ using the fact that $\divergence (\grad^\perp f )\equiv 0$ for any function $f$.
 }
 \end{proof}
 
-Now that we have our differential operators, let's apply them in some examples. 
-
-
 
 \section{Examples}
+
+Now that we have our differential operators, let us apply them in some examples. 
 
 \subsection{Heat equation}
 
@@ -1346,7 +1329,7 @@ From here, it is clear that eat each timestep we simply have a fairly trivial li
 \bseqn{
 	u_0 := Y_6^0 + \sqrt{14 \over 11} Y_6^6.
 }
-The snapshots of the solution $u$ in bsreffig{fig:heateqn} are taken of the initial conditions, plus after $25$, $50$ and $75$ timesteps respectively.
+The snapshots of the solution $u$ in \bsreffig{fig:heateqn} are taken of the initial conditions, plus after $25$, $50$ and $75$ timesteps respectively.
 
 
 \subsection{Linearised shallow water equations}
@@ -1419,7 +1402,7 @@ Let us write this in coefficient space. Firstly, our coefficients vectors for th
 	\uvec(x,y,z) &\approx \VSHvecfull(x,y,z)^\top \: \uvec^c \\
 	h(x,y,z) &\approx \SHvec(x,y,z)^\top \: \vec{h}^c.
 }
-As eluded to earlier, we will \enquote{extend} the scalar function's coefficients vector, writing $\tilde{\vec{h}}^c = E_v \vec{h}^c$, as described in \bsrefsection{section:SHdiffoperators}. Thus, our system can be written as a matrix-vector system:
+As eluded to earlier, we will \enquote{extend} the scalar function's coefficients vector, writing $\tilde{\vec{h}}^c = \calE_v \vec{h}^c$, as described in \bsrefsection{section:SHdiffoperators}. Thus, our system can be written as a matrix-vector system:
 \bseqn{
 	\uvec^c_{n+1} &= \uvec^c_n + \Delta t \: (\tilde \calG \tilde{\vec{h}}^c_{n+1} - 2 \rotrate \tangentjacobi_z \calR \uvec^c_{n+1}) \\
 	\tilde{\vec{h}}^c_{n+1} &= \tilde{\vec{h}}^c_n - \Delta t \: \calH \tilde \calD \uvec^c_{n+1}
@@ -1434,7 +1417,7 @@ $\iff$
 	\Big[ I + \Delta t^2 \calH \tilde \calG \tilde \calD + 2 \rotrate \Delta t \: \tangentjacobi_z \calR \Big] \: \uvec^c_{n+1} &= \uvec^c_n + \Delta t \tilde \calG \tilde{\vec{h}}^c_{n} \\
 	\tilde{\vec{h}}^c_{n+1} &= \tilde{\vec{h}}^c_n - \Delta t \: \calH \tilde \calD \uvec^c_{n+1}.
 }
-Here, it is clear that the matrix $I + \Delta t^2 \calH \tilde \calG \tilde \calD + 2 \rotrate \Delta t \: \tangentjacobi_z \calR$ is sparse with banded-block-banded structure, and hence this system will be efficient to solve. Doing so at each iteration provides us with the coefficients vectors $\uvec^c_{n+1}, \tilde{\vec{h}}^c_{n+1}$ if we know $\uvec^c_{n}, \tilde{\vec{h}}^c_{n}$. Of course, when evaluating the function $h$, we can simply gather back the coefficients vector $\vec{h}^c$ by $\vec{h}^c = E_s \tilde{\vec{h}}^c$.
+Here, it is clear that the matrix $I + \Delta t^2 \calH \tilde \calG \tilde \calD + 2 \rotrate \Delta t \: \tangentjacobi_z \calR$ is sparse with banded-block-banded structure, and hence this system will be efficient to solve. Doing so at each iteration provides us with the coefficients vectors $\uvec^c_{n+1}, \tilde{\vec{h}}^c_{n+1}$ if we know $\uvec^c_{n}, \tilde{\vec{h}}^c_{n}$. Of course, when evaluating the function $h$, we can simply gather back the coefficients vector $\vec{h}^c$ by $\vec{h}^c = \calE_s \tilde{\vec{h}}^c$.
 
 As a demonstration, in \bsreffig{fig:swe} we see four snapshots of the solution to the system in \bsrefeqn{eqn:swe} on the unit sphere, with $\rotrate = \calH = 1$ and initial conditions given by
 \bseqnnumber{

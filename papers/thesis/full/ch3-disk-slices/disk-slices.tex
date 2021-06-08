@@ -4,11 +4,11 @@
 
 The contents of the previous chapter on spherical harmonics can allow us to use similar techniques for developing sparse spectral methods for solving linear partial differential equations on other domains. Before we can return to the 3D surface realm, let us first achieve a foundation in two-dimensions by looking at a special class of geometries that includes disk slices and trapeziums.
 
-In recent years, there has been some interesting work in the area of multivariate orthogonal polynomials in two-dimensional domains (see \cite{dunkl2014orthogonal}), such as for a Chebychev-based spectral method on the rectangle \cite{julien2009efficient}. In particular, spectral methods have been established on the disk \cite{boyd2011comparing, vasil2016tensor} and the triangle \cite{olver2019triangle}. Examples of applications for the disk include use in optics \cite{mahajan2007orthonormal}, astrophysics \cite{pringle1981accretion}, and fluid dynamics \cite{eggels1994fully, noll1976zernike, kerswell2005recent}, and for the triangle include solving Volterra integral equations \cite{gutleb2020sparse}. 
+In recent years, there has been some interesting work in the area of multivariate orthogonal polynomials in two-dimensional domains (see \cite{dunkl2014orthogonal}), such as for a Chebyshev-based spectral method on the rectangle \cite{julien2009efficient}. In particular, spectral methods have been established on the disk \cite{boyd2011comparing, vasil2016tensor} and the triangle \cite{olver2019triangle}. Examples of applications for the disk include use in optics \cite{mahajan2007orthonormal}, astrophysics \cite{pringle1981accretion}, and fluid dynamics \cite{eggels1994fully, noll1976zernike, kerswell2005recent}, and for the triangle include solving Volterra integral equations \cite{gutleb2020sparse}. 
 
-For the disk, a review of spectral methods on the disk for solving the Poisson equation has been completed \cite{boyd2011comparing}, that looks at methods involving various bases for expanding functions in the disk including Zernike polynomials and Chebyshev polynomials. It is concluded that using Chebyshev polynomials yields mixed results, but that there is also no single advised basis to use. While Zernike polynomials yield accurate results, there is a lack of radial fast transform, which is a disadvantage. However, ideas for how to overcome this have progressed \cite{slevinsky2018use, sakai2009application, wilber2017computing}. One solution proposed is pairing the Zernike disk OPs with a radial basis defined in terms of Jacobi polynomials \cite{vasil2016tensor}:
+For the disk, a review of spectral methods on the disk for solving the Poisson equation has been completed \cite{boyd2011comparing}, that looks at methods involving various bases for expanding functions in the disk including Zernike polynomials and Chebyshev polynomials. It is concluded that using Chebyshev polynomials yields mixed results, but that there is also no single advised basis to use. Zernike polynomials were found to yield accurate results, and ideas for how to implement a radial transform have progressed in recent years \cite{slevinsky2018use, sakai2009application, wilber2017computing} \bstodo{not sure what to say here?}. One solution proposed is pairing the Zernike disk OPs with a radial basis defined in terms of Jacobi polynomials \cite{vasil2016tensor}:
 \bseqnnumber{
-	Q_n^{k,m}(r) := C_n^{k,m} r^m P^{(k,m)}_n(2r^2 - 1), \label{eqn:ds:diskops}.
+	Q_n^{k,m}(r) := C_n^{k,m} r^m P^{(k,m)}_n(2r^2 - 1), \label{eqn:ds:diskops}
 }
 where $C_n^{k,m}$ is some normalising constant so that they are orthonormal with respect to $\int_0^1 Q_n^{k,m}(r) \; Q_{n'}^{k,m}(r) \; (1-r^2)^k \; r \; \D r = \delta_{n,n'}$. $\{Q_n^{k,m}\}$ are therefore a two-parameter family of orthogonal polynomials. The use of polar coordinates here then allows for radially symmetric partial differential (and other) operators, as well as basis (parameter) conversion operators, to be represented as banded matrices by exploiting the relations of the Jacobi polynomials -- they are extremely useful for solving a number of problems in not just 1D but 2D also, since one can utilise the sparsity of the relations that they hold to yield operator matrices that are efficient to solve \cite{doha2006efficient}.
 
@@ -43,7 +43,7 @@ for $\alpha \leq x \leq \beta,$ $-\rho(x) \leq y \leq \rho(x)$. The correspondin
 \bseqn{
 	\hdopnkabc(x,y) = C_{n,k} x^{n-k} y^k + (\hbox{lower order terms})
 }
-where $C_{n,k} \neq 0$ and \enquote{lower order terms'} includes degree $n$ polynomials of the form $x^{n-j} y^j$ where $j < k$. The precise normalization arises from their definition in terms of one-dimensional OPs we will see in \bsrefdef{def:ds:OPconstruction}.
+where $C_{n,k} \neq 0$ and \enquote{lower order terms} includes degree $n$ polynomials of the form $x^{n-j} y^j$ where $j < k$. The precise normalization arises from their definition in terms of one-dimensional OPs we will see in \bsrefdef{def:ds:OPconstruction}.
 
 Sparsity comes from expanding the domain and range of an operator using different choices of the parameters $a$, $b$ and $c$. Whereas the sparsity pattern and entries derived for equations on the triangle \cite{olver2018recurrence, olver2019triangle} and for equations on the disk \cite{vasil2016tensor} with the frameworks discussed earlier both result from manipulations of Jacobi polynomials, in the present work we use a more general integration-by-parts argument to deduce the sparsity structure, alongside careful use of the Christoffel-Darboux formula \cite[18.2.2]{DLMF} and quadrature rules to determine the entries. In particular, by exploiting the connection with one-dimensional orthogonal polynomials we can construct discretizations of general partial differential operators of size $p(p-1)/2 \times p(p-1)/2$ in $O(p^3)$ operations, where $p$ is the total polynomial degree. This compares favourably to $O(p^6)$ operations if one proceeds na\"ively. Furthermore, we use this framework to derive sparse $p$-finite element methods that are analogous to those of Beuchler and Sch\"oberl on tetrahedra \cite{beuchler2006new}, see also work by Li and Shen \cite{li2010optimal}.
 
@@ -142,6 +142,8 @@ Note here we can simply remove the need for including a fourth parameter $d$. Th
 	\hdopnkabc(x,y) := \genjacnmk^{(a, b, 2c+2k+1)}(x) \: \rho(x)^k \: \jac_k^{(c,c)}\fpr(\frac{y}{\rho(x)}), \quad (x,y) \in \Omega
 }
 In this case the weight $\jacw(x)$ is an ultraspherical weight, and the corresponding OPs are the normalized Jacobi polynomials $\{\jac_n^{(b, b)}\}$, while the weight $w_R(x)$ is non-classical (it is in fact semi-classical, and is equivalent to a generalized Jacobi weight \cite[\S5]{magnus1995painleve}).
+
+\remark We should note at this stage that hereon we will continue to use the notation $\jac_n^{(a, b)}$ to refer to the univariate OPs orthonormal with respect to the weight $\jacw^{(a,b)}$. For the disk-slice case, this means they are the orthonormal Jacobi polynomials, which is why we choose this notation. We stress that this is in difference to the spherical harmonic framework in \bsrefchapter{CHAPTER:sphericalharmonics}, where conventionally they are defined using the un-normalized (i.e. simply orthogonal) classical Jacobi polynomials, and for which we also used the notation $\jac_n^{(a, b)}$.
 
 %Again, for clarity we will use the notation that for $p : \Omega \to \R$, $\norm{p}_{\Wab}^2 := \ip<p, p>_{\Wab}$.
 
@@ -242,15 +244,16 @@ and set $J_x^{(a,b,c,d)}, J_y^{(a,b,c,d)}$ as the Jacobi matrices corresponding 
 }
 The matrices $J_x^{(a,b,c,d)}, J_y^{(a,b,c,d)}$ act on the coefficients vector of a function's expansion in the $\{\hdopnkabcd\}$ basis. For example, let $a, b$ be general parameters and a function $f(x,y)$ defined on $\Omega$ be approximated by its expansion $f(x,y) = \bighdopabcd(x,y)^\top \vec{f}$. Then $x \: f(x,y)$ is approximated by $\bighdopabcd(x,y)^\top {J_x^{(a,b,c,d)\top}} \vec{f}$. In other words, ${J_x^{(a,b,c,d)\top}} \vec{f}$ is the coefficients vector for the expansion of the function $(x,y) \mapsto x \: f(x,y)$ in the $\{\hdopnkabcd\}$ basis. 
 
-Further, note that $J_x^{(a,b,c,d)}, J_y^{(a,b,c,d)}$ are banded-block-banded matrices (see \bsrefdef{def:sh:bandedblockbanded}). They are block-tridiagonal (block-bandwidths $(1,1)$):
+Further, note that $J_x^{(a,b,c,d)}, J_y^{(a,b,c,d)}$ are banded-block-banded matrices (see \bsrefdef{def:bandedblockbanded}). They are block-tridiagonal (block-bandwidths $(1,1)$):
 \bseqn{
-J_{x/y}^{(a,b,c,d)} &= \begin{pmatrix}
-		B^{x/y}_0 & A^{x/y}_0 & & & & \\
-		C^{x/y}_1 & B^{x/y}_1 & A^{x/y}_1 & & & \\
-		& C^{x/y}_2 & B^{x/y}_2 & A^{x/y}_2  & & & \\
-		& & C^{x/y}_3 & \ddots & \ddots & \\
-		& & & \ddots & \ddots & \ddots \\
-	\end{pmatrix}.
+	J_{x/y}^{(a,b,c,d)} &= 
+		\begin{pmatrix}
+			B^{x/y}_0 & A^{x/y}_0 & & & & \\
+			C^{x/y}_1 & B^{x/y}_1 & A^{x/y}_1 & & & \\
+			& C^{x/y}_2 & B^{x/y}_2 & A^{x/y}_2  & & & \\
+			& & C^{x/y}_3 & \ddots & \ddots & \\
+			& & & \ddots & \ddots & \ddots \\
+		\end{pmatrix}.
 }
 For $J_x^{(a,b,c,d)}$, the blocks are diagonal (sub-block-bandwidths $(0,0)$) for $n = 0,1,2,\dots$:
 \bseqn{
@@ -432,11 +435,11 @@ are then given by:
 \bseqn{
 	\hdopnkabc(x,y) := \genjacnmk^{(a, b, 2c+2k+1)}(x) \: \rho(x)^k \: \jac_k^{(c,c)}\fpr(\frac{y}{\rho(x)}), \quad (x,y) \in \Omega
 }
-where the 1D OPs $\{\genjac^{(a, b, c)}_n\}$ are orthogonal on the interval $(\alpha, \beta)$ with respect to the weight
+where the 1D OPs $\{\genjac^{(a, b, c)}_n\}$ are orthonormal on the interval $(\alpha, \beta)$ with respect to the weight
 \bseqn{
 	\genjacw^{(a,b,c)}(x) :=  (\beta - x)^a \: (x - \alpha)^b \: \rho(x)^{c}
 }
-and the 1D OPs $\{\jac^{(c, c)}_n\}$ are orthogonal on the interval $(\gamma, \delta) = (-1, 1)$ with respect to the weight
+and the 1D OPs $\{\jac^{(c, c)}_n\}$ are orthonormal on the interval $(\gamma, \delta) = (-1, 1)$ with respect to the weight
 \bseqn{
 	\jacw^{(c)}(x) := (1-x)^c \: (1+x)^c = (1-x^2)^c.
 }
@@ -456,7 +459,7 @@ and recall that a function $f(x,y)$ defined on $\Omega$ is approximated by its e
 }
 \end{definition}
 
-The incrementing and decrementing of parameters as seen here is analogous to other well known orthogonal polynomial families' derivatives, for example the Jacobi polynomials on the interval, as seen in the DLMF \cite[(18.9.3)]{DLMF}, and on the triangle \cite{olver2018recurrence}. An illustration of how the non-weighted differential operators increment the parameters (a,b,c) is seen in \bsreffig{fig:ds:laplaceparameterconversion}.
+The incrementing and decrementing of parameters as seen here is analogous to other well known orthogonal polynomial families' derivatives, for example the Jacobi polynomials on the interval, as seen in the DLMF \cite[(18.9.3)]{DLMF}, and on the triangle \cite{olver2018recurrence}. An illustration of how the non-weighted differential operators increment the parameters $(a,b,c)$ is seen in \bsreffig{fig:ds:laplaceparameterconversion}.
 
 \begin{theorem}\label{theorem:ds:sparsityofdifferentialoperators}
 	The operator matrices $D_x^{(a,b,c)}, \: D_y^{(a,b,c)}, \: W_x^{(a,b,c)}, \: W_y^{(a,b,c)}$ from \bsrefdef{def:ds:differentialoperators} are sparse, with banded-block-banded structure. More specifically:
