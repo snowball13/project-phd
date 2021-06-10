@@ -321,7 +321,7 @@ We can combine each system in \bsrefeqns{eqn:ds:jacobimatricesdefinitionx}{eqn:d
 	\end{pmatrix}^\top,
 }
 where we note $\hdopabcd_{0,0}(x,y) \equiv \genjac_0^{(a,b,c+d+1)} \: \jac_0^{(d,c)}$, and for each $n = 0,1,2\dots$,
-\bseqn{
+\bseqnnumber{
 A_n &:= \begin{pmatrix}
 		A^x_n \\
 		A^y_n
@@ -329,7 +329,7 @@ A_n &:= \begin{pmatrix}
 C_n := \begin{pmatrix}
 		C^x_n \\
 		C^y_n
-	    \end{pmatrix} \in \R^{2(n+1)\times n} \quad (n \ne 0), \nonumber \\
+	    \end{pmatrix} \in \R^{2(n+1)\times n} \quad (n \ne 0), \label{eqn:ds:jacobisubmats1} \\
 B_n &:= \begin{pmatrix}
 		B^x_n \\
 		B^y_n
@@ -337,7 +337,7 @@ B_n &:= \begin{pmatrix}
 G_n(x,y) := \begin{pmatrix}
 		xI_{n+1} \\
 		yI_{n+1}
-	    \end{pmatrix} \in \R^{2(n+1)\times(n+1)}.
+	    \end{pmatrix} \in \R^{2(n+1)\times(n+1)}. \label{eqn:ds:jacobisubmats2}
 }
  
 For each $n = 0,1,2\dots$ let $\Dnt$ be any matrix that is a left inverse of $A_n$, i.e. such that $\Dnt A_n = I_{n+2}$. Multiplying our system by the preconditioner matrix that is given by the block diagonal matrix of the $\Dnt$'s, we obtain a lower triangular system \cite[p78]{dunkl2014orthogonal}, which can be expanded to obtain the recurrence for $n = 0,1,2,\dots$:
@@ -349,14 +349,14 @@ For each $n = 0,1,2\dots$ let $\Dnt$ be any matrix that is a left inverse of $A_
 	\end{cases}.
 }
 Note that we can define an explicit $\Dnt$ as follows:
-\bseqn{
+\bseqnnumber{
 \Dnt := \begin{pmatrix}
 		\frac{1}{\alphaabcd_{n+1,0,1}} & &  \\
 		& \ddots & & &  \\
 		& & \ddots & & \\
 		& & & \frac{1}{\alphaabcd_{n+1,n,1}} & \\
 		\eta_{0} & 0 & \hdots & 0 & \eta_{1} & \hdots & \hdots & \eta_{n+1}
-	    \end{pmatrix},
+	    \end{pmatrix}, \label{eqn:ds:Dtdef}
 }
  where
  \bseqn{
@@ -368,6 +368,10 @@ Note that we can define an explicit $\Dnt$ as follows:
 It follows that we can apply $\Dnt$ in $O(n)$ complexity, and thereby calculate $\bighdopabcd_{0}(x,y)$  through $\bighdopabcd_{n}(x,y)$ in optimal $O(n^2)$ complexity.
 
 For the disk-slice, $\betaabc_{n,k,2} = \betaabc_{n,k,5} = \betaabc_{n,k,8} \equiv 0$ for any $n, k$.
+
+\begin{definition}\label{def:sc:clenshawmats}
+	The matrices $-\Dnt (B_n-G_n(x,y,z))$, $\Dnt C_n$ defined via \bsrefeqns{eqn:ds:jacobisubmats1}{eqn:ds:Dtdef} are the recurrence coefficient matrices associated with the OPs $\{\hdopnkabcd\}$.
+\end{definition}
 
 %
 \section{Sparse partial differential operators}\label{Section:PDOs}

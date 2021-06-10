@@ -244,7 +244,7 @@ Note that these OP vectors we have defined are grouped and ordered according to 
 \bseqnnumber{
 	J_x \SHvec(x,y,z) = x \SHvec(x,y,z), \quad J_y \SHvec(x,y,z) = y \SHvec(x,y,z), \quad J_z \SHvec(x,y,z) = z \SHvec(x,y,z) \label{eqn:jacobimatsdef}
 }
-for $(x,y,z) \in \Omega$. These Jacobi matrices can act on the coefficients vector of a function's expansion in the spherical harmonic basis to implement the operation for multiplication by $x$, $y$ or $z$. For example, given sufficiently large $n \in \N$ let the function $f(x,y,z) : \Omega \to \C$ be given by its expansion \nomenclature[fvec]{$\vec{f}, \vec{\xi}$}{Lower case bold letters refer to vectors} \nomenclature[transpose]{$\vec{v}^\top, A^\top$}{Transpose of the vector $\vec{v}$ or matrix $A$ (non complex conjuagate)}
+for $(x,y,z) \in \Omega$. While $J_x, J_y, J_z$ are not Jacobi matrices in the classical sense, they are block Jacobi matrices. However, it is useful to simply label them as such. These Jacobi matrices can act on the coefficients vector of a function's expansion in the spherical harmonic basis to implement the operation for multiplication by $x$, $y$ or $z$. For example, given sufficiently large $n \in \N$ let the function $f(x,y,z) : \Omega \to \C$ be given by its expansion \nomenclature[fvec]{$\vec{f}, \vec{\xi}$}{Lower case bold letters refer to vectors} \nomenclature[transpose]{$\vec{v}^\top, A^\top$}{Transpose of the vector $\vec{v}$ or matrix $A$ (non complex conjuagate)}
 \bseqn{
 	f(x,y,z) = \sum_{l=0}^{N} \sum_{m=-l}^{l} f_{l,m} \; \Ylm(x,y,z) = \SHvec(x,y,z)^\top \: \fvec
 }
@@ -264,7 +264,7 @@ where
 			\fvec_N
 		\end{pmatrix}.
 }
-We say that $\fvec$ is the \textit{coefficients vector} of the function $f$. Then $x f(x,y,z)$ is approximated by $\SHvec(x,y,z)^\top \: J_x^\top \: \fvec$. In other words, $J_x^\top \: \fvec$ is the coefficients vector for the expansion of the function $(x,y,z) \mapsto x \: f(x,y,z)$ in the spherical harmonics basis.
+We say that $\fvec$ is the \textit{coefficients vector} of the function $f$. Then $x f(x,y,z)$ is approximated by $\SHvec(x,y,z)^\top \: J_x^\top \: \fvec$. In other words, $J_x^\top \: \fvec$ is the coefficients vector for the expansion of the function $(x,y,z) \mapsto x \: f(x,y,z)$ in the spherical harmonics basis. 
 
 An important property of the Jacobi matrices is that they are sparse -- specifically they are \textit{banded-block-banded matrices}.
 
@@ -461,7 +461,7 @@ For $l = 0$ we can simply set
 }
 It will be convenient for us to give a formal name for these coefficient matrices above for a family of multidimensional orthogonal polynomials.
 \begin{definition}\label{def:clenshawmats}
-	The matrices $-\Dlt (B_l-G_l(x,y,z))$, $\Dlt C_l$ for $l \in \No$ defined via \bsrefeqns{eqn:clenshawmats1}{eqn:Dzerotdef} are called the \textbf{recurrence coefficient matrices} for a given family of multidimensional orthogonal polynomials.
+	The matrices $-\Dlt (B_l-G_l(x,y,z))$, $\Dlt C_l$ for $l \in \No$ defined via \bsrefeqns{eqn:clenshawmats1}{eqn:Dzerotdef} are called the recurrence coefficient matrices for a given family of multidimensional orthogonal polynomials.
 \end{definition}
 
 
