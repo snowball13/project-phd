@@ -2,7 +2,7 @@
 
 \chapter{Spherical harmonics as orthogonal polynomials}\label{CHAPTER:sphericalharmonics}
 
-To introduce ourselves to the world of multidimensional orthogonal polynomials for solving PDEs on the sphere, we can naturally choose to look at the famous spherical harmonics. Our aim here is to express the spherical harmonics as polynomials in three variables $x, y, z$ to evaluate functions and solve PDEs on the whole sphere. More precisely, we desire the solution to partial differential equations on the domain
+To introduce ourselves to the world of multidimensional orthogonal polynomials for solving PDEs on the sphere, we can naturally choose to look at the famous spherical harmonics. Our aim here is to express the spherical harmonics as polynomials in three variables $x, y, z$ to evaluate functions and solve PDEs on the whole sphere. More precisely, we desire the solution to partial differential equations on the domain \nomenclature[Omega]{$\Omega$}{The domain of interest}
 \bseqn{
 	\Omega := \bsset{(x,y,z) \in \R^3}{x^2 + y^2 = \rho(z)^2}
 }
@@ -12,7 +12,7 @@ where
 }
 While it may seem somewhat odd, it should hopefully become apparent why this is a practical way to define our domain. 
 
-It is useful to be able to transform between these cartesian coordinates and the spherical coordinates ($\varphi, \theta$). Throughout this thesis we will use the convention that the spherical coordinate angles be defined by
+It is useful to be able to transform between these cartesian coordinates and the spherical coordinates \nomenclature[phi]{$\varphi$}{The polar angle in spherical coordinates} \nomenclature[theta]{$\theta$}{The azimuthal angle in spherical coordinates}($\varphi, \theta$). Throughout this thesis we will use the convention that the spherical coordinate angles be defined by \nomenclature[xyz]{$x,y,z$}{Lower case non-bold $x,y,z$ represents cartesian coordinates}
 \bseqn{
 	x &= \sinphi \costheta = \rho(z) \costheta \\
 	y &= \sinphi \sintheta = \rho(z) \sintheta \\
@@ -20,7 +20,7 @@ It is useful to be able to transform between these cartesian coordinates and the
 }
 where $\rho(z) := \sqrt{1-z^2}$.
 
-In this chapter, we demonstrate how one can write the spherical harmonics as polynomials in $(x, y, z)$, and how the relationships between them can be used to obtain sparse \enquote{Jacobi operators} for multiplication by $x,y,z$. We demonstrate how these in turn lead to an algorithm for evaluating the spherical harmonics, an efficient algorithm for evaluating functions when expanded in the SH OP basis, and sparse \enquote{banded-block-banded} differential operator matrices. The techniques used here are done so with the aim of applying them to other OP families of other domains (and we do so in later chapters). We will finally demonstrate a proof-of-concept via the examples of the heat equation and the linearised shallow water equations on the unit sphere. These examples consider partial differential operators involving the spherical Laplacian (the Laplace--Beltrami operator): written in spherical coordinates this is
+In this chapter, we demonstrate how one can write the spherical harmonics as polynomials in $(x, y, z)$, and how the relationships between them can be used to obtain sparse \enquote{Jacobi operators} for multiplication by $x,y,z$. We demonstrate how these in turn lead to an algorithm for evaluating the spherical harmonics, an efficient algorithm for evaluating functions when expanded in the SH OP basis, and sparse \enquote{banded-block-banded} differential operator matrices. The techniques used here are done so with the aim of applying them to other OP families of other domains (and we do so in later chapters). We will finally demonstrate a proof-of-concept via the examples of the heat equation and the linearised shallow water equations on the unit sphere. These examples consider partial differential operators involving the spherical Laplacian (the Laplace--Beltrami operator): written in spherical coordinates this is \nomenclature[Deltas]{$\DeltaS$}{The Laplace--Beltrami operator}
 \bseqnnumber{
 	\DeltaS &= {1 \over \sinphi} \ppphi \Big( \sinphi \ppphi \Big) + {1 \over \sin^2 \varphi} \ppthetatwo = {1 \over \rho} \ppphi \Big( \rho \ppphi \Big) + {1 \over \rho^2} \ppthetatwo \label{eqn:laplacebeltrami}
 }
@@ -33,12 +33,12 @@ The code that allows one to produce the numerical examples in this chapter is pu
 
 Before we proceed further, let us build up to our definition of the spherical harmonics. We first need to introduce a few classical orthogonal polynomials. \enquote{Orthogonal polynomials} (OPs) are defined as such by the condition that each polynomial is orthogonal to each other, with respect to a given inner product. In particular, they are orthogonal with respect to all lower degree polynomials. 
 
-On the unit interval, $[-1,1]$, we note that there is a hierarchy of OPs in the sense that \cite[table 18.3.1, eqn 18.9.15]{DLMF}:
+On the unit interval, $[-1,1]$, we note that there is a hierarchy of OPs in the sense that \cite[table 18.3.1, eqn 18.9.15]{DLMF}: \nomenclature[Pnab]{$P^{(a,b)}_n$}{The degree $n$ Jacobi polynomial (context determines normalized or not) unless otherwise stated}
 \bseqn{
 	& \ddx{x} P^{(a,b)}_l (x) = \half \: (l + a + b + 1) \: P^{(a+1,b+1)}_{l-1}(x) \\
 	\implies & \dmdxm{x}{m} P_l(x) = {(l+m)! \over 2^m \: l!} \: P^{(m,m)}_{l-m}(x)
 }
-where $P^{(a,b)}_l (x)$ is the $l$ degree \textit{Jacobi polynomial}, and $P_l(x) := P^{(0,0)}_l (x)$ is simply the \textit{Legendre polynomial} of degree $l$. Jacobi polynomials are orthogonal with weight $w(x) = (1-x)^a(1+x)^b$; that is for $l, l' \in \No,$
+where $P^{(a,b)}_l (x)$ is the $l$ degree \textit{Jacobi polynomial}, and \nomenclature[Pl]{$P_l$}{The degree $l$ Legendre polynomial} $P_l(x) := P^{(0,0)}_l (x)$ is simply the \textit{Legendre polynomial} of degree $l$. Jacobi polynomials are orthogonal with weight $w(x) = (1-x)^a(1+x)^b$; that is for $l, l' \in \No,$ \nomenclature[Kronecker delta]{$\delta_{n, n'}$}{The Kronecker delta function; $1$ if $n=n'$, else $0$}
 \bseqn{
 	\int_{-1}^1 {P^{(a,b)}_l(x)}^2 \:(1-x)^a(1+x)^b \: \D x &=: \omega_{P,l}^{(a,b)} \\
 	\int_{-1}^1 P^{(a,b)}_l(x) \: P^{(a,b)}_{l'}(x) \:(1-x)^a(1+x)^b \: \D x &= \omega_{P,l}^{(a,b)} \: \delta_{l, l'}.
@@ -47,7 +47,7 @@ Legendre polynomials are special cases of \textit{Legendre functions} when $l$ i
 \bseqn{
 	(1 - x^2) \dmdxm{x}{2}y - 2x \ddx{x} y + l(l+1)y = 0
 }
-which is helpfully known as the \textit{Legendre equation} \cite[14.2.1]{DLMF}. Further, the \textit{associated Legendre polynomials} are a set of polynomials orthogonal with respect to unit weight on the unit interval, and can be defined as the $m^{\text{th}}$ derivative of a Legendre polynomial \cite[p5]{belousov1962tables}:
+which is helpfully known as the \textit{Legendre equation} \cite[14.2.1]{DLMF}. Further, the \textit{associated Legendre polynomials} are a set of polynomials orthogonal with respect to unit weight on the unit interval, and can be defined as the $m^{\text{th}}$ derivative of a Legendre polynomial \cite[p5]{belousov1962tables}: \nomenclature[Plm]{$\Plm$}{The Associated Legendre polynomial of degree $l$ and order $m$}
 \bseqn{
 	\Plm(x) &:= (-1)^m (1-x^2)^\frac{m}{2} \dmdxm{x}{m} P_l(x) = (-1)^m \; {(l+m)! \over 2^m \; l!} \; (1-x^2)^\frac{m}{2} \; P^{(m,m)}_{l-m}(x),
 }
@@ -67,13 +67,13 @@ Although often referred to as the associated Legendre \enquote{polynomials} as w
 
 These relationships for the Jacobi polynomials and associated Legendre polynomials allow us to explicitly see where the normalising constants that we shall be using for our definition of the spherical harmonics come from. 
 
-On that note, we can now write down the spherical harmonics. Let $(x,y,z) \in \Omega$. We will use the standard definition -- that is, the spherical harmonics, orthonormal on the unit sphere, are \cite[14.30.1]{DLMF}:
+On that note, we can now write down the spherical harmonics. Let $(x,y,z) \in \Omega$. We will use the standard definition -- that is, the spherical harmonics, orthonormal on the unit sphere, are \cite[14.30.1]{DLMF}: \nomenclature[Ylm]{$\Ylm$}{The degree $l$ and order $m$ spherical harmonic}
 \bseqnnumber{
 	\Ylmfull &:= \Bigg({(2l+1) \: (l-m)! \over 4 \pi \: (l+m)!}\Bigg)^\frac{1}{2} \: \eimtheta \Plm (\cosphi) \nonumber \\
 	&= \clm (1 - (\cosphi)^2)^\frac{|m|}{2} \eimtheta P^{(|m|,|m|)}_{l-|m|}(\cosphi) \nonumber \\
 	&= \clm P^{(|m|,|m|)}_{l-|m|}(z) \: \rho(z)^{|m|} \: \eimtheta \label{eqn:shdef}
 }
-for $0 \le |m| \le l, \, l \in \No$, where
+for $0 \le |m| \le l, \, l \in \No$, where \nomenclature[clm]{$\clm$}{The normalising constant for the spherical harmonic $\Ylm$}
 \bseqnnumber{
 	\clm := \Bigg({(2l+1) \: (l-m)! \over 4\pi \: (l+m)!}\Bigg)^\half \: {(l+m)! \over 2^{\abs{m}} \; l!} \:
 		\begin{cases} 
@@ -89,13 +89,13 @@ which can be simplified to
 			1 &\text{if } m < 0
 		\end{cases}.
 }
-The spherical harmonics as defined are then orthonormal with respect to the inner product with uniform measure
+The spherical harmonics as defined are then orthonormal with respect to the inner product with uniform measure \nomenclature[conjuagate]{$a^*$}{The complex conjugate of $a \in \C$}
 \bseqn{
 	&\int_0^{2\pi} \int_0^\pi \Ylmfull \: {Y_{l'}^{m'}(\varphi, \theta)}^{*} \: \sinphi \: \D \varphi \: \D \theta \\
 	& \quad = 2\pi \: \delta_{m, m'} \: \clm \: c_{l'}^{m'} \: \int_{-1}^1 P^{(|m|,|m|)}_{l-|m|}(z) \: P^{(|m|,|m|)}_{l'-|m|}(z) \: \rho(z)^{2|m|} \: \D z \\
 	& \quad = \delta_{l, l'} \: \delta_{m, m'}
 }
-where $\alpha^*$ denotes the complex conjugate of $\alpha \in \C$. Note how we can express the spherical harmonics $\Ylm$ in terms of $x,y,z$ instead of $\varphi, \theta$ by noting that $\rho(z)^{|m|} \eimtheta$ can be expressed in terms of $x,y,z$ for any $m \in \Z$. Indeed, they are polynomials in $x,y,z$ which we denote $\Ylm(x,y,z)$. They span all polynomials modulo the vanishing ideal associated by the zero set of $x^2 + y^2 + z^2 - 1$ in $\R^3$.
+where $\alpha^*$ denotes the complex conjugate of \nomenclature[C]{$\C$}{The complex numbers} $\alpha \in \C$. Note how we can express the spherical harmonics $\Ylm$ in terms of $x,y,z$ instead of $\varphi, \theta$ by noting that $\rho(z)^{|m|} \eimtheta$ can be expressed in terms of $x,y,z$ for any \nomenclature[Z]{$\Z$}{The integers} $m \in \Z$. Indeed, they are polynomials in $x,y,z$ which we denote $\Ylm(x,y,z)$. They span all polynomials modulo the vanishing ideal associated by the zero set of $x^2 + y^2 + z^2 - 1$ in \nomenclature[R]{$\R$}{The real numbers} \nomenclature[Rd]{$\R^d$}{The d-dimensional coordinate space over the real numbers} $\R^3$.
 
 
 
@@ -121,7 +121,7 @@ However we reiterate our goal here is to use techniques that can generalise to s
 \begin{proof}
 	The first two results are simply consequences of the relationships established for incrementing and decrementing the parameters of Jacobi polynomials detailed in \cite[18.9.5, 18.9.6]{DLMF}, along with the symmetry relation that $P_{n}^{(\alpha, \beta)}(-z) \equiv (-1)^n P_{n}^{(\beta, \alpha)}(z)$. The final one is simply a rearranging of the established three-term recurrence detailed in \cite[18.9.1, 18.9.2]{DLMF}
 \end{proof}
-We thus can present a helpful corollary specific for our needs.
+We thus can present a helpful corollary specific for our needs. \nomenclature[alpha]{$\alpha_{l,m,j}$}{Lower case greek letters with subscripts refer to coefficients in scalar OP relations (unless otherwise stated)}
 \begin{corollary}\label{corollary:jacobirelations}
 	Let $l, m \in \N_0$ s.t. $0 \le m \le l$ and let $z \in [-1,1]$. Then:
 \bseqn{
@@ -221,7 +221,7 @@ and
 }
 \end{proof}
 
-These recurrences lead to Jacobi operators that correspond to multiplication by $x,y,z$ of the OPs. Define for $l \in \No$:
+These recurrences lead to Jacobi operators that correspond to multiplication by $x,y,z$ of the OPs. Define for $l \in \No$: \nomenclature[Pvector]{$\SHvec$}{Vector of the SH OPs} \nomenclature[Pvectorl]{$\SHvec_l$}{(Sub-)Vector of the degree $l$ SH OPs}
 \bseqn{
 	\SHvecl := 
 		\begin{pmatrix}
@@ -240,11 +240,11 @@ These recurrences lead to Jacobi operators that correspond to multiplication by 
 			\vdots \\
 		\end{pmatrix}.
 }
-Note that these OP vectors we have defined are grouped and ordered according to the degree $l$, and within each degree ordered by the Fourier mode $m$. Let the Jacobi matrices $J_x, J_y, J_z$ hence be given by 
+Note that these OP vectors we have defined are grouped and ordered according to the degree $l$, and within each degree ordered by the Fourier mode $m$. Let the Jacobi matrices \nomenclature[J]{$J_x, J_y, J_z$}{Jacobi operator matrices} $J_x, J_y, J_z$ hence be given by 
 \bseqnnumber{
 	J_x \SHvec(x,y,z) = x \SHvec(x,y,z), \quad J_y \SHvec(x,y,z) = y \SHvec(x,y,z), \quad J_z \SHvec(x,y,z) = z \SHvec(x,y,z) \label{eqn:jacobimatsdef}
 }
-for $(x,y,z) \in \Omega$. These Jacobi matrices can act on the coefficients vector of a function's expansion in the spherical harmonic basis to implement the operation for multiplication by $x$, $y$ or $z$. For example, given sufficiently large $n \in \N$ let the function $f(x,y,z) : \Omega \to \C$ be given by its expansion
+for $(x,y,z) \in \Omega$. These Jacobi matrices can act on the coefficients vector of a function's expansion in the spherical harmonic basis to implement the operation for multiplication by $x$, $y$ or $z$. For example, given sufficiently large $n \in \N$ let the function $f(x,y,z) : \Omega \to \C$ be given by its expansion \nomenclature[fvec]{$\vec{f}, \vec{\xi}$}{Lower case bold letters refer to vectors} \nomenclature[transpose]{$\vec{v}^\top, A^\top$}{Transpose of the vector $\vec{v}$ or matrix $A$ (non complex conjuagate)}
 \bseqn{
 	f(x,y,z) = \sum_{l=0}^{N} \sum_{m=-l}^{l} f_{l,m} \; \Ylm(x,y,z) = \SHvec(x,y,z)^\top \: \fvec
 }
@@ -306,7 +306,7 @@ Using \bsrefeqns{eqn:shrecx}{eqn:shrecz}, we have that the Jacobi matrices take 
 			& & & \ddots & \ddots & \ddots \\
 		\end{pmatrix}.
 }
-$J_x$ has subblock-bandwidths $(2,2)$, where the blocks for $l \in \No$ are given by:
+$J_x$ has subblock-bandwidths $(2,2)$, where the blocks for \nomenclature[N]{$\N$}{The natural numbers (positive integers)} \nomenclature[N0]{$\No$}{The set $\N \cup \{0\}$} $l \in \No$ are given by:
 \bseqn{
 	A_{x,l} &:= 
 		\begin{pmatrix}
@@ -367,7 +367,7 @@ The sparsity and structure of the Jacobi matrices as we have defined them can be
 
 Three-term recurrence relations for orthogonal polynomials are well established (see for example \cite[Section 18.9]{DLMF}), including for multidimensional OPs \cite[Section 3.2]{dunkl2014orthogonal}. In a similar vein, we can obtain a recurrence relation for the spherical harmonics by combining each system in \bsrefeqn{eqn:jacobimatsdef} in a specific way. It should be emphasised at this point that this is not necessarily the optimal way of computing the spherical harmonics; various efficient methods and algorithms have been proposed (see e.g. \cite{guy1998efficient, sloan2013efficient, fukushima2012numerical}). We present this method in order to be able to generalise it to other multidimensional OP families later on in this thesis.
 
-Rewriting \bsrefeqn{eqn:jacobimatsdef}, we have that:
+Rewriting \bsrefeqn{eqn:jacobimatsdef}, we have that: \nomenclature[I]{$I$, $I_d$}{The identity matrix (in $\R^{d \times d}$)}
 \bseqn{
 	(J_x - xI)\SHvec(x,y,z) = (J_y - yI)\SHvec(x,y,z) = (J_z - zI)\SHvec(x,y,z) = \vec{0}.
 }
@@ -521,16 +521,16 @@ where at each iteration, $\vec{\xi}_n$ is a vector of matrices (note that we are
 %%% TANGENT BUNDLE ----- VECTOR SHs
 \section{Vector spherical harmonics as orthogonal vectors in three variables}\label{section:VSHs}
 
-We have established that the spherical harmonics can be viewed as a basis of orthonormal polynomials on the sphere. Specifically, given a function $f : \Omega \to \C$, we can write $f = \sum_{l = 0}^{N} \sum_{m = -l}^{l} f_{l,m} \; \Ylm$ where $\{f_{l,m}\}$ are coefficients and $N \in \N$ is sufficiently large. But what about vector-valued functions?
+We have established that the spherical harmonics can be viewed as a basis of orthonormal polynomials on the sphere. Specifically, given a function $f : \Omega \to \C$, we can write $f = \sum_{l = 0}^{N} \sum_{m = -l}^{l} f_{l,m} \; \Ylm$ where $\{f_{l,m}\}$ are coefficients and $N \in \N$ is sufficiently large. But what about vector-valued functions? \nomenclature[r]{$\rvec$}{The unit normal vector at the point $(x,y,z)$}
 \begin{definition}\label{def:tangentbundle}
 	Let $(x,y,z) \in \Omega$. We refer to the \textbf{tangent space} of the point $(x,y,z)$ as the space of all vectors that are orthogonal to the vector $\rvec := [x,y,x]^\top$. We further define the \textbf{tangent bundle} of $\Omega$ as the set of all such spaces for every point in $\Omega$.
 \end{definition}
-For the purposes of this discussion, we will only consider the tangent bundle, and thus wish to write down a basis for vector-valued functions with values in the tangent bundle. Fortunately, there is a simple solution known as the \textit{vector spherical harmonics (VSHs)} \cite{barrera1985vector}:
+For the purposes of this discussion, we will only consider the tangent bundle, and thus wish to write down a basis for vector-valued functions with values in the tangent bundle. Fortunately, there is a simple solution known as the \textit{vector spherical harmonics (VSHs)} \cite{barrera1985vector}: \nomenclature[grad]{$\gradS$}{The spherical gradient operator} \nomenclature[Psilm]{$\gradYlm$}{The vector spherical harmonic $\gradS \Ylm$} \nomenclature[Philm]{$\gradpYlm$}{The vector spherical harmonic $\gradS^\perp \Ylm = \rvec \times \gradS \Ylm$}
 \bseqnnumber{
-	\gradYlm &:= \nabla \Ylm = \ppx{\phi} \Ylm \phivec + {1 \over \sinphi} \ppx{\theta} \Ylm \thetavec, \nonumber \\
-	\gradpYlm &:= \nabla^\perp \Ylm \equiv \rvec \times \nabla \Ylm = \ppx{\phi} \Ylm \thetavec - {1 \over \sinphi} \ppx{\theta} \Ylm \phivec. \label{eqn:VSHs}
+	\gradYlm &:= \gradS \Ylm = \ppx{\phi} \Ylm \phivec + {1 \over \sinphi} \ppx{\theta} \Ylm \thetavec, \nonumber \\
+	\gradpYlm &:= \gradS^\perp \Ylm \equiv \rvec \times \gradS \Ylm = \ppx{\phi} \Ylm \thetavec - {1 \over \sinphi} \ppx{\theta} \Ylm \phivec. \label{eqn:VSHs}
 }
-Here, $\rvec$ is simply the outward unit normal vector to the surface of the sphere at the point $(x,y,z)$, while $\phivec, \thetavec$ are the standard spherical coordinate unit vectors, i.e. $\phivec := [\costheta \cosphi, \sintheta \cosphi, -\sinphi]^\top$, $\thetavec := [-\sintheta, \costheta, 0]^\top$. They are orthogonal with respect to the inner product $\ip<\vec{A}, \vec{B}> = \iint_\Omega \vec{A} \cdot \vec{B}^* \: \sinphi \: \D\varphi \: \D\theta$ -- in particular, for any $l, l' \in \N$, $m, m' \in \Z$ s.t. $-l \le m \le l$, $-l' \le m' \le l'$,
+Here, $\rvec$ is simply the outward unit normal vector to the surface of the sphere at the point $(x,y,z)$, while \nomenclature[phi theta vector]{$\phivec$, $\thetavec$}{The standard spherical coordinate angular basis vectors} $\phivec, \thetavec$ are the standard spherical coordinate unit vectors, i.e. $\phivec := [\costheta \cosphi, \sintheta \cosphi, -\sinphi]^\top$, $\thetavec := [-\sintheta, \costheta, 0]^\top$. They are orthogonal with respect to the inner product \nomenclature[inner]{$\ip<u, v>$}{An inner product (defined by the context)}  $\ip<\vec{A}, \vec{B}> = \iint_\Omega \vec{A} \cdot \vec{B}^* \: \sinphi \: \D\varphi \: \D\theta$ -- in particular, for any $l, l' \in \N$, $m, m' \in \Z$ s.t. $-l \le m \le l$, $-l' \le m' \le l'$,
 \bseqn{
 	\ip<\gradYlm, \gradYlmprime> &= \iint_\Omega \gradYlm \cdot {\gradYlmprime}^* \: \sinphi \: \D\varphi \: \D\theta = \delta_{l,l'} \delta_{m,m'} \: l (l+1), \\
 	\ip<\gradpYlm, \gradpYlmprime> &= \iint_\Omega \gradpYlm \cdot {\gradpYlmprime}^* \: \sinphi \: \D\varphi \: \D\theta = \delta_{l,l'} \delta_{m,m'} \: l (l+1), \\
@@ -571,7 +571,7 @@ and, for $l \in \No, m \in \Z$ s.t. $-l \le m \le l$,
 The expressions for the VSHs as given in \bsrefeqn{eqn:VSHs} together with the above allow us to be able to find the coefficients for our desired expressions for $x \gradYlm$, $y \gradYlm$, $z \gradYlm$, $x \gradpYlm$, $y \gradpYlm$ and $z \gradpYlm$. 
 
 \begin{lemma}\label{lemma:VSHrecurrences}
-	For $l \in \N$ and $m \in \Z$ s.t. $-l \le m \le l$, the vector spherical harmonics satisfy the relationships:
+	For $l \in \N$ and $m \in \Z$ s.t. $-l \le m \le l$, the vector spherical harmonics satisfy the relationships: \nomenclature[Alpha]{$A_{l,m,j}$}{Capital greek letters with subscripts refer to coefficients in vector OP (VSH) relations (unless otherwise stated)}
 \bseqn{
 	x \gradYlm &= A_{l,m,1} \gradY^{m-1}_{l-1} + A_{l,m,2} \gradY^{m+1}_{l-1} + A_{l,m,3} \gradY^{m-1}_{l+1} + A_{l,m,4} \gradY^{m+1}_{l+1} \\
 & \quad \quad \quad + A_{l,m,5} \gradpY^{m-1}_{l} + A_{l,m,6} \gradpY^{m+1}_{l}, \\
@@ -831,7 +831,7 @@ Again, we can see here in \bsrefeqn{eqn:lemmaVSHrecurrencesproofz4} that the coe
 Finally, to complete our proof, for multiplication by $x,y,z$ of the other VSHs $\gradpYlm$, simply take the cross product by $\unitvec{r}$ of $x \gradYlm$, etc. noting that $\rvec \times \gradYlm = \gradpYlm$ and $\rvec \times \gradpYlm = - \norm{\rvec} \gradYlm = - \gradYlm$ by the triple vector product and orthogonality.
 \end{proof}
 
-As for the scalar case, these coefficients detailed above are then the nonzero entries of the Jacobi matrices for the VSHs. Define $\VSHvecfull$ by
+As for the scalar case, these coefficients detailed above are then the nonzero entries of the Jacobi matrices for the VSHs. Define $\VSHvecfull$ by \nomenclature[T vector]{$\VSHvecfull$}{Vector of the VSHs} \nomenclature[Tl vector]{$\VSHvecfulll$}{(Sub)-Vector of the VSHs of order $l$} 
 \bseqnnumber{
 	\VSHvecfull = 
 		\begin{pmatrix} 
@@ -883,7 +883,7 @@ for each $(x,y,z) \in \Omega$. The VSH Jacobi matrices are banded-block-banded d
 			& & & \ddots & \ddots & \ddots \\
 		\end{pmatrix}.
 }
-Let $0_2 \in \R^{2\times2}$ be the $2\times2$ zero matrix. $\tangentjacobi_x$ has subblock-bandwidths $(4,4)$ since for $l \in \No$:
+Let \nomenclature[zerod]{$0_d$}{The zero matrix in $\R^{d \times d}$} $0_2 \in \R^{2\times2}$ be the $2\times2$ zero matrix. $\tangentjacobi_x$ has subblock-bandwidths $(4,4)$ since for $l \in \No$:
 \bseqn{
 	A_{x,l} &:= 
 		\begin{pmatrix}
@@ -1306,7 +1306,7 @@ Let $u : \Omega \to \C$ represent the temperature at a point $(x,y,z)$ on the sp
 \bseqnnumber{
 	\ppx{t}{u} = \alpha \DeltaS u \label{eqn:heateqn}
 }
-for some $\alpha \in \R$. A simple timestepping method we can use to iterate with is the BDF2 method \cite[§2.3]{iserles2009first}. Let $u_n$ for $n = 0, 1, 2, \dots$ be the solution at time $n \Delta t$ where $\Delta t$ is the timestep. The are timestepping method is
+for some $\alpha \in \R$. A simple timestepping method we can use to iterate with is the BDF2 method \cite[§2.3]{iserles2009first}. Let $u_n$ for $n = 0, 1, 2, \dots$ be the solution at time $n \Delta t$ where $\Delta t$ is the timestep. The are timestepping method is \nomenclature[Delta t]{$\Delta t$}{A timestep for a simulation}
 \bseqn{
 	{u_1 - u_0 \over \Delta t} &= \alpha \DeltaS u_1 \\
 	{3u_{n+1} - 4u_n + u_{n-1} \over 2\Delta t} &= \alpha \DeltaS u_{n+1}, \quad n = 1,2,\dots

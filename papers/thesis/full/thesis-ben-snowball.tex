@@ -39,10 +39,23 @@
 \usepackage{csquotes}
 
 
+
+%%%%%%
+% NOTATION INDEX
+\usepackage{nomencl}
+\makenomenclature
+\renewcommand{\nomname}{Index of Notation}
+%%%%%%
+
+
+
 \usepackage[square,numbers]{natbib}
 \usepackage{url}
 %\bibliographystyle{elsarticle-harv}
 \bibliographystyle{plain}
+
+
+
 
 
 % END PREAMBLE
@@ -105,14 +118,17 @@
 
 
 % appendices come here
-\addcontentsline{toc}{chapter}{Appendices}
-\appendix
-\chapter*{Appendices}
-\renewcommand{\thesection}{A}
 \input{appendix/appendix}
 
 
+% notation index here
+\newpage
+\addcontentsline{toc}{chapter}{Index of Notation}
+\printnomenclature
+
+
 % References
+\newpage
 \addcontentsline{toc}{chapter}{Bibliography}
 %\bibliographystyle{alpha}
 \bibliography{bibliography/thesis-ben-snowball}

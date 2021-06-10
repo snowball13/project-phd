@@ -35,7 +35,7 @@ where  either of the following conditions hold:
 
 For simplicity of presentation we focus on the disk-slice in this chapter, where $\rho(x) = \sqrt{1-x^2}$, $(\alpha,\beta) \subset (0, 1)$, and $(\gamma, \delta)  = (-1,1)$. However, we will discuss an extension to other geometries, including the half-disk and trapeziums, by choosing the function $\rho$ and constants $\alpha, \beta, \gamma, \delta$ appropriately (for example, choosing $\rho(x) = 1-\xi x$ and $(\alpha,\beta) = (\gamma, \delta) = (0, 1)$ for some constant $\xi > 0$ returns the trapezium case). Moreover, one should be able to see that the full disk and triangle can also be obtained in such a way.
 
-We will show that partial differential equations become sparse linear systems when viewed as acting on expansions involving a family of orthogonal polynomials (OPs) that generalise Jacobi polynomials, mirroring the ultraspherical spectral method for ordinary differential equations on the interval \cite{olver2013fast}, and its analogues on the disk \cite{vasil2016tensor} and triangle \cite{olver2018recurrence,olver2019triangle}. On the disk-slice the family of weights we consider are of the form
+We will show that partial differential equations become sparse linear systems when viewed as acting on expansions involving a family of orthogonal polynomials (OPs) that generalise Jacobi polynomials, mirroring the ultraspherical spectral method for ordinary differential equations on the interval \cite{olver2013fast}, and its analogues on the disk \cite{vasil2016tensor} and triangle \cite{olver2018recurrence,olver2019triangle}. On the disk-slice the family of weights we consider are of the form \nomenclature[a]{$a,b,c,d$}{Lower case letters $a,b,c,d$ refer to OP family parameters (unless otherwise stated)}
 \bseqn{
 	\Wabc(x,y) = (\beta - x)^a \: (x - \alpha)^b \: (1-x^2-y^2)^c
 }
@@ -55,7 +55,7 @@ We can mirror the approach for the spherical harmonics, in that we will outline 
 
 \subsection{Explicit construction}
 
-We can construct 2D orthogonal polynomials on $\Omega$ from 1D orthogonal polynomials on the intervals \([\alpha,\beta]\) and \([\gamma,\delta]\). 
+We can construct 2D orthogonal polynomials on $\Omega$ from 1D orthogonal polynomials on the intervals $[\alpha,\beta]$ and $[\gamma,\delta]$. 
 
 \begin{proposition}[{\cite[p55--56]{dunkl2014orthogonal}}]\label{prop:ds:construction}
 	Let $w_1 : (\alpha,\beta) \: \to \R$, $w_2 : (\gamma,\delta) \: \to \R$ be weight functions with $\alpha,\beta,\gamma,\delta \in \R$, and let $\rho \: : \: (\alpha,\beta) \: \to (0,\infty)$ be such that either \bsrefcondition{cond:trap} or \bsrefcondition{cond:disk} with $w_2$ being an even function hold.
@@ -67,7 +67,7 @@ are orthogonal polynomials with respect to the weight $W(x,y) := w_1(x) \: w_2\f
 \end{proposition}
 
 
-For disk slices and trapeziums, we specialise \bsrefprop{prop:ds:construction} in the following definitions. First we introduce notation for two families of univariate OPs.
+For disk slices and trapeziums, we specialise \bsrefprop{prop:ds:construction} in the following definitions. First we introduce notation for two families of univariate OPs. \nomenclature[weight]{$\genjacw^{(a,b,c)}$, $\jacw^{(a,b)}$}{Weight functions for the one-dimensional OPs $\{\genjac_n^{(a,b,c)}\}$ and $\{\jac_n^{(a,b)}\}$ respectively} 
 \begin{definition}\label{def:ds:OPconstruction}
 	Let $\genjacw^{(a,b,c)}(x)$ and $\jacw^{(a,b)}(x)$ be two weight functions on the intervals $(\alpha, \beta)$ and $(\gamma, \delta)$ respectively, given by:
 \bseqn{
@@ -76,7 +76,7 @@ For disk slices and trapeziums, we specialise \bsrefprop{prop:ds:construction} i
 		\jacw^{(a,b)}(x) &:= (\delta-x)^a \: (x - \gamma)^b
 	\end{cases}
 }
-and define the associated inner products by:
+and define the associated inner products by: \nomenclature[omega]{$\normgenjac$, $\normjac$}{Normalising constants for inner products} \nomenclature[innerw]{$\ip< p, \: q >_w$}{A one-dimensional inner product with weight $w$}
 \bseqnnumber{
 	\ip< p, \: q >_{\genjacw^{(a,b,c)}} &:= \frac{1}{\normgenjac^{(a,b,c)}} \: \int_\alpha^\beta p(x) \: q(x) \: \genjacw^{(a,b,c)}(x) \: \D x \label{eqn:ds:ipgenjac} \\
 	\ip<p, q>_{\jacw^{(a,b)}} &:= \frac{1}{\normjac^{(a,b)}} \: \int_\gamma^\delta p(y) \: q(y) \: \jacw^{(a,b)}(y)\: \D y \label{eqn:ds:ipjac}
@@ -85,10 +85,10 @@ where
 \bseqnnumber{
 	\normgenjac^{(a,b,c)} := \int_\alpha^\beta \: \genjacw^{(a,b,c)}(x) \: \D x, \quad \normjac^{(a,b)} := \int_\gamma^\delta \: \jacw^{(a,b)}(y) \: \D y. \label{eqn:ds:ipnormalisations}
 }
-Denote the three-parameter family of orthonormal polynomials on $[\alpha,\beta]$ by $\{\genjac_n^{(a,b,c)}\}$, orthonormal with respect to the inner product defined in \bsrefeqn{eqn:ds:ipgenjac}, and the two-parameter family of orthonormal polynomials on $[\gamma,\delta]$ by $\{\jac_n^{(a,b)}\}$, orthonormal with respect to the inner product defined in \bsrefeqn{eqn:ds:ipjac}.
+Denote the three-parameter family of orthonormal polynomials on $[\alpha,\beta]$ by \nomenclature[R]{$\genjac_n^{(a,b,c)}$}{Non-classical three-parameter univariate OP of degree $n$} $\{\genjac_n^{(a,b,c)}\}$, orthonormal with respect to the inner product defined in \bsrefeqn{eqn:ds:ipgenjac}, and the two-parameter family of orthonormal polynomials on $[\gamma,\delta]$ by $\{\jac_n^{(a,b)}\}$, orthonormal with respect to the inner product defined in \bsrefeqn{eqn:ds:ipjac}.
 \end{definition}
 
-We can now write down our 2D OP family.
+We can now write down our 2D OP family. \nomenclature[Hnk]{$\hdopnk^{(a,b,c,d)}$}{Four-parameter bivariate OP of degree $n$ and order $k$ defined on the given domain and by the given inner product}
 \begin{definition}\label{def:ds:constuction}
 	For parameters $a,b,c,d \in \R$, define the four-parameter 2D orthogonal polynomials as the set $\{\hdopnk^{(a,b,c,d)}\}$ where:
 \bseqn{
@@ -98,22 +98,22 @@ We can now write down our 2D OP family.
 
 The comparison with the construction of the 3D spherical harmonics is evident here (the $\genjac$ OPs are in place of the Jacobi polynomials, and the $\jac$ OPs are in place of the complex exponentials, which are just Chebyshev polynomials). By defining our OPs in this way, we will be able to yield sparse and banded relations for the necessary operators involved in PDEs, just as we did before.
 
-$\{\hdopnk^{(a,b,c,d)}\}$ are orthogonal with respect to the weight
+$\{\hdopnk^{(a,b,c,d)}\}$ are orthogonal with respect to the weight \nomenclature[Wa]{$W^{(a)}, W^{(a,b,c)}, W^{(a,b,c,d)}$}{Weight function for relevant multidimensional OPs, with the given parameters}
 \bseqn{
 	W^{(a,b,c,d)}(x,y) := \genjacw^{(a,b,c+d)}(x) \: \jacw^{(d,c)}\fpr(\frac{y}{\rho(x)}), \quad (x,y) \in \Omega,
 }
 assuming that either \bsrefcondition{cond:trap} holds, or \bsrefcondition{cond:disk} holds with $\jacw^{(a,b)}$ being an even function (i.e. $a = b$, and we can hence denote the weight as $\jacw^{(a)}(x) = w^{(a,a)}_P(x) = (\delta-x^2)^a$). That is,
 \bseqn{
-	\ip< \hdopnk^{(a,b,c,d)}, \: \hdopmj^{(a,b,c,d)} >_{W^{(a,b,c,d)}} &= \normgenjac^{(a,b,c+d+2k+1)} \: \normjac^{(d,c)} \: \delta_{n,m} \: \delta_{k,j}
+	\ip< \hdopnk^{(a,b,c,d)}, \: \hdopmj^{(a,b,c,d)} >_{\hdop^{(a,b,c,d)}} &= \normgenjac^{(a,b,c+d+2k+1)} \: \normjac^{(d,c)} \: \delta_{n,m} \: \delta_{k,j}
 }
-where for $f, g : \Omega \to \R$ the inner product is defined as 
+where for $f, g : \Omega \to \R$ the inner product is defined as \nomenclature[innerH]{$\ip< p, \: q >_{\hdopabcd}$}{A multidimensional inner product over $\Omega$ with the weight $\Wabcd$ associated with the OPs $\{\hdopnkabcd\}$}
 \bseqn{
-	\ip< f, \: g >_{W^{(a,b,c,d)}} := \iint_\Omega \: f(x,y) \: g(x,y) \: W^{(a,b,c,d)}(x,y) \: \D y \: \D x.
+	\ip< f, \: g >_{\hdop^{(a,b,c,d)}} := \iint_\Omega \: f(x,y) \: g(x,y) \: W^{(a,b,c,d)}(x,y) \: \D y \: \D x.
 }
 
 We can see that they are indeed orthogonal using the change of variable $t = \frac{y}{\rho(x)}$, for the following normalisation:
 \bseqnnumber{
-	&\ip< \hdopnkabcd, \: \hdopmjabcd >_\Wabcd \\
+	&\ip< \hdopnkabcd, \: \hdopmjabcd >_{\hdopabcd} \\
 	&=  \iint_\Omega \: \Big[ \genjacnmk^{(a,b,c+d+2k+1)}(x) \: \genjacmmj^{(a,b,c+d+2j+1)}(x) \: \rho(x)^{k+j}  \nonumber \\
 		&\quadfour \cdot \: \jac_k^{(d,c)}\fpr(\frac{y}{\rho(x)}) \: \jac_j^{(d,c)}\fpr(\frac{y}{\rho(x)})  \: \Wabcd(x,y) \Big] \: \D y \: \D x \nonumber \\
 	&= \Big( \int_\alpha^\beta \: {\genjacnmk^{(a,b,c+d+2k+1)}}(x) \: {\genjacmmj^{(a,b,c+d+2j+1)}}(x) \: \genjacw^{(a,b,c+d+k+j+1)}(x) \: \D x \Big) \nonumber \\
@@ -145,7 +145,6 @@ In this case the weight $\jacw(x)$ is an ultraspherical weight, and the correspo
 
 \remark We should note at this stage that hereon we will continue to use the notation $\jac_n^{(a, b)}$ to refer to the univariate OPs orthonormal with respect to the weight $\jacw^{(a,b)}$. For the disk-slice case, this means they are the orthonormal Jacobi polynomials, which is why we choose this notation. We stress that this is in difference to the spherical harmonic framework in \bsrefchapter{CHAPTER:sphericalharmonics}, where conventionally they are defined using the un-normalized (i.e. simply orthogonal) classical Jacobi polynomials, and for which we also used the notation $\jac_n^{(a, b)}$.
 
-%Again, for clarity we will use the notation that for $p : \Omega \to \R$, $\norm{p}_{\Wab}^2 := \ip<p, p>_{\Wab}$.
 
 
 \subsection{Jacobi matrices}
@@ -185,13 +184,13 @@ for $(x,y) \in \Omega$, where
 \end{lemma}
 
 \begin{proof}
-The 3-term recurrence for multiplication by $x$ follows from \bsrefeqn{eqn:ds:Hrecurrence}. For the recurrence for multiplication by $y$, since $\{\hdopmjabcd\}$ for $m = 0,\dots,n+1$, $j = 0,\dots,m$ is an orthogonal basis for any degree $n+1$ polynomial, we can expand $y \: \hdopnkabcd(x,y) = \sum_{m=0}^{n+1} \sum_{j=0}^m c_{m,j} \: \hdopmjabcd(x,y)$. These coefficients are given by
+The 3-term recurrence for multiplication by $x$ follows from \bsrefeqn{eqn:ds:Hrecurrence}. For the recurrence for multiplication by $y$, since $\{\hdopmjabcd\}$ for $m = 0,\dots,n+1$, $j = 0,\dots,m$ is an orthogonal basis for any degree $n+1$ polynomial, we can expand $y \: \hdopnkabcd(x,y) = \sum_{m=0}^{n+1} \sum_{j=0}^m c_{m,j} \: \hdopmjabcd(x,y)$. These coefficients are given by \nomenclature[abs]{$\abs{m}$}{The absolute value of a scalar $m$} \nomenclature[norm]{$\norm{f}$}{The norm of a function f, defined by the square root of the relevant inner product} \nomenclature[normH]{$\norm{f}_{\hdopabcd}$}{The norm of a function f, defined by the square root of the inner product over $\Omega$ given by the weight $\Wabcd$ associated with the OPs $\{\hdopnkabcd\}$}
 \bseqn{
-	c_{m,j} = {\ip< y \: \hdopnkabcd, \hdopmjabcd >_{\Wabcd}}{\norm{\hdopmjabcd}^{-2}_{\Wabcd}}.
+	c_{m,j} = {\ip< y \: \hdopnkabcd, \hdopmjabcd >_{\hdopabcd}}{\norm{\hdopmjabcd}^{-2}_{\hdopabcd}}.
 }
-Recall from \bsrefeqn{eqn:ds:normhdop} that $\norm{\hdopmjabcd}_{\Wabcd}^2 = \normgenjac^{(a,b,c+d+2j+1)} \: \normjac^{(d,c)}$. Then for $m = 0,\dots,n+1$, $j = 0,\dots,m$, using the change of variable $t = \frac{y}{\rho(x)}$:
+Recall from \bsrefeqn{eqn:ds:normhdop} that $\norm{\hdopmjabcd}_{\hdopabcd}^2 = \normgenjac^{(a,b,c+d+2j+1)} \: \normjac^{(d,c)}$. Then for $m = 0,\dots,n+1$, $j = 0,\dots,m$, using the change of variable $t = \frac{y}{\rho(x)}$:
 \bseqn{
-	&\ip<y \hdopnkabcd, \hdopmjabcd>_\Wabcd \\
+	&\ip<y \hdopnkabcd, \hdopmjabcd>_{\hdopabcd} \\
 	&=  \iint_\Omega \hdopnkabcd(x,y) \: \hdopmjabcd(x,y) \: y \: \Wabcd(x,y) \: dy \: dx \\
 	&= \Big( \int^\beta_\alpha \genjacnmk^{(a, b, c+d+2k+1)}(x) \: \genjacmmj^{(a, b, c+d+2j+1)}(x) \: \rho(x)^{k+j+2} \: \genjacw^{(a, b,c+d)}(x) \: \D x \Big) \\
 		&\quadfour \cdot \: \Big( \int^\delta_{\gamma} \jac_k^{(d,c)}(t) \: \jac_j^{(d,c)}(t) \: t \: \jacw^{(d,c)}(t) \: \D t \Big) \\
@@ -222,20 +221,22 @@ If \bsrefcondition{cond:disk} holds we have that $\gamma^{(d,c)}_{k} = \gamma^{(
 
 \end{proof}
 
-Three-term recurrences lead to Jacobi operators that correspond to multiplication by $x$ and $y$. Define, for $n=0,1,2,\dots$: 
+Three-term recurrences lead to Jacobi operators that correspond to multiplication by $x$ and $y$. Define, for $n=0,1,2,\dots$: \nomenclature[Hvectorabcd]{$\bighdopabcd$}{Vector of the disk-slice/trapezium OPs ordered by degree, with parameters $a,b,c,d$} \nomenclature[Hvectornabcd]{$\bighdopabcd_n$}{(Sub-)Vector of the disk-slice/trapezium OPs of degree $n$, with parameters $a,b,c,d$}
 \bseqn{
-\bighdopabcd_n := \begin{pmatrix}
-		\hdopabcd_{n,0}(x,y) \\
-		\vdots \\
-		\hdopabcd_{n,n}(x,y)
-	\end{pmatrix} \in \R^{n+1}, 
-\quad \quad 
-\bighdopabcd := \begin{pmatrix}
-		\bighdopabcd_0 \\
-		\bighdopabcd_1 \\
-		\bighdopabcd_2 \\
-		\vdots \\
-	\end{pmatrix}
+	\bighdopabcd_n := 
+		\begin{pmatrix}
+			\hdopabcd_{n,0}(x,y) \\
+			\vdots \\
+			\hdopabcd_{n,n}(x,y)
+		\end{pmatrix} \in \R^{n+1}, 
+	\quad \quad 
+	\bighdopabcd := 
+		\begin{pmatrix}
+			\bighdopabcd_0 \\
+			\bighdopabcd_1 \\
+			\bighdopabcd_2 \\
+			\vdots \\
+		\end{pmatrix}
 }
 and set $J_x^{(a,b,c,d)}, J_y^{(a,b,c,d)}$ as the Jacobi matrices corresponding to
 \bseqnnumber{
@@ -443,7 +444,7 @@ and the 1D OPs $\{\jac^{(c, c)}_n\}$ are orthonormal on the interval $(\gamma, \
 \bseqn{
 	\jacw^{(c)}(x) := (1-x)^c \: (1+x)^c = (1-x^2)^c.
 }
-Denote the weighted OPs by
+Denote the weighted OPs by \nomenclature[Wvectorabcd]{$\bigWabcd$}{Vector of the weighted disk-slice/trapezium OPs ordered by degree, with parameters $a,b,c,d$}
 \bseqn{
 	\bigWabc(x,y) := \Wabc(x,y) \: \bighdopabc(x,y),
 }
@@ -480,11 +481,11 @@ First, note that:
 }
 We proceed with the case for the operator $D_y^{(a,b,c)}$ for partial differentiation by $y$. Since $\{\hdop^{(a,b,c+1)}_{m,j}\}$ for $m = 0,\dots,n-1$, $j = 0,\dots,m$ is an orthogonal basis for any degree $n-1$ polynomial, we can expand $\ppx{y} \hdopnkabc = \sum_{m=0}^{n-1} \sum_{j=0}^m c_{m,j}^y \: \hdop^{(a, b, c+1)}_{m,j}$. The coefficients of the expansion are then the entries of the relevant operator matrix. We can use an integration-by-parts argument to show that the only non-zero coefficient of this expansion is when $m = n-1$, $j = k-1$. First, note that
 \bseqn{
-	c_{m,j}^y = {\ip<\ppx{y} \hdopnkabc, \hdop^{(a, b, c+1)}_{m,j} >_{W^{(a, b, c+1)}}}{\norm{\hdop^{(a, b, c+1)}_{m,j}}^{-2}_{W^{(a, b+1)}}}.
+	c_{m,j}^y = {\ip<\ppx{y} \hdopnkabc, \hdop^{(a, b, c+1)}_{m,j} >_{\hdop^{(a, b, c+1)}}}{\norm{\hdop^{(a, b, c+1)}_{m,j}}^{-2}_{\hdop^{(a, b+1)}}}.
 }
 Then, using the change of variable $t = \frac{y}{\rho(x)}$, we have that
 \bseqn{
-	&\ip<\ppx{y} \hdopnkabc, \hdop^{(a, b, c+1)}_{m,j} >_{W^{(a, b, c+1)}} \\
+	&\ip<\ppx{y} \hdopnkabc, \hdop^{(a, b, c+1)}_{m,j} >_{\hdop^{(a, b, c+1)}} \\
 	&= \iint_\Omega \: \Big[ \genjacnmk^{(a,b,2c+2k+1)}(x) \: \rho(x)^{k-1} \: \jac_k^{(c,c) \: \prime}\fpr(\frac{y}{\rho(x)}) \\
 	& \quad \quad \quad \quad \quad \quad \cdot \: \genjacmmj^{(a,b,2c+2j+3)}(x) \: \rho(x)^{j} \: \jac_j^{(c+1,c+1)}\fpr(\frac{y}{\rho(x)}) \Big] \: \D y \: \D x \\
 	&= \normgenjac^{(a, b, 2c+2k+1)} \: \ip< \genjacnmk^{(a,b,2c+2k+1)}, \rho(x)^{j-k+1} \: \genjacmmj^{(a,b,2c+2j+3)} >_{\genjacw^{(a,b,2c+2k+1)}} \\
@@ -511,11 +512,11 @@ showing that the only possible non-zero coefficient is when $m=n-1, j=k-1$. Fina
 
 We next consider the case for the operator $D_x^{(a,b,c)}$ for partial differentiation by $x$. Since $\{\hdop^{(a+1, b+1, c+1)}_{m,j}\}$ for $m = 0,\dots,n-1$, $j = 0,\dots,m$ is an orthogonal basis for any degree $n-1$ polynomial, we can expand $\ppx{x} \hdopnkabc = \sum_{m=0}^{n-1} \sum_{j=0}^m c_{m,j}^x \: \hdop^{(a+1, b+1, c+1)}_{m,j}$. The coefficients of the expansion are then the entries of the relevant operator matrix. As before, we can use an integration-by-parts argument to show that the only non-zero coefficients of this expansion are when $m = n-1, n-2, n-3$, $j = k, k-1, k-2$ and $0 \le j \le m$. First, note that
 \bseqn{
-	c_{m,j}^x = {\ip<\ppx{x} \hdopnkabc, \hdop^{(a+1, b+1, c+1)}_{m,j} >_{W^{(a+1, b+1, c+1)}}}{\norm{\hdop^{(a+1, b+1, c+1)}_{m,j}}^{-2}_{W^{(a+1, b+1, c+1)}}}.
+	c_{m,j}^x = {\ip<\ppx{x} \hdopnkabc, \hdop^{(a+1, b+1, c+1)}_{m,j} >_{\hdop^{(a+1, b+1, c+1)}}}{\norm{\hdop^{(a+1, b+1, c+1)}_{m,j}}^{-2}_{\hdop^{(a+1, b+1, c+1)}}}.
 }
 Now, again using the change of variable $t= \frac{y}{\rho(x)}$, we have that
 \bseqnnumber{
-	&\ip<\ppx{x} \hdopnkabc, \hdop^{(a+1, b+1, c+1)}_{m,j} >_{W^{(a+1, b+1, c+1)}} \nonumber \\ 
+	&\ip<\ppx{x} \hdopnkabc, \hdop^{(a+1, b+1, c+1)}_{m,j} >_{\hdop^{(a+1, b+1, c+1)}} \nonumber \\ 
 	&= \Big( \int_\alpha^\beta \: \genjacnmk^{(a, b, 2c+2k+1) \: \prime} \: \genjacmmj^{(a+1, b+1, 2c+2j+3)} \: \rho^{k+j+1} \: \genjacw^{(a+1, b+1, 2c+2)} \: \D x \Big) \nonumber \\
 	&\quad \quad \quad \quad \quad \cdot \: \Big( \int_\gamma^\delta \jac_k^{(c,c)} \: \jac_j^{(c+1,c+1)} \: \jacw^{(c+1)} \: \D t \Big) \nonumber \\ 
 	& \quad + k \: \Big( \int_\alpha^\beta \: \genjacnmk^{(a, b, 2c+2k+1)} \: \genjacmmj^{(a+1, b+1, 2c+2j+3)} \: \rho^{k+j} \: \rho' \: \genjacw^{(a+1, b+1, 2c+2)} \: \D x \Big) \nonumber \\
@@ -567,7 +568,7 @@ Finally,
 }
 which is also zero for $m < n - 3$. Thus
 \bseqn{
-	&\ip<\ppx{x} \hdopnkabc, \hdop^{(a+1, b+1, c+1)}_{m,j} >_{W^{(a+1, b+1, c+1)}} = 0
+	&\ip<\ppx{x} \hdopnkabc, \hdop^{(a+1, b+1, c+1)}_{m,j} >_{\hdop^{(a+1, b+1, c+1)}} = 0
 }
 for $m < n - 3$, $j \notin \{k-2, k\}$, showing that the only possible non-zero coefficients $c_{m,j}^x$ are when $m = n-3,n-2,n-1$ and $j = k-2,k$ $(j \le m)$.
 
@@ -578,7 +579,7 @@ We can gain the non-zero entries of the weighted differential operators similarl
 }
 and also that
 \bseqn{
-	\ip< \Wabc \hdopnkabc, W^{(\tilde{a},\tilde{b},\tilde{c})} \hdopmj^{(\tilde{a},\tilde{b},\tilde{c})} >_{W^{(-\tilde{a},-\tilde{b},-\tilde{c})}} = \ip< \hdopnkab, \hdopmj^{(\tilde{a},\tilde{b})} >_\Wabc.
+	\ip< \Wabc \hdopnkabc, W^{(\tilde{a},\tilde{b},\tilde{c})} \hdopmj^{(\tilde{a},\tilde{b},\tilde{c})} >_{\hdop^{(-\tilde{a},-\tilde{b},-\tilde{c})}} = \ip< \hdopnkabc, \hdopmj^{(\tilde{a},\tilde{b},\tilde{c})} >_{\hdopabc}.
 }
 \end{proof}
 
@@ -619,11 +620,11 @@ for conversion between weighted spaces, according to:
 \begin{proof}
 We proceed with the case for the non-weighted operators $T^{(a,b)\to(a+\tilde{a},b+\tilde{b},c+\tilde{c})}$, where $\tilde{a}, \tilde{b}, \tilde{c} \in \{0,1\}$. Since $\{\hdop^{(a+\tilde{a},b+\tilde{b},c+\tilde{c})}_{m,j}\}$ for $m = 0,\dots,n$, $j = 0,\dots,m$ is an orthogonal basis for any degree $n$ polynomial, we can expand $\hdopnkabc = \sum_{m=0}^{n} \sum_{j=0}^m c_{m,j} \: \hdop^{(a+\tilde{a},b+\tilde{b},c+\tilde{c})}_{m,j}$. The coefficients of the expansion are then the entries of the relevant operator matrix. We will show that the only non-zero coefficients are for $m \ge n - \tilde{a} - \tilde{b} - 2\tilde{c} $, $j \ge k-2\tilde{c}$ and $0 \le j \le m$. First, note that
 \bseqn{
-	c_{m,j} = {\ip< \hdopnkabc, \hdop^{(a+\tilde{a},b+\tilde{b},c+\tilde{c})}_{m,j} >_{W^{(a+\tilde{a},b+\tilde{b},c+\tilde{c})}}}{\norm{\hdop^{(a+\tilde{a},b+\tilde{b},c+\tilde{c})}_{m,j}}^{-2}_{W^{(a+\tilde{a},b+\tilde{b},c+\tilde{c})}}}.
+	c_{m,j} = {\ip< \hdopnkabc, \hdop^{(a+\tilde{a},b+\tilde{b},c+\tilde{c})}_{m,j} >_{\hdop^{(a+\tilde{a},b+\tilde{b},c+\tilde{c})}}}{\norm{\hdop^{(a+\tilde{a},b+\tilde{b},c+\tilde{c})}_{m,j}}^{-2}_{\hdop^{(a+\tilde{a},b+\tilde{b},c+\tilde{c})}}}.
 }
 Then, using the change of variable $t = \frac{y}{\rho(x)}$, we have that
 \bseqn{
-	&\ip< \hdopnkabc, \hdop^{(a+\tilde{a},b+\tilde{b},c+\tilde{c})}_{m,j} >_{W^{(a+\tilde{a},b+\tilde{b},c+\tilde{c})}} \\
+	&\ip< \hdopnkabc, \hdop^{(a+\tilde{a},b+\tilde{b},c+\tilde{c})}_{m,j} >_{\hdop^{(a+\tilde{a},b+\tilde{b},c+\tilde{c})}} \\
 	&= \normgenjac^{(a+\tilde{a},b+\tilde{b},2c+2\tilde{c})} \: \ip< \genjacnmk^{(a,b,2c+2k+1)}, \rho(x)^{k+j+1} \: \genjacmmj^{(a+\tilde{a},b+\tilde{b},2c+2\tilde{c}+2j+1)} >_{\genjacw^{(a+\tilde{a},b+\tilde{b},2c+2\tilde{c})}} \\ 
 		&\quadfour \cdot \: \normjac^{(c+\tilde{c})} \: \ip< \jac_k^{(c,c)}, \: \jac_{j}^{(c+\tilde{c},c+\tilde{c})} >_{\jacw^{(c+\tilde{c})}} \\
 	&= \normgenjac^{(a,b,2c+2k+1)} \: \ip< \genjacnmk^{(a,b,2c+2k+1)}, \genjacw^{(\tilde{a}, \tilde{b}, \: 2\tilde{c}+j-k)} \: \genjacmmj^{(a+\tilde{a},b+\tilde{b},2c+2\tilde{c}+2j+1)} >_{\genjacw^{(a,b,2c+2k+1)}} \\
@@ -657,7 +658,7 @@ The sparsity argument for the weighted parameter transformation operators follow
 	\label{fig:ds:sparsity}
 \end{figure}
 
-General linear partial differential operators with polynomial variable coefficients can be constructed by composing the sparse representations for partial derivatives, conversion between bases, and Jacobi operators. As a canonical example, we can obtain the matrix operator for the Laplacian $\Delta$, that will take us from coefficients for expansion in the weighted space
+General linear partial differential operators with polynomial variable coefficients can be constructed by composing the sparse representations for partial derivatives, conversion between bases, and Jacobi operators. As a canonical example, we can obtain the matrix operator for the Laplacian \nomenclature[Delta]{$\Delta$}{The Laplacian operator in $\R^2$} $\Delta$, that will take us from coefficients for expansion in the weighted space
 \bseqn{
 	\bigWiii(x,y) = \Wiii(x,y) \: \bighdopiii(x,y)
 }
@@ -667,7 +668,7 @@ to coefficients in the non-weighted space $\bighdopiii(x,y)$. Note that this con
 }
 Importantly, this operator will have banded-block-banded structure, and hence will be sparse, as seen in \bsreffig{fig:ds:sparsity}.
 
-Another important example is the Biharmonic operator $\Delta^2$, where we assume zero Dirichlet and Neumann conditions. To construct this operator, we first note that we can obtain the matrix operator for the Laplacian $\Delta$ that will take us from coefficients for expansion in the space $\bighdopooo(x,y)$ to coefficients in the space $\bighdop^{(2,2,2)}(x,y)$. We denote this matrix operator that acts on the coefficients vector as $\laplaceooo$, and is given by
+Another important example is the biharmonic operator \nomenclature[Delta2]{$\Delta^2$}{The biharmonic operator in $\R^2$} $\Delta^2$, where we assume zero Dirichlet and Neumann conditions. To construct this operator, we first note that we can obtain the matrix operator for the Laplacian $\Delta$ that will take us from coefficients for expansion in the space $\bighdopooo(x,y)$ to coefficients in the space $\bighdop^{(2,2,2)}(x,y)$. We denote this matrix operator that acts on the coefficients vector as $\laplaceooo$, and is given by
 \bseqn{
     \laplaceooo := D_x^{(1,1,1)} \: D_x^{(0,0,0)} + T^{(1,1,2)\to(2,2,2)} \: D_y^{(1,1,1)} \: T^{(0,0,1)\to(1,1,1)} \: D_y^{(0,0,0)}.
 }
@@ -810,9 +811,9 @@ where
 
 These two propositions allow us to recursively obtain the recurrence coefficients for the OPs $\{\genjac_{n-k}^{(a,b,2c+2k + 1)}\}$ as $k$ increases to be large. 
 
-\noindent{\bf Remark}:
-The Corollary demonstrates that in order to obtain the recurrence coefficients $\{\alpha_{m}^{(a,b,2c+2k+1)}\}$, $\{\beta_{m}^{(a,b,2c+2k+1)}\}$ for some $m$ and $k$, we require that we obtain the recurrence coefficients $\{\alpha_{m+2}^{(a,b,2c+2(k-1)+1)}\}$, $\{\beta_{m+2}^{(a,b,2c+2(k-1)+1)}\}$. Thus, for large $N$, this recursive method of obtaining the recurrence coefficients requires a large initialisation (i.e. using the Lanczos algorithm to compute the recurrence coefficients $\{\alpha_{n}^{(a,b,2c+1)}\}$, $\{\beta_{n}^{(a,b,2c+1)}\}$ -- however, we only need to compute these once, and can store and save this initialisation to disk once computed, for the given values of $a, b, c$). 
+\remark The Corollary demonstrates that in order to obtain the recurrence coefficients $\{\alpha_{m}^{(a,b,2c+2k+1)}\}$, $\{\beta_{m}^{(a,b,2c+2k+1)}\}$ for some $m$ and $k$, we require that we obtain the recurrence coefficients $\{\alpha_{m+2}^{(a,b,2c+2(k-1)+1)}\}$, $\{\beta_{m+2}^{(a,b,2c+2(k-1)+1)}\}$. Thus, for large $N$, this recursive method of obtaining the recurrence coefficients requires a large initialisation (i.e. using the Lanczos algorithm to compute the recurrence coefficients $\{\alpha_{n}^{(a,b,2c+1)}\}$, $\{\beta_{n}^{(a,b,2c+1)}\}$ -- however, we only need to compute these once, and can store and save this initialisation to disk once computed, for the given values of $a, b, c$). 
 %This is the most expensive part of the current calculation, but note that we can reuse this computation for multiple partial differential equations. Efficient construction of OPs with large parameters in the weights is an important topic, but one tangential to the proposed scheme. 
+
 
 \subsection{Quadrature rule on the disk-slice}
 
@@ -820,16 +821,16 @@ In this section we construct a quadrature rule exact for polynomials in the disk
 
 \begin{theorem}
 Denote the  Gauss quadrature nodes and weight on $[\alpha,\beta]$ with weight $(\beta - s)^a \: (s - \alpha)^b \: \rho(s)^{2c+1}$ as $(s_k,w_k^{(s)})$ , and
- on \([-1,1]\) with weight \((1-t^2)^c\) as $(t_k,w_k^{(t)})$. Define
+ on $[-1,1]$ with weight $(1-t^2)^c$ as $(t_k,w_k^{(t)})$. Define
 \bseqn{
 	x_{i+(j-1)N} &:= s_j, \quad i,j = 1,\dots, \ceil{\frac{N+1}{2}}, \\
 	y_{i+(j-1)N} &:= \rho(s_j) \: t_i, \quad i,j = 1,\dots, \ceil{\frac{N+1}{2}}, \\
 	w_{i+(j-1)N} &:= w_j^{(s)} w_i^{(t)}, \quad  i,j = 1,\dots, \ceil{\frac{N+1}{2}}.
 }
 Let $f(x,y)$ be a polynomial on $\Omega$. The quadrature rule is then
-$$
-\iint_\Omega f(x,y) \: \Wab(x,y) \: \D A \approx \half \sum_{j=1}^{M} w_j \: \big[ f(x_j, y_j) + f(x_j, -y_j) \big],
-$$
+\bseqn{
+	\iint_\Omega f(x,y) \: \Wab(x,y) \: \D A \approx \half \sum_{j=1}^{M} w_j \: \big[ f(x_j, y_j) + f(x_j, -y_j) \big],
+}
 where $M = \ceil{\half(N+1)}^2$, and the quadrature rule is exact if $f(x,y)$ is a polynomial of degree $\le N$.
 \end{theorem}
 
@@ -902,9 +903,9 @@ for all $n = 0,1,2,\dots,N$, and where
 		\vdots \\
 		f_{n,n}
 	\end{pmatrix} \in \R^{n+1} \quad \forall n = 0,1,2,\dots,N, \quad
-	f_{n,k} := \frac{\ip< f, \: \hdopnk^{(a,b,c)}>_{\Wabc}}{\norm{\hdopnk^{(a,b,c)}}_{\Wabc}}
+	f_{n,k} := \frac{\ip< f, \: \hdopnk^{(a,b,c)}>_{\hdopabc}}{\norm{\hdopnk^{(a,b,c)}}_{\hdopabc}}
 }
-Recall from \bsrefeqn{eqn:ds:normhdop} that $\norm{\hdopnkabc}^2_\Wabc = \normgenjac^{(a,b,2c+2k+1)} \: \normjac^{(c)}$. Using the quadrature rule detailed in Section 4.2 for the inner product, we can calculate the coefficients $f_{n,k}$ for each $n = 0,\dots,N$, $k = 0,\dots,n$: 
+Recall from \bsrefeqn{eqn:ds:normhdop} that $\norm{\hdopnkabc}^2_{\hdopabc} = \normgenjac^{(a,b,2c+2k+1)} \: \normjac^{(c)}$. Using the quadrature rule detailed in Section 4.2 for the inner product, we can calculate the coefficients $f_{n,k}$ for each $n = 0,\dots,N$, $k = 0,\dots,n$: 
 \bseqn{
 	f_{n,k} &= \lambda^{(a,b,c)}_k \: \sum_{j=1}^{M} w_j \: \big[ f(x_j, y_j) \: \hdopnkabc(x_j, y_j) +f(x_j, -y_j) \: \hdopnkabc(x_j, -y_j) \big]
 }
@@ -1217,7 +1218,7 @@ We seek $u_p \in V_p$ s.t.
 	\label{eqn:ds:FEMweakform}
 }
 
-Recall that the OPs $\bighdop^{(a,b,c)}$ are orthogonal with respect to the weight $\Wabc$ on $\Omega$, and define the matrix $\Lambda^{(a,b,c)} :=  \ip< \bighdop^{(a,b,c)}, \: {\bighdop^{(a,b,c)}}^\top >_{\Wabc}$. Note that due to orthogonality this is a diagonal matrix. We can choose a basis for $V_p$ by using the weighted orthogonal polynomials on $\element$ with parameters $a = b = c = 1$
+Recall that the OPs $\bighdop^{(a,b,c)}$ are orthogonal with respect to the weight $\Wabc$ on $\Omega$, and define the matrix $\Lambda^{(a,b,c)} :=  \ip< \bighdop^{(a,b,c)}, \: {\bighdop^{(a,b,c)}}^\top >_{\hdopabc}$. Note that due to orthogonality this is a diagonal matrix. We can choose a basis for $V_p$ by using the weighted orthogonal polynomials on $\element$ with parameters $a = b = c = 1$
 \bseqn{
 	\bigWiii(x,y) = \Wiii(x,y) \: \bighdopiii(x,y)
 }
@@ -1251,7 +1252,7 @@ where $\vec{u}, \vec{v}$ are the coefficient vectors of the expansions of $u_p, 
 \bseqn{
 	L(v_p) &= \int_\element \: v_p \: f \: \D \vec{x}\\
 	&= \int_\element \: \vec{v}^\top \: \bigWiii \: \bighdopiii^\top \: \vec{f} \: \D \vec{x} \\
-	&= \vec{v}^\top \: \ip< \bighdopiii, {\bighdopiii}^\top >_{\Wiii} \: \D \vec{x} \\
+	&= \vec{v}^\top \: \ip< \bighdopiii, {\bighdopiii}^\top >_{\hdopiii} \: \D \vec{x} \\
 	&= \vec{v}^\top \Lambda^{(1,1,1)} \: \vec{f},
 }
 where $\vec{f}$ is the coefficient vector for the expansion of the function $f(x,y)$ in the $\bighdopiii$ OP basis.

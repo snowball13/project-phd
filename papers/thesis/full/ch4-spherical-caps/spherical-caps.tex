@@ -128,12 +128,12 @@ We can now define the 3D OPs for the spherical cap.
 }
 \end{definition}
 
-By construction, $\{\scopnkia\}$ are orthogonal with respect to the inner product
+By construction, $\{\scopnkia\}$ are orthogonal with respect to the inner product \nomenclature[innerQ]{$\ip< p, \: q >_{\scopa}$}{A multidimensional inner product over $\Omega$ with the weight $\Wa$ associated with the OPs $\{\scopnkia\}$}
 \bseqn{
 	\ip< p, \: q >_{\scopa} &:= \int_\Omega p(\xvec, z) \: q(\xvec, z) \: \genjacw^{(a,0)}(z) \: \D A \\
 	&= \int_\alpha^1 \int_0^{2\pi} p(\rho(z) \cos\theta, \rho(z) \sin\theta, z) \: q(\rho(z) \cos\theta, \rho(z) \sin\theta, z) \: \D \theta \: \genjacw^{(a,0)}(z) \: \D z,
 }
-with
+with \nomenclature[normQ]{$\norm{f}_{\scopa}$}{The norm of a function f, defined by the square root of the inner product over $\Omega$ given by the weight $\Wa$ associated with the OPs $\{\scopnkia\}$}
 \bseqnnumber{
 	\norm{\scopnkia}_{\scopa}^2 &:= \ip< \scopnkia, \: \scopnkia >_{\scopa} = \pi \: \normgenjac^{(a, 2k)}. \label{eqn:sc:normscop}
 }
@@ -255,7 +255,7 @@ where again $\delta_{k, j}$ is the standard Kronecker delta function, and we hav
 
 \end{proof}
 
-The recurrences in \bsreflemma{lemma:sc:Qrecurrence} lead to (block) Jacobi matrices that correspond to multiplication by $x$, $y$ and $z$. In later sections we will use an ordering of the OPs so that they are grouped by Fourier mode $k$, which is convenient for the application of differential and other operators to the vector of coefficients of a given function's expansion (some operators will exploit this ordering for operators where Fourier modes do not interact, and thus will be block-diagonal). Before that, the ordering we will use in the remainder of this section is convenient for establishing Jacobi operators for multiplication by $x$, $y$ and $z$, and hence building the OPs and importantly obtaining the associated \textit{recurrence coefficient matrices} necessary for efficient function evaluation using the Clenshaw algorithm. In practice, it is simply a matter of converting coefficients between the two orderings. To this end, we define our OP-building ordering as follows. For $n=0,1,2,\dots$:
+The recurrences in \bsreflemma{lemma:sc:Qrecurrence} lead to (block) Jacobi matrices that correspond to multiplication by $x$, $y$ and $z$. In later sections we will use an ordering of the OPs so that they are grouped by Fourier mode $k$, which is convenient for the application of differential and other operators to the vector of coefficients of a given function's expansion (some operators will exploit this ordering for operators where Fourier modes do not interact, and thus will be block-diagonal). Before that, the ordering we will use in the remainder of this section is convenient for establishing Jacobi operators for multiplication by $x$, $y$ and $z$, and hence building the OPs and importantly obtaining the associated \textit{recurrence coefficient matrices} necessary for efficient function evaluation using the Clenshaw algorithm. In practice, it is simply a matter of converting coefficients between the two orderings. To this end, we define our OP-building ordering as follows. For $n=0,1,2,\dots$: \nomenclature[Qtildevectora]{$\bigscopta$}{Vector of the spherical cap OPs ordered by degree, with parameter $a$} \nomenclature[Qtildevectorna]{$\bigscoptna$}{(Sub-)Vector of the spherical cap OPs of degree $n$, with parameter $a$}
 \bseqn{
 	\bigscoptna := 
 		\begin{pmatrix}
@@ -518,7 +518,7 @@ It follows that we can apply $\Dnt$ in $O(n)$ complexity, and thereby calculate 
 %
 \section{Sparse partial differential operators}\label{Section:sc:PDOs}
 
-In this section we will derive the entries of spherical partial differential operators applied to our basis, demonstrating their sparsity in the process. To this end, as alluded to in \bsrefsection{section:sc:jacobimats}, we introduce new notation for a different ordering of the OP vector, in order to exploit the orthogonality the polynomials $\chki$ will bring and thus ensure the operators will be block-diagonal. Let $N \in \N$ and define:
+In this section we will derive the entries of spherical partial differential operators applied to our basis, demonstrating their sparsity in the process. To this end, as alluded to in \bsrefsection{section:sc:jacobimats}, we introduce new notation for a different ordering of the OP vector, in order to exploit the orthogonality the polynomials $\chki$ will bring and thus ensure the operators will be block-diagonal. Let $N \in \N$ and define: \nomenclature[QvectorNa]{$\bigscopNa$}{Vector of the spherical cap OPs up to degree $N$, grouped by order $k$, with parameter $a$} \nomenclature[QvectorNka]{$\bigscopNka$}{(Sub-)Vector of the spherical cap OPs of order $k$ up to degree $N$, with parameter $a$}
 \bseqnnumber{
 	\bigscopNka &:= 
 		\begin{pmatrix}
@@ -542,7 +542,7 @@ In this section we will derive the entries of spherical partial differential ope
 		\end{pmatrix} \in \R^{(N+1)^2} \label{eqn:sc:OPdefNa}
 }
 
-We further denote the weighted set of OPs on $\Omega$ by 
+We further denote the weighted set of OPs on $\Omega$ by \nomenclature[WvectorNa]{$\bigWNa$}{Vector of the weighted spherical cap OPs up to degree $N$, grouped by order $k$, with parameter $a$}
 \bseqn{
 	\bigWNa(x,y,z) := \genjacw^{(a,0)}(z) \: \bigscopNa(x,y,z),
 }
