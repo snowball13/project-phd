@@ -10,14 +10,27 @@
 \renewcommand{\thesection}{A}
 \section{Tangent bundle of the spherical cap}\label{appendix:tangent}
 
-One desired goal is to be able to extend the methodology detailed in \bsrefchapter{CHAPTER:sphericalcaps} to the tangent bundle of the spherical cap $\Omega$ (see \bsrefdef{def:tangentbundle}), which we denote $\tangentspace$. By creating a basis of orthogonal vector polynomials (OVPs) for the spherical cap $\Omega$, we can expand vector-valued functions that lie in the tangent space in this basis. Such functions that are useful for the sphere are gradients and perpendicular-gradients of scalar functions.
+One desired goal is to be able to extend the methodology detailed in \bsrefchapter{CHAPTER:sphericalcaps} to the tangent bundle of the spherical cap $\Omega$ (see \bsrefdef{def:tangentbundle}). By creating a basis of orthogonal vector polynomials (OVPs) for the spherical cap $\Omega$, we can expand vector-valued functions that lie in the tangent bundle in this basis. Such functions that are useful for the sphere are gradients and perpendicular-gradients of scalar functions, as we have seen in \bsrefsection{section:examples} where we solved the linearised shallow water equations on the whole sphere.
 
-Any function in the tangent space of $\Omega$ can be written as $\nabla f + \rvec \times \nabla g$ for some scalar functions $f, g$ on $\Omega$. Let $f$ be a scalar function on $\Omega$ that satisfies zero boundary conditions. Then there exist coefficients $\vec{f}$ such that $f$ can be expanded in the OP basis $\bigW_N^{(1)}$ for large enough N, i.e. $f = \genjacw^{(1,0)} \: \sum_{n,k,i} f_{n,k,i} \: \scopnki^{(1)}$. The gradient and perpendicular gradient of $f$ are then
-\begin{align*}
-	\nabla f &= \sum_{n,k,i} f_{n,k,i} \: \nabla \Big( \genjacw^{(1,0)} \: \scopnki^{(1)} \Big) \\
-	\rvec \times \nabla f &= \sum_{n,k,i} f_{n,k,i} \: \rvec \times \nabla \Big( \genjacw^{(1,0)} \: \scopnki^{(1)} \Big).
-\end{align*}
-For the whole sphere, recall from \bsrefsection{section:VSHs} that we simply chose the vector spherical harmonics as our tangent bundle basis, defined as the gradient and perpendicular gradients of the scalar spherical harmonics. We could make that choice because the vector spherical harmonics as defined were naturally orthogonal. Unfortunately, we do not have the same luxury here, with the sets $\{ \nabla \Big( \genjacw^{(a,0)} \: \scopnki^{(a)} \Big), \rvec \times \nabla \Big( \genjacw^{(a,0)} \: \scopnki^{(a)} \Big) \}$ and $\{ \nabla \scopnki^{(a)}, \rvec \times \nabla \scopnki^{(a)} \}$ not being orthogonal for any parameter $a$. The game for future work is to find an orthogonal basis that spans the tangent space of the spherical cap $\Omega$, such that we can sparsely expand the likes of $\nabla \scopnki^{(a)}$.
+Any function in the tangent bundle of $\Omega$ can be written as 
+\bseqn{
+	\vec{F} = \phivec F_\varphi + \thetavec F_\theta
+}
+for some scalar functions $F_\varphi, F_\theta$ on $\Omega$. Of course, we can expand these functions in our spherical cap scalar OPs $\bigscopa$ (or $\bigW^{(a)}$ if they satisfy zero boundary conditions). Gradients and perpendicular gradients of scalar functions also take the form of $\vec{F}$. 
+
+For the whole sphere, recall from \bsrefsection{section:VSHs} that we simply chose the vector spherical harmonics as our tangent bundle basis, defined as the gradient and perpendicular gradients of the scalar spherical harmonics. We could make that choice because the vector spherical harmonics as defined were naturally orthogonal, and formed a complete basis for such functions $\vec{F}$. Unfortunately, we do not have the same luxury here, with the sets $\{ \gradS \Big( \genjacw^{(a,0)} \: \scopnki^{(a)} \Big), \; \rvec \times \gradS \Big( \genjacw^{(a,0)} \: \scopnki^{(a)} \Big) \}$ and $\{ \gradS \scopnki^{(a)}, \; \rvec \times \gradS \scopnki^{(a)} \}$ not being orthogonal for any parameter $a$, and with the same observation for the non-weighted OPs. As such, one would need to find an orthogonal basis that spans the tangent bundle of the spherical cap $\Omega$, such that we can sparsely expand, either analytically or numerically, the spherical gradients of our scalar basis polynomials and other vector fields of the form $\vec{F}$.
+
+
+
+
+%%%%%
+
+%Any function in the tangent bundle of $\Omega$ can be written as $\gradS f + \rvec \times \gradS g$ for some scalar functions $f, g$ on $\Omega$. Let $f$ be a scalar function on $\Omega$ that satisfies zero boundary conditions. Then there exist coefficients $\vec{f}$ such that $f$ can be expanded in the OP basis $\bigW_N^{(1)}$ for large enough N, i.e. $f = \genjacw^{(1,0)} \: \sum_{n,k,i} f_{n,k,i} \: \scopnki^{(1)}$. The gradient and perpendicular gradient of $f$ are then
+%\bseqn{
+%	\gradS f &= \sum_{n,k,i} f_{n,k,i} \: \gradS \Big( \genjacw^{(1,0)} \: \scopnki^{(1)} \Big) \\
+%	\rvec \times \gradS f &= \sum_{n,k,i} f_{n,k,i} \: \rvec \times \gradS \Big( \genjacw^{(1,0)} \: \scopnki^{(1)} \Big).
+%}
+%For the whole sphere, recall from \bsrefsection{section:VSHs} that we simply chose the vector spherical harmonics as our tangent bundle basis, defined as the gradient and perpendicular gradients of the scalar spherical harmonics. We could make that choice because the vector spherical harmonics as defined were naturally orthogonal. Unfortunately, we do not have the same luxury here, with the sets $\{ \gradS \Big( \genjacw^{(a,0)} \: \scopnki^{(a)} \Big), \rvec \times \gradS \Big( \genjacw^{(a,0)} \: \scopnki^{(a)} \Big) \}$ and $\{ \gradS \scopnki^{(a)}, \rvec \times \gradS \scopnki^{(a)} \}$ not being orthogonal for any parameter $a$. As such, one would need to find an orthogonal basis that spans the tangent bundle of the spherical cap $\Omega$, such that we can sparsely expand, either analytically or numerically, the spherical gradients of our scalar basis functions (i.e. $\gradS \scopnki^{(a)}$ and $\rvec \times \gradS \scopnki^{(a)}$).
 
 
 

@@ -542,7 +542,7 @@ Let $\uvec$ be a vector-valued function on $\Omega$ whose values are of the form
 }
 for some scalar functions $u^\varphi, u^\theta$. Such a function $\uvec$ we refer to as a \textit{vector-valued function in the tangent bundle} of the sphere. Importantly, the set $\{\gradYlm, \gradpYlm\}$ form a complete and orthogonal basis for such functions \cite{barrera1985vector}. That is, given $\uvec$, there exist coefficients $\{u_{l,m}^{\gradYlm}, u_{l,m}^{\gradpYlm} \}$ such that for large enough $N$:
 \bseqn{
-	\uvec = \sum_{l = 0}^{N} \sum_{m = -l}^{l} u_{l,m}^{\gradYlm} \; \gradYlm + u_{l,m}^{\gradpYlm} \; \gradpYlm.
+	\uvec = \sum_{l = 0}^{N} \sum_{m = -l}^{l} u_{l,m}^{\gradY} \; \gradYlm + u_{l,m}^{\gradpY} \; \gradpYlm.
 }
 Vector spherical harmonics have been widely used in electrostatics (e.g. \cite{barrera1985vector}), electrodynamics (e.g. \cite{carrascal1991vector}), and of course fluid dynamics including weather and climate modelling (e.g. \cite{moses1974use, fengler2005nonlinear, swarztrauber1996spectral}). Other definitions for VSHs are used (e.g. \cite{hill1954theory}), however it is convenient for deriving explicit sparse relations and operators to use the ones described here. In particular, we can note that computing the gradient or divergence of a function is merely a matter of conversion between the SH and the VSH bases.
 
@@ -1287,7 +1287,7 @@ using the fact that $\divergence (\grad^\perp f )\equiv 0$ for any function $f$.
 \end{proof}
 
 
-\section{Examples}
+\section{Examples}\label{section:examples}
 
 Now that we have our differential operators, let us apply them in some examples. 
 

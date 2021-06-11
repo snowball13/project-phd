@@ -84,7 +84,7 @@ where $Y_0^h$ is chosen so that $\ip< Y_0^h, \: Y_0^h >_{\ch^h} = 1$.
 
 \subsection{Explicit construction}
 
-A continuation to the procedure for defining OPs on quadratic curves (see \cite{olver2021orthogonal}) has also been presented \cite{olver2020orthogonal}, where OPs are defined on quadratic surfaces of revolution in higher dimensions (specifically, surfaces in $\R^{d+1} for d \ge 2$). The authors describe their technique as modelled on the structure of the unit sphere, by approaching the construction as a generalisation of spherical harmonics.
+A continuation to the procedure for defining OPs on quadratic curves (see \cite{olver2021orthogonal}) has also been presented \cite{olver2020orthogonal}, where OPs are defined on quadratic surfaces of revolution in higher dimensions (specifically, surfaces in $\R^{d+1}$ for $d \ge 2$). The authors describe their technique as modelled on the structure of the unit sphere, by approaching the construction as a generalisation of spherical harmonics.
 
 Using this approach, we can construct the 3D orthogonal polynomials on the spherical cap or band $\Omega$ from 1D orthogonal polynomials on the interval $[\alpha,\beta]$, and from Fourier series written as orthogonal polynomials in $x$ and $y$. Recall that the spherical cap is defined by
 \bseqn{
@@ -828,7 +828,7 @@ General linear partial differential operators with polynomial variable coefficie
 }
 Importantly, this operator will have banded-block-banded structure, and hence will be sparse, as seen in \bsreffig{fig:sc:sparsity}.
 
-Another desirable operator is the Biharmonic operator $\DeltaS^2$, for which we assume zero Dirichlet and Neumann conditions. That is, 
+Another desirable operator is the Biharmonic operator $\DeltaS^2$, for which we assume zero Dirichlet and Neumann conditions. That is, \bstodo{All functions not dependent on r (ie any we expand in this basis) satisfy the derivative BC automatically. I am fairly sure this is still the BC for the sphere though..?}
 \bseqn{
 	u(x,y,z) &= 0, \quad \pfpx{n}{u}(x,y,z) = \nabla_S u(x,y,z) \cdot \unitvec{n}(x,y,z) = 0 \quad \text{for } (x,y,z) \in \partial\Omega
 }
