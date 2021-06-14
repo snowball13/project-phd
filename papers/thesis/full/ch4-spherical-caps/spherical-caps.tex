@@ -840,9 +840,6 @@ and the boundary conditions simplify to
 \bseqn{
 	u(x,y,z) &= 0, \quad \pfpx{z}{u}(x,y,z) = 0 \quad \text{for } (x,y,z) \in \partial\Omega.
 }
-
-\bstodoinline{The above I think is now correct. Does it make sense?}
-
 The matrix operator for the biharmonic operator will take us from coefficients in the space $\bigW^{(2)}(x,y,z)$ to coefficients in the space $\bigscopN^{(2)}(x,y,z)$. To construct this, we can simply multiply together two of the spherical Laplacian operators defined in \bsrefdef{def:sc:differentialoperators}, namely $\calL^{(0)\to(2)}$ and $\calL_W^{(2)\to(0)}$:
 \bseqn{
 	\calB^{(2)}_W := \calL^{(0)\to(2)} \: \calL_W^{(2)\to(0)}.
@@ -1165,11 +1162,7 @@ Our last example is the biharmonic equation. Find $u(x,y,z)$ given a function $f
 	\end{cases}
 	\label{eqn:sc:biharmonic}
 }
-where $\DeltaS^2$ is the biharmonic operator, noting the imposition of zero Dirichlet and Neumann boundary conditions on $u$. Recall from \bsrefsection{section:sc:furtherdiffoperators} that for the spherical cap, the boundary conditions here simplify to $u = \pfpx{z}{u} = 0$ on $\partial \Omega$ (since the normal vector of the boundary is simply $\phivec(x,y,z)$).
-
-\bstodoinline{The above just references the BCs explained earlier.}
-
-In \bsreffig{fig:sc:biharmonic} we see the solution to the biharmonic \bsrefeqn{eqn:sc:biharmonic} in the spherical cap $\Omega$. In \bsreffig{fig:sc:biharmonic} we also show the norms of each block of calculated coefficients of the approximation for four more complex right-hand sides of the biharmonic equation with $N = 200$, that is, $(N+1)^2 = 40,401$ unknowns. Once again, the rate of decay in the coefficients is a proxy for the rate of convergence of the computed solution, and we see that we achieve exponential convergence for these more complex functions.
+where $\DeltaS^2$ is the biharmonic operator, noting the imposition of zero Dirichlet and Neumann boundary conditions on $u$. Recall from \bsrefsection{section:sc:furtherdiffoperators} that for the spherical cap, the boundary conditions here simplify to $u = \pfpx{z}{u} = 0$ on $\partial \Omega$ (since the normal vector of the boundary is simply $\phivec(x,y,z)$). In \bsreffig{fig:sc:biharmonic} we see the solution to the biharmonic \bsrefeqn{eqn:sc:biharmonic} in the spherical cap $\Omega$. In \bsreffig{fig:sc:biharmonic} we also show the norms of each block of calculated coefficients of the approximation for four more complex right-hand sides of the biharmonic equation with $N = 200$, that is, $(N+1)^2 = 40,401$ unknowns. Once again, the rate of decay in the coefficients is a proxy for the rate of convergence of the computed solution, and we see that we achieve exponential convergence for these more complex functions.
 
 
 \subsection{Other boundary conditions}
