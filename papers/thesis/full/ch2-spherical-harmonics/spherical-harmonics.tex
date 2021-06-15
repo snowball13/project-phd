@@ -205,12 +205,13 @@ For multiplication by $x$ and $y$, note that the complex exponential satisfies
 }
 Combining this with the results in \bsrefcor{corollary:jacobirelations}, the expressions for multiplication of the spherical harmonic $\Ylm$ by $x$ and $y$ are then:
 \bseqn{
-	x \,\Ylmxyz &= \clm \costheta \: \eimtheta \: \rho(z)^{|m|+1} P^{(|m|,|m|)}_{l-|m|}(z) \\
+	&x \,\Ylmxyz \\
+	&= \clm \costheta \: \eimtheta \: \rho(z)^{|m|+1} P^{(|m|,|m|)}_{l-|m|}(z) \\
 	&= \half \clm (e^{i(m+1)\theta} + e^{i(m-1)\theta}) \rho(z)^{|m|+1} P^{(|m|,|m|)}_{l-|m|}(z) \\
 	&= \half \clm e^{i(m+1)\theta} \rho(z)^{|m|+1} \: \big[ \tilde \alpha_{l,m,4} P^{(|m|+1,|m|+1)}_{l-|m|}(z) + \tilde \alpha_{l,m,2} P^{(|m|+1,|m|+1)}_{l-|m|-2}(z) \big] \\
-	&\quad \quad + \half \clm e^{i(m-1)\theta} \rho(z)^{|m|-1} \: \big[ \tilde \alpha_{l,m,3} P^{(|m|-1,|m|-1)}_{l-|m|+2}(z) + \tilde \alpha_{l,m,1} P^{(|m|-1,|m|-1)}_{l-|m|}(z) \big] \\
+	&\quadtwo + \half \clm e^{i(m-1)\theta} \rho(z)^{|m|-1} \: \big[ \tilde \alpha_{l,m,3} P^{(|m|-1,|m|-1)}_{l-|m|+2}(z) + \tilde \alpha_{l,m,1} P^{(|m|-1,|m|-1)}_{l-|m|}(z) \big] \\
 	&= \alpha_{l,m,1} Y^{m-1}_{l-1}(x,y,z) +  \alpha_{l,m,2} Y^{m+1}_{l-1}(x,y,z) \\
-	&\quad \quad + \alpha_{l,m,3} Y^{m-1}_{l+1}(x,y,z) + \alpha_{l,m,4} Y^{m+1}_{l+1}(x,y,z),
+	&\quadtwo + \alpha_{l,m,3} Y^{m-1}_{l+1}(x,y,z) + \alpha_{l,m,4} Y^{m+1}_{l+1}(x,y,z),
 }
 and
 \bseqn{
@@ -488,7 +489,7 @@ using the orthonormality of the spherical harmonics. As discussed in \bsrefchapt
 
 A multivariate analogue of Clenshaw's recursive algorithm for evaluation of a function expanded in an OP basis has been established for methods on other domains in 2D such as the triangle \cite{olver2019triangle}, and we proceed similarly here. We can use the Clenshaw algorithm to evaluate this function at a given point $(x,y,z)$ on $\Omega$ \cite{press2007numerical}. The multidimensional \textit{Clenshaw algorithm} is as follows:
 \bseqn{
-	\quad &\text{1) } \text{Set } \vec{\xi}_{N+2} = \bold{0}, \: \vec{\xi}_{N+2} = \bold{0}. \\
+	\quad &\text{1) } \text{Set } \vec{\xi}_{N+2} = \vec{0}, \: \vec{\xi}_{N+2} = \vec{0}. \\
 	\quad &\text{2) } \text{For } n = N:-1:0 \\
 	\quad & \quad \quad \quad \text{set } \vec{\xi}_{n}^T = \fvec_n^T - \vec{\xi}_{n+1}^T D^T_n (B_n - G_n(x,y,z)) -  \vec{\xi}_{n+2}^T D^T_{n+1}C_{n+1} \\
 	\quad &\text{3) } \text{Output: } f(x,y,z) \approx \vec{\xi}_{0}^T \SHvec_0(x,y,z) \equiv \xi_0 Y_0.
@@ -507,7 +508,7 @@ i.e. $V \fvec$ is the coefficients vector for the expansion of the function $(x,
 
 Let $\vec{v}$ be the coefficients of the expansion of $v$ up to order $N$. The operator $V$ would then be the result of the following \textit{operator Clenshaw algorithm}:
 \bseqn{
-	\quad &\text{1) } \text{Set } \vec{\xi}_{N+2} = \bold{0}, \: \vec{\xi}_{N+2} = \bold{0}. \\
+	\quad &\text{1) } \text{Set } \vec{\xi}_{N+2} = \vec{0}, \: \vec{\xi}_{N+2} = \vec{0}. \\
 	\quad &\text{2) } \text{For } n = N:-1:0 \\
 	\quad & \quad \quad \quad \text{set } \vec{\xi}_{n}^T = \vec{v}_n^T - \vec{\xi}_{n+1}^T D^T_n (B_n - G_n(J_x,J_y,J_z)) -  \vec{\xi}_{n+2}^T D^T_{n+1}C_{n+1} \\
 	\quad &\text{3) } \text{Output: } f(x,y,z) \approx \vec{\xi}_{0}^T \SHvec_0(x,y,z) \equiv \xi_0 Y_0
@@ -799,7 +800,8 @@ The integral over $\theta$ in \bsrefeqn{eqn:lemmaVSHrecurrencesproofz1} is simpl
 	&= \int_{-1}^{1} \Big\{ \abs{m}(\abs{m}+2) z \jaclmabs{l}{m} \jaclmabs{l'}{m} \rho^{2\abs{m}} \nonumber \\
 	&\quadfour + z d_{l,\abs{m}} d_{l',\abs{m}} \jaclmbracket{l}{\abs{m}+1} \jaclmbracket{l'}{\abs{m}+1} \rho^{2\abs{m}+2} \Big\} \: \D z \nonumber \\
 	&= \int_{-1}^{1} \Big\{ \abs{m}(\abs{m}+2) \jaclmabs{l'}{m} \rho^{2\abs{m}} \big[ \tilde\gamma_{l,\abs{m},1} \jaclmabs{l-1}{m} + \tilde\gamma_{l,\abs{m},2} \jaclmabs{l+1}{m} \big] \nonumber \\
-	&\quadtwo + d_{l,\abs{m}} d_{l',\abs{m}} \jaclmbracket{l'}{\abs{m}+1} \rho^{2\abs{m}+2} \big[ \tilde\gamma_{l,\abs{m}+1,1} \jaclmbracket{l-1}{\abs{m}+1} + \tilde\gamma_{l,\abs{m}+1,2} \jaclmbracket{l+1}{\abs{m}+1} \big]\Big\} \: \D z \nonumber \\
+	&\quadfour + d_{l,\abs{m}} d_{l',\abs{m}} \jaclmbracket{l'}{\abs{m}+1} \rho^{2\abs{m}+2} \nonumber \\
+	&\quadfour \quadtwo \cdot \big[ \tilde\gamma_{l,\abs{m}+1,1} \jaclmbracket{l-1}{\abs{m}+1} + \tilde\gamma_{l,\abs{m}+1,2} \jaclmbracket{l+1}{\abs{m}+1} \big]\Big\} \: \D z \nonumber \\
 	&= c_{l-1}^{m} \delta_{l',l-1} \big[ \abs{m}(\abs{m}+2) {\tilde\gamma_{l,\abs{m},1} \over 2\pi (c_{l-1}^{\abs{m}})^2} + d_{l,\abs{m}} d_{l-1,\abs{m}} {\tilde\gamma_{l,\abs{m}+1,1} \over 2\pi (c_{l-1}^{\abs{m}+1})^2} \big] \nonumber \\
 	&\quadtwo + c_{l+1}^{m} \delta_{l',l+1} \big[ \abs{m}(\abs{m}+2) {\tilde\gamma_{l,\abs{m},2} \over 2\pi (c_{l+1}^{\abs{m}})^2} + d_{l,\abs{m}} d_{l+1,\abs{m}} {\tilde\gamma_{l,\abs{m}+1,2} \over 2\pi (c_{l+1}^{\abs{m}+1})^2} \big] \nonumber \\
 	&= c_{l-1}^{m} \delta_{l',l-1} \big[ \abs{m}(\abs{m}+2) {\tilde\gamma_{l,\abs{m},1} \over (c_{l-1}^{\abs{m}})^2} + d_{l,\abs{m}} d_{l-1,\abs{m}} {\tilde\gamma_{l,\abs{m}+1,1} \over (c_{l-1}^{\abs{m}+1})^2} \big] \nonumber \\
@@ -808,7 +810,7 @@ The integral over $\theta$ in \bsrefeqn{eqn:lemmaVSHrecurrencesproofz1} is simpl
 Combining \bsrefeqn{eqn:lemmaVSHrecurrencesproofz2} with \bsrefeqn{eqn:lemmaVSHrecurrencesproofz1}, we obtain that
 \bseqnnumber{
 	\ip<z \gradYlm, \gradYlmprime> &= \clm \delta_{m',m} \Big\{ c_{l-1}^{m} \delta_{l',l-1} \big[ \abs{m}(\abs{m}+2) {\tilde\gamma_{l,\abs{m},1} \over (c_{l-1}^{\abs{m}})^2} + d_{l,\abs{m}} d_{l-1,\abs{m}} {\tilde\gamma_{l,\abs{m}+1,1} \over (c_{l-1}^{\abs{m}+1})^2} \big] \nonumber \\
-	&\quadfour + c_{l+1}^{m} \delta_{l',l+1} \big[ \abs{m}(\abs{m}+2) {\tilde\gamma_{l,\abs{m},2} \over (c_{l+1}^{\abs{m}})^2} + d_{l,\abs{m}} d_{l+1,\abs{m}} {\tilde\gamma_{l,\abs{m}+1,2} \over (c_{l+1}^{\abs{m}+1})^2} \big] \Big\}. \label{eqn:lemmaVSHrecurrencesproofz3}
+	&\quadtwo + c_{l+1}^{m} \delta_{l',l+1} \big[ \abs{m}(\abs{m}+2) {\tilde\gamma_{l,\abs{m},2} \over (c_{l+1}^{\abs{m}})^2} + d_{l,\abs{m}} d_{l+1,\abs{m}} {\tilde\gamma_{l,\abs{m}+1,2} \over (c_{l+1}^{\abs{m}+1})^2} \big] \Big\}. \label{eqn:lemmaVSHrecurrencesproofz3}
 }
 We can see here in \bsrefeqn{eqn:lemmaVSHrecurrencesproofz3} that the nonzero coefficients $\calC_{l',m'}$ are those described in the Lemma as $\Gamma_{l,m,1}$ and $\Gamma_{l,m,2}$.
 
@@ -817,13 +819,13 @@ Next, we also have that
 	&\ip<z \gradYlm, \gradpYlmprime> \nonumber \\
 	&= \iint_\Omega \cosphi \: \gradYlm \cdot {\gradpYlmprime}^* \sinphi \: \D\varphi \: \D\theta \nonumber \\
 	&= \clm \clmprime \Big( \int_0^{2\pi} \eimtheta \eimthetaprime \: \D\theta \Big) \nonumber \\
-	&\quadtwo \cdot \Big( \int_{-1}^{1} \rho(z)^{\abs{m} + \abs{m'} - 2} \Big\{ i m' z \jaclmabs{l'}{m'}(z) \big[ \abs{m} z \jaclmabs{l}{m}(z) - \rho(z)^2 \jaclmabsdz{l}{m}(z) \big] \nonumber \\
-	&\quadfour + i m z \jaclmabs{l}{m}(z) \big[ \abs{m'} z \jaclmabs{l'}{m'}(z) - \rho(z)^2 \jaclmabs{l'}{m'}(z) \big] \Big\} \: \D z \Big) \nonumber \\
-	&= \clm c_{l'}^{m} 2 \pi \delta_{m',m} \: \int_{-1}^{1} \Big\{ 2i m\abs{m} z^2 \jaclmabs{l}{m}(z) \jaclmabs{l'}{m}(z) \rho(z)^{2\abs{m} - 2} \nonumber \\
-	&\quadeight \quadtwo - i m z \jaclmabs{l}{m}(z) \jaclmabsdz{l'}{m}(z) \rho(z)^{2\abs{m}} \nonumber \\
-	&\quadeight \quadtwo - i m z \jaclmabsdz{l}{m}(z) \jaclmabs{l'}{m}(z) \rho(z)^{2\abs{m}} \Big\} \: \D z \nonumber \\
-	&= \clm c_{l'}^{m} 2 \pi \delta_{m',m} \: \int_{-1}^{1} i m \jaclmabs{l}{m}(z) \jaclmabs{l'}{m}(z) \rho(z)^{2\abs{m}} \: \D z \nonumber \\
-	&= \delta_{l',l} \delta_{m',m} i m. \label{eqn:lemmaVSHrecurrencesproofz4}
+	&\quadtwo \cdot \Big( \int_{-1}^{1} \rho^{\abs{m} + \abs{m'} - 2} \Big\{ i m' z \jaclmabs{l'}{m'} \big[ \abs{m} z \jaclmabs{l}{m} - \rho^2 \jaclmabsdz{l}{m} \big] \nonumber \\
+	&\quadfour \quadfour \quadtwo + i m z \jaclmabs{l}{m} \big[ \abs{m'} z \jaclmabs{l'}{m'} - \rho^2 \jaclmabs{l'}{m'} \big] \Big\} \: \D z \Big) \nonumber \\
+	&= \clm c_{l'}^{m} 2 \pi \delta_{m',m} \: \int_{-1}^{1} \Big\{ 2i m\abs{m} z^2 \jaclmabs{l}{m} \jaclmabs{l'}{m} \rho^{2\abs{m} - 2} \nonumber \\
+	&\quadeight \quadtwo - i m z \jaclmabs{l}{m} \jaclmabsdz{l'}{m} \rho^{2\abs{m}} \nonumber \\
+	&\quadeight \quadtwo - i m z \jaclmabsdz{l}{m} \jaclmabs{l'}{m} \rho^{2\abs{m}} \Big\} \: \D z \nonumber \\
+	&= \clm c_{l'}^{m} \; 2 \pi \; \delta_{m',m} \: \int_{-1}^{1} i m \jaclmabs{l}{m}(z) \jaclmabs{l'}{m}(z) \rho(z)^{2\abs{m}} \: \D z \nonumber \\
+	&= \delta_{l',l} \; \delta_{m',m} \; i \; m. \label{eqn:lemmaVSHrecurrencesproofz4}
 }
 %&= \delta_{l',l} \delta_{m',m} i m (-1)^m. \label{eqn:lemmaVSHrecurrencesproofz4}
 Again, we can see here in \bsrefeqn{eqn:lemmaVSHrecurrencesproofz4} that the coefficients $\calC^\perp_{l',m'}$ are zero when $l' \ne l$ or $m' \ne m$, and that the nonzero coefficients are those described in the Lemma as $\Gamma_{l,m,3}$.
@@ -883,7 +885,7 @@ for each $(x,y,z) \in \Omega$. The VSH Jacobi matrices are banded-block-banded d
 			& & & \ddots & \ddots & \ddots \\
 		\end{pmatrix}.
 }
-Let \nomenclature[zerod]{$0_d$}{The zero matrix in $\R^{d \times d}$} $0_2 \in \R^{2\times2}$ be the $2\times2$ zero matrix. $\tangentjacobi_x$ has subblock-bandwidths $(4,4)$ since for $l \in \No$:
+Let \nomenclature[zerod]{$0_d$}{The zero matrix in $\R^{d \times d}$} $0_2 \in \R^{2\times2}$ be the zero matrix. $\tangentjacobi_x$ has subblock-bandwidths $(4,4)$ since for $l \in \No$:
 \bseqn{
 	A_{x,l} &:= 
 		\begin{pmatrix}
@@ -897,7 +899,10 @@ Let \nomenclature[zerod]{$0_d$}{The zero matrix in $\R^{d \times d}$} $0_2 \in \
 			\mathcal{A}_{l,-l+1,5} & \ddots & \ddots \\
 			& \ddots & \ddots & \mathcal{A}_{l,l-1,6} \\
 			& & \mathcal{A}_{l,l,5} & 0_2
-		\end{pmatrix}  \in \R^{2(2l+1)\times2(2l+1)}, \\
+		\end{pmatrix}  \in \R^{2(2l+1)\times2(2l+1)},
+}
+and
+\bseqn{
 	C_{x,l} &:= 
 		\begin{pmatrix}
 			\mathcal{A}_{l,-l,2} & & & \\
@@ -910,12 +915,12 @@ Let \nomenclature[zerod]{$0_d$}{The zero matrix in $\R^{d \times d}$} $0_2 \in \
 }
 where
 \bseqn{
-	\mathcal{A}_{l,m,j} := 
+	\mathcal{A}_{l,m,j} &:= 
 		\begin{pmatrix}
 			A_{l,m,j} & 0 \\
 			0 & A_{l,m,j}
-		\end{pmatrix} \: \text{for } j = 1, 2, 3, 4, \quad
-	\mathcal{A}_{l,m,j} := 
+		\end{pmatrix} \: \text{for } j = 1, 2, 3, 4, \\
+	\mathcal{A}_{l,m,j} &:= 
 		\begin{pmatrix}
 			0 & A_{l,m,j} \\
 			- A_{l,m,j} & 0
@@ -935,7 +940,10 @@ Similarly, $\tangentjacobi_y$ also has subblock-bandwidths $(4,4)$ since for $l 
 			\mathcal{B}_{l,-l+1,5} & \ddots & \ddots \\
 			& \ddots & \ddots & \mathcal{B}_{l,l-1,6} \\
 			& & \mathcal{B}_{l,l,5} & 0_2
-		\end{pmatrix}  \in \R^{2(2l+1)\times2(2l+1)}, \\
+		\end{pmatrix}  \in \R^{2(2l+1)\times2(2l+1)},
+}
+and
+\bseqn{
 	C_{y,l} &:= 
 		\begin{pmatrix}
 			\mathcal{B}_{l,-l,2} & & & \\
@@ -948,12 +956,12 @@ Similarly, $\tangentjacobi_y$ also has subblock-bandwidths $(4,4)$ since for $l 
 }
 where
 \bseqn{
-	\mathcal{B}_{l,m,j} := 
+	\mathcal{B}_{l,m,j} &:= 
 		\begin{pmatrix}
 			B_{l,m,j} & 0 \\
 			0 & B_{l,m,j}
-		\end{pmatrix} \: \text{for } j = 1, 2, 3, 4, \quad
-	\mathcal{B}_{l,m,j} := 
+		\end{pmatrix} \: \text{for } j = 1, 2, 3, 4, \\
+	\mathcal{B}_{l,m,j} &:= 
 		\begin{pmatrix}
 			0 & B_{l,m,j} \\
 			- B_{l,m,j} & 0
@@ -976,7 +984,10 @@ Finally, $\tangentjacobi_z$ has subblock-bandwidths $(2,2)$, as for $l \in \No$:
 			& & \ddots \\
 			& & & 0 & \Gamma_{l,l,3} \\
 			& & & - \Gamma_{l,l,3} & 0 \\
-		\end{pmatrix}  \in \R^{2(2l+1)\times2(2l+1)}, \\
+		\end{pmatrix}  \in \R^{2(2l+1)\times2(2l+1)},
+}
+and
+\bseqn{
 	C^z_l &:= 
 		\begin{pmatrix}
 			0 \\
@@ -994,32 +1005,32 @@ The sparsity and structure of the Jacobi matrices for the VSHs as we have define
 
 
 
-\subsection{Three-term recurrence relation for $\VSHvecfull(x,y,z)$}\label{subsection:VSHrecurrence}
+\subsection{Three-term recurrence relation for $\VSHvecfull$}\label{subsection:VSHrecurrence}
 
 We can combine each system in \bsrefeqn{eqn:tangentjacobimatdef} into a block-tridiagonal system for any $(x,y,z) \in \Omega$:
 \bseqn{
 	\renewcommand\arraystretch{1.3}
 	\begin{pmatrix}
 		I_6 & & & \\
-		B_1-G_1(x,y,z) & A_1 & & \\
-		C_2 & B_2-G_2(x,y,z) & \quad A_3 \quad & \\
-		& C_3 & B_3 - G_3(x,y,z)  & \ddots \\
+		B_1-G_1 & A_1 & & \\
+		C_2 & B_2-G_2 & \quad A_3 \quad & \\
+		& C_3 & B_3 - G_3  & \ddots \\
 		& & \ddots &\ddots
 	\end{pmatrix}
-	\VSHvecfull(x,y,z)
+	\VSHvecfull
 	=
 	\begin{pmatrix}
-		\VSHvecfull_1(x,y,z) \\ \vec{0} \\ \vec{0} \\ \vdots
+		\VSHvecfull_1 \\ \vec{0} \\ \vec{0} \\ \vdots
 	\end{pmatrix},
 }
-where we note that 
+where 
 \bseqn{
 	\VSHvecfull_{1}(x,y,z) := 
 		\begin{pmatrix}
 			\gradY_1^{-1}(x,y,z)^\top \\ \gradpY_1^{-1}(x,y,z)^\top \\ \gradY_1^{0}(x,y,z)^\top \\ \gradpY_1^{0}(x,y,z)^\top \\ \gradY_1^{1}(x,y,z)^\top \\ \gradpY_1^{1}(x,y,z)^\top \\
-			\end{pmatrix}, 
+		\end{pmatrix}, 
 }
-can be calculated explicitly, and for each $l \in \N$,
+which we note can be calculated explicitly, and for each $l \in \N$,
 \bseqnnumber{
 	A_l &:= 
 		\begin{pmatrix}
@@ -1160,7 +1171,7 @@ As eluded to, we would like to be able to obtain the coefficients for the expans
 \subsubsection{Function evaluation}
 The Clenshaw algorithm presented in \bsrefsection{subsubsection:clenshaw} can also be used to evaluate a vector-valued function in the tangent bundle of $\Omega$, where the matrices $C_n, B_n, \Dnt, G_n(x,y,z)$ are all defined in \bsrefsection{subsection:VSHrecurrence}:
 \bseqn{
-	\quad &\text{1) } \text{Set } \vec{\xi}_{N+2} = \bold{0}, \: \vec{\xi}_{N+2} = \bold{0}. \\
+	\quad &\text{1) } \text{Set } \vec{\xi}_{N+2} = \vec{0}, \: \vec{\xi}_{N+2} = \vec{0}. \\
 	\quad &\text{2) } \text{For } n = N:-1:1 \\
 	\quad & \quad \quad \quad \text{set } \vec{\xi}_{n}^\top = (\uvec^c_n)^\top - \vec{\xi}_{n+1}^\top \Dnt \big(B_n - G_n(x,y,z)\big) -  \vec{\xi}_{n+2}^\top D^\top_{n+1} C_{n+1} \\
 	\quad &\text{3) } \text{Output: } \uvec(x,y,z) \approx \VSHvecfull_1(x,y,z)^\top \vec{\xi}_{1} \\
@@ -1236,18 +1247,6 @@ where $\uvec \equiv \phivec \: u_\varphi + \thetavec \: u_\theta$.
 \begin{theorem}
 	The operator matrices defined in \bsrefdef{def:SHoperators} are diagonal, and are given by:
 \bseqn{
-	\calD &\equiv \calL := 
-		\begin{pmatrix}
-			\calL_0 & & \\
-			& \ddots & \\
-			& & \calL_N
-		\end{pmatrix} \in \R^{(N+1)^2 \times (N+1)^2}, \quad
-	\tilde \calD = 
-		\begin{pmatrix}
-			\tilde \calD_0 & & \\
-			& \ddots & \\
-			& & \tilde \calD_N
-		\end{pmatrix} \in \R^{2(N+1)^2 \times 2(N+1)^2}, \\
 	\calG &= I_{(N+1)^2}, \quad
 	\tilde \calG = 
 		\begin{pmatrix}
@@ -1256,7 +1255,19 @@ where $\uvec \equiv \phivec \: u_\varphi + \thetavec \: u_\theta$.
 			& & \ddots & & \\
 			& & & 1 & \\
 			& & & & 0
-		\end{pmatrix}  \in \R^{2(N+1)^2 \times 2(N+1)^2},
+		\end{pmatrix}  \in \R^{2(N+1)^2 \times 2(N+1)^2}, \\
+	\calD &\equiv \calL := 
+		\begin{pmatrix}
+			\calL_0 & & \\
+			& \ddots & \\
+			& & \calL_N
+		\end{pmatrix} \in \R^{(N+1)^2 \times (N+1)^2}, \\
+	\tilde \calD &= 
+		\begin{pmatrix}
+			\tilde \calD_0 & & \\
+			& \ddots & \\
+			& & \tilde \calD_N
+		\end{pmatrix} \in \R^{2(N+1)^2 \times 2(N+1)^2},
 }
 where
 \bseqn{
@@ -1369,7 +1380,7 @@ A keen eye may notice that -- while we have operators for the multiplication by 
 \begin{proof}
 	Using the relations that $\gradYlm = \gradS \Ylm$ and $\gradpYlm = \rvec \times \gradS \Ylm$ for each $l \in \N$, $m \in \Z$ s.t. $-l \le m \le l$, we have that:
 \bseqn{
-	\rvec \times \bold{u} &= \rvec \times \sum_{l=0}^{N} \sum_{m=-l}^{l} [ u^{\gradY}_{l,m} \gradYlm + u^{\gradpY}_{l,m} \gradpYlm ] \\
+	\rvec \times \vec{u} &= \rvec \times \sum_{l=0}^{N} \sum_{m=-l}^{l} [ u^{\gradY}_{l,m} \gradYlm + u^{\gradpY}_{l,m} \gradpYlm ] \\
 	&= \sum_{l=0}^{N} \sum_{m=-l}^{l} [ u^{\gradY}_{l,m} \rvec \times \gradYlm + u^{\gradpY}_{l,m} \rvec \times ( \rvec \times \gradYlm ) ] \\
 	&= \sum_{l=0}^{N} \sum_{m=-l}^{l} [ u^{\gradY}_{l,m} \: \gradpYlm - u^{\gradpY}_{l,m} \: \gradYlm ) ].
 }

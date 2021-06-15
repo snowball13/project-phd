@@ -128,7 +128,8 @@ We can now define the 3D OPs for the spherical cap.
 
 By construction, $\{\scopnkia\}$ are orthogonal with respect to the inner product \nomenclature[innerQ]{$\ip< p, \: q >_{\scopa}$}{A multidimensional inner product over $\Omega$ with the weight $\Wa$ associated with the OPs $\{\scopnkia\}$}
 \bseqn{
-	\ip< p, \: q >_{\scopa} &:= \int_\Omega p(\xvec, z) \: q(\xvec, z) \: \genjacw^{(a,0)}(z) \: \D A \\
+	&\ip< p, \: q >_{\scopa} \\
+	&:= \int_\Omega p(\xvec, z) \: q(\xvec, z) \: \genjacw^{(a,0)}(z) \: \D A \\
 	&= \int_\alpha^1 \int_0^{2\pi} p(\rho(z) \cos\theta, \rho(z) \sin\theta, z) \: q(\rho(z) \cos\theta, \rho(z) \sin\theta, z) \: \D \theta \: \genjacw^{(a,0)}(z) \: \D z,
 }
 with \nomenclature[normQ]{$\norm{f}_{\scopa}$}{The norm of a function f, defined by the square root of the inner product over $\Omega$ given by the weight $\Wa$ associated with the OPs $\{\scopnkia\}$}
@@ -196,7 +197,9 @@ for $(x,y,z) \in \Omega$, where
 	\alphaa_{n,k,3} &:=\eta_{k-1} \: \ip<\genjacnmk^{(a, 2k)}, \: \genjac_{n-k+1}^{(a, 2(k-1))}>_{\genjacw^{(a, 2k)}}, \\
 	\alphaa_{n,k,4} &:= \eta_{k} \: \ip<\genjacnmk^{(a, 2k)}, \genjac_{n-k-1}^{(a, 2(k+1))}>_{\genjacw^{(a, 2(k+1))}}, \\
 	\alphaa_{n,k,5} &:= \eta_{k-1} \: \ip<\genjacnmk^{(a, 2k)}, \: \genjac_{n-k+2}^{(a, 2(k-1))}>_{\genjacw^{(a, 2k)}}, \\
-	\alphaa_{n,k,6} &:=\eta_{k} \: \ip<\genjacnmk^{(a, 2k)}, \genjacnmk^{(a, 2(k+1))}>_{\genjacw^{(a, 2(k+1))}}, \\
+	\alphaa_{n,k,6} &:=\eta_{k} \: \ip<\genjacnmk^{(a, 2k)}, \genjacnmk^{(a, 2(k+1))}>_{\genjacw^{(a, 2(k+1))}},
+}
+\bseqn{
 	\betaa_{n,k,i,j} &:= 
 		\begin{cases}
 			- \alphaa_{n,k,j} \quad &\text{if }(i = 0 \text{ and } j \text{ is odd}) \text{ or }(i = 1 \text{ and } j \text{ is even}) \\
@@ -239,7 +242,7 @@ These coefficients are given by
 \bseqn{
 	d_{m,j} = {\ip< y \: \scopnkia, \scopmjha >_{\scopa}}{\norm{\scopmjha}^{-2}_{\scopa}}
 }
-where we show the non-zero coefficients that result are the $\betaa_{n,k,1},\dots,\betaa_{n,k,6}$ in the lemma:sc:
+where we show the non-zero coefficients that result are the $\betaa_{n,k,1},\dots,\betaa_{n,k,6}$ as stated in the Lemma:
 \bseqn{
 	&\ip<y \: \scopnkia, \scopmjha>_{\scopa} \\
 	&= \int_\Omega \scopnkia(\xvec,z) \: \scopmjha(\xvec,z) \: y \: \genjacw^{(a,0)}(z) \: \D A \\
@@ -730,7 +733,9 @@ Using \bsrefeqn{eqn:sc:woplaplacian}, and integrating by parts thrice, we then h
 	&\quadeight \quadeight \quadtwo \quad + a (a-1) \rho^2 \big] \\
 	&\quadeight + a \: \genjacnmk^{(a,2k) \: \prime} \: \genjac_{m-k}^{(a - \tilde a, 2k)} \: \genjacw^{(a - 1, 2k+2)} \\
 	&\quadeight + \genjacnmk^{(a,2k)} \: \genjacw^{(a-1, 2k)} \big[ \genjac_{m-k}^{(a - \tilde a, 2k) \: \prime \prime} \: \genjacw^{(1, 2)} + a \genjac_{m-k}^{(a - \tilde a, 2k) \: \prime} \: \rho^2 \\
-	&\quadeight \quadeight \quadtwo \quad - 2(k+1) z \: \genjac_{m-k}^{(a - \tilde a, 2k)} \: \genjacw^{(1, 0)} \big] \Big\} \: \D z \\
+	&\quadeight \quadeight \quadtwo \quad - 2(k+1) z \: \genjac_{m-k}^{(a - \tilde a, 2k)} \: \genjacw^{(1, 0)} \big] \Big\} \: \D z
+}
+\bseqn{
 	&= \pi \: \delta_{k,j} \: \delta_{i,h} \: \int_\alpha^1 \: \Big\{ \genjac_{m-k}^{(a - \tilde a, 2k)} \: \genjacnmk^{(a,2k)} \: \genjacw^{(a - 2, 2k)} \: \big[ -k(k+1) \genjacw^{(2,0)} - 2a(k+1)z \: \genjacw^{(1,0)} \\
 	&\quadeight \quadeight \quadtwo \quad + a (a-1) \rho^2 \big] \\
 	&\quadfour \quadtwo + \genjacnmk^{(a,2k)} \: \genjacw^{(a - 1, 2k+2)} \big[ \genjac_{m-k}^{(a - \tilde a, 2k) \: \prime \prime} \: \rho^2 - 2(k+1) z \: \genjac_{m-k}^{(a - \tilde a, 2k) \: \prime} \big] \\
@@ -1015,7 +1020,7 @@ For a function $f$, with coefficients vector $\vec{f}$ for expansion in the $\{\
 }
 The trivariate Clenshaw algorithm works similar to the bivariate Clenshaw algorithm introduced in \cite{olver2019triangle} for expansions in the triangle:
 \bseqn{
-	\quad &\text{1) } \text{Set } \vec{\xi}_{N+2} = \bold{0}, \: \vec{\xi}_{N+2} = \bold{0}. \\
+	\quad &\text{1) } \text{Set } \vec{\xi}_{N+2} = \vec{0}, \: \vec{\xi}_{N+2} = \vec{0}. \\
 	\quad &\text{2) } \text{For } n = N:-1:0 \\
 	\quad & \quad \quad \quad \text{set } \vec{\xi}_{n}^T = {{\vec{f}}_n}^T - \vec{\xi}_{n+1}^T D^T_n (B_n - G_n(x,y,z)) -  \vec{\xi}_{n+2}^T D^T_{n+1}C_{n+1} \\
 	\quad &\text{3) } \text{Output: } f(x,y,z) \approx \vec{\xi}_{0} \: \bigscopta_{0}  = \xi_{0} \: \scopa_0
@@ -1037,7 +1042,7 @@ i.e. $V \vec{f}$ is the coefficients vector for the function $v(x,y,z) \: f(x,y,
 
 To this end, let $\tilde{\vec{v}}$ be the coefficients for expansion up to order $N$ in the $\{\scopnki\}$ basis of $v$ (rearranged as in \bsrefsection{section:sc:functionevaluation} so that $v(x,y,z) = {\vec{v}}^\top \: \bigscopta(x,y,z)$). Denote $X := (J_x^{(a)})^\top$, $Y := (J_y^{(a)})^\top$, $Z := (J_z^{(a)})^\top$. The operator $V$ is then the result of the following:
 \bseqn{
-	\quad &\text{1) } \text{Set } \vec{\xi}_{N+2} = \bold{0}, \: \vec{\xi}_{N+2} = \bold{0}. \\
+	\quad &\text{1) } \text{Set } \vec{\xi}_{N+2} = \vec{0}, \: \vec{\xi}_{N+2} = \vec{0}. \\
 	\quad &\text{2) } \text{For } n = N:-1:0 \\
 	\quad & \quad \quad \quad \text{set } \vec{\xi}_{n}^T = {\tilde{\vec{v}}_n}^T - \vec{\xi}_{n+1}^T D^T_n \big(B_n - G_n(X, Y, Z)\big) -  \vec{\xi}_{n+2}^T D^T_{n+1}C_{n+1} \\
 	\quad &\text{3) } \text{Output: } V = v(X, Y, Z) \approx \vec{\xi}_{0} \: \bigscopta_{0}  = \xi_{0} \: \scopa_0
