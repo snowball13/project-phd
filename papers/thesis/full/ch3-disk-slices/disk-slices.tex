@@ -6,7 +6,7 @@ The contents of the previous chapter on spherical harmonics can allow us to use 
 
 In recent years, there has been some interesting work in the area of multivariate orthogonal polynomials in two-dimensional domains (see \cite{dunkl2014orthogonal}), such as for a Chebyshev-based spectral method on the rectangle \cite{julien2009efficient}. In particular, spectral methods have been established on the disk \cite{boyd2011comparing, vasil2016tensor} and the triangle \cite{olver2019triangle}. Examples of applications for the disk include use in optics \cite{mahajan2007orthonormal}, astrophysics \cite{pringle1981accretion}, and fluid dynamics \cite{eggels1994fully, noll1976zernike, kerswell2005recent}, and for the triangle include solving Volterra integral equations \cite{gutleb2020sparse}. 
 
-For the disk, a review of spectral methods on the disk for solving the Poisson equation has been completed \cite{boyd2011comparing}, that looks at methods involving various bases for expanding functions in the disk including Zernike polynomials and Chebyshev polynomials. It was concluded that using Chebyshev polynomials yields mixed results, but that there was also no single advised basis to use, due to Zernike polynomials having a lack of radial fast transform at the time despite being found to yield accurate results. In the years since however, such radial fast transforms have been developed \cite{slevinsky2018use, sakai2009application, wilber2017computing}. The Zernike disk OPs can be written in terms of Jacobi polynomials \cite{boyd2011comparing}:
+A review of spectral methods on the disk for solving the Poisson equation has been completed \cite{boyd2011comparing}, that looks at methods involving various bases for expanding functions in the disk including Zernike polynomials and Chebyshev polynomials. It was concluded that using Chebyshev polynomials yields mixed results, but that there was also no single advised basis to use, due to Zernike polynomials having a lack of radial fast transform at the time despite being found to yield accurate results. In the years since however, such radial fast transforms have been developed \cite{slevinsky2018use, sakai2009application, wilber2017computing}. The Zernike disk OPs can be written in terms of Jacobi polynomials \cite{boyd2011comparing}:
 \bseqn{
 	Z_n^m(r, \theta) := R_n^m(r) \sin(m\theta), \quad Z_n^{-m}(r, \theta) := R_n^m(r) \cos(m\theta),
 }
@@ -43,11 +43,11 @@ where  either of the following conditions hold:
 
 For simplicity of presentation we focus on the disk-slice in this chapter, where $\rho(x) = \sqrt{1-x^2}$, $(\alpha,\beta) \subset (0, 1)$, and $(\gamma, \delta)  = (-1,1)$. However, we will discuss an extension to other geometries, including the half-disk and trapeziums, by choosing the function $\rho$ and constants $\alpha, \beta, \gamma, \delta$ appropriately (for example, choosing $\rho(x) = 1-\xi x$ and $(\alpha,\beta) = (\gamma, \delta) = (0, 1)$ for some constant $\xi > 0$ returns the trapezium case). Moreover, one should be able to see that the full disk and triangle can also be obtained in such a way.
 
-We will show that partial differential equations become sparse linear systems when viewed as acting on expansions involving a family of orthogonal polynomials (OPs) that generalise Jacobi polynomials, mirroring the ultraspherical spectral method for ordinary differential equations on the interval \cite{olver2013fast}, and its analogues on the disk \cite{vasil2016tensor} and triangle \cite{olver2018recurrence,olver2019triangle}. On the disk-slice the family of weights we consider are of the form \nomenclature[a]{$a,b,c,d$}{Lower case letters $a,b,c,d$ refer to OP family parameters (unless otherwise stated)}
+We will show that partial differential equations become sparse linear systems when viewed as acting on expansions involving a family of orthogonal polynomials that generalise Jacobi polynomials, mirroring the ultraspherical spectral method for ordinary differential equations on the interval \cite{olver2013fast}, and its analogues on the disk \cite{vasil2016tensor} and triangle \cite{olver2018recurrence,olver2019triangle}. On the disk-slice the family of weights we consider are of the form \nomenclature[a]{$a,b,c,d$}{Lower case letters $a,b,c,d$ refer to OP family parameters (unless otherwise stated)}
 \bseqn{
 	\Wabc(x,y) = (\beta - x)^a \: (x - \alpha)^b \: (1-x^2-y^2)^c
 }
-for $\alpha \leq x \leq \beta,$ $-\rho(x) \leq y \leq \rho(x)$. The corresponding OPs denoted $\hdopnkabc(x,y)$, where $n$ denotes the polynomial degree, and $0 \le k \le n$. We define these to be orthogonalised lexicographically, that is,
+for $\alpha \leq x \leq \beta,$ $-\rho(x) \leq y \leq \rho(x)$. The corresponding OPs are denoted $\hdopnkabc(x,y)$, where $n$ denotes the polynomial degree, and $0 \le k \le n$. We define these to be orthogonalised lexicographically, that is,
 \bseqn{
 	\hdopnkabc(x,y) = C_{n,k} x^{n-k} y^k + (\hbox{lower order terms})
 }
@@ -104,7 +104,7 @@ We can now write down our 2D OP family. \nomenclature[Hnk]{$\hdopnk^{(a,b,c,d)}$
 }
 \end{definition}
 
-The comparison with the construction of the 3D spherical harmonics is evident here (the $\genjac$ OPs are in place of the Jacobi polynomials, and the $\jac$ OPs are in place of the complex exponentials, which are just Chebyshev polynomials). By defining our OPs in this way, we will be able to yield sparse and banded relations for the necessary operators involved in PDEs, just as we did before.
+The comparison with the construction of the 3D spherical harmonics is evident here (the $\genjac_n$ OPs are in place of the Jacobi polynomials, and the $\jac_n$ OPs are in place of the complex exponentials, which are just Chebyshev polynomials). By defining our OPs in this way, we will be able to yield sparse and banded relations for the necessary operators involved in PDEs, just as we did before.
 
 $\{\hdopnk^{(a,b,c,d)}\}$ are orthogonal with respect to the weight \nomenclature[Wa]{$W^{(a)}, W^{(a,b,c)}, W^{(a,b,c,d)}$}{Weight function for relevant multidimensional OPs, with the given parameters}
 \bseqn{
@@ -157,7 +157,7 @@ In this case the weight $\jacw(x)$ is an ultraspherical weight, and the correspo
 
 \subsection{Jacobi matrices}
 
-Recall that Jacobi matrices are an important piece of the puzzle for using these orthogonal polynomials to practically solve PDEs in a sparse spectral method. To obtain the entries for them, we first need to establish the three-term recurrences associated with $\genjac_n^{(a,b,c)}$ and $\jac_n^{(d,c)}$. These can be expressed as: 
+Recall that Jacobi matrices are an important piece of the puzzle for using these orthogonal polynomials to practically solve PDEs in a sparse spectral method. To obtain their entries, we first need to establish the three-term recurrences associated with $\genjac_n^{(a,b,c)}$ and $\jac_n^{(d,c)}$. These can be expressed as: 
 \bseqnnumber{
 	x \genjac_n^{(a,b,c)}(x) &= \beta_n^{(a,b,c)} \genjac_{n+1}^{(a,b,c)}(x) + \alpha_n^{(a,b,c)} \genjac_n^{(a,b,c)}(x) + \beta_{n-1}^{(a,b,c)} \genjac_{n-1}^{(a,b,c)}(x) \label{eqn:ds:Hrecurrence} \\
 	y \jac_n^{(d,c)}(y) &= \delta_n^{(d,c)} \jac_{n+1}^{(d,c)}(y) + \gamma_{n}^{(d,c)} \jac_{n}^{(d,c)}(y) + \delta_{n-1}^{(d,c)} \jac_{n-1}^{(d,c)}(y). \label{eqn:ds:Precurrence}
@@ -165,7 +165,7 @@ Recall that Jacobi matrices are an important piece of the puzzle for using these
 Of course, for the disk-slice case, we have that $c = d$ and $\gamma_{n}^{(c,c)} = 0$ $\forall n=0,1,2,\dots$. We can use \bsrefeqns{eqn:ds:Hrecurrence}{eqn:ds:Precurrence} to determine the 2D recurrences for $\hdopnkabcd(x,y)$. Importantly, we can deduce sparsity in the recurrence relationships.
 
 \begin{lemma}
-	$\hdopnkabcd(x,y)$ satisfy the following 3-term recurrences:
+	$\hdopnkabcd(x,y)$ satisfy the following relations:
 \bseqn{
 	x \hdopnkabcd(x,y) &= \alphaabcd_{n,k,1} \hdop_{n-1, k}^{(a,b,c,d)}(x, y) + \alphaabcd_{n,k,2} \hdop_{n, k}^{(a,b,c,d)}(x, y) \\
 		&\quad + \alphaabcd_{n+1,k,1} \hdop_{n+1, k}^{(a,b,c)}(x, y), \\
@@ -192,7 +192,7 @@ for $(x,y) \in \Omega$, where
 \end{lemma}
 
 \begin{proof}
-The 3-term recurrence for multiplication by $x$ follows from \bsrefeqn{eqn:ds:Hrecurrence}. For the recurrence for multiplication by $y$, since $\{\hdopmjabcd\}$ for $m = 0,\dots,n+1$, $j = 0,\dots,m$ is an orthogonal basis for any degree $n+1$ polynomial, we can expand $y \: \hdopnkabcd(x,y) = \sum_{m=0}^{n+1} \sum_{j=0}^m c_{m,j} \: \hdopmjabcd(x,y)$. These coefficients are given by \nomenclature[abs]{$\abs{m}$}{The absolute value of a scalar $m$} \nomenclature[norm]{$\norm{f}$}{The norm of a function f, defined by the square root of the relevant inner product} \nomenclature[normH]{$\norm{f}_{\hdopabcd}$}{The norm of a function f, defined by the square root of the inner product over $\Omega$ given by the weight $\Wabcd$ associated with the OPs $\{\hdopnkabcd\}$}
+The relation for multiplication by $x$ follows from \bsrefeqn{eqn:ds:Hrecurrence}. For multiplication by $y$, since $\{\hdopmjabcd\}$ for $m = 0,\dots,n+1$, $j = 0,\dots,m$ is an orthogonal basis for any degree $n+1$ polynomial, we can expand $y \: \hdopnkabcd(x,y) = \sum_{m=0}^{n+1} \sum_{j=0}^m c_{m,j} \: \hdopmjabcd(x,y)$. These coefficients are given by \nomenclature[abs]{$\abs{m}$}{The absolute value of a scalar $m$} \nomenclature[norm]{$\norm{f}$}{The norm of a function f, defined by the square root of the relevant inner product} \nomenclature[normH]{$\norm{f}_{\hdopabcd}$}{The norm of a function f, defined by the square root of the inner product over $\Omega$ given by the weight $\Wabcd$ associated with the OPs $\{\hdopnkabcd\}$}
 \bseqn{
 	c_{m,j} = {\ip< y \: \hdopnkabcd, \hdopmjabcd >_{\hdopabcd}}{\norm{\hdopmjabcd}^{-2}_{\hdopabcd}}.
 }
@@ -229,7 +229,7 @@ If \bsrefcondition{cond:disk} holds we have that $\gamma^{(d,c)}_{k} = \gamma^{(
 
 \end{proof}
 
-Three-term recurrences lead to Jacobi operators that correspond to multiplication by $x$ and $y$. Define, for $n=0,1,2,\dots$: \nomenclature[Hvectorabcd]{$\bighdopabcd$}{Vector of the disk-slice/trapezium OPs ordered by degree, with parameters $a,b,c,d$} \nomenclature[Hvectornabcd]{$\bighdopabcd_n$}{(Sub-)Vector of the disk-slice/trapezium OPs of degree $n$, with parameters $a,b,c,d$}
+These relations lead to Jacobi operators that correspond to multiplication by $x$ and $y$. Define, for $n=0,1,2,\dots$: \nomenclature[Hvectorabcd]{$\bighdopabcd$}{Vector of the disk-slice/trapezium OPs ordered by degree, with parameters $a,b,c,d$} \nomenclature[Hvectornabcd]{$\bighdopabcd_n$}{(Sub-)Vector of the disk-slice/trapezium OPs of degree $n$, with parameters $a,b,c,d$}
 \bseqn{
 	\bighdopabcd_n := 
 		\begin{pmatrix}
@@ -1021,7 +1021,7 @@ We can tackle the problem as follows. Denote the coefficient vector for expansio
     \laplacewiii \vec{u} = \vec{f}
 }
 which can be solved to find $\vec{u}$.
-In \bsreffig{fig:ds:poisson} we see the solution to the Poisson equation with zero boundary conditions given in \bsrefeqn{eqn:ds:poisson} in the disk-slice $\Omega$. In \bsreffig{fig:ds:poisson} we also show the norms of each block of calculated coefficients of the approximation for four right-hand sides of the Poisson equation with $N = 990$, that is, $491,536$ unknowns. The rate of decay in the coefficients is a proxy for the rate of convergence of the computed solution: as typical of spectral methods, we expect the numerical scheme to converge at the same rate as the coefficients decay. We see that we achieve algebraic convergence for the first three examples, noting that for right hand-sides that vanish at the corners of our disk-slice ($x\in\{\alpha,\beta\}, \: y = \pm \rho(x)$) we observe faster convergence. 
+In \bsreffig{fig:ds:poisson} we see the solution to the Poisson equation with zero boundary conditions given in \bsrefeqn{eqn:ds:poisson} in the disk-slice $\Omega$. In \bsreffig{fig:ds:poisson} we also show the norms of each block of calculated coefficients of the approximation for four right-hand sides of the Poisson equation with $N = 990$, that is, $491,536$ unknowns. The rate of decay in the coefficients is a proxy for the rate of convergence of the computed solution; as typical of spectral methods, we expect the numerical scheme to converge at the same rate as the coefficients decay. We see that we achieve algebraic convergence for the first three examples, noting that for right hand-sides that vanish at the corners of our disk-slice ($x\in\{\alpha,\beta\}, \: y = \pm \rho(x)$) we observe faster convergence. 
 
 
 In \bsreffig{fig:ds:poissonexact} we see an example where the solution calculated to the Poisson equation is shown together with a plot of the exact solution and the error. We see that the computed solution is almost exact. The example was chosen so that the exact solution was $u(x,y) = \Wiii (x,y) y^3 \exp(x)$, and thus the RHS function $f$ would be $f(x,y) = \Delta \big[ \Wiii(x,y) \: y^3 \: \exp(x) \big]$.
@@ -1039,7 +1039,7 @@ Find $u(x,y)$ given functions $v$, $f : \Omega \to \R$ such that:
 }
 where $k \in \R$, noting the imposition of zero Dirichlet boundary conditions on $u$.
 
-We can tackle the problem as follows. Denote the coefficient vector for expansion of $u$ in the $\bigWiii$ OP basis up to degree $N$ by $\vec{u}$, and the coefficient vector for expansion of $f$ in the $\bighdopiii$ OP basis up to degree $N$ by $\vec{f}$. Since $f$ is known, we can obtain  the coefficients $\vec{f}$ using the quadrature rule above. We can obtain the matrix operator for the variable-coefficient function $v(x,y)$ by using the Clenshaw algorithm with matrix inputs as the Jacobi matrices ${J_x^{(0,0,0)}}^\top, {J_y^{(0,0,0)}}^\top$, yielding an operator matrix of the same dimension as the input Jacobi matrices a la the procedure introduced in \cite{olver2019triangle}. We can denote the resulting operator acting on coefficients in the $\bighdopooo$ space by $V({J_x^{(0,0,0)}}^\top, {J_y^{(0,0,0)}}^\top)$. In matrix-vector notation, our system hence becomes:
+We can tackle the problem as follows. Denote the coefficient vector for expansion of $u$ in the $\bigWiii$ OP basis up to degree $N$ by $\vec{u}$, and the coefficient vector for expansion of $f$ in the $\bighdopiii$ OP basis up to degree $N$ by $\vec{f}$. Since $f$ is known, we can obtain  the coefficients $\vec{f}$ using the quadrature rule above. We can obtain the matrix operator for the variable-coefficient function $v(x,y)$ by using the Clenshaw algorithm with matrix inputs as the Jacobi matrices ${J_x^{(0,0,0)}}^\top, {J_y^{(0,0,0)}}^\top$, yielding an operator matrix of the same dimension as the input Jacobi matrices \`a la the procedure introduced in \cite{olver2019triangle}. We can denote the resulting operator acting on coefficients in the $\bighdopooo$ space by $V({J_x^{(0,0,0)}}^\top, {J_y^{(0,0,0)}}^\top)$. In matrix-vector notation, our system hence becomes:
 \bseqn{
     (\laplacewiii + k^2 T^{(0,0,0)\to(1,1,1)} \: V({J_x^{(0,0,0)}}^\top, {J_y^{(0,0,0)}}^\top) \: T_W^{(1,1,1)\to(0,0,0)}) \vec{u} = \vec{f}
 }
@@ -1079,6 +1079,28 @@ where $\Delta^2$ is the Biharmonic operator, noting the imposition of zero Diric
 %%%%%
 \section{Other domains}
 
+\begin{figure}[t]
+	\begin{subfigure}{0.3\textwidth}
+	\includegraphics[scale=0.35]{solution-pfem-poisson-diskslice-alpha=0p2-beta=0p8-f=Wycosx}
+        	%\label{fig:ds:solutionblocknorms-poisson}
+	\centering
+	\end{subfigure}
+	\begin{subfigure}{0.3\textwidth}
+	\includegraphics[scale=0.38]{solution-poisson}
+	\centering
+	%\label{fig:ds:solution-poisson}
+	\end{subfigure}
+	\begin{subfigure}{0.3\textwidth}
+	\includegraphics[scale=0.38]{solution-trapezium-helmholtz-k=100-n=1500}
+	%\label{fig:ds:solution-poisson}
+	\centering
+	\end{subfigure}
+	\centering
+	\caption{Left: The computed solution to $\Delta u = f$ with zero boundary conditions with $f(x,y) = \Wiii(x,y) y \cos(x)$ in the disk-slice using the $p$-FEM approach with a single element. Centre: The computed solution to $\Delta u = f$ with zero boundary conditions with $f(x,y) = 1 + \text{erf}(5(1 - 10((x - 0.5)^2 + y^2)))$ in the half-disk. Right: The computed solution to $\Delta u + k^2 \: v \: u = f$ with zero boundary conditions with $f(x,y) = (1-x) \: x \: y \: (1- \half x - y) \: e^x$, $v(x,y) = 1 - (3(x-1)^2 + 5y^2)$ and $k = 100$. in the trapezium.}
+	\centering
+	\label{fig:ds:trappfem}
+\end{figure}
+
 \subsection{End-Disk-Slice}\label{section:ds:enddiskslice}
 
 The work in this paper on the disk-slice can be easily transferred to the special-case domain of the end-disk-slice, such as half disks, by which we mean
@@ -1102,7 +1124,7 @@ Our 1D weight functions on the intervals $(\alpha, \beta)$ and $(\gamma, \delta)
 \end{cases}
 }
 
-Note here how we can remove the need for third parameter, which is why we consider this a special case. This will make some calculations easier, and the operator matrices more sparse. The weight $\jacw^{(b)}(x)$ is a still the same ultraspherical weight (and the corresponding OPs are the Jacobi polynomials $\{\jac_n^{(b, b)}\}$). $\genjacw^{(a,b)}(x)$ is the (non-classical) weight for the OPs denoted $\{\genjac_n^{(a,b)}\}$. Thus we arrive at the two-parameter family of 2D orthogonal polynomials $\{\hdopnkab\}$ on $\Omega$ given by, for \(0 \le k \le n, \: n = 0,1,2,\dots,\)
+Note here how we can remove the need for a third parameter, which is why we consider this a special case. This will make some calculations easier, and the operator matrices more sparse. The weight $\jacw^{(b)}(x)$ is a still the same ultraspherical weight (and the corresponding OPs are the Jacobi polynomials $\{\jac_n^{(b, b)}\}$). $\genjacw^{(a,b)}(x)$ is the (non-classical) weight for the OPs denoted $\{\genjac_n^{(a,b)}\}$. Thus we arrive at the two-parameter family of 2D orthogonal polynomials $\{\hdopnkab\}$ on $\Omega$ given by, for \(0 \le k \le n, \: n = 0,1,2,\dots,\)
 \bseqn{
 	\hdopnkab(x,y) := \genjacnmk^{(a, 2b+2k+1)}(x) \: \rho(x)^k \: \jac_k^{(b,b)}\fpr(\frac{y}{\rho(x)}), \quad (x,y) \in \Omega, 
 }
@@ -1188,28 +1210,6 @@ In \bsreffig{fig:ds:trappfem} we see the solution to the Helmholtz equation with
 
 \section{P-finite element methods using sparse operators}\label{section:ds:PFEM}
 
-\begin{figure}[t]
-	\begin{subfigure}{0.3\textwidth}
-	\includegraphics[scale=0.35]{solution-pfem-poisson-diskslice-alpha=0p2-beta=0p8-f=Wycosx}
-        	%\label{fig:ds:solutionblocknorms-poisson}
-	\centering
-	\end{subfigure}
-	\begin{subfigure}{0.3\textwidth}
-	\includegraphics[scale=0.38]{solution-poisson}
-	\centering
-	%\label{fig:ds:solution-poisson}
-	\end{subfigure}
-	\begin{subfigure}{0.3\textwidth}
-	\includegraphics[scale=0.38]{solution-trapezium-helmholtz-k=100-n=1500}
-	%\label{fig:ds:solution-poisson}
-	\centering
-	\end{subfigure}
-	\centering
-	\caption{Left: The computed solution to $\Delta u = f$ with zero boundary conditions with $f(x,y) = \Wiii(x,y) y \cos(x)$ in the disk-slice using the $p$-FEM approach with a single element. Centre: The computed solution to $\Delta u = f$ with zero boundary conditions with $f(x,y) = 1 + \text{erf}(5(1 - 10((x - 0.5)^2 + y^2)))$ in the half-disk. Right: The computed solution to $\Delta u + k^2 \: v \: u = f$ with zero boundary conditions with $f(x,y) = (1-x) \: x \: y \: (1- \half x - y) \: e^x$, $v(x,y) = 1 - (3(x-1)^2 + 5y^2)$ and $k = 100$. in the trapezium.}
-	\centering
-	\label{fig:ds:trappfem}
-\end{figure}
-
 It is possible for our framework to be applied to a $p$-finite element method -- that is, one where we can vary the polynomial degree $p$ of the basis functions used in each element (compare this to a normal $h$-FEM, where we can tune the element size $h$). For example, one could discretise the disk into disk-slice elements, and apply a $p$-finite element method to solve PDEs on the disk. As a precursor to this, in this section we limit our discretisation to a single element. Specifically, we follow the method of \cite{beuchler2006new} to construct a sparse $p$-finite element method in terms of the operators constructed above, with the benefit of ensuring that the resulting discretisation is symmetric. Consider the 2D Dirichlet problem on a domain $\Omega$:
 \bseqn{
 	\begin{cases}
@@ -1222,14 +1222,13 @@ This has the weak formulation for any test function $v \in V := H_0^1(\Omega) = 
 	L(v) := \int_\Omega f \: v \: \D \vec{x} = \int_\Omega \nabla u \cdot \nabla v \: \D \vec{x} =: a(u,v).
 }
 
-As eluded to, in general we would let $\FEset$ be the set of elements $\element$ that make up our finite element discretisation of the domain, where each $\element$ is a trapezium or disk slice for example. However, here we simply consider our domain to be a disk-slice and our discretisation to be a single element -- that is we let $\element = \Omega$ for a disk-slice domain. We can choose our finite dimensional space $V_p = \bsset{v_p \in V}{\deg(v_p|_\element) \le p}$ for some $p \in \N$.
+As eluded to, in general we would discretise our domain $\Omega$ with a mesh $\FEset$ consisting of elements $\element$, where each $\element \in \FEset$ is a trapezium or disk slice for example. However, here we simply consider our domain to be a disk-slice and our discretisation to be a single element -- that is we let $\element = \Omega$ for a disk-slice domain. We can choose our finite dimensional space $V_p = \bsset{v_p \in V}{\deg(v_p|_\element) \le p}$ for some $p \in \N$.
 
 We seek $u_p \in V_p$ s.t.
 \bseqnnumber{
 	L(v_p) = a(u_p,v_p) \quad \forall \: v_p \in V_p.
 	\label{eqn:ds:FEMweakform}
 }
-
 Recall that the OPs $\bighdop^{(a,b,c)}$ are orthogonal with respect to the weight $\Wabc$ on $\Omega$, and define the matrix $\Lambda^{(a,b,c)} :=  \ip< \bighdop^{(a,b,c)}, \: {\bighdop^{(a,b,c)}}^\top >_{\hdopabc}$. Note that due to orthogonality this is a diagonal matrix. We can choose a basis for $V_p$ by using the weighted orthogonal polynomials on $\element$ with parameters $a = b = c = 1$
 \bseqn{
 	\bigWiii(x,y) = \Wiii(x,y) \: \bighdopiii(x,y)
@@ -1254,7 +1253,8 @@ and rewrite \bsrefeqn{eqn:ds:FEMweakform} in matrix form:
 					\bighdopooo^\top \Wiii_x \vec{u} \\
 					\bighdopooo^\top T_W^{(1,1,0)\to(0,0,0)} \Wiii_y \vec{u}
 				\end{pmatrix} \: \D \vec{x}
-				\\
+}
+\bseqn{
 	&= \int_\element \Big( \vec{v}^\top {\Wiii_x}^\top \bighdopooo \bighdopooo^\top \Wiii_x \vec{u} \nonumber \\
 					& \quad \quad \quad + \vec{v}^\top ({T_W^{(1,1,0)\to(0,0,0)} \Wiii_y})^\top \bighdopooo \bighdopooo^\top T_W^{(1,1,0)\to(0,0,0)} \Wiii_y \vec{u}  \Big) \: \D \vec{x} \\
 	&= \vec{v}^\top \: \Big( {\Wiii_x}^\top \Lambda^{(0,0,0)} \Wiii_x \\
@@ -1285,8 +1285,7 @@ and the load vector $\tilde{\vec{f}}$ is given by
 \bseqn{
 	\tilde{\vec{f}} = \Lambda^{(1,1,1)} \: \vec{f}.
 }
-
-Note that since we have sparse operator matrices for partial derivatives and basis-transform, we obtain a symmetric sparse (element) stiffness matrix, as well as a sparse operator matrix for calculating the load vector (rhs).
+Note that since we have sparse operator matrices for partial derivatives and basis-transform, we obtain a symmetric sparse (element) stiffness matrix, as well as a sparse operator matrix for calculating the load vector.
 
 
 

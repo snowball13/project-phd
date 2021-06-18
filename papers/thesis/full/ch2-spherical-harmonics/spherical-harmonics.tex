@@ -31,7 +31,7 @@ The code that allows one to produce the numerical examples in this chapter is pu
 
 \section{Defining the spherical harmonics in three variables}
 
-Before we proceed further, let us build up to our definition of the spherical harmonics. We first need to introduce a few classical orthogonal polynomials. \enquote{Orthogonal polynomials} (OPs) are defined as such by the condition that each polynomial is orthogonal to each other, with respect to a given inner product. In particular, they are orthogonal with respect to all lower degree polynomials. 
+Before we proceed further, let us build up to our definition of the spherical harmonics. We first need to introduce a few classical orthogonal polynomials. Orthogonal polynomials are defined as such by the condition that each polynomial is orthogonal to each other, with respect to a given inner product. In particular, they are orthogonal with respect to all lower degree polynomials. 
 
 On the unit interval, $[-1,1]$, we note that there is a hierarchy of OPs in the sense that \cite[table 18.3.1, eqn 18.9.15]{DLMF}: \nomenclature[Pnab]{$P^{(a,b)}_n$}{The degree $n$ Jacobi polynomial (context determines normalized or not) unless otherwise stated}
 \bseqn{
@@ -267,7 +267,7 @@ where
 }
 We say that $\fvec$ is the \textit{coefficients vector} of the function $f$. Then $x f(x,y,z)$ is approximated by $\SHvec(x,y,z)^\top \: J_x^\top \: \fvec$. In other words, $J_x^\top \: \fvec$ is the coefficients vector for the expansion of the function $(x,y,z) \mapsto x \: f(x,y,z)$ in the spherical harmonics basis. 
 
-An important property of the Jacobi matrices is that they are sparse -- specifically they are \textit{banded-block-banded matrices}.
+An important property of the Jacobi matrices is that they are sparse -- specifically they are banded-block-banded matrices.
 
 \begin{definition}\label{def:bandedblockbanded}
 	A block matrix $A$ with blocks $A_{i,j}$ has block-bandwidths $(L, U)$ if $A_{i,j} = 0$ for $-L \le j - i \le U$, and subblock-bandwidths $(\lambda, \mu)$ if all blocks are banded with bandwidths $(\lambda, \mu)$. A matrix where the block-bandwidths and subblock-bandwidths are small compared to the dimensions is referred to as a banded-block-banded matrix.
@@ -366,7 +366,7 @@ The sparsity and structure of the Jacobi matrices as we have defined them can be
 
 \section{Three-term recurrence relation for $\SHvec$}
 
-Three-term recurrence relations for orthogonal polynomials are well established (see for example \cite[Section 18.9]{DLMF}), including for multidimensional OPs \cite[Section 3.2]{dunkl2014orthogonal}. In a similar vein, we can obtain a recurrence relation for the spherical harmonics by combining each system in \bsrefeqn{eqn:jacobimatsdef} in a specific way. It should be emphasised at this point that this is not necessarily the optimal way of computing the spherical harmonics; various efficient methods and algorithms have been proposed (see e.g. \cite{guy1998efficient, sloan2013efficient, fukushima2012numerical}). We present this method in order to be able to generalise it to other multidimensional OP families later on in this thesis.
+Three-term recurrence relations for orthogonal polynomials are well established (see for example \cite[\S18.9]{DLMF}), including for multidimensional OPs \cite[\S3.2]{dunkl2014orthogonal}. In a similar vein, we can obtain a recurrence relation for the spherical harmonics by combining each system in \bsrefeqn{eqn:jacobimatsdef} in a specific way. It should be emphasised at this point that this is not necessarily the optimal way of computing the spherical harmonics; various efficient methods and algorithms have been proposed (see e.g. \cite{guy1998efficient, sloan2013efficient, fukushima2012numerical}). We present this method in order to be able to generalise it to other multidimensional OP families later on in this thesis.
 
 Rewriting \bsrefeqn{eqn:jacobimatsdef}, we have that: \nomenclature[I]{$I$, $I_d$}{The identity matrix (in $\R^{d \times d}$)}
 \bseqn{
@@ -416,7 +416,7 @@ where we note $Y_0^0(x,y,z) \equiv Y_0 := c_0^0 \: P_0^{(0,0)} \equiv \half {1 \
 		\end{pmatrix}  \in \C^{3(2l+1)\times(2l+1)}. \label{eqn:clenshawmats2}
 }
  
-For each $l = 0,1,2\dots$ let $\Dlt$ be any matrix that is a left inverse of $A_l$, i.e. such that $\Dlt A_l = \idmat{2l+3}$. Multiplying our system by the preconditioner matrix that is given by the block diagonal matrix of the $\Dlt$'s, we obtain a lower triangular system \cite[Section 3.2]{dunkl2014orthogonal}, which can be expanded to obtain the three-term recurrence, for $l = 0,1,2,\dots$:
+For each $l = 0,1,2\dots$ let $\Dlt$ be any matrix that is a left inverse of $A_l$, i.e. such that $\Dlt A_l = \idmat{2l+3}$. Multiplying our system by the preconditioner matrix that is given by the block diagonal matrix of the $\Dlt$'s, we obtain a lower triangular system \cite[\S3.2]{dunkl2014orthogonal}, which can be expanded to obtain the three-term recurrence, for $l = 0,1,2,\dots$:
 \bseqn{
 	\begin{cases}
 		\SHvec_{-1}(x,y,z) := 0 \\
@@ -526,7 +526,7 @@ We have established that the spherical harmonics can be viewed as a basis of ort
 \begin{definition}\label{def:tangentbundle}
 	Let $(x,y,z) \in \Omega$. We refer to the \textbf{tangent space} of the point $(x,y,z)$ as the space of all vectors that are orthogonal to the vector $\rvec := [x,y,x]^\top$. We further define the \textbf{tangent bundle} of $\Omega$ as the set of all such spaces for every point in $\Omega$.
 \end{definition}
-For the purposes of this discussion, we will only consider the tangent bundle, and thus wish to write down a basis for vector-valued functions with values in the tangent bundle. Fortunately, there is a simple solution known as the \textit{vector spherical harmonics (VSHs)} \cite{barrera1985vector}: \nomenclature[grad]{$\gradS$}{The spherical gradient operator} \nomenclature[Psilm]{$\gradYlm$}{The vector spherical harmonic $\gradS \Ylm$} \nomenclature[Philm]{$\gradpYlm$}{The vector spherical harmonic $\gradS^\perp \Ylm = \rvec \times \gradS \Ylm$}
+For the purposes of this discussion, we will only consider the tangent bundle, and thus wish to write down a basis for vector-valued functions with values in the tangent bundle. Fortunately, there is a simple solution known as the vector spherical harmonics (VSHs) \cite{barrera1985vector}: \nomenclature[grad]{$\gradS$}{The spherical gradient operator} \nomenclature[Psilm]{$\gradYlm$}{The vector spherical harmonic $\gradS \Ylm$} \nomenclature[Philm]{$\gradpYlm$}{The vector spherical harmonic $\gradS^\perp \Ylm = \rvec \times \gradS \Ylm$}
 \bseqnnumber{
 	\gradYlm &:= \gradS \Ylm = \ppx{\phi} \Ylm \phivec + {1 \over \sinphi} \ppx{\theta} \Ylm \thetavec, \nonumber \\
 	\gradpYlm &:= \gradS^\perp \Ylm \equiv \rvec \times \gradS \Ylm = \ppx{\phi} \Ylm \thetavec - {1 \over \sinphi} \ppx{\theta} \Ylm \phivec. \label{eqn:VSHs}
@@ -679,7 +679,7 @@ On that note, we will first consider the case that $m > 0$ and $m' = m - 1$, and
 	&\quadtwo + {\delta_{l',l+1} \over 2\pi} \Big\{ \big[ (m^2 - 1) \tilde \alpha_{l+1, m-1, 2} - d_{l+1,m-1} \tilde \gamma_{l+1,m,1} \big] {1 \over (\clm)^2} \nonumber \\
 	&\quadeight + d_{l,m} d_{l+1,m-1} {\tilde \alpha_{l-1, m-1, 3} \over (c_{l+1}^m)^2} \Big\}. \label{eqn:lemmaVSHrecurrencesproof2}
 }
-As we can see, the coefficients are then also only possibly nonzero for $l' = l \pm 1$. Combining the above with the \bsrefeqn{eqn:lemmaVSHrecurrencesproof}, we have that our two coefficients for $\calA_{l-1,m-1}, \calA_{l+1,m-1}$ are those stated in the Lemma as $A_{l,m,1}$ and $A_{l,m,3}$, for $m > 0$. 
+As we can see, the coefficients zero for $l' \ne l \pm 1$. Combining the above with the \bsrefeqn{eqn:lemmaVSHrecurrencesproof}, we have that our two coefficients for $\calA_{l-1,m-1}, \calA_{l+1,m-1}$ are those stated in the Lemma as $A_{l,m,1}$ and $A_{l,m,3}$, for $m > 0$. 
 
 Next, assume $m \ge 0$ and consider the case $m' = m + 1$. The integral in \bsrefeqn{eqn:lemmaVSHrecurrencesproof} is then:
 \bseqnnumber{
@@ -699,7 +699,7 @@ Next, assume $m \ge 0$ and consider the case $m' = m + 1$. The integral in \bsre
 	&= {\delta_{l',l-1} \over 2\pi} \Big\{ \big[ m(m+2) \tilde \alpha_{l, m, 2} - d_{l,m} \tilde \gamma_{l,m+1,1} \big] {1 \over (c_{l-1}^{m+1})^2} + d_{l,m} d_{l-1,m+1} {\tilde \alpha_{l-1, m+2, 3} \over (c_{l}^{m+1})^2} \Big\} \nonumber \\
 	&\quadtwo + {\delta_{l',l+1} \over 2\pi} \Big\{ \big[ m(m+2) \tilde \alpha_{l, m, 4} - d_{l,m} \tilde \gamma_{l,m+1,2} \big] {1 \over (c_{l-1}^{m+1})^2} + d_{l,m} d_{l+1,m+1} {\tilde \alpha_{l+1, m+2, 1} \over (c_{l}^{m+1})^2} \Big\}. \label{eqn:lemmaVSHrecurrencesproof3}
 }
-Again, we can see that the coefficients are then also only possibly nonzero for $l' = l \pm 1$. Combining the above with the \bsrefeqn{eqn:lemmaVSHrecurrencesproof}, we have that our two coefficients for $\calA_{l-1,m-1}, \calA_{l+1,m-1}$ are those stated in the Lemma as $A_{l,m,2}$ and $A_{l,m,4}$, for $m \ge 0$.
+Again, we can see that the coefficients hence zero for $l' \ne l \pm 1$. Combining the above with the \bsrefeqn{eqn:lemmaVSHrecurrencesproof}, we have that our two coefficients for $\calA_{l-1,m-1}, \calA_{l+1,m-1}$ are those stated in the Lemma as $A_{l,m,2}$ and $A_{l,m,4}$, for $m \ge 0$.
 
 We still have to account for the remaining $m = 0$ cases and $m$ negative cases. Thankfully, as noted earlier, the case of $m \le 0$, $m' = m-1$ is the same as replacing $m$ with $\abs{m}$ in \bsrefeqn{eqn:lemmaVSHrecurrencesproof3}. Thus, our two coefficients for $\calA_{l-1,m-1}, \calA_{l+1,m-1}$ are those stated in the Lemma as $A_{l,m,1}$ and $A_{l,m,3}$, for $m \le 0$. Similarly the case of $m < 0$, $m' = m+1$ is the same as replacing $m$ with $\abs{m}$ in \bsrefeqn{eqn:lemmaVSHrecurrencesproof2}, and thus our two coefficients for $\calA_{l-1,m+1}, \calA_{l+1,m+1}$ are those stated in the Lemma as $A_{l,m,2}$ and $A_{l,m,4}$ for $m < 0$.
 
@@ -1194,9 +1194,9 @@ Notice how the iteration also ends at $n=1$ (not $n=0$) here, since the VSHs for
 
 \subsection{Sparse partial differential operators}\label{section:SHdiffoperators}
 
-The framework we have outlined for the spherical harmonics and the vector spherical harmonics allows us to easily and explicitly derive sparse operator matrices for partial differential operators such as the spherical gradient, divergence and Laplace--Beltrami, as well as other key operators found in examples such as the linearised shallow water equations. These operators will take coefficients of a function's expansion in either the SSH or VSH basis, to coefficients in either basis. 
+The framework we have outlined for the spherical harmonics and the vector spherical harmonics allows us to easily and explicitly derive sparse operator matrices for partial differential operators such as the spherical gradient, divergence and Laplace--Beltrami, as well as other key operators found in examples such as the linearised shallow water equations. These operators will take coefficients of a function's expansion in either the SH or VSH basis, to coefficients in either basis. 
 
-Let $\uvec$ be a vector-valued function on the tangent bundle of $\Omega$ with coefficients vectors $\uvecc, \uveccperp$ for its expansion in the VSH basis up to order $N \in \N$, and let $f$ be a scalar function on $\Omega$ with coefficients vector $\fvecc$ for its expansion in the SSH basis also up to order $N$, i.e.
+Let $\uvec$ be a vector-valued function on the tangent bundle of $\Omega$ with coefficients vectors $\uvecc, \uveccperp$ for its expansion in the VSH basis up to order $N \in \N$, and let $f$ be a scalar function on $\Omega$ with coefficients vector $\fvecc$ for its expansion in the SH basis also up to order $N$, i.e.
 \bseqn{
 	\uvec(x,y,z) &\approx \VSHvecfull(x,y,z)^\top \: \uvec^c \\
 	&\equiv \VSHvec(x,y,z)^\top \: \uvecc + \VSHvecperp(x,y,z)^\top \: \uveccperp \\
@@ -1317,7 +1317,7 @@ Let $u : \Omega \to \C$ represent the temperature at a point $(x,y,z)$ on the sp
 \bseqnnumber{
 	\ppx{t}{u} = \alpha \DeltaS u \label{eqn:heateqn}
 }
-for some $\alpha \in \R$. A simple timestepping method we can use to iterate with is the BDF2 method \cite[§2.3]{iserles2009first}. Let $u_n$ for $n = 0, 1, 2, \dots$ be the solution at time $n \Delta t$ where $\Delta t$ is the timestep. The are timestepping method is \nomenclature[Delta t]{$\Delta t$}{A timestep for a simulation}
+for some $\alpha \in \R$. A simple timestepping method we can use to iterate with is the BDF2 method \cite[\S2.3]{iserles2009first}. Let $u_n$ for $n = 0, 1, 2, \dots$ be the solution at time $n \Delta t$ where $\Delta t$ is the timestep. The timestepping method is \nomenclature[Delta t]{$\Delta t$}{A timestep for a simulation}
 \bseqn{
 	{u_1 - u_0 \over \Delta t} &= \alpha \DeltaS u_1 \\
 	{3u_{n+1} - 4u_n + u_{n-1} \over 2\Delta t} &= \alpha \DeltaS u_{n+1}, \quad n = 1,2,\dots
@@ -1336,7 +1336,7 @@ Our system then becomes
 	[I - \Delta t \alpha \calL] \uvec^c_1 -  &= u_0 \\
 	[3I - 2\Delta t \alpha \calL] \uvec^c_{n+1} &= 4\uvec^c_n - \uvec^c_{n-1}, \quad n = 1,2,\dots.
 }
-From here, it is clear that eat each timestep we simply have a fairly trivial linear system to solve, with the matrices $I - \Delta t \alpha \calL$, $3I - 2\Delta t \alpha \calL$ being banded-block-banded (in fact, simply diagonal here). We demonstrate this theory in \bsreffig{fig:heateqn}, where we see four snapshots of the solution to the heat equation in \bsrefeqn{eqn:heateqn} on the unit sphere with our order $N$ set large enough (here, $N=20$). We set $\alpha = {1 \over 42}$ and a step size of $\Delta t = 0.01$, and take the initial condition for the heat $u$ to be a \enquote{football function}\footnote{These initial conditions are taken from an example found at https://www.chebfun.org/examples/sphere/SphereHeatConduction.html} -- that is we take
+From here, it is clear that at each timestep we simply have a fairly trivial linear system to solve, with the matrices $I - \Delta t \alpha \calL$, $3I - 2\Delta t \alpha \calL$ being banded-block-banded (in fact, simply diagonal here). We demonstrate this theory in \bsreffig{fig:heateqn}, where we see four snapshots of the solution to the heat equation in \bsrefeqn{eqn:heateqn} on the unit sphere with our order $N$ set large enough (here, $N=20$). We set $\alpha = {1 \over 42}$ and a step size of $\Delta t = 0.01$, and take the initial condition for the heat $u$ to be a \enquote{football function}\footnote{These initial conditions are taken from an example found at https://www.chebfun.org/examples/sphere/SphereHeatConduction.html} -- that is we take
 \bseqn{
 	u_0 := Y_6^0 + \sqrt{14 \over 11} Y_6^6.
 }
@@ -1352,7 +1352,7 @@ The snapshots of the solution $u$ in \bsreffig{fig:heateqn} are taken of the ini
 	\label{fig:swe}
 \end{figure}
 
-The linearised shallow water equations allow us to showcase more of the differential operators that we defined in \bsrefdef{def:SHoperators} (namely the divergence and gradient operators) and demonstrate how the natural sparsity that our framework brings to the problem leads to a simple sparse linear system to solve.
+The linearised shallow water equations (SWEs) allow us to showcase more of the differential operators that we defined in \bsrefdef{def:SHoperators} (namely the divergence and gradient operators) and demonstrate how the natural sparsity that our framework brings to the problem leads to a simple sparse linear system to solve.
 
 Let $\uvec(x,y,z)$ be the tangential velocity of a flow and $h(x,y,z)$ be the height deviation of the flow from some constant reference height $\calH$. Define $\rvec$ as the unit outward normal vector at the point on the sphere $(x,y,z)$, so that
 \bseqn{
@@ -1439,7 +1439,7 @@ where $\mu = {\pi \over 6}$, with the solution order $N$ set large enough (here,
 
 \section{Conclusion}
 
-Spherical harmonics have been widely used to solve PDEs, in particular a spherical harmonics approach is used as part of the Integrated Forecasting System (IFS) that ECMWF uses for their forecasts. In this chapter, we have chosen to view the spherical harmonics as orthogonal (in fact orthonormal) polynomials in $x$, $y$ and $z$ in order to illustrate and understand more about how the framework presented here for using multivariate OPs in a spectral method translate to the sphere. We have derived the entries of \textit{Jacobi matrices} that represent multiplication by the coordinates, showing how they are \textit{banded-block-banded} in structure. We have set out how one can find coefficients for the expansion of a function in the spherical harmonics basis using established transforms, and how one can evaluate a function given its coefficients vector using a multidimensional version of the Clenshaw algorithm. We extended our framework to include the \textit{tangent bundle} of the sphere -- that is, the space of vectors orthogonal to the unit outward normal for each point on the sphere -- where we can use the \textit{vector spherical harmonics} as vector-valued orthogonal polynomials to be a basis, demonstrating how similar such Jacobi matrices, function expansion and evaluation can be derived. Further, by exploiting the natural sparsity of the relationships between the OPs in the bases, we have shown how matrices for differential and other operators will be sparse and banded-block-banded in structure too. In fact, for the spherical harmonics, these are simply diagonal. Finally, we presented a couple of simple examples of how one can put this all into practice, namely solving the heat equation and the linearised shallow water equations on the unit sphere.
+Spherical harmonics have been widely used to solve PDEs, in particular a spherical harmonics approach is used as part of the Integrated Forecasting System (IFS) that ECMWF uses for their forecasts. In this chapter, we have chosen to view the spherical harmonics as orthogonal (in fact orthonormal) polynomials in $x$, $y$ and $z$ in order to illustrate and understand more about how the framework presented here for using multivariate OPs in a spectral method translate to the sphere. We have derived the entries of Jacobi matrices that represent multiplication by the coordinates, showing how they are banded-block-banded in structure. We have set out how one can find coefficients for the expansion of a function in the spherical harmonics basis using established transforms, and how one can evaluate a function given its coefficients vector using a multidimensional version of the Clenshaw algorithm. We extended our framework to include the tangent bundle of the sphere -- that is, the space of vectors orthogonal to the unit outward normal for each point on the sphere -- where we can use the vector spherical harmonics as vector-valued orthogonal polynomials to be a basis, demonstrating how similar such Jacobi matrices, function expansion and evaluation can be derived. Further, by exploiting the natural sparsity of the relationships between the OPs in the bases, we have shown how matrices for differential and other operators will be sparse and banded-block-banded in structure too. In fact, for the spherical harmonics, these are simply diagonal. Finally, we presented a couple of simple examples of how one can put this all into practice, namely solving the heat equation and the linearised shallow water equations on the unit sphere.
 
 
 
