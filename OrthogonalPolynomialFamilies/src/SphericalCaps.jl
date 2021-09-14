@@ -1011,7 +1011,7 @@ function resizedata!(S::SphericalCapSpace, N; jacobimatcall=false)
 end
 
 function clenshawDTBmG(S::SphericalCapSpace{<:Any, T, <:Any, <:Any}, n::Int,
-                        ξ::AbstractArray{R}, X::R, Y::R, Z::R;
+                        ξ::AbstractArray{R}, X, Y, Z;
                         clenshawalg=true, operator=false) where {T,R}
     # Returns:
     #   ξ * DTn * (Bn - Gn(x,y,z)) if clenshawalg
