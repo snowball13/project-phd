@@ -1,0 +1,432 @@
+
+\appendix
+\chapter*{Appendices}
+\addcontentsline{toc}{chapter}{Appendices}
+
+
+%%%%%%%%%%%%%%%%
+%%% TANGENT SPACE %%%
+
+\renewcommand{\thesection}{A}
+\section{Tangent bundle of the spherical cap}\label{appendix:tangent}
+
+One desired goal is to be able to extend the methodology detailed in \bsrefchapter{CHAPTER:sphericalcaps} to the tangent bundle of the spherical cap $\Omega$ (see \bsrefdef{def:tangentbundle}). By creating a basis of orthogonal vector polynomials (OVPs) for the spherical cap $\Omega$, we can expand vector-valued functions that lie in the tangent bundle in this basis. Such functions that are useful for the sphere are gradients and perpendicular-gradients of scalar functions, as we have seen in \bsrefsection{section:examples} where we solved the linearised shallow water equations on the whole sphere.
+
+Any function in the tangent bundle of $\Omega$ can be written as 
+\bseqn{
+	\vec{F} = \phivec F_\varphi + \thetavec F_\theta
+}
+for some scalar functions $F_\varphi, F_\theta$ on $\Omega$. Of course, we can expand these functions in our spherical cap scalar OPs $\bigscopa$ (or $\bigW^{(a)}$ if they satisfy zero boundary conditions). Gradients and perpendicular gradients of scalar functions also take the form of $\vec{F}$. 
+
+For the whole sphere, recall from \bsrefsection{section:VSHs} that we simply chose the vector spherical harmonics as our tangent bundle basis, defined as the gradient and perpendicular gradients of the scalar spherical harmonics. We could make that choice because the vector spherical harmonics as defined were naturally orthogonal, and formed a complete basis for such functions $\vec{F}$. Unfortunately, we do not have the same luxury here, with the sets $\{ \gradS \Big( \genjacw^{(a,0)} \: \scopnki^{(a)} \Big), \; \rvec \times \gradS \Big( \genjacw^{(a,0)} \: \scopnki^{(a)} \Big) \}$ and $\{ \gradS \scopnki^{(a)}, \; \rvec \times \gradS \scopnki^{(a)} \}$ not being orthogonal for any parameter $a$, and with the same observation for the non-weighted OPs. As such, one would need to find an orthogonal basis that spans the tangent bundle of the spherical cap $\Omega$, such that we can sparsely expand, either analytically or numerically, the spherical gradients of our scalar basis polynomials and other vector fields of the form $\vec{F}$.
+
+
+
+
+%%%%%
+
+%Any function in the tangent bundle of $\Omega$ can be written as $\gradS f + \rvec \times \gradS g$ for some scalar functions $f, g$ on $\Omega$. Let $f$ be a scalar function on $\Omega$ that satisfies zero boundary conditions. Then there exist coefficients $\vec{f}$ such that $f$ can be expanded in the OP basis $\bigW_N^{(1)}$ for large enough N, i.e. $f = \genjacw^{(1,0)} \: \sum_{n,k,i} f_{n,k,i} \: \scopnki^{(1)}$. The gradient and perpendicular gradient of $f$ are then
+%\bseqn{
+%	\gradS f &= \sum_{n,k,i} f_{n,k,i} \: \gradS \Big( \genjacw^{(1,0)} \: \scopnki^{(1)} \Big) \\
+%	\rvec \times \gradS f &= \sum_{n,k,i} f_{n,k,i} \: \rvec \times \gradS \Big( \genjacw^{(1,0)} \: \scopnki^{(1)} \Big).
+%}
+%For the whole sphere, recall from \bsrefsection{section:VSHs} that we simply chose the vector spherical harmonics as our tangent bundle basis, defined as the gradient and perpendicular gradients of the scalar spherical harmonics. We could make that choice because the vector spherical harmonics as defined were naturally orthogonal. Unfortunately, we do not have the same luxury here, with the sets $\{ \gradS \Big( \genjacw^{(a,0)} \: \scopnki^{(a)} \Big), \rvec \times \gradS \Big( \genjacw^{(a,0)} \: \scopnki^{(a)} \Big) \}$ and $\{ \gradS \scopnki^{(a)}, \rvec \times \gradS \scopnki^{(a)} \}$ not being orthogonal for any parameter $a$. As such, one would need to find an orthogonal basis that spans the tangent bundle of the spherical cap $\Omega$, such that we can sparsely expand, either analytically or numerically, the spherical gradients of our scalar basis functions (i.e. $\gradS \scopnki^{(a)}$ and $\rvec \times \gradS \scopnki^{(a)}$).
+
+
+
+
+%%%%%
+
+%We can extend the methodology detailed in \bsrefchapter{CH:SCs} to the tangent space of the spherical cap $\Omega$, which we call $\tangentspace$. By creating a basis of orthogonal vector polynomials (OVPs) for the spherical cap $\Omega$, we can expand vector-valued functions that lie in the tangent space in this basis. Such functions that are useful for the sphere are gradients and perpendicular-gradients of scalar functions. In this section we will define the OVPs, outline the Clenshaw matrices and how to build the OVFs, function evaluation as well as differential operators for gradient, curl and divergence that take us to and from coefficients in either of the OVP or scalar OP expansions.
+%
+%Any function in the tangent space of $\Omega$ can be written as $\nabla f + \rvec \times \nabla g$ for some scalar functions $f, g$ on $\Omega$. Let $f$ be a scalar function on $\Omega$ that satisfies zero boundary conditions. Then there exist coefficients $\bm{f}$ such that $f$ can be expanded in the OP basis $\bigW_N^{(1)}$ for large enough N, i.e. $f = \genjacw^{(1,0)} \: \sum_{n,k,i} f_{n,k,i} \: \scopnki^{(1)}$. The gradient and perpendicular gradient of $f$ are then
+%\begin{align*}
+%	\nabla f &= \sum_{n,k,i} f_{n,k,i} \: \nabla \Big( \genjacw^{(1,0)} \: \scopnki^{(1)} \Big) \\
+%	\rvec \times \nabla f &= \sum_{n,k,i} f_{n,k,i} \: \rvec \times \nabla \Big( \genjacw^{(1,0)} \: \scopnki^{(1)} \Big).
+%\end{align*}
+%For the whole sphere, recall from \bsrefsection{Section:VSHs} that we simply chose the vector spherical harmonics as our tangent space basis, defined as the gradient and perpendicular gradients of the scalar spherical harmonics. We could make that choice because the vector spherical harmonics as defined were naturally orthogonal. Unfortunately, we do not have the same luxury here, with the sets $\{ \nabla \Big( \genjacw^{(a,0)} \: \scopnki^{(a)} \Big), \rvec \times \nabla \Big( \genjacw^{(a,0)} \: \scopnki^{(a)} \Big) \}$ and $\{ \nabla \scopnki^{(a)}, \rvec \times \nabla \scopnki^{(a)} \}$ not being orthogonal for any parameter $a$. 
+%
+%The game is to find an orthogonal basis that spans the tangent space of the spherical cap $\Omega$ such that we can sparsely expand $\nabla \Big( \genjacw^{(1,0)} \: \scopnki^{(1)} \Big)$ and $\rvec \times \nabla \Big( \genjacw^{(1,0)} \: \scopnki^{(1)} \Big)$ for each $n,k,i$ trio.
+%
+%Define the OVFs as follows:
+%\begin{align}
+%	\tsopinki(x,y,z) &:= \phivec \: \frac{1}{\rho(z)} \: \scopnki^{(0)}(x,y,z) \\
+%	\tsopiinki(x,y,z) &:= \thetavec \: \frac{1}{\rho(z)} \: \scopnki^{(0)}(x,y,z)
+%\end{align}
+%where
+%\begin{align}
+%	\phivec &:= 
+%		\begin{pmatrix}
+%			\cos(\theta) \: \cos(\phi) \\
+%			\sin(\theta) \: \cos(\phi) \\
+%			- \sin(\phi)
+%		\end{pmatrix}
+%		=
+%		\begin{pmatrix}
+%			x z / \rho(z) \\
+%			y z / \rho(z) \\
+%			- \rho(z)
+%		\end{pmatrix} \\
+%	\thetavec &:= 
+%		\begin{pmatrix}
+%			-\sin(\theta) \\
+%			\cos(\theta) \\
+%			0
+%		\end{pmatrix}
+%		=
+%		\begin{pmatrix}
+%			-y / \rho(z) \\
+%			x / \rho(z) \\
+%			0
+%		\end{pmatrix}
+%\end{align}
+%These are orthogonal with respect to the inner product $\ip<\bm{A}, \bm{B}>_\tangentspace := \int_\Omega \bm{A} \cdot \bm{B} \: \rho(z)^2 \: \D A$:
+%\begin{align*}
+%	\ip<\tsopinki, \tsopi_{m,j,h}>_\tangentspace &= \int_\Omega \tsopinki \cdot \tsopi_{m,j,h} \: \rho(z)^2 \:\D A \\
+%	&= \int_\Omega \scopnki^{(0)} \: \scopmjh^{(0)} \: \D \Omega \\
+%	&= \pi \: \normgenjac^{(0, 2k)} \: \delta_{n,m} \: \delta_{k,j} \: \delta_{i,h}, \\
+%	\ip<\tsopiinki, \tsopii_{m,j,h}>_\tangentspace &= \int_\Omega \tsopiinki \cdot \tsopii_{m,j,h} \: \rho(z)^2 \:\D A \\
+%	&= \int_\Omega \scopnki^{(0)} \: \scopmjh^{(0)} \: \D \Omega \\
+%	&= \pi \: \normgenjac^{(0, 2k)} \: \delta_{n,m} \: \delta_{k,j} \: \delta_{i,h}, \\
+%	\ip<\tsopinki, \tsopii_{m,j,h}>_\tangentspace &\equiv 0.
+%\end{align*}
+%To show that these span the tangent space $\tangentspace$, we merely require that we can sparsely expand $\nabla \Big( \genjacw^{(1,0)} \: \scopnki^{(1)} \Big), \: \rvec \times \nabla \Big( \genjacw^{(1,0)} \: \scopnki^{(1)} \Big)$ with the vectors $\tsopi_{m,j,h}, \tsopii_{m,j,h}$.  First, note that
+%\begin{align*}
+%	\nabla \Big( \genjacw^{(1,0)} \: \scopnki^{(1)} \Big) &= \phivec \: \ppphi \Big( \genjacw^{(1,0)} \: \scopnki^{(1)} \Big) + \thetavec \: \frac{1}{\rho(z)} \: \pptheta \Big( \genjacw^{(1,0)} \: \scopnki^{(1)} \Big) \\
+%	&= \phivec \: \Big[k \: z \: \genjacw^{(1,0)}(z) \: \genjacnmk^{(1,2k)}(z) -  \big(\genjacw^{(1,0)}(z) \: \genjacnmk^{(1,2k)}(z) \big)' \rho(z)^2 \Big] \: \rho(z)^{k-1} \: \chki(\theta) \\
+%	&\quad \quad + \thetavec \: (-1)^{i+1} \: k \: \genjacw^{(1,0)}(z) \: \genjacnmk^{(1,2k)}(z) \: \rho(z)^{k-1} \: \ch_{k,|i-1|}(\theta).
+%\end{align*}
+%Then,
+%\begin{align*}
+%	&\ip<\nabla \Big( \genjacw^{(1,0)} \: \scopnki^{(1)} \Big), \tsopi_{m,j,h}>_\tangentspace \\
+%	&\quad \quad = \int_\Omega \nabla \Big( \genjacw^{(1,0)} \: \scopnki^{(1)} \Big) \cdot \tsopi_{m,j,h} \: \rho(z)^2 \:\D A \\
+%	&\quad \quad = \pi \: \delta_{k,j} \: \delta_{i,h} \: \int_\alpha^1 \Big[k \: z \: \genjacw^{(1,0)} \: \genjacnmk^{(1,2k)} -  (\genjacw^{(1,0)} \: \genjacnmk^{(1,2k)})' \rho^2 \Big] \: \rho^{k-1} \: \genjac_{m-k}^{(0,2k)} \: \rho^{k-1} \: \rho^2 \:\D z \\
+%	&\quad \quad = \pi \: \delta_{k,j} \: \delta_{i,h} \: \int_\alpha^1 \Big[k \: z \: \genjacw^{(1,0)} \: \genjacnmk^{(1,2k)} -  (\genjacw^{(1,0)} \: \genjacnmk^{(1,2k)})' \rho^2 \Big] \: \genjac_{m-k}^{(0,2k)} \: \rho^{2k} \:\D z \quad (\star) \\
+%	&\quad \quad = \pi \: \delta_{k,j} \: \delta_{i,h} \: \int_\alpha^1 \Big( kz \: \genjacnmk^{(1,2k)} \: \genjac_{m-k}^{(0,2k)} \: \genjacw^{(1,2k)} \\
+%	&\quad \quad\quad \quad\quad \quad\quad \quad\quad \quad+ \genjacw^{(1,2k)} \: \genjacnmk^{(1,2k)} \: \Big[ \genjac_{m-k}^{(0,2k) \; \prime} \: \rho^2 - (2k+2) \: z \: \genjac_{m-k}^{(0,2k)} \Big] \Big) \: \D z \\
+%	&\quad \quad = \pi \: \delta_{k,j} \: \delta_{i,h} \: \int_\alpha^1 \genjacnmk^{(1,2k)} \: \Big[ - (k + 2) \: z \: \genjac_{m-k}^{(0,2k)} + \genjac_{m-k}^{(0,2k) \; \prime} \: \rho^2 \Big] \: \genjacw^{(1,2k)} \: \D z \quad (\star \star)
+%\end{align*}
+%where by orthogonality of the $\{\genjac_n^{(a,2b)}\}$ OPs we have that the above is zero for $m - k > n - k + 2 \iff m > n + 2$ at $(\star)$ and also for $n - k > m - k + 1 \iff m < n - 1$ at $(\star \star)$. Further, 
+%\begin{align*}
+%	&\ip<\nabla \Big( \genjacw^{(1,0)} \: \scopnki^{(1)} \Big), \tsopii_{m,j,h}>_\tangentspace \\
+%	&\quad \quad = \int_\Omega \nabla \Big( \genjacw^{(1,0)} \: \scopnki^{(1)} \Big) \cdot \tsopii_{m,j,h} \: \rho(z)^2 \:\D A \\
+%	&\quad \quad = (-1)^{i+1} \: k \: \pi \: \delta_{k,j} \: \delta_{i,|h-1|} \: \int_\alpha^1 \genjacw^{(1,0)} \: \genjacnmk^{(1,2k)} \: \rho^{k-1} \: \genjac_{m-k}^{(0,2k)} \: \rho^{k-1} \: \rho^2 \:\D z \\
+%	&\quad \quad = (-1)^{i+1} \: k \: \pi \: \delta_{k,j} \: \delta_{i,|h-1|} \: \int_\alpha^1 \genjacnmk^{(1,2k)}  \: \genjac_{m-k}^{(0,2k)} \: \genjacw^{(1,2k)} \: \D z
+%\end{align*}
+%which again by orthogonality is zero for $m - k > n - k + 1 \iff m > n + 1$ and $n - k > m - k \iff m < n$. We of course have similar results for $\rvec \times \nabla \Big( \genjacw^{(1,0)} \: \scopnki^{(1)} \Big)$ since
+%\begin{align*}
+%	\rvec \times \phivec = \thetavec, \quad \rvec \times \thetavec = - \phivec.
+%\end{align*}
+%We now have a set of orthogonal vector valued functions that span the tangent space $\tangentspace$. By construction, we have the same recurrence coefficients for multiplication by $x,y,z$ for each of the OVFs as for the OPs $\scopnki^{(0)}$. 
+%
+%Define
+%\begin{align*}
+%	\bigtsoptn := 
+%		\begin{pmatrix}
+%			\tsopit_{n,0,0}(x,y,z) \\
+%			\tsopiit_{n,0,0}(x,y,z) \\
+%			\tsopit_{n,1,0}(x,y,z) \\
+%			\tsopiit_{n,1,0}(x,y,z) \\
+%			\tsopit_{n,1,1}(x,y,z) \\
+%			\tsopiit_{n,1,1}(x,y,z) \\
+%			\vdots \\
+%			\tsopit_{n,n,0}(x,y,z) \\
+%			\tsopiit_{n,n,0}(x,y,z) \\
+%			\tsopit_{n,n,1}(x,y,z) \\
+%			\tsopiit_{n,n,1}(x,y,z)
+%		\end{pmatrix} \in \R^{2(2n+1) \times 3}, 
+%	\quad \quad 
+%	\bigtsopt := 
+%		\begin{pmatrix}
+%			\bigtsopt_0 \\
+%			\bigtsopt_1 \\
+%			\bigtsopt_2 \\
+%			\vdots \\
+%		\end{pmatrix}
+%\end{align*}
+%and set $\jacobimattangentx, \jacobimattangenty, \jacobimattangentz$ as the Jacobi matrices corresponding to
+%\begin{align}
+%	\jacobimattangentx \: \bigtsopt(x,y,z) = x \: \bigtsopt(x,y,z), \nonumber \\
+%	\jacobimattangenty \: \bigtsopt(x,y,z) = y \: \bigtsopt(x,y,z), \label{eqn:jacobimatricestangentdefinition} \\
+%	\jacobimattangentz \: \bigtsopt(x,y,z) = z \: \bigtsopt(x,y,z), \nonumber
+%\end{align}
+%The matrices $\jacobimattangentx, \jacobimattangenty, \jacobimattangentz$ act on the coefficients vector of a function's expansion in the $\bigtsopt$ basis. For example, let a function $\bm{F}(x,y,z) : \Omega \to \tangentspace$ be approximated by its expansion $\bm{F}(x,y,z)^\top = \bigtsopt(x,y,z)^\top \bm{F}_c$, for some coefficients vector $\bm{F}_c$. Then $x \: \bm{F}(x,y,z)$ is approximated by $\bigtsopt(x,y,z)^\top {(\jacobimattangentx)}^\top \bm{F}_c$. In other words, ${(\jacobimattangentx)}^\top \bm{F}_c$ is the coefficients vector for the expansion of the function $(x,y,z) \mapsto x \: \bm{F}(x,y,z)$ in the  $\bigtsopt$ basis. Further, note that $\jacobimattangentx, \jacobimattangenty, \jacobimattangentz$ are banded-block-banded matrices -- they are block-tridiagonal (block-bandwidths $(1,1)$):
+%\begin{align*}
+%	\jacobimattangent_{x/y/z} &= 
+%		\begin{pmatrix}
+%			B_{x/y/z, 0} & A_{x/y/z, 0} & & & & \\
+%			C_{x/y/z, 1} & B_{x/y/z, 1} & A_{x/y/z, 1} & & & \\
+%			& C_{x/y/z, 2} & B_{x/y/z, 2} & A_{x/y/z, 2} & & & \\
+%			& & C_{x/y/z, 3} & \ddots & \ddots & \\
+%			& & & \ddots & \ddots & \ddots \\
+%		\end{pmatrix}
+%\end{align*}
+%For $\jacobimattangentx$, the sub-blocks have sub-block-bandwidths $(?,?)$:
+%\begin{align*}
+%	A_{x,n} &:= 
+%		\begin{pmatrix}
+%			0 & A_{n,0,6} & 0 & & \\
+%			A_{n,1,5} & \ddots & \ddots & & \\
+%			& \ddots & \ddots & \ddots & \\
+%			& & A_{n,n,5} & 0 & A_{n,n,6} \\
+%		\end{pmatrix} \in \R^{2(2n+1)\times2(2n+3)}, \quad n = 0,1,2,\dots \\
+%	B_{x,n} &:= 
+%		\begin{pmatrix}
+%			0 & A_{n,0,4} & & \\
+%			A_{n,1,3} & \ddots & \ddots & \\
+%			& \ddots & \ddots & A_{n,n-1,4} \\
+%			& & A_{n,n,3} & 0
+%		\end{pmatrix} \in \R^{2(2n+1)\times2(2n+1)}  \quad n = 0,1,2,\dots \\
+%	C_{x,n} &:= 
+%		\begin{pmatrix}
+%			0 & A_{n,0,2} & & \\
+%			A_{n,1,1} & \ddots & \ddots & \\
+%			& \ddots & \ddots & A_{n,n-2,2} \\
+%			& & \ddots & 0 \\
+%			& & & A_{n,n,1} \\
+%		\end{pmatrix} \in \R^{2(2n+1)\times2(2n-1)}, \quad n = 1,2,\dots
+%\end{align*}
+%where
+%\begin{align*}
+%	A_{n,k,j} &:= \alphaonkj \: I_{4} \in \R^{4\times4}, \quad k = 1,\dots,n \: (j \text{ even}), \quad k = 2,\dots,n \: (j \text{ odd}) \\
+%	A_{n,0,j} &:=
+%		\begin{pmatrix}
+%			\alphao_{n,0,j} & 0 & 0 & 0 \\
+%			0 & \alphao_{n,0,j} & 0 & 0
+%		\end{pmatrix} \in \R^{2\times4}, \quad j \text{ even} \\
+%	A_{n,1,j} &:=
+%		\begin{pmatrix}
+%			\alphao_{n,1,j} & 0 \\
+%			0 & \alphao_{n,1,j} \\
+%			0 & 0 \\
+%			0 & 0
+%		\end{pmatrix} \in \R^{4\times2}, \quad j \text{ odd}
+%\end{align*}
+%For $\jacobimattangenty$, the sub-blocks have sub-block-bandwidths $(?,?)$:
+%\begin{align*}
+%	A_{y,n} &:= 
+%		\begin{pmatrix}
+%			0 & B_{n,0,6} & 0 & & \\
+%			B_{n,1,5} & \ddots & \ddots & & \\
+%			& \ddots & \ddots & \ddots & \\
+%			& & B_{n,n,5} & 0 & B_{n,n,6} \\
+%		\end{pmatrix} \in \R^{2(2n+1)\times2(2n+3)}, \quad n = 0,1,2,\dots \\
+%	B_{y,n} &:= 
+%		\begin{pmatrix}
+%			0 & B_{n,0,4} & & \\
+%			B_{n,1,3} & \ddots & \ddots & \\
+%			& \ddots & \ddots & B_{n,n-1,4} \\
+%			& & B_{n,n,3} & 0
+%		\end{pmatrix} \in \R^{2(2n+1)\times2(2n+1)}  \quad n = 0,1,2,\dots \\
+%	C_{y,n} &:= 
+%		\begin{pmatrix}
+%			0 & B_{n,0,2} & & \\
+%			B_{n,1,1} & \ddots & \ddots & \\
+%			& \ddots & \ddots & B_{n,n-2,2} \\
+%			& & \ddots & 0 \\
+%			& & & B_{n,n,1} \\
+%		\end{pmatrix} \in \R^{2(2n+1)\times2(2n-1)}, \quad n = 1,2,\dots
+%\end{align*}
+%where
+%\begin{align*}
+%	B_{n,k,j} &:= 
+%		\begin{pmatrix}
+%			0 & 0 & \betaonkj & 0 \\
+%			0 & 0 & 0 & \betaonkj \\
+%			\betaonkj & 0 & 0 & 0 \\
+%			0 & \betaonkj & 0 & 0
+%		\end{pmatrix} \in \R^{4\times4}, \quad k = 1,\dots,n \: (j \text{ even}), \quad k = 2,\dots,n \: (j \text{ odd}) \\
+%	B_{n,0,j} &:=
+%		\begin{pmatrix}
+%			0 & 0 & \betao_{n,0,j} & 0 \\
+%			0 & 0 & 0 & \betao_{n,0,j}
+%		\end{pmatrix} \in \R^{2\times4}, \quad j \text{ even} \\
+%	B_{n,1,j} &:=
+%		\begin{pmatrix}
+%			0 & 0 \\
+%			0 & 0 \\
+%			\betao_{n,1,j} & 0 \\
+%			0 & \betao_{n,1,j}
+%		\end{pmatrix} \in \R^{4\times2}, \quad j \text{ odd}
+%\end{align*}
+%For $\jacobimattangentz$, the sub-blocks have sub-block-bandwidths $(?,?)$:
+%\begin{align*}
+%	A_{z,n} &:= 
+%		\begin{pmatrix}
+%			\Gamma_{n,0,3} & 0 & 0 & & \\
+%			0 & \ddots & \ddots & & \\
+%			& \ddots & \ddots & \ddots & \\
+%			& & 0 & \Gamma_{n,n,3} & 0 \\
+%		\end{pmatrix} \in \R^{2(2n+1)\times2(2n+3)}, \quad n = 0,1,2,\dots \\
+%	B_{z,n} &:= 
+%		\begin{pmatrix}
+%			\Gamma_{n,0,2} & 0 & & \\
+%			0 & \ddots & \ddots & \\
+%			& \ddots & \ddots & 0 \\
+%			& & 0 & \Gamma_{n,n,2}
+%		\end{pmatrix} \in \R^{2(2n+1)\times2(2n+1)}  \quad n = 0,1,2,\dots \\
+%	C_{z,n} &:= 
+%		\begin{pmatrix}
+%			\Gamma_{n,0,1} & 0 & & \\
+%			0 & \ddots & \ddots & \\
+%			& \ddots & \ddots & 0 \\
+%			& & \ddots &  \Gamma_{n,n-1,1} \\
+%			& & & 0 \\
+%		\end{pmatrix} \in \R^{2(2n+1)\times2(2n-1)}, \quad n = 1,2,\dots
+%\end{align*}
+%where
+%\begin{align*}
+%	\Gamma_{n,k,j} &:= \gammaonkj \: I_{4} \in \R^{4\times4}, \quad k = 1,\dots,n \\
+%	\Gamma_{n,0,j} &:=
+%		\begin{pmatrix}
+%			\gammao_{n,0,j} & 0 \\
+%			0 & \gammao_{n,0,j}
+%		\end{pmatrix} \in \R^{2\times2}.
+%\end{align*}
+%Note that the sparsity of the Jacobi matrices (in particular the sparsity of the sub-blocks) comes from the natural sparsity of the three-term recurrences of the 1D OPs and the circular harmonics, meaning that the sparsity is not limited to the specific spherical cap, and would extend to the spherical band.
+%
+%
+%\subsection{Building the OPs} 
+%
+%We can combine each system in (\ref{eqn:jacobimatricestangentdefinition}) into a block-tridiagonal system, for any $(x,y,z) \in \Omega$:
+%
+%\begin{align*}
+%\renewcommand\arraystretch{1.3}
+%\begin{pmatrix}
+%		I_2 & & & \\
+%		B_0-G_0(x,y,z) & A_0 & & \\
+%		C_1 & B_1-G_1(x,y,z) & \quad A_1 \quad & \\
+%		& C_2 & B_2 - G_2(x,y,z)  & \ddots \\
+%		& & \ddots &\ddots
+%\end{pmatrix}
+%\bigtsopt(x,y,z)
+%=
+%\begin{pmatrix}
+%	 \tsopi_0^\top \\ \tsopii_0^\top \\ 0 \\ 0 \\ \vdots  \\
+%\end{pmatrix},
+%\end{align*}
+%where we note $\scopa_0 := \scopa_{0,0,0}(x,y,z) \equiv \genjac_0^{(a,0)} \: \ch_0$, and for each $n = 0,1,2\dots$,
+%\begin{align*}
+%A_n &:= \begin{pmatrix}
+%		A_{x,n} \\
+%		A_{y,n} \\
+%		A_{z,n}
+%	    \end{pmatrix} \in \R^{6(2n+1)\times2(2n+3)}, \quad
+%C_n := \begin{pmatrix}
+%		C_{x,n} \\
+%		C_{y,n} \\
+%		C_{z,n}
+%	    \end{pmatrix} \in \R^{6(2n+1)\times2(2n-1)} \quad (n \ne 0), \nonumber \\
+%B_n &:= \begin{pmatrix}
+%		B_{x,n} \\
+%		B_{y,n} \\
+%		B_{z,n}
+%	    \end{pmatrix} \in \R^{6(2n+1)\times2(2n+1)}, \quad
+%G_n(x,y,z) := \begin{pmatrix}
+%		xI_{2(2n+1)} \\
+%		yI_{2(2n+1)} \\
+%		zI_{2(2n+1)}
+%	    \end{pmatrix} \in \R^{6(2n+1)\times2(n+1)}.
+%\end{align*}
+% 
+%For each $n = 0,1,2\dots$ let $\Dnt$ be any matrix that is a left inverse of $A_n$, i.e. such that $\Dnt A_n = I_{2(2n+3)}$. Multiplying our system by the preconditioner matrix that is given by the block diagonal matrix of the $\Dnt$'s, we obtain a lower triangular system \cite[p78]{dunkl2014orthogonal}, which can be expanded to obtain the recurrence:
+%\begin{align*}
+%	\begin{cases}
+%		\bigtsopt_{-1}(x,y,z) := 0 \\
+%		\bigtsopt_{0}(x,y,z) = 
+%			\begin{pmatrix} 
+%				\tsopi_0^\top \\ 
+%				\tsopii_0^\top
+%			\end{pmatrix} :=
+%			\begin{pmatrix} 
+%				\tsopi_{0,0,0}^\top \\
+%				\tsopi_{0,0,0}^\top
+%			\end{pmatrix} \\
+%		\bigtsopt_{n+1}(x,y,z) = -\Dnt (B_n-G_n(x,y,z)) \bigtsoptn(x,y,z) - \Dnt C_n  \, \bigtsopt_{n-1}(x,y,z), \quad n = 0,1,2,\dots.
+%	\end{cases}
+%\end{align*}
+%
+%Note that we can define an explicit \(\Dnt\) as follows: \bstodo{type up DnT for tangent space}
+%\begin{align*}
+%\Dnt := \begin{pmatrix}
+%		0 & & & 0 & & & 1 / \gammaa_{n,0,3} & & \\
+%		& \ddots & & & \ddots & & & \ddots \\
+%		& & \ddots & & & \ddots & & & \ddots \\
+%		& & & 0 & & & 0 & & & 1 / \gammaa_{n,n,3}  \\
+%		& & & & & \bm{\eta}^\top_{1} & & & \\
+%		& & & & & \bm{\eta}^\top_{0} & & &
+%	    \end{pmatrix} \in \R^{(2n+3)\times3(2n+1)},
+%\end{align*}
+%for $n = 2, 3, \dots$ where $\bm{\eta}_{0}, \bm{\eta}_{1} \in \R^{3(2n+1)}$ with entries given by 
+%\begin{align*}
+%	\big(\bm{\eta}_{0}\big)_j &= 
+%		\begin{cases}
+%			\frac{1}{\alphaa_{n,n,6}} & j = 2n+1 \\
+%			\frac{- \: \alphaa_{n,n,5}}{\alphaa_{n,n,6} \: \gammaa_{n, n-1, 3}} & j = 3(2n+1) - 2 \\
+%			0 & o/w
+%		\end{cases} \\
+%	\big(\bm{\eta}_{1}\big)_j &= 
+%		\begin{cases}
+%			\big(\bm{\eta}_{0}\big)_{j+1} & j = 2n, 3(2n+1) - 3 \\
+%			0 & o/w
+%		\end{cases}
+%\end{align*}
+%For $n=0, 1$, we can simply take
+%\begin{align*}
+%D^\top_0 &:= \begin{pmatrix}
+%		0 & 0 & \frac{1}{\gammaa_{0,0,3}} \\
+%		\frac{1}{\alphaa_{0,0,6}} & 0 & 0 \\
+%		0 & \frac{1}{\betaa_{0,0,6}} & 0
+%	    \end{pmatrix} \in \R^{3\times3}, \\
+%D^\top_1 &:= \begin{pmatrix}
+%		0 & 0 & 0 & 0 & 0 & 0 & 1 / \gammaa_{1,0,3} & & \\
+%		0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 / \gammaa_{1,1,3} \\
+%		0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 / \gammaa_{1,1,3}  \\
+%		0 & 1 / \alphaa_{1,1,6} & 0 & 0 & 0 & 0 & \eta & 0 & 0 \\
+%		0 & 0 & 1 / \alphaa_{1,1,6} & 0 & 0 & 0 & 0 & 0 & 0
+%	    \end{pmatrix} \in \R^{5\times9},
+%\end{align*}
+%where $\eta = \frac{- \: \alphaa_{1,1,5}}{\alphaa_{1,1,6} \: \gammaa_{1, 0, 3}}$.
+%
+%It follows that we can apply $\Dnt$ in $O(n)$ complexity, and thereby calculate $\bigtsopt_0(x,y,z)$  through $\bigtsoptn(x,y,z)$ in optimal $O(n^2)$ complexity. \bstodo{correct for this case}
+%
+%\subsection{Operators}
+%
+%Gradient operator on a scalar function is pretty much outlined above. Divergence would either be worked out by knowing what $f,g$ are for a function $\bm{F} = \nabla f + \rvec \times \nabla g$, so that $\nabla \cdot \bm{F} = \nabla^2 f$. Alternatively, we have expressions for $\rhoppphi \scopnkia$ and $\pptheta \scopnkia$ so that we can calculate an operator for $\rho^2 \nabla \cdot$, i.e. 
+%\begin{align*}
+%	\rho^2 \nabla \cdot \bm{F} &= \rho^2 \: \frac{1}{\rho} \ppphi (\rho F^\phi) + \rho^2 \: \frac{1}{\rho} \pptheta F^\theta \\
+%	&= \sum_{n,k,i} F^\phi_{n,k,i} \: \rhoppphi \scopnki^{(0)} + F^\theta_{n,k,i} \: \pptheta \scopnki^{(0)}.
+%\end{align*}
+%
+%
+%\subsection{Linear SWE}
+%
+%\begin{align*}
+%	\uvec_t &= - f \rvec \times \uvec + \grad h \\
+%	h_t &= -\href \divergence \uvec
+%\end{align*}
+%$\implies$
+%\begin{align*}
+%	\uvecnpi &= \uvecn - \Delta t \: f \rvec \times \uvecnpi +\Delta t \: \grad h_{n+1} \\
+%	h_{n+1} &= h_n - \Delta t \: \href \divergence \uvecnpi
+%\end{align*}
+%$\implies$
+%\begin{align*}
+%	\uvecnpic &= \uvecnc - \Delta t \: F \uvecnpic +\Delta t \: G \hvecnpic \\
+%	P \hvecnpic &= P \hvecnc - \Delta t \: \href D \uvecnpic
+%\end{align*}
+%where $F : \bigtsop \to \bigtsop$ is the operator for $f \rvec \times$, $D : \bigtsop \to \bigscop^{(1)}$ is the operator for $\rho^2 \divergence$, $G : \bigW^{(1)} \to \bigtsop$ is the operator for $\grad$, and $P : \bigW^{(1)} \to \bigscop^{(1)}$ is the operator for multiplication by $\rho(z)^2$.
+%
+%
+%
+%
+%
+%
+%  
+
+
+
+
+
+
+

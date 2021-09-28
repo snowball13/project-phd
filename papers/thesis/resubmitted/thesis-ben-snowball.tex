@@ -1,0 +1,150 @@
+
+%%%%%%%%%%%%%
+
+% BEGIN PACKAGES 
+
+\documentclass[a4paper,12pt,twoside]{report}
+\usepackage[left=3.5cm,right=3.5cm,top=4cm,bottom=4cm]{geometry}
+
+
+%\usepackage[parfill]{parskip}    		% Activate to begin paragraphs with an empty line rather than an indent
+
+
+%\geometry{letterpaper}                   		% ... or a4paper or a5paper or ... 
+%\geometry{landscape}                		% Activate for rotated page geometry
+
+\usepackage{verbatim}
+\usepackage{latexsym}
+%\usepackage{mathchars}
+\usepackage{setspace}
+
+\input{blocked.sty}
+\input{uhead.sty}
+\input{boxit.sty}
+\input{icthesis.sty}
+\raggedbottom
+
+
+\usepackage{graphicx}				% Use pdf, png, jpg, or eps§ with pdflatex; use eps in DVI mode
+								% TeX will automatically convert eps --> pdf in pdflatex		
+\usepackage[margin=10pt,font=footnotesize,labelfont=bf]{caption}
+\usepackage{subcaption}
+\usepackage{float}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{bm}
+\usepackage{bbm}
+\usepackage{mleftright}
+\usepackage{todonotes}
+\usepackage{csquotes}
+
+
+
+%%%%%%
+% NOTATION INDEX
+\usepackage{nomencl}
+\makenomenclature
+\renewcommand{\nomname}{Index of Notation}
+%%%%%%
+
+
+
+\usepackage[square,numbers]{natbib}
+\usepackage{url}
+%\bibliographystyle{elsarticle-harv}
+\bibliographystyle{plain}
+
+
+
+
+
+% END PREAMBLE
+
+
+
+% INCLUDES AND IMAGE PATHS
+
+\input{includes/bsmacros}
+\input{includes/bsthesisnewcommands}
+\input{includes/somacros}
+
+\graphicspath{ {images/disk-slices/}{images/spherical-caps/}{images/spherical-harmonics/} }
+
+
+%%%%%%%%%%%%%%%%%%
+
+
+% BEGIN HERE!!!!
+
+
+\begin{document}
+
+%Title Page
+\title{\LARGE {\bf Sparse Spectral Methods on Disk-Slices, Trapeziums and Spherical Caps}\\
+ \vspace*{6mm}
+}
+\author{Benjamin Samuel Thomas Snowball}
+%\date{}							% Activate to display a given date or no date
+\submitdate{June 2021}
+
+%\normallinespacing
+\maketitle
+
+
+\preface
+
+
+% Abstract, foreword
+\input{abstract/abstract}
+\input{foreword/foreword}
+
+
+% Declaration, acknowledgements, quotes
+\input{declaration/declaration}
+\input{acknowledgements/acknowledgements}
+%\input{quotes/quotes}
+
+
+%%%%%%
+% Actual Thesis Starts HERE!!!!!!!!!
+\body
+\input{ch1-introduction/introduction}
+\input{ch2-spherical-harmonics/spherical-harmonics}
+\input{ch3-disk-slices/disk-slices}
+\input{ch4-spherical-caps/spherical-caps}
+\input{conclusion/summary}
+% END Thesis main body
+%%%%%%%%%%
+
+
+% appendices come here
+\input{appendix/appendix}
+
+
+% notation index here
+\newpage
+\addcontentsline{toc}{chapter}{Index of Notation}
+\printnomenclature
+
+
+% References
+\newpage
+\addcontentsline{toc}{chapter}{Bibliography}
+%\bibliographystyle{alpha}
+\bibliography{bibliography/thesis-ben-snowball}
+
+
+\end{document}
+
+
+
+
+
+  
+
+
+
+
+
+
+

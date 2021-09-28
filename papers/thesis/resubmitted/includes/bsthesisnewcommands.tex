@@ -1,0 +1,345 @@
+% Thesis/PhD newcommands
+
+%%%%%%
+% General
+\newcommand{\quadtwo}{\quad \quad}
+\newcommand{\quadfour}{\quadtwo \quadtwo}
+\newcommand{\quadsix}{\quadtwo \quadtwo \quadtwo}
+\newcommand{\quadeight}{\quadfour \quadfour}
+
+\newcommand{\bigO}{\mathcal{O}}
+\newcommand{\half}{\frac{1}{2}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\No}{\mathbb{N}_0}
+\renewcommand{\vec}[1]{\bm{#1}}
+\newcommand{\unitvec}[1]{\hat{\bm{#1}}}
+\newcommand{\ddx}[1]{{{\rm d} \over {\rm d} #1}}
+\newcommand{\ppx}[1]{{\partial \over \partial #1}}
+\newcommand{\pfpx}[2]{{\partial #2 \over \partial #1}}
+\newcommand{\pmpxm}[2]{{\partial^{#2} \over \partial {#1}^{#2}}}
+\newcommand{\dmdxm}[2]{{{\rm d}^{#2} \over {\rm d} {#1}^{#2}}}
+\newcommand{\costheta}{\cos\theta}
+\newcommand{\sintheta}{\sin\theta}
+\newcommand{\cosphi}{\cos\varphi}
+\newcommand{\sinphi}{\sin\varphi}
+\newcommand{\eimphi}{e^{im\varphi}}
+\newcommand{\eimtheta}{e^{im\theta}}
+\newcommand{\eimthetaprime}{e^{im'\theta}}
+\newcommand{\phivec}{\hat{\bm{\phi}}}
+\newcommand{\thetavec}{\hat{\bm{\theta}}}
+
+\newcommand{\signfunc}[1]{\text{sgn}(#1)\:}
+
+\newcommand{\mtrx}[1]{#1}
+\newcommand{\idmat}[1]{\mtrx{I}_{#1}}
+\newcommand{\zeromat}[1]{\mtrx{0}_{#1}}
+
+\newcommand{\divergence}{\nabla \cdot}
+\newcommand{\grad}{\nabla}
+\newcommand{\DeltaS}{\Delta_{\rm S}}
+\newcommand{\gradS}{\nabla_{\rm S}}
+
+% fancy letters
+\newcommand{\calA}{\mathcal{A}}
+\newcommand{\calB}{\mathcal{B}}
+\newcommand{\calC}{\mathcal{C}}
+\newcommand{\calD}{\mathcal{D}}
+\newcommand{\calE}{\mathcal{E}}
+\newcommand{\calF}{\mathcal{F}}
+\newcommand{\calG}{\mathcal{G}}
+\newcommand{\calH}{\mathcal{H}}
+\newcommand{\calL}{\mathcal{L}}
+\newcommand{\calR}{\mathcal{R}}
+\newcommand{\bigP}{\mathbb{P}}
+\newcommand{\bigT}{\mathbb{T}}
+
+
+
+%%%%%%
+% Thesis specific
+
+\newcommand{\rotrate}{\tilde \Omega}
+
+% SH
+\newcommand{\Ylm}{Y^m_l}
+\newcommand{\Ylmprime}{Y_{l'}^{m'}}
+\newcommand{\Ylmxyz}{\Ylm(x,y,z)}
+\newcommand{\Ylmfull}{\Ylm(\varphi, \theta)}
+\newcommand{\Plm}{\jac^m_l}
+\newcommand{\jaclm}[2]{P^{(#2,#2)}_{#1-#2}}
+\newcommand{\jaclmbracket}[2]{P^{(#2,#2)}_{#1-(#2)}}
+\newcommand{\jaclmabs}[2]{P^{(\abs{#2},\abs{#2})}_{#1-\abs{#2}}}
+\newcommand{\jaclmdz}[2]{P^{(#2,#2) \; \prime}_{#1-#2}}
+\newcommand{\jaclmbracketdz}[2]{P^{(#2,#2) \; \prime}_{#1-(#2)}}
+\newcommand{\jaclmabsdz}[2]{P^{(\abs{#2},\abs{#2}) \; \prime}_{#1-\abs{#2}}}
+\newcommand{\jaclmuser}[2]{P^{(#2, #2)}_{#1}}
+\newcommand{\jaclmuserdz}[2]{P^{(#2, #2) \; \prime}_{#1}}
+\newcommand{\alphalm}{\alpha^m_l}
+\newcommand{\clm}{c^m_l}
+\newcommand{\clmprime}{c_{l'}^{m'}}
+\newcommand{\ctilde}{\tilde{c}^m_l}
+\newcommand{\ctildemod}{\tilde{c}^{|m|}_l}
+\newcommand{\chat}{\hat{c}^m_l}
+\newcommand{\chatmod}{\hat{c}^{|m|}_l}
+%\newcommand{\ddx}{\frac{\mathrm{d}}{\mathrm{d}x}}
+%\newcommand{\ddy}{\frac{\mathrm{d}}{\mathrm{d}y}}
+%\newcommand{\pddx}{\frac{\partial}{\partial x}}
+%\newcommand{\pddy}{\frac{\partial}{\partial y}}
+%\newcommand{\pddn}{\frac{\partial}{\partial n}}
+%\newcommand{\dmdxm}{\frac{\mathrm{d}^m}{\mathrm{d}x^m}}
+
+\newcommand{\Atilde}{\tilde{A}_{l,m}}
+\newcommand{\Btilde}{\tilde{B}_{l,m}}
+\newcommand{\Dtilde}{\tilde{D}_{l,m}}
+\newcommand{\Etilde}{\tilde{E}_{l,m}}
+\newcommand{\Ftilde}{\tilde{F}_{l,m}}
+\newcommand{\Gtilde}{\tilde{G}_{l,m}}
+\newcommand{\Alm}{A_{l,m}}
+\newcommand{\Blm}{B_{l,m}}
+\newcommand{\Dlm}{D_{l,m}}
+\newcommand{\Elm}{E_{l,m}}
+\newcommand{\Flm}{F_{l,m}}
+\newcommand{\Glm}{G_{l,m}}
+
+\newcommand{\xione}{\xi^{(1)}_{n, \lambda}}
+\newcommand{\xitwo}{\xi^{(2)}_{n, \lambda}}
+\newcommand{\xithree}{\xi^{(3)}_{n, \lambda}}
+\newcommand{\xifour}{\xi^{(4)}_{n, \lambda}}
+
+
+\newcommand{\gradY}{\vec{\Psi}}
+%\newcommand{\gradYlm}{\nabla \Ylm}
+%\newcommand{\gradYlmprime}{\nabla \Ylmprime}
+\newcommand{\gradYlm}{\gradY_l^m}
+\newcommand{\gradYlmprime}{\gradY_{l'}^{m'}}
+\newcommand{\gradpY}{\vec{\Phi}}
+%\newcommand{\gradpYlm}{\nabla^\perp \Ylm}
+%\newcommand{\gradpYlmprime}{\nabla^\perp \Ylmprime}
+\newcommand{\gradpYlm}{\gradpY_l^m}
+\newcommand{\gradpYlmprime}{\gradpY_{l'}^{m'}}
+
+\newcommand{\SHvec}{\bigP}
+\newcommand{\SHvecl}{\SHvec_l}
+\newcommand{\VSHvec}{\bigT^{\gradY}}
+\newcommand{\VSHvecperp}{\bigT^{\gradpY}}
+\newcommand{\VSHvecl}{\VSHvec_l}
+\newcommand{\VSHvecperpl}{\VSHvecperp_l}
+\newcommand{\VSHvecfull}{\tilde{\bigT}}
+\newcommand{\VSHvecfulll}{\VSHvecfull_l}
+
+\newcommand{\Dlt}{D^\top_l}
+
+\newcommand{\curlyy}{\bm{\mathcal{Y}}}
+\newcommand{\blone}{\beta_{l, 1}}
+\newcommand{\blzero}{\beta_{l, 0}}
+\newcommand{\blmone}{\beta_{l, -1}}
+\newcommand{\chivec}{\bm{\chi}_{1,m_s}}
+\newcommand{\cgcoeff}{\mathcal{C}}
+
+\newcommand{\alm}{a_{l,m}}
+\newcommand{\blm}{b_{l,m}}
+\newcommand{\dlm}{d_{l,m}}
+\newcommand{\elm}{e_{l,m}}
+\newcommand{\flm}{f_{l,m}}
+\newcommand{\glm}{g_{l,m}}
+\newcommand{\hlm}{h_{l,m}}
+\newcommand{\jlm}{j_{l,m}}
+\newcommand{\klm}{k_{l,m}}
+\newcommand{\almperp}{a_{l,m}^\perp}
+\newcommand{\blmperp}{b_{l,m}^\perp}
+\newcommand{\dlmperp}{d_{l,m}^\perp}
+\newcommand{\elmperp}{e_{l,m}^\perp}
+\newcommand{\flmperp}{f_{l,m}^\perp}
+\newcommand{\glmperp}{g_{l,m}^\perp}
+\newcommand{\hlmperp}{h_{l,m}^\perp}
+\newcommand{\jlmperp}{j_{l,m}^\perp}
+\newcommand{\klmperp}{k_{l,m}^\perp}
+
+
+
+% Disk-Slice
+\newcommand{\hdop}{H}
+\newcommand{\bighdop}{\mathbb{\hdop}}
+\newcommand{\hdopnk}{\hdop_{n,k}}
+\newcommand{\hdopnkab}{\hdop_{n,k}^{(a,b)}}
+\newcommand{\hdopab}{\hdop^{(a,b)}}
+\newcommand{\Wab}{{W^{(a,b)}}}
+\newcommand{\hdopmj}{\hdop_{m,j}}
+\newcommand{\hdopmjab}{\hdop_{m,j}^{(a,b)}}
+\newcommand{\alphaab}{\alpha^{(a,b)}}
+\newcommand{\betaab}{\beta^{(a,b)}}
+\newcommand{\bighdopab}{\bighdop^{(a,b)}}
+\newcommand{\Dnt}{D^\top_n}
+\newcommand{\Wii}{W^{(1,1)}}
+\newcommand{\hdopii}{\hdop^{(1,1)}}
+\newcommand{\bighdopii}{{\mathbb{\hdop}^{(1,1)}}}
+\newcommand{\hdopoo}{\hdop^{(0,0)}}
+\newcommand{\bighdopoo}{{\mathbb{\hdop}^{(0,0)}}}
+\newcommand{\hdopoi}{\hdop^{(0,1)}}
+\newcommand{\hdopio}{\hdop^{(1,0)}}
+%\newcommand{\jac}{{\tilde P}}
+\newcommand{\jac}{{P}}
+\newcommand{\genjac}{R}
+\newcommand{\genjacnmk}{\genjac_{n-k}}
+\newcommand{\genjacmmj}{\genjac_{m-j}}
+\newcommand{\genjacw}{w_\genjac}
+\newcommand{\jacw}{w_P}
+\newcommand{\normgenjac}{\omega_\genjac}
+\newcommand{\normjac}{\omega_P}
+
+%\newcommand{\dx}{\frac{\partial}{\partial x}}
+%\newcommand{\dy}{\frac{\partial}{\partial y}}
+\newcommand{\laplacewii}{\Delta_W^{(1,1)\to(1,1)}}
+\newcommand{\laplacewtt}{\Delta_W^{(2,2)\to(0,0)}}
+\newcommand{\laplaceoo}{\Delta^{(0,0)\to(2,2)}}
+\newcommand{\biharmonic}{_2\Delta_W^{(2,2)\to(2,2)}}
+
+\newcommand{\element}{\tau}
+\newcommand{\refelement}{\hat{\tau}}
+\newcommand{\FEset}{\mathcal{T}}
+\newcommand{\bigW}{\mathbb{W}}
+\newcommand{\bigWab}{\mathbb{W}^{(a,b)}}
+\newcommand{\bigWii}{{\mathbb{W}^{(1,1)}}}
+\newcommand{\bigQ}{\mathbb{Q}}
+\newcommand{\bigQab}{\bigQ^{(a,b)}}
+
+
+\newcommand{\hdopnkabc}{\hdop_{n,k}^{(a,b,c)}}
+\newcommand{\hdopabc}{\hdop^{(a,b,c)}}
+\newcommand{\Wabc}{{W^{(a,b,c)}}}
+\newcommand{\hdopmjabc}{\hdop_{m,j}^{(a,b,c)}}
+\newcommand{\alphaabc}{\alpha^{(a,b,c)}}
+\newcommand{\betaabc}{\beta^{(a,b,c)}}
+\newcommand{\bighdopabc}{\bighdop^{(a,b,c)}}
+\newcommand{\Wiii}{W^{(1,1,1)}}
+\newcommand{\hdopiii}{\hdop^{(1,1,1)}}
+\newcommand{\bighdopiii}{{\mathbb{\hdop}^{(1,1,1)}}}
+\newcommand{\hdopooo}{\hdop^{(0,0,0)}}
+\newcommand{\bighdopooo}{{\mathbb{\hdop}^{(0,0,0)}}}
+\newcommand{\hdopooi}{\hdop^{(0,0,1)}}
+\newcommand{\hdopiio}{\hdop^{(1,1,0)}}
+\newcommand{\laplacewiii}{\Delta_W^{(1,1,1)\to(1,1,1)}}
+\newcommand{\laplacewttt}{\Delta_W^{(2,2,2)\to(0,0,0)}}
+\newcommand{\laplaceooo}{\Delta^{(0,0,0)\to(2,2,2)}}
+\newcommand{\biharmonictwo}{_2\Delta_W^{(2,2,2)\to(2,2,2)}}
+\newcommand{\bigWiii}{{\mathbb{W}^{(1,1,1)}}}
+\newcommand{\bigWabc}{\mathbb{W}^{(a,b,c)}}
+
+\newcommand{\alphaabcd}{\alpha^{(a,b,c,d)}}
+\newcommand{\betaabcd}{\beta^{(a,b,c,d)}}
+\newcommand{\hdopnkabcd}{\hdop_{n,k}^{(a,b,c,d)}}
+\newcommand{\hdopabcd}{\hdop^{(a,b,c,d)}}
+\newcommand{\Wabcd}{{W^{(a,b,c,d)}}}
+\newcommand{\hdopmjabcd}{\hdop_{m,j}^{(a,b,c,d)}}
+\newcommand{\bighdopabcd}{\bighdop^{(a,b,c,d)}}
+\newcommand{\bigWabcd}{\mathbb{W}^{(a,b,c,d)}}
+
+\newcommand{\genjact}{\tilde{\genjac}}
+\newcommand{\genjactnmk}{\genjact_{n-k}}
+\newcommand{\genjactmmj}{\genjact_{m-j}}
+\newcommand{\genjactw}{w_{\genjact}}
+\newcommand{\normgenjact}{\omega_{\genjact}}
+
+
+% Spherical Cap
+\newcommand{\scop}{Q}
+\newcommand{\scopnki}{\scop_{n,k,i}}
+\newcommand{\scopmjh}{\scop_{m,j,h}}
+\newcommand{\scopa}{\scop^{(a)}}
+\newcommand{\scopnkia}{\scopnki^{(a)}}
+\newcommand{\scopmjha}{\scopmjh^{(a)}}
+\newcommand{\bigscop}{{\mathbb{Q}}}
+\newcommand{\bigscopa}{\bigscop^{(a)}}
+\newcommand{\bigscopN}{\bigscop_{N}}
+\newcommand{\bigscopNa}{\bigscopa_{N}}
+\newcommand{\bigscopNka}{\bigscopa_{N,k}}
+\newcommand{\bigscopt}{\mathbb{\tilde{Q}}}
+\newcommand{\bigscopta}{\bigscopt^{(a)}}
+\newcommand{\bigscoptn}{\bigscopt_{n}}
+\newcommand{\bigscoptna}{\bigscopta_{n}}
+\newcommand{\xvec}{\mathbf{x}}
+\newcommand{\ch}{Y}
+\newcommand{\chki}{\ch_{k,i}}
+\newcommand{\chjh}{\ch_{j,h}}
+\newcommand{\chkitheta}{\ch_{k,i}(\theta)}
+\newcommand{\alphaa}{\alpha^{(a)}}
+\newcommand{\betaa}{\beta^{(a)}}
+\newcommand{\gammaa}{\gamma^{(a)}}
+\newcommand{\Wa}{W^{(a)}}
+\newcommand{\bigWNa}{\mathbb{W}_N^{(a)}}
+\newcommand{\ddz}{\ddx{z}}
+\newcommand{\ppz}{\ppx{z}}
+\newcommand{\ppphi}{\ppx{\varphi}}
+\newcommand{\rhoppphi}{\rho \ppphi}
+\newcommand{\rhozppphi}{\rho(z) \ppphi}
+\newcommand{\pptheta}{\ppx{\theta}}
+\newcommand{\ppthetatwo}{{\partial^2 \over \partial \theta^2}}
+\newcommand{\bigWNi}{\mathbb{W}_N^{(1)}}
+\newcommand{\scopi}{\scop^{(1)}}
+\newcommand{\scopnkii}{\scopnki^{(1)}}
+\newcommand{\bigWNo}{\mathbb{W}_N^{(0)}}
+\newcommand{\scopo}{\scop^{(0)}}
+\newcommand{\scopnkio}{\scopnki^{(0)}}
+\newcommand{\bigscopi}{\bigscop^{(1)}}
+\newcommand{\bigscopNi}{\bigscopi_{N}}
+\newcommand{\bigscopNki}{\bigscopi_{N,k}}
+\newcommand{\bigscopo}{\bigscop^{(0)}}
+\newcommand{\bigscopNo}{\bigscopo_{N}}
+\newcommand{\bigscopNko}{\bigscopo_{N,k}}
+
+
+% Tangent space
+\newcommand{\tangentspace}{{\Omega_T}}
+\newcommand{\bigtsop}{\mathbb{T}}
+\newcommand{\bigtsopt}{\tilde{\bigtsop}}
+\newcommand{\bigtsoptn}{\bigtsopt_n}
+\newcommand{\bigtsopN}{\bigtsop_N}
+\newcommand{\bigtsopNk}{\bigtsop_{N,k}}
+\newcommand{\tsopi}{\bm{\Phi}}
+\newcommand{\tsopii}{\bm{\Psi}}
+\newcommand{\tsopiN}{\tsopi_N}
+\newcommand{\tsopiiN}{\tsopii_N}
+\newcommand{\tsopinki}{\tsopi_{n,k,i}}
+\newcommand{\tsopiinki}{\tsopii_{n,k,i}}
+\newcommand{\tsopinkit}{\tsopi_{n,k,i}^\top}
+\newcommand{\tsopiinkit}{\tsopii_{n,k,i}\top}
+\newcommand{\tsopit}{\tsopi^\top}
+\newcommand{\tsopiit}{\tsopii^\top}
+\newcommand{\rvec}{\hat{\vec{r}}}
+\newcommand{\jacobimattangent}{{}^T\!J}
+\newcommand{\jacobimattangentx}{\jacobimattangent_x}
+\newcommand{\jacobimattangenty}{\jacobimattangent_y}
+\newcommand{\jacobimattangentz}{\jacobimattangent_z}
+\newcommand{\alphao}{\alpha^{(0)}}
+\newcommand{\alphaonkj}{\alphao_{n,k,j}}
+\newcommand{\betao}{\beta^{(0)}}
+\newcommand{\betaonkj}{\betao_{n,k,j}}
+\newcommand{\gammao}{\gamma^{(0)}}
+\newcommand{\gammaonkj}{\gammao_{n,k,j}}
+\newcommand{\uvec}{\vec{u}}
+\newcommand{\fvec}{\vec{f}}
+\newcommand{\hvec}{\vec{h}}
+\newcommand{\fvecc}{\fvec^c}
+\newcommand{\hvecc}{\hvec^c}
+\newcommand{\uvecn}{\uvec_n}
+\newcommand{\hvecn}{\hvec_n}
+\newcommand{\uvecnpi}{\uvec_{n+1}}
+\newcommand{\hvecnpi}{\hvec_{n+1}}
+\newcommand{\hvecnc}{\hvecc_n}
+\newcommand{\uvecnpic}{\uvecnpi^c}
+\newcommand{\hvecnpic}{\hvecnpi^c}
+\newcommand{\href}{\mathcal{H}}
+\newcommand{\tangentjacobi}{{}^T\!J}
+
+\newcommand{\uvecc}{\uvec^{\gradY c}}
+\newcommand{\uvecnc}{\uvecc_n}
+\newcommand{\uveccperp}{\uvec^{\gradpY c}}
+\newcommand{\uvecncperp}{\uveccperp_n}
+\newcommand{\fveccexp}{\tilde{\fvecc}}
+
+
+
+

@@ -1,0 +1,62 @@
+
+\usepackage[margin=10pt,font=footnotesize,labelfont=bf]{caption}
+\usepackage{subcaption}
+\usepackage{float}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{bm}
+\usepackage{bbm}
+\usepackage{mleftright}
+\usepackage{todonotes}
+\usepackage{csquotes}
+
+
+\newcommand{\sotodo}{\todo[color=green]}
+\newcommand{\sotodoinline}{\todo[color=green,inline=true]}
+\newcommand{\bstodo}{\todo[color=pink]}
+\newcommand{\bstodoinline}{\todo[color=pink,inline=true]}
+
+
+\usepackage[square,numbers]{natbib}
+\usepackage{url}
+%\bibliographystyle{elsarticle-harv}
+\bibliographystyle{plain}
+
+
+
+\usepackage{amsthm}
+
+\newtheorem{proposition}{Proposition}
+\newtheorem{lemma}{Lemma} 
+\newtheorem{theorem}{Theorem} 
+\newtheorem{definition}{Definition}
+\newtheorem{condition}{Condition}
+\newtheorem{algorithm}{Algorithm}
+\newtheorem{corollary}{Corollary}
+%\newtheorem*{remark}{Remark}
+\def\remark{\noindent{\bf Remark}: }
+
+
+\def\bseqn#1{\begin{align*} #1 \end{align*}}
+\def\bseqnnumber#1{\begin{align} #1 \end{align}}
+\def\bsset#1#2{\{ #1 \quad | \quad #2 \}}
+
+
+\def\bsrefchapter#1{Chapter~\ref{#1}}
+\def\bsrefsection#1{Section~\ref{#1}}
+\def\bsrefappendix#1{Appendix~\ref{#1}}
+
+\def\bsrefeqn#1{equation (\ref{#1})}
+\def\bsrefeqncapital#1{Equation (\ref{#1})}
+\def\bsrefeqns#1#2{equations (\ref{#1}--\ref{#2})}
+\def\bsrefeqnslist#1#2#3{equations (\ref{#1}), (\ref{#2}), (\ref{#3})}
+\def\bsreflemma#1{Lemma~\ref{#1}}
+\def\bsreftheorem#1{Theorem~\ref{#1}}
+\def\bsrefprop#1{Proposition~\ref{#1}}
+\def\bsrefcor#1{Corollary~\ref{#1}}
+\def\bsrefdef#1{Definition~\ref{#1}}
+\def\bsrefcondition#1{Condition~\ref{#1}}
+\def\bsreffig#1{Figure~\ref{#1}}
+\def\bsreffigs#1#2{Figures~\ref{#1}, \ref{#2}}
+
+
