@@ -684,7 +684,7 @@ Another important example is the biharmonic operator \nomenclature[Delta2]{$\Del
 \bseqn{
     \laplaceooo := D_x^{(1,1,1)} \: D_x^{(0,0,0)} + T^{(1,1,2)\to(2,2,2)} \: D_y^{(1,1,1)} \: T^{(0,0,1)\to(1,1,1)} \: D_y^{(0,0,0)}.
 }
-Further, we can represent the Laplacian as a map from coefficients in the space $\bigW^{(2,2)}$ to coefficients in the space $\bighdopooo$. Note that a function expanded in the $\bigW^{(2,2)}$ basis will satisfy both zero Dirichlet and Neumann boundary conditions on $\Omega$. We denote this matrix operator as $\laplacewttt$, and is given by
+Further, we can represent the Laplacian as a map from coefficients in the space $\bigW^{(2,2,2)}$ to coefficients in the space $\bighdopooo$. Note that a function expanded in the $\bigW^{(2,2,2)}$ basis will satisfy both zero Dirichlet and Neumann boundary conditions on $\Omega$. We denote this matrix operator as $\laplacewttt$, and is given by
 \bseqn{
 	\laplacewttt := W_x^{(1,1,1)} \: W_x^{(2,2,2)} + T_W^{(1,1,0)\to(0,0,0)} \: W_y^{(1,1,1)} \: T_W^{(2,2,1)\to(1,1,1)} \: W_y^{(2,2,2)}.
 }
@@ -932,7 +932,9 @@ The proofs of \bsreftheorem{theorem:ds:sparsityofdifferentialoperators} and \bsr
 %
 \section{Examples on the disk-slice with zero Dirichlet conditions}\label{Section:Examples}
 
-We now demonstrate how the sparse linear systems constructed as above can be used to efficiently solve PDEs with zero Dirichlet conditions. We consider Poisson, inhomogeneous variable coefficient Helmholtz equation and the Biharmonic equation, demonstrating the versatility of the approach. 
+We now demonstrate how the sparse linear systems constructed as above can be used to efficiently solve PDEs with zero Dirichlet conditions. We consider the Poisson equation, an inhomogeneous variable coefficient Helmholtz equation and the Biharmonic equation, demonstrating the versatility of the approach.
+
+As mentioned earlier, we can handle these boundary conditions by incorporating them into the chosen basis OP family. The weight $\Wiii(x,y)$ is of course zero on the boundary of $\Omega$, and in fact any polynomial that vanishes on the boundary will have $\Wiii(x,y)$ as a factor. Hence, any function expanded in the $\bigWiii$ basis will satisfy zero Dirichlet conditions. The same argument can be used to see why any function expanded in the $\bigW^{(2,2,2)}$ basis will satisfy zero Neumann conditions too.
 
 \subsection{Poisson}
 
@@ -1016,12 +1018,11 @@ The Poisson equation is the classic problem of finding $u(x,y)$ given a function
 }
 noting the imposition of zero Dirichlet boundary conditions on $u$.
 
-We can tackle the problem as follows. Denote the coefficient vector for expansion of $u$ in the $\bigWiii$ OP basis up to degree $N$ by $\vec{u}$, and the coefficient vector for expansion of $f$ in the $\bighdopiii$ OP basis up to degree $N$ by $\vec{f}$. Since $f$ is known, we can obtain $\vec{f}$ using the quadrature rule above. In matrix-vector notation, our system hence becomes:
+We can tackle the problem as follows. Since $u$ vanishes on the boundary, any polynomial expansion will have $\Wiii(x,y)$ as a factor, and so we can denote the coefficient vector for expansion of $u$ in the $\bigWiii$ OP basis up to degree $N$ by $\vec{u}$, while the coefficient vector for expansion of $f$ in the $\bighdopiii$ OP basis up to degree $N$ we can denote by $\vec{f}$. Since $f$ is known, we can obtain $\vec{f}$ using the quadrature rule above. In matrix-vector notation, our system hence becomes:
 \bseqn{
     \laplacewiii \vec{u} = \vec{f}
 }
-which can be solved to find $\vec{u}$.
-In \bsreffig{fig:ds:poisson} we see the solution to the Poisson equation with zero boundary conditions given in \bsrefeqn{eqn:ds:poisson} in the disk-slice $\Omega$. In \bsreffig{fig:ds:poisson} we also show the norms of each block of calculated coefficients of the approximation for four right-hand sides of the Poisson equation with $N = 990$, that is, $491,536$ unknowns. The rate of decay in the coefficients is a proxy for the rate of convergence of the computed solution; as typical of spectral methods, we expect the numerical scheme to converge at the same rate as the coefficients decay. We see that we achieve algebraic convergence for the first three examples, noting that for right hand-sides that vanish at the corners of our disk-slice ($x\in\{\alpha,\beta\}, \: y = \pm \rho(x)$) we observe faster convergence. 
+which can be solved to find $\vec{u}$. In \bsreffig{fig:ds:poisson} we see the solution to the Poisson equation with zero boundary conditions given in \bsrefeqn{eqn:ds:poisson} in the disk-slice $\Omega$. In \bsreffig{fig:ds:poisson} we also show the norms of each block of calculated coefficients of the approximation for four right-hand sides of the Poisson equation with $N = 990$, that is, $491,536$ unknowns. The rate of decay in the coefficients is a proxy for the rate of convergence of the computed solution; as typical of spectral methods, we expect the numerical scheme to converge at the same rate as the coefficients decay. We see that we achieve algebraic convergence for the first three examples, noting that for right hand-sides that vanish at the corners of our disk-slice ($x\in\{\alpha,\beta\}, \: y = \pm \rho(x)$) we observe faster convergence. 
 
 
 In \bsreffig{fig:ds:poissonexact} we see an example where the solution calculated to the Poisson equation is shown together with a plot of the exact solution and the error. We see that the computed solution is almost exact. The example was chosen so that the exact solution was $u(x,y) = \Wiii (x,y) y^3 \exp(x)$, and thus the RHS function $f$ would be $f(x,y) = \Delta \big[ \Wiii(x,y) \: y^3 \: \exp(x) \big]$.
