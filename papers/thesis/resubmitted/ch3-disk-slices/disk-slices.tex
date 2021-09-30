@@ -330,21 +330,25 @@ We can combine each system in \bsrefeqns{eqn:ds:jacobimatricesdefinitionx}{eqn:d
 }
 where we note $\hdopabcd_{0,0}(x,y) \equiv \genjac_0^{(a,b,c+d+1)} \: \jac_0^{(d,c)}$, and for each $n = 0,1,2\dots$,
 \bseqnnumber{
-A_n &:= \begin{pmatrix}
-		A^x_n \\
-		A^y_n
-	    \end{pmatrix} \in \R^{2(n+1)\times(n+2)}, \quad
-C_n := \begin{pmatrix}
-		C^x_n \\
-		C^y_n
-	    \end{pmatrix} \in \R^{2(n+1)\times n} \quad (n \ne 0), \label{eqn:ds:jacobisubmats1} \\
-B_n &:= \begin{pmatrix}
-		B^x_n \\
-		B^y_n
-	    \end{pmatrix} \in \R^{2(n+1)\times(n+1)}, \quad
-G_n(x,y) := \begin{pmatrix}
-		xI_{n+1} \\
-		yI_{n+1}
+	A_n &:= 
+		\begin{pmatrix}
+                    	A_{x,n} \\
+			A_{y,n}
+		\end{pmatrix}, \quad \in \R^{2(n+1)\times(n+2)}, \quad
+	C_n &:= 
+		\begin{pmatrix}
+                    	C_{x,n} \\
+			C_{y,n}
+		\end{pmatrix} \in \R^{2(n+1)\times n} \quad (n \ne 0), \label{eqn:ds:jacobisubmats1} \\
+	B_n &:= 
+		\begin{pmatrix}
+                    	B_{x,n} \\
+			B_{y,n}
+		\end{pmatrix} \in \R^{2(n+1)\times(n+1)}, \quad
+	G_n(x,y) := 
+		\begin{pmatrix}
+			xI_{n+1} \\
+			yI_{n+1}
 	    \end{pmatrix} \in \R^{2(n+1)\times(n+1)}. \label{eqn:ds:jacobisubmats2}
 }
  
