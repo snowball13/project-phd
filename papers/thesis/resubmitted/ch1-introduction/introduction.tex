@@ -25,7 +25,82 @@ Recently, a method for computing tensor fields in spherical coordinates using Ja
 
 On the other hand, we aim to propose a strictly orthogonal \textit{polynomial} basis, and derive sparse operators for multiplication by the cartesian coordinate axes, which can in turn lead to operators for multiplication by trigonometric functions too. By utilising orthogonal polynomials in cartesian coordinates, we can develop a sparse spectral method on subdomains of the sphere surface (e.g. the spherical cap) using our knowledge of other geometries and methods involving OPs developed for them.
 
-The structure of this thesis is as follows.
+
+% GENERAL FRAMEWORK
+The construction of the spectral methods in this thesis follow a similar pattern that is worth detailing here as a general framework.
+\begin{itemize}
+	\item \textit{Define the domain of interest via a restriction of one coordinate in terms of the remainder, that uses a function $\rho$ that satisfies one of two conditions.}
+	
+		For example, for a domain in 2D space, we would define this as $\Omega := \bsset{(x,y) \in \R^2}{\alpha \le x \le \beta, \: \gamma \rho(x) \le y \le \delta \rho(x)}$.
+	
+	\item \textit{Express the multivariate and multi-parameter OPs as polynomials in cartesian coordinates.}
+	
+		The construction of the multivariate OPs takes its inspiration from the Koornwinder approach \cite{koornwinder1975two}. These OPs will be $d$-parameter, meaning that we can construct parameter lowering and raising operators for conversion between the OP bases.
+	
+	\item \textit{Derive expressions for multiplication of the OPs by the coordinates.}
+	
+	\item \textit{Use these relations to determine the entries to \enquote{Jacobi matrices} $J_x$, etc. that represent multiplication by the coordinates when applied to the degree-ordered vector of OPs $\bigP$.}
+	
+		These Jacobi matrices will be banded-block-banded in structure. In fact, due to the construction, they will be block-tridiagonal:
+		\bseqn{
+			J_{x/y} &= 
+			\begin{pmatrix}
+				B_{x/y,0} & A_{x/y,0} & & & & \\
+				C_{x/y,1} & B_{x/y,1} & A_{x/y,1} & & & \\
+				& C_{x/y,2} & B_{x/y,2} & A_{x/y,2}  & & & \\
+				& & C_{x/y,3} & \ddots & \ddots & \\
+				& & & \ddots & \ddots & \ddots \\
+			\end{pmatrix}.
+		}
+		The degree-ordered vector of OPs, $\bigP$, can be thought of as being made up of ordered sub-vectors grouped by polynomial degree, $\bigP_n$ for $n \in \No$.
+		
+	\item \textit{Create a three-term recurrence for the vector of degree $n$ OPs by combining the systems $J_x \bigP = x \bigP$, etc.}
+	
+		The resulting three-term recurrence will have the form:
+		\bseqn{
+			\bigP_{n+1}(x,y) = -\Dnt (B_n-G_n(x,y)) \bigP_n(x,y) - \Dnt C_n  \, \bigP_{n-1}(x,y)
+		}
+		Here, the matrices $B_n$, $C_n$ and $G_n$ are defined via:
+		\bseqn{
+                    	C_n := 
+                    		\begin{pmatrix}
+                    			C_{x,n} \\
+	                    		C_{y,n}
+				\end{pmatrix} \: (n \ne 0), \quad
+			B_n &:= 
+				\begin{pmatrix}
+                    			B_{x,n} \\
+	                    		B_{y,n}
+				\end{pmatrix}, \quad
+			G_n(x,y) := 
+                    		\begin{pmatrix}
+					xI_{n+1} \\
+	                    		yI_{n+1}
+				\end{pmatrix}.
+		}
+		The matrices $\Dnt$ are left-inverses of the matrices $A_n$ respectively, which are defined similarly:
+		\bseqn{		
+			A_n &:=
+				\begin{pmatrix}
+                    			A_{x,n} \\
+                    			A_{y,n}
+				\end{pmatrix}, \quad
+		}
+		
+	\item \textit{Use the multivariate version of the Clenshaw algorithm for evaluation of functions expanded in the OP basis.}
+	
+	\item \textit{Derive (sparse) relationships for various differential operations, and relations for incrementing and decrementing the parameter values of the OPs. Hence construct the sparse operator matrices representing these operations.}
+		
+		The differential operators may raise or lower parameter values, which is why the basis conversion operator matrices are required. Further operators may be constructed as combinations of others.
+		
+	\item \textit{Use the \enquote{operator Clenshaw algorithm} to construct operator matrices for the action of multiplying by a general function.}
+	
+		For instance, this would be useful for a variable coefficient in a Helmholtz example.
+\end{itemize}
+
+
+
+The structure of the remainder of thesis is as follows.
 
 \bsrefchapter{CHAPTER:sphericalharmonics} of this thesis provides an introduction to sparse spectral methods via the spherical harmonics on the whole sphere surface. Here, we think of the spherical harmonics in a non-traditional way and write them as a group of multidimensional orthogonal polynomials in $(x,y,z)$ as opposed to functions of spherical coordinates. We present an OP framework for how the spherical harmonics can be used to expand functions defined on the sphere as multidimensional polynomials in $x, y, z$, and how differential operators can be applied as banded-block-banded matrix operators to coefficient vectors for a function's expansion. Further, we demonstrate how the vector spherical harmonics (VSHs) can be used as an orthogonal basis for vector valued functions lying in the \enquote{tangent bundle} of the sphere, and thus how one can additionally derive gradient and divergence operators.
 
