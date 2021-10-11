@@ -1001,7 +1001,7 @@ where the quadrature nodes and weights are those from \bsreftheorem{theorem:sc:q
 
 For a function $f$, with coefficients vector $\vec{f}$ for expansion in the $\{\scopnki\}$ basis as determined via the method in \bsrefsection{section:sc:expandingfunctions} up to order $N$, we can use the Clenshaw algorithm to evaluate the function at a point $(x,y,z) \in \Omega$ as follows, as we have seen for the spherical harmonics and disk-slice in \bsrefchapter{CHAPTER:sphericalharmonics} and \bsrefchapter{CHAPTER:diskslice} respectively. Let $A_n, B_n, \Dnt, C_n$ be the Clenshaw matrices from \bsrefdef{def:sc:clenshawmats}, and define the rearranged coefficients vector $\tilde{\vec{f}}$ via
 \bseqn{
-	{\vec{f}}_n &:= 
+	\tilde{\vec{f}}_n &:= 
 		\begin{pmatrix}
 			f_{n,0,0} \\
 			f_{n,1,0} \\
@@ -1010,19 +1010,19 @@ For a function $f$, with coefficients vector $\vec{f}$ for expansion in the $\{\
 			f_{n,n,0} \\
 			f_{n,n,1}
 		\end{pmatrix} \in \R^{2(N+1)} \quad \text{for } n = 1,2,\dots,N, \quad
-	{\vec{f}}_0 = f_{0,0,0} \in \R, \\
-	{\vec{f}} &:= 
+	\tilde{\vec{f}}_0 = f_{0,0,0} \in \R, \\
+	\tilde{\vec{f}} &:= 
 		\begin{pmatrix}
-			{\vec{f}}_0 \\
+			\tilde{\vec{f}}_0 \\
 			\vdots \\
-			{\vec{f}}_N
+			\tilde{\vec{f}}_N
 		\end{pmatrix} \in \R^{(N+1)^2}.
 }
 The trivariate Clenshaw algorithm works similar to the bivariate Clenshaw algorithm introduced in \cite{olver2019triangle} for expansions in the triangle:
 \bseqn{
 	\quad &\text{1) } \text{Set } \vec{\xi}_{N+2} = \vec{0}, \: \vec{\xi}_{N+2} = \vec{0}. \\
 	\quad &\text{2) } \text{For } n = N:-1:0 \\
-	\quad & \quad \quad \quad \text{set } \vec{\xi}_{n}^T = {{\vec{f}}_n}^T - \vec{\xi}_{n+1}^T D^T_n (B_n - G_n(x,y,z)) -  \vec{\xi}_{n+2}^T D^T_{n+1}C_{n+1} \\
+	\quad & \quad \quad \quad \text{set } \vec{\xi}_{n}^T = {\tilde{\vec{f}}_n}^T - \vec{\xi}_{n+1}^T D^T_n (B_n - G_n(x,y,z)) -  \vec{\xi}_{n+2}^T D^T_{n+1}C_{n+1} \\
 	\quad &\text{3) } \text{Output: } f(x,y,z) \approx \vec{\xi}_{0} \: \bigscopta_{0}  = \xi_{0} \: \scopa_0
 }
 
@@ -1036,25 +1036,29 @@ The proofs of \bsreftheorem{theorem:sc:sparsityofdifferentialoperators} and \bsr
 
 The Clenshaw algorithm outlined in \bsrefsection{section:sc:functionevaluation} can also be used with Jacobi matrices $J^{(a)}_x, J^{(a)}_y, J^{(a)}_z$ replacing the point $(x,y,z)$. Let $v : \Omega \to \R$ be the function that we wish to obtain an operator matrix $V$ for $v$, so that
 \bseqn{
-	v(x,y,z) \: f(x,y,z) = v(x,y,z) \: \vec{f} \: \bigscopta(x,y,z) = (V \vec{f})^\top \: \bigscopta(x,y,z),
+	v(x,y,z) \: f(x,y,z) = v(x,y,z) \: \tilde{\vec{f}} \: \bigscopta(x,y,z) = (\tilde V \tilde{\vec{f}})^\top \: \bigscopta(x,y,z),
 }
-i.e. $V \vec{f}$ is the coefficients vector for the function $v(x,y,z) \: f(x,y,z)$. 
+i.e. $\tilde V \tilde{\vec{f}}$ is the coefficients vector for the function $v(x,y,z) \: f(x,y,z)$ in the $\bigscopta$ basis.
 
-To this end, let $\tilde{\vec{v}}$ be the coefficients for expansion up to order $N$ in the $\{\scopnki\}$ basis of $v$ (rearranged as in \bsrefsection{section:sc:functionevaluation} so that $v(x,y,z) = {\vec{v}}^\top \: \bigscopta(x,y,z)$). Denote $X := (J_x^{(a)})^\top$, $Y := (J_y^{(a)})^\top$, $Z := (J_z^{(a)})^\top$. The operator $V$ is then the result of the following:
+To this end, let $\tilde{\vec{v}}$ be the coefficients for expansion up to order $N$ in the $\{\scopnki\}$ basis of $v$ (rearranged as in \bsrefsection{section:sc:functionevaluation} so that $v(x,y,z) = \tilde{\vec{v}}^\top \: \bigscopta(x,y,z)$). Denote $X := (J_x^{(a)})^\top$, $Y := (J_y^{(a)})^\top$, and $Z := (J_z^{(a)})^\top$. The operator $\tilde V$ is then the result of the following:
 \bseqn{
 	\quad &\text{1) } \text{Set } \vec{\xi}_{N+2} = \vec{0}, \: \vec{\xi}_{N+2} = \vec{0}. \\
 	\quad &\text{2) } \text{For } n = N:-1:0 \\
 	\quad & \quad \quad \quad \text{set } \vec{\xi}_{n}^T = {\tilde{\vec{v}}_n}^T - \vec{\xi}_{n+1}^T D^T_n \big(B_n - G_n(X, Y, Z)\big) -  \vec{\xi}_{n+2}^T D^T_{n+1}C_{n+1} \\
-	\quad &\text{3) } \text{Output: } V = v(X, Y, Z) \approx \vec{\xi}_{0} \: \bigscopta_{0}  = \xi_{0} \: \scopa_0
+	\quad &\text{3) } \text{Output: } \tilde V = v(X, Y, Z) \approx \vec{\xi}_{0} \: \bigscopta_{0}  = \xi_{0} \: \scopa_0
 }
-where at each iteration, $\vec{\xi}_n$ is a vector of matrices.
+where at each iteration, $\vec{\xi}_n$ is a vector of matrices\footnote{It may help to think of this symbolically. At each iteration, the entries of $\vec{\xi}_n$ are polynomials in $X$, $Y$, and $Z$. On the final step, $\vec{\xi}_0 = \xi_{0}$ is hence some polynomial expression in $X$, $Y$, and $Z$, which we can then evaluate by inserting the Jacobi matrices.}. Of course, by using rearranged versions of the Jacobi matrices (that act on coefficients $\vec{f}$ that expand the function $f$ in the $\bigscopa$ basis), the same algorithm would return the operator $V$ so that 
+\bseqn{
+	v(x,y,z) \: f(x,y,z) = v(x,y,z) \: {\vec{f}} \: \bigscopa(x,y,z) = (V {\vec{f}})^\top \: \bigscopa(x,y,z),
+}
+i.e. $V {\vec{f}}$ is the coefficients vector for the function $v(x,y,z) \: f(x,y,z)$ in the $\bigscopa$ basis.
 
 
 
 %
 \section{Examples on spherical caps with zero Dirichlet conditions}\label{Section:sc:Examples}
 
-We now demonstrate how the sparse linear systems constructed as above can be used to efficiently solve PDEs with zero Dirichlet conditions on the spherical cap defined by $\Omega$. We consider Poisson, inhomogeneous variable coefficient Helmholtz equation and the biharmonic equation, as well as a time dependent heat equation, demonstrating the versatility of the approach.
+We now demonstrate how the sparse linear systems constructed as above can be used to efficiently solve PDEs with zero Dirichlet conditions on the spherical cap defined by $\Omega$. We consider Poisson, an inhomogeneous variable coefficient Helmholtz equation, and the biharmonic equation, as well as a time dependent heat equation, demonstrating the versatility of the approach.
 
 \subsection{Poisson}
 
