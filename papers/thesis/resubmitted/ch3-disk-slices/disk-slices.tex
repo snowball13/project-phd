@@ -53,7 +53,7 @@ for $\alpha \leq x \leq \beta,$ $-\rho(x) \leq y \leq \rho(x)$. The correspondin
 }
 where $C_{n,k} \neq 0$ and \enquote{lower order terms} includes degree $n$ polynomials of the form $x^{n-j} y^j$ where $j < k$. The precise normalization arises from their definition in terms of one-dimensional OPs we will see in \bsrefdef{def:ds:OPconstruction}.
 
-Sparsity comes from expanding the domain and range of an operator using different choices of the parameters $a$, $b$ and $c$. Whereas the sparsity pattern and entries derived for equations on the triangle \cite{olver2018recurrence, olver2019triangle} and for equations on the disk \cite{vasil2016tensor} with the frameworks discussed earlier both result from manipulations of Jacobi polynomials, in the present work we use a more general integration-by-parts argument to deduce the sparsity structure, alongside careful use of the Christoffel-Darboux formula \cite[18.2.2]{DLMF} and quadrature rules to determine the entries. In particular, by exploiting the connection with one-dimensional orthogonal polynomials we can construct discretizations of general partial differential operators of size $p(p-1)/2 \times p(p-1)/2$ in $O(p^3)$ operations, where $p$ is the total polynomial degree. This compares favourably to $O(p^6)$ operations if one proceeds na\"ively. Furthermore, we use this framework to derive sparse $p$-finite element methods that are analogous to those of Beuchler and Sch\"oberl on tetrahedra \cite{beuchler2006new}, see also work by Li and Shen \cite{li2010optimal}.
+Sparsity comes from expanding the domain and range of an operator using different choices of the parameters $a$, $b$ and $c$. Whereas the sparsity pattern and entries derived for equations on the triangle \cite{olver2018recurrence, olver2019triangle} and for equations on the disk \cite{vasil2016tensor} with the frameworks discussed earlier both result from manipulations of Jacobi polynomials, in the present work we use a more general integration-by-parts argument to deduce the sparsity structure, alongside careful use of the Christoffel-Darboux formula \cite[(18.2.12)]{DLMF} and quadrature rules to determine the entries. In particular, by exploiting the connection with one-dimensional orthogonal polynomials we can construct discretizations of general partial differential operators of size $p(p-1)/2 \times p(p-1)/2$ in $O(p^3)$ operations, where $p$ is the total polynomial degree. This compares favourably to $O(p^6)$ operations if one proceeds na\"ively. Furthermore, we use this framework to derive sparse $p$-finite element methods that are analogous to those of Beuchler and Sch\"oberl on tetrahedra \cite{beuchler2006new}, see also work by Li and Shen \cite{li2010optimal}.
 
 
 
@@ -65,7 +65,7 @@ We can mirror the approach for the spherical harmonics, in that we will outline 
 
 We can construct 2D orthogonal polynomials on $\Omega$ from 1D orthogonal polynomials on the intervals $[\alpha,\beta]$ and $[\gamma,\delta]$. 
 
-\begin{proposition}[{\cite[p55--56]{dunkl2014orthogonal}}]\label{prop:ds:construction}
+\begin{proposition}[{\cite[p.55--56]{dunkl2014orthogonal}}]\label{prop:ds:construction}
 	Let $w_1 : (\alpha,\beta) \: \to \R$, $w_2 : (\gamma,\delta) \: \to \R$ be weight functions with $\alpha,\beta,\gamma,\delta \in \R$, and let $\rho \: : \: (\alpha,\beta) \: \to (0,\infty)$ be such that either \bsrefcondition{cond:trap} or \bsrefcondition{cond:disk} with $w_2$ being an even function hold.
 $\forall$, $n = 0,1,2,\dots, $ let $\{p_{n,k}\}$ be polynomials orthogonal with respect to the weight $\rho(x)^{2k+1} w_1(x)$ where $0 \le k \le n$, and $\{q_{n}\}$ be polynomials orthogonal with respect to the weight $w_2(x)$. Then, for $n = 0,1,2,\dots$, $k = 0,\dots,n$, the 2D polynomials defined on $\Omega$ given by
 \bseqn{
@@ -257,46 +257,46 @@ Further, note that $J_x^{(a,b,c,d)}, J_y^{(a,b,c,d)}$ are banded-block-banded ma
 \bseqn{
 	J_{x/y}^{(a,b,c,d)} &= 
 		\begin{pmatrix}
-			B^{x/y}_0 & A^{x/y}_0 & & & & \\
-			C^{x/y}_1 & B^{x/y}_1 & A^{x/y}_1 & & & \\
-			& C^{x/y}_2 & B^{x/y}_2 & A^{x/y}_2  & & & \\
-			& & C^{x/y}_3 & \ddots & \ddots & \\
+			B_{x/y,0} & A_{x/y,0} & & & & \\
+			C_{x/y,1} & B_{x/y,1} & A_{x/y,1} & & & \\
+			& C_{x/y,2} & B_{x/y,2} & A_{x/y,2}  & & & \\
+			& & C_{x/y,3} & \ddots & \ddots & \\
 			& & & \ddots & \ddots & \ddots \\
 		\end{pmatrix}.
 }
 For $J_x^{(a,b,c,d)}$, the blocks are diagonal (sub-block-bandwidths $(0,0)$) for $n = 0,1,2,\dots$:
 \bseqn{
-	A^x_n &:= 
+	A_{x,n} &:= 
 		\begin{pmatrix}
 			\alphaabcd_{n+1,0,1} & 0 & \hdots & 0 \\
 			& \ddots & & \vdots & \\
 			& & \alphaabcd_{n+1,n,1} & 0 \\
 		\end{pmatrix} \in \R^{(n+1)\times(n+2)}, \\
-	B^x_n &:= 
+	B_{x,n} &:= 
 		\begin{pmatrix}
 			\alphaabcd_{n,0,2} & & \\
 			& \ddots & \\
 			& & \alphaabcd_{n,n,2} \\
 		\end{pmatrix} \in \R^{(n+1)\times(n+1)}, \\
-	C^x_n &:= \big( A^x_{n-1} \big)^\top \in \R^{(n+1)\times n}, \quad (n \ne 0)
+	C_{x,n} &:= \big( A^x_{n-1} \big)^\top \in \R^{(n+1)\times n}, \quad (n \ne 0)
 }
 and for $J_y^{(a,b,c,d)}$ the blocks are tridiagonal (sub-block-bandwidths $(1,1)$):
 \bseqn{
-	A^y_n &:= 
+	A_{y,n} &:= 
 		\begin{pmatrix}
 			\betaabcd_{n,0,8} & \betaabcd_{n,0,9} & & & \\
 			\betaabcd_{n,1,7}& \ddots & \ddots & & \\
 			& \ddots & \ddots & \ddots & \\
 			& & \betaabcd_{n,n,7} & \betaabcd_{n,n,8} & \betaabcd_{n,n,9} \\
 		\end{pmatrix} \in \R^{(n+1)\times(n+2)}, \\
-	B^y_n &:= 
+	B_{y,n} &:= 
 		\begin{pmatrix}
 			\betaabcd_{n,0,5} & \betaabcd_{n,0,6} & & \\
 			\betaabcd_{n,1,4} & \ddots & \ddots & \\
 			& \ddots & \ddots & \betaabcd_{n,n-1,6} \\
 			& & \betaabcd_{n,n,4} & \betaabcd_{n,n,5}
 		\end{pmatrix} \in \R^{(n+1)\times(n+1)}, \\
-	C^y_n &:= 
+	C_{y,n} &:= 
 		\begin{pmatrix}
 			\betaabcd_{n,0,2} & \betaabcd_{n,0,3} & & \\
 			\betaabcd_{n,1,1} & \ddots & \ddots & \\
@@ -352,7 +352,7 @@ where we note $\hdopabcd_{0,0}(x,y) \equiv \genjac_0^{(a,b,c+d+1)} \: \jac_0^{(d
 	    \end{pmatrix} \in \R^{2(n+1)\times(n+1)}. \label{eqn:ds:jacobisubmats2}
 }
  
-For each $n = 0,1,2\dots$ let $\Dnt$ be any matrix that is a left inverse of $A_n$, i.e. such that $\Dnt A_n = I_{n+2}$. Multiplying our system by the preconditioner matrix that is given by the block diagonal matrix of the $\Dnt$'s, we obtain a lower triangular system \cite[p78]{dunkl2014orthogonal}, which can be expanded to obtain the recurrence for $n = 0,1,2,\dots$:
+For each $n = 0,1,2\dots$ let $\Dnt$ be any matrix that is a left inverse of $A_n$, i.e. such that $\Dnt A_n = I_{n+2}$. Multiplying our system by the preconditioner matrix that is given by the block diagonal matrix of the $\Dnt$'s, we obtain a lower triangular system \cite[p.78]{dunkl2014orthogonal}, which can be expanded to obtain the recurrence for $n = 0,1,2,\dots$:
 \bseqn{
 	\begin{cases}
 		\bighdopabcd_{-1}(x,y) := 0 \\
@@ -709,7 +709,7 @@ In this section we discuss how to take advantage of the proposed basis and spars
 %To obtain the recurrence coefficients for the $\{\genjac_n^{(a,b,c)}\}$ OPs in (\ref{eqn:Hrecurrence}), we use a variant of the Stieltjes procedure \cite{gautschi1982generating} where the polynomials are expressed as Chebyshev polynomial expansions and the inner products are calculated via Clenshaw--Curtis quadrature. This has the benefit that it is easier to incorporate high-precision arithmetic, which we use to overcome ill-conditioning present when $c$ is large, as required for large $n$ in \eqref{eq:diskpolys}. The ApproxFun.jl \cite{ApproxFun} package gives a convenient way to manipulate Chebyshev and Jacobi expansions, which we use to calculate the inner products and norms in this algorithm, utilising the {\tt BigFloat} type to handle high-precision calculations.
 
 
-It is possible to obtain the recurrence coefficients for the $\{\genjac_n^{(a,b,c)}\}$ OPs in \bsrefeqn{eqn:ds:Hrecurrence}, by careful application of the Christoffel--Darboux formula \cite[18.2.12]{DLMF}. We explain the process here for the disk-slice case, however we note that a similar but simpler argument holds for the trapezium case. We thus first need to define a new set of `interim' 1D OPs.
+It is possible to obtain the recurrence coefficients for the $\{\genjac_n^{(a,b,c)}\}$ OPs in \bsrefeqn{eqn:ds:Hrecurrence}, by careful application of the Christoffel--Darboux formula \cite[(18.2.12)]{DLMF}. We explain the process here for the disk-slice case, however we note that a similar but simpler argument holds for the trapezium case. We thus first need to define a new set of `interim' 1D OPs.
 \begin{definition}\label{def:ds:InterimOPconstruction}
 Let $\genjactw^{(a,b,c,d)}(x) := (\beta - x)^a \: (x - \alpha)^{b} \: (1-x)^{c} \: (1+x)^{d} $ be a weight function on the interval $(\alpha, \beta)$, and define the associated inner product by:
 \bseqnnumber{
@@ -743,7 +743,7 @@ and define
 	\mathcal{C}_n^{(a,b,c,d)} &= \fpr(\frac{\normgenjact^{(a,b,c+1,d)}}{\normgenjact^{(a,b,c,d)} \: \genjact_n^{(a,b,c,d)}(1) \: \genjact_{n+1}^{(a,b,c,d)}(1) \: \tilde{\beta}_n^{(a,b,c,d)}})^\half, \label{eqn:ds:genjactnormalisationi} \\
 	\mathcal{D}_n^{(a,b,c,d)} &= (-1)^n \: \fpr(\frac{- \normgenjact^{(a,b,c,d+1)}}{\normgenjact^{(a,b,c,d)} \: \genjact_n^{(a,b,c,d)}(-1) \: \genjact_{n+1}^{(a,b,c,d)}(-1) \: \tilde{\beta}_n^{(a,b,c,d)}})^\half. \label{eqn:ds:genjactnormalisationii}
 }
-Now, by the Christoffel--Darboux formula \cite[18.2.12]{DLMF}, we have that for any $x, y \in \R$,
+Now, by the Christoffel--Darboux formula \cite[(18.2.12)]{DLMF}, we have that for any $x, y \in \R$,
 \bseqnnumber{
 	&\sum_{k=0}^n \: \genjact_{k}^{(a,b,c,d)}(y) \: \genjact_{k}^{(a,b,c,d)}(x) \nonumber \\
 	&= \tilde{\beta}_n^{(a,b,c,d)} \: \frac{\genjact_{n}^{(a,b,c,d)}(x) \: \genjact_{n+1}^{(a,b,c,d)}(y) - \genjact_{n+1}^{(a,b,c,d)}(x) \: \genjact_{n}^{(a,b,c,d)}(y)}{y - x}. \label{eqn:ds:christoffeldarboux}
@@ -1298,7 +1298,7 @@ Note that since we have sparse operator matrices for partial derivatives and bas
 
 In this chapter we have shown that bivariate orthogonal polynomials can lead to sparse discretizations of general linear PDEs on specific domains whose boundary is specified by an algebraic curve -- notably here the disk-slice -- with Dirichlet boundary conditions. This work extends the triangle case \cite{beuchler2006new, li2010optimal, olver2019triangle} and whole disk case \cite{boyd2011comparing, vasil2016tensor} to non-classical geometries, and forms a building block in developing an $hp-$finite element method to solve PDEs on other polygonal domains by using suitably shaped elements (for example, by dividing the disk or a section of the disk into disk-slice elements, which has applications in turbulent pipe flow \cite{eggels1994fully, kerswell2005recent, vasil2016tensor}).
 
-We have demonstrated how one can construct the three-or-four-parameter OP families (depending on the domain) that form the basis for our sparse spectral methods, and presented a procedure, utilising the Christoffel-Darboux formula \cite[18.2.2]{DLMF}, of explicitly calculating the recurrence coefficients for the univariate OPs that are part of the construction. These coefficients contribute to calculations of the entries in the Jacobi matrices and other differential operators. Moreover, we have defined a quadrature rule that can be used for expanding functions in our OP basis and for calculating said entries of important operators. We have looked at a few mathematical examples including the Poisson, variable coefficient Helmholtz, and biharmonic equations and shown that our method performs well. Importantly, all operator matrices used are shown to be sparse, and in fact banded-block-banded in structure.
+We have demonstrated how one can construct the three-or-four-parameter OP families (depending on the domain) that form the basis for our sparse spectral methods, and presented a procedure, utilising the Christoffel-Darboux formula \cite[(18.2.12)]{DLMF}, of explicitly calculating the recurrence coefficients for the univariate OPs that are part of the construction. These coefficients contribute to calculations of the entries in the Jacobi matrices and other differential operators. Moreover, we have defined a quadrature rule that can be used for expanding functions in our OP basis and for calculating said entries of important operators. We have looked at a few mathematical examples including the Poisson, variable coefficient Helmholtz, and biharmonic equations and shown that our method performs well. Importantly, all operator matrices used are shown to be sparse, and in fact banded-block-banded in structure.
 
 Looking ahead, this work serves as a stepping stone to constructing similar methods to solve partial differential equations on sub-domains of the $2$-sphere surface, such as spherical caps that we will discuss in the next chapter.
 
