@@ -6,7 +6,7 @@ While the work in the previous chapter looked at developing a sparse spectral me
 
 Our aim in this chapter is to develop a sparse spectral method for solving linear partial differential equations on certain subsets of the sphere -- specifically spherical caps. More precisely, we consider the solution of partial differential equations on the \textit{spherical cap} $\Omega$ defined by
 \bseqn{
-	\Omega := \bsset{(x,y,z) \in \R^3}{\alpha < z < \beta, \: x^2 + y^2 + z^2 = 1}
+	\Omega := \bsset{(x,y,z) \in \R^3}{\alpha < z < \beta, \: x^2 + y^2 + z^2 = 1},
 }
 where $\alpha \in (-1,1)$ and $\beta := 1$. Simply put, the region of the surface of the $2$-sphere where the $z$-coordinate range is limited to the interval $[\alpha,1]$ is what we refer to as the spherical cap.
 
@@ -22,19 +22,19 @@ On the spherical cap, the family of weights we will consider are of the form
 }
 noting that $\Wa(x,y,z) = 0$ for $(x,y,z) \in \partial \Omega$ when $a > 0$. The corresponding OPs denoted $\scopnkia(x,y,z)$, where $n$ denotes the polynomial degree, $0 \le k \le n$ and $i \in \{0, \min(1,k)\}$. We define these to be orthogonalised lexicographically, that is,
 \bseqn{
-	\scopnkia(x,y,z) = C_{n,k,i} \: x^{k-i} \: y^i \: z^{n-k} + (\hbox{lower order terms})
+	\scopnkia(x,y,z) = C_{n,k,i} \: x^{k-i} \: y^i \: z^{n-k} + (\hbox{lower order terms}),
 }
 where $C_{n,k,i} \neq 0$ and \enquote{lower order terms} includes degree $n$ polynomials of the form $x^{j - i} \: y^{i} \: z^{n-j}$ where $j < k$. The precise normalization arises from their definition in terms of one-dimensional OPs that we will see in \bsrefdef{def:sc:OPconstruction}. 
 
 Just as for the spherical harmonics framework for the whole sphere in \bsrefchapter{CHAPTER:sphericalharmonics}, we consider partial differential operators involving the spherical Laplacian (the Laplace--Beltrami operator). Recall that we write the spherical coordinates as
 \bseqn{
-	x &= \sinphi \costheta = \rho(z) \costheta \\
-	y &= \sinphi \sintheta = \rho(z) \sintheta \\
-	z &= \cosphi
+	x &= \sinphi \costheta = \rho(z) \costheta, \\
+	y &= \sinphi \sintheta = \rho(z) \sintheta, \\
+	z &= \cosphi,
 }
 where $ \rho(z) := \sqrt{1-z^2}$, and that the Laplace--Beltrami operator is then
 \bseqn{
-	\DeltaS &= {1 \over \sinphi} \ppphi \Big( \sinphi \ppphi \Big) + {1 \over \sin^2 \varphi} \ppthetatwo = {1 \over \rho} \ppphi \Big( \rho \ppphi \Big) + {1 \over \rho^2} \ppthetatwo
+	\DeltaS &= {1 \over \sinphi} \ppphi \Big( \sinphi \ppphi \Big) + {1 \over \sin^2 \varphi} \ppthetatwo = {1 \over \rho} \ppphi \Big( \rho \ppphi \Big) + {1 \over \rho^2} \ppthetatwo,
 }
 i.e. $\DeltaS f(\xvec) = \Delta f({\xvec \over \norm{\xvec}})$ for $\xvec := (x,y,z) \in \R^3$. We do so by considering the component operators $\rho {\partial \over \partial \varphi}$ and ${\partial \over \partial \theta}$ applied to OPs with a specific choices of weight so that their discretisation is sparse, see \bsreftheorem{theorem:sc:sparsityofdifferentialoperators}. Sparsity comes from expanding the domain and range of an operator using different choices of the parameter $a$, \`a la the ultraspherical spectral method we investigated in \bsrefchapter{CHAPTER:diskslice} for disk-slices and trapeziums (see also \cite{snowball2019sparse}), as well as for intervals \cite{olver2013fast}, triangles \cite{olver2019triangle}, and the related work on sparse discretisations involving Jacobi polynomials on disks \cite{vasil2016tensor} and spheres \cite{vasil2019tensor,lecoanet2019tensor}. Just as we proceeded in \bsrefchapter{CHAPTER:diskslice} for the disk-slice case in 2D (see also \cite{snowball2019sparse}), we will use an integration-by-parts argument to deduce the sparsity structure.
 
@@ -53,9 +53,9 @@ The spherical cap can be thought of as a higher dimensional version of the circl
 \begin{definition}[\cite{olver2021orthogonal}]\label{def:sc:Ydefinition}
 	Define the unit circle $\omega := \bsset{\vec{x} = (x,y) \in \R^2}{x^2 + y^2 = 1}$, and define the parameter $\theta$ for each $(x,y) \in \omega$ by $x = \cos\theta$, $y = \sin\theta$. Define the polynomials $\{\chki\}$ for $k = 0, 1, \dots$, $i = 0, 1$ on $(x,y) \in \omega$ by
 \bseqn{
-	\ch_{0,0}(\xvec) \equiv \ch_{0,0}(x, y) &:= \ch_{0} =: \ch_{0,0}(\theta) \\
-	\ch_{k,0}(\xvec) \equiv \ch_{k,0}(x, y) &:= T_k(x) = \cos k \theta =: \ch_{k,0}(\theta) \\
-	\ch_{k,1}(\xvec) \equiv \ch_{k,1}(x, y) &:= y \: U_{k-1}(x) = \sin k \theta =: \ch_{k,1}(\theta)
+	\ch_{0,0}(\xvec) \equiv \ch_{0,0}(x, y) &:= \ch_{0} =: \ch_{0,0}(\theta), \\
+	\ch_{k,0}(\xvec) \equiv \ch_{k,0}(x, y) &:= T_k(x) = \cos k \theta =: \ch_{k,0}(\theta), \\
+	\ch_{k,1}(\xvec) \equiv \ch_{k,1}(x, y) &:= y \: U_{k-1}(x) = \sin k \theta =: \ch_{k,1}(\theta),
 }
 for $k = 1,2,3,\dots$ where $\ch_{0} := {\sqrt{2} \over 2}$ and $T_k$, $U_{k-1}$ are the standard Chebyshev polynomials on the interval $[-1,1]$. The $\{Y_{k,i}\}$ are orthonormal with respect to the inner product
 \bseqn{
@@ -68,13 +68,13 @@ However, for an arc of the unit circle $\bsset{\vec{x} = (x,y) \in \R^2}{x \ge h
 \bseqn{
 	\ip< p, \: q >_{\ch^h} &:= c^h \: \int_{-\arccos{h}}^{\arccos{h}} p(\xvec(\theta)) \: q(\xvec(\theta)) \: \D \theta \\
 	&= c^h \: \int_h^1 \Big\{ p(x,\sqrt{1-x^2}) \; q(x,\sqrt{1-x^2}) \\
-	&\quadfour \quadtwo + p(x,-\sqrt{1-x^2}) \; q(x,-\sqrt{1-x^2}) \Big\} {\D x \over \sqrt{1-x^2}}
+	&\quadfour \quadtwo + p(x,-\sqrt{1-x^2}) \; q(x,-\sqrt{1-x^2}) \Big\} {\D x \over \sqrt{1-x^2}},
 }
 for some normalising constant $c^h$. In the same vein, we can choose to construct the arc OPs in the same way as the whole circle OPs -- that is, define $\{T_k^h\}$, $\{U_k^h\}$ as two sets of univariate orthogonal polynomials on the interval $[h,1]$, orthogonal with respect to the weight functions $(1-x^2)^{-\half}$ and $(1-x^2)^{\half}$ respectively, and then define
 \bseqn{
-	\ch^h_{0,0}(\xvec) \equiv \ch^h_{0,0}(x, y) &:= \ch^h_{0} =: \ch^h_{0,0}(\theta) \\
-	\ch^h_{k,0}(\xvec) \equiv \ch^h_{k,0}(x, y) &:= T^h_k(x) =: \ch^h_{k,0}(\theta) \\
-	\ch^h_{k,1}(\xvec) \equiv \ch^h_{k,1}(x, y) &:= y \: U^h_{k-1}(x) =: \ch^h_{k,1}(\theta)
+	\ch^h_{0,0}(\xvec) \equiv \ch^h_{0,0}(x, y) &:= \ch^h_{0} =: \ch^h_{0,0}(\theta), \\
+	\ch^h_{k,0}(\xvec) \equiv \ch^h_{k,0}(x, y) &:= T^h_k(x) =: \ch^h_{k,0}(\theta), \\
+	\ch^h_{k,1}(\xvec) \equiv \ch^h_{k,1}(x, y) &:= y \: U^h_{k-1}(x) =: \ch^h_{k,1}(\theta),
 }
 where $Y_0^h$ is chosen so that $\ip< Y_0^h, \: Y_0^h >_{\ch^h} = 1$.
 
@@ -93,28 +93,29 @@ Using this approach, we can construct the 3D orthogonal polynomials on the spher
 \begin{proposition}[\cite{olver2020orthogonal}]\label{prop:sc:OPconstruction}
 	Let $w : (\alpha,\beta) \to \R$ be a weight function. For $n = 0,1,2,\dots, $ let $\{r_{n,k}\}$ be polynomials orthogonal with respect to the weight $\rho(x)^{2k} w(x)$ where $0 \le k \le n$. Then the 3D polynomials defined on $\Omega$ given by
 \bseqn{
-	\scopnki(x,y,z) := r_{n-k,k}(z) \: \rho(z)^k \: \ch_{k,i}\fpr({x \over \rho(z)}, {y \over \rho(z)})
+	\scopnki(x,y,z) := r_{n-k,k}(z) \: \rho(z)^k \: \ch_{k,i}\fpr({x \over \rho(z)}, {y \over \rho(z)}),
 }
 for $i \in {0,1}, \: 0 \le k \le n, \: n = 0,1,2,\dots$ are orthogonal polynomials with respect to the inner product
 \bseqn{
 	&\ip< p, \: q > := \int_\Omega p(x,y,z) \: q(x,y,z) \: w(z) \: \D A \\
 	&= \int_0^{\cos^{-1}(\alpha)} \int_0^{2\pi} \Big\{ p\big(\sinphi \costheta, \sinphi \sintheta, \cosphi \big) \: q\big(\sinphi \costheta, \sinphi \sintheta, \cosphi \big) \\
 	&\quadeight \quad \cdot w(\cosphi) \: \sinphi \Big\} \: \D \theta \: \D \varphi \\
-	&= \int_\alpha^1 \int_0^{2\pi} p\big(\rho(z) \costheta, \rho(z) \sintheta, z\big) \: q\big(\rho(z) \costheta, \rho(z) \sintheta, z\big) \: w(z) \: \D \theta \: \D z
+	&= \int_\alpha^1 \int_0^{2\pi} p\big(\rho(z) \costheta, \rho(z) \sintheta, z\big) \: q\big(\rho(z) \costheta, \rho(z) \sintheta, z\big) \: w(z) \: \D \theta \: \D z,
 }
 on $\Omega$, where $\D A = \sinphi \: \D \theta \: \D \varphi$ is the uniform spherical measure on $\Omega$. 
 \end{proposition}
 
 For the spherical cap, we can use \bsrefprop{prop:sc:OPconstruction} to create our one-parameter family of OPs. The univariate OPs that we will choose for the $r_{n,k}$ polynomials above will be the non-classical $\genjac^{(a,b)}$ OPs that we defined in \bsrefdef{def:ds:OPconstruction}. Since there is only one boundary for the spherical cap, we will only need to use a two-parameter version\footnote{For a spherical band with two boundaries, we would need the three-parameter version}). For reference, the family of orthonormal polynomials on $[\alpha,\beta]$ denoted $\{\genjac_n^{(a,b)}\}$ are defined such that they are orthonormal with respect to the inner product
 \bseqnnumber{
-	\ip< p, \: q >_{\genjacw^{(a,b)}} &:= \frac{1}{\normgenjac^{(a,b)}} \: \int_\alpha^1 p(x) \: q(x) \: \genjacw^{(a,b)}(x) \: \D x \label{eqn:sc:ipgenjac}
+	\ip< p, \: q >_{\genjacw^{(a,b)}} &:= \frac{1}{\normgenjac^{(a,b)}} \: \int_\alpha^1 p(x) \: q(x) \: \genjacw^{(a,b)}(x) \: \D x, \label{eqn:sc:ipgenjac}
 }
 where
 \bseqn{
-	\genjacw^{(a,b)}(x) &:= (x - \alpha)^{a} \: \rho(x)^{b}
-} is the weight function and 
+	\genjacw^{(a,b)}(x) &:= (x - \alpha)^{a} \: \rho(x)^{b},
+} 
+is the weight function and 
 \bseqnnumber{
-	\normgenjac^{(a,b)} := \int_\alpha^1 \: \genjacw^{(a,b)}(x) \: \D x \label{eqn:sc:ipnormalisation}
+	\normgenjac^{(a,b)} := \int_\alpha^1 \: \genjacw^{(a,b)}(x) \: \D x, \label{eqn:sc:ipnormalisation}
 }
 is a normalising constant.
 
@@ -143,7 +144,7 @@ A method for obtaining explicit recurrence coefficients and evaluating integrals
 
 Recall that we can express the three-term recurrences associated with $\genjac_n^{(a,b)}$ as
 \bseqnnumber{
-	x \genjac_n^{(a,b)}(x) &= \beta_n^{(a,b)} \genjac_{n+1}^{(a,b)}(x) + \alpha_n^{(a,b)} \genjac_n^{(a,b)}(x) + \beta_{n-1}^{(a,b)} \genjac_{n-1}^{(a,b)}(x) \label{eqn:sc:Rrecurrence}
+	x \genjac_n^{(a,b)}(x) &= \beta_n^{(a,b)} \genjac_{n+1}^{(a,b)}(x) + \alpha_n^{(a,b)} \genjac_n^{(a,b)}(x) + \beta_{n-1}^{(a,b)} \genjac_{n-1}^{(a,b)}(x), \label{eqn:sc:Rrecurrence}
 }
 where the coefficients are calculable (see \bsrefchapter{CHAPTER:diskslice}). We can use \bsrefeqn{eqn:sc:Rrecurrence} to determine the 3D recurrences for $\scopnkia(x,y,z)$. Importantly, we can deduce sparsity in the recurrence relationships.  We first require the following lemma.
 
@@ -162,9 +163,9 @@ The following identities hold for $k = 2,3,\dots$, $j = 0,1,\dots$ and $i, h \in
 \begin{proof}
 Each follows from the definitions of $\ch_{k,i}$ and $\ch_0$, as well as the trigonometric relationships:
 \bseqn{
-	2 \cos k \theta \cos\theta &= \cos (k-1)\theta + \cos(k+1)\theta \\
-	2 \sin k \theta \cos\theta &= \sin (k-1)\theta + \sin(k+1)\theta \\
-	2 \cos k \theta \sin\theta &= - \sin (k-1)\theta + \sin(k+1)\theta \\
+	2 \cos k \theta \cos\theta &= \cos (k-1)\theta + \cos(k+1)\theta, \\
+	2 \sin k \theta \cos\theta &= \sin (k-1)\theta + \sin(k+1)\theta, \\
+	2 \cos k \theta \sin\theta &= - \sin (k-1)\theta + \sin(k+1)\theta, \\
 	2 \sin k \theta \sin\theta &= \cos (k-1)\theta - \cos(k+1)\theta.
 }
 \end{proof}
@@ -176,7 +177,7 @@ Define
 		\begin{cases}
 			0 &\text{if } k < 0 \\
 			\ch_0 &\text{if } k = 0 \\
-			\half &\text{otherwise}
+			\half &\text{otherwise}.
 		\end{cases}
 }
 $\scopnkia(x,y,z)$ satisfy the following recurrences:
@@ -203,8 +204,8 @@ for $(x,y,z) \in \Omega$, where
 	\betaa_{n,k,i,j} &:= 
 		\begin{cases}
 			- \alphaa_{n,k,j} \quad &\text{if }(i = 0 \text{ and } j \text{ is odd}) \text{ or }(i = 1 \text{ and } j \text{ is even}) \\
-			\alphaa_{n,k,j} \quad &\text{otherwise}
-		\end{cases}, \\	
+			\alphaa_{n,k,j} \quad &\text{otherwise},
+		\end{cases} \\	
 	\gammaa_{n,k,1} &:= \beta_{n-k-1}^{(a, 2k)}, \qquad \gammaa_{n,k,2} := \alpha_{n-k}^{(a, 2k)}, \qquad \gammaa_{n,k,3} := \beta_{n-k}^{(a, 2k)}.
 }
 \end{lemma}
@@ -218,12 +219,12 @@ for $(x,y,z) \in \Omega$, where
 }
 These coefficients are given by
 \bseqn{
-	c_{m,j} = {\ip< x \: \scopnkia, \scopmjha >_{\scopa}}{\norm{\scopmjha}^{-2}_{\scopa}}
+	c_{m,j} = {\ip< x \: \scopnkia, \scopmjha >_{\scopa}}{\norm{\scopmjha}^{-2}_{\scopa}},
 }
 where we show the non-zero coefficients that result are the $\alphaa_{n,k,1},\dots,\alphaa_{n,k,6}$ in the lemma.
 Recall from \bsrefeqn{eqn:sc:normscop} that $\norm{\scopmjha}_{\scopa}^2 = \pi \: \normgenjac^{(a,2j)}$. Using a change of variables 
 \bseqn{
-	(\cos\theta \sin\varphi, \: \sin\theta\sin\varphi, \: \cos\varphi) = (x, y, z)
+	(\cos\theta \sin\varphi, \: \sin\theta\sin\varphi, \: \cos\varphi) = (x, y, z),
 }
 we have that, for $m = 0,\dots,n+1$, $j = 0,\dots,m$, 
 \bseqn{
@@ -232,7 +233,7 @@ we have that, for $m = 0,\dots,n+1$, $j = 0,\dots,m$,
 	&= \Big( \int^1_\alpha \genjacnmk^{(a, 2k)}(z) \: \genjacmmj^{(a, 2j)}(z) \: \rho(z)^{k+j+1} \: \genjacw^{(a, 0)}(z) \: \D z \Big) \\
 	&\quadfour \cdot \Big( \int_0^{2\pi} \chki(\theta) \: \chjh(\theta) \: \cos\theta \: \D \theta \Big) \\
 	&= \Big( \int^1_\alpha \genjacnmk^{(a, 2k)}(z) \: \genjacmmj^{(a, 2j)}(z) \: \genjacw^{(a, k + j + 1)}(z) \: \D z \Big) \cdot \: \Big( \int_0^{2\pi} \chki(\theta) \: \chjh(\theta) \: \cos\theta \: \D \theta \Big) \\
-	&= \half \: \pi \: \delta_{i,h} \: (\eta_{k-1} \: \delta_{k-1, j} + \eta_{k} \: \delta_{k+1, j})  \int^1_\alpha \genjacnmk^{(a, 2k)}(z) \: \genjacmmj^{(a, 2j)}(z) \: \genjacw^{(a, k + j + 1)}(z) \: \D z
+	&= \half \: \pi \: \delta_{i,h} \: (\eta_{k-1} \: \delta_{k-1, j} + \eta_{k} \: \delta_{k+1, j})  \int^1_\alpha \genjacnmk^{(a, 2k)}(z) \: \genjacmmj^{(a, 2j)}(z) \: \genjacw^{(a, k + j + 1)}(z) \: \D z,
 }
 where $\delta_{k, j}$ is the standard Kronecker delta function, using \bsreflemma{lemma:sc:Yrecurrence}. Similarly, for the recurrence for multiplication by $y$, we can expand 
 \bseqn{
@@ -240,7 +241,7 @@ where $\delta_{k, j}$ is the standard Kronecker delta function, using \bsreflemm
 }
 These coefficients are given by
 \bseqn{
-	d_{m,j} = {\ip< y \: \scopnkia, \scopmjha >_{\scopa}}{\norm{\scopmjha}^{-2}_{\scopa}}
+	d_{m,j} = {\ip< y \: \scopnkia, \scopmjha >_{\scopa}}{\norm{\scopmjha}^{-2}_{\scopa}},
 }
 where we show the non-zero coefficients that result are the $\betaa_{n,k,1},\dots,\betaa_{n,k,6}$ as stated in the Lemma:
 \bseqn{
@@ -250,7 +251,7 @@ where we show the non-zero coefficients that result are the $\betaa_{n,k,1},\dot
 	&\quadfour \cdot \Big( \int_0^{2\pi} \chki(\theta) \: \chjh(\theta) \: \sin\theta \: \D \theta \Big) \\
 	&= \Big( \int^1_\alpha \genjacnmk^{(a, 2k)}(z) \: \genjacmmj^{(a, 2j)}(z) \: \genjacw^{(a, k + j + 1)}(z) \: \D z \Big) \cdot \: \Big( \int_0^{2\pi} \chki(\theta) \: \chjh(\theta) \: \sin\theta \: \D \theta \Big) \\
 	&= \half \: \pi \: \delta_{|i-1|,h} \: \big[(-1)^{i+1} \: \eta_{k-1} \: \delta_{k-1, j} + (-1)^i \: \eta_{k} \: \delta_{k+1, j}\big] \\
-	&\quadfour \cdot \Big( \int^1_\alpha \genjacnmk^{(a, 2k)}(z) \: \genjacmmj^{(a, 2j)}(z) \: \genjacw^{(a, k + j + 1)}(z) \: \D z \Big)
+	&\quadfour \cdot \Big( \int^1_\alpha \genjacnmk^{(a, 2k)}(z) \: \genjacmmj^{(a, 2j)}(z) \: \genjacw^{(a, k + j + 1)}(z) \: \D z \Big),
 }
 where again $\delta_{k, j}$ is the standard Kronecker delta function, and we have used \bsreflemma{lemma:sc:Yrecurrence}.
 
@@ -274,13 +275,13 @@ The recurrences in \bsreflemma{lemma:sc:Qrecurrence} lead to (block) Jacobi matr
 			\bigscopta_1 \\
 			\bigscopta_2 \\
 			\vdots \\
-		\end{pmatrix}
+		\end{pmatrix},
 }
 and set $ J_x^{(a)},  J_y^{(a)},  J_z^{(a)}$ as the Jacobi matrices corresponding to
 \bseqnnumber{
 	J_x^{(a)} \: \bigscopta(x,y,z) = x \: \bigscopta(x,y,z), \nonumber \\
 	J_y^{(a)} \: \bigscopta(x,y,z) = y \: \bigscopta(x,y,z), \label{eqn:sc:jacobimatricesdefinitionalt} \\
-	J_z^{(a)} \: \bigscopta(x,y,z) = z \: \bigscopta(x,y,z). \nonumber
+	J_z^{(a)} \: \bigscopta(x,y,z) = z \: \bigscopta(x,y,z), \nonumber
 }
 where
 \bseqn{
@@ -303,14 +304,14 @@ For $J_x^{(a)}$, the sub-blocks have sub-block-bandwidths $(2,2)$:
 			A^{(a)}_{n,1,5} & \ddots & \ddots & & \\
 			& \ddots & \ddots & \ddots & \\
 			& & A^{(a)}_{n,n,5} & 0 & A^{(a)}_{n,n,6} \\
-		\end{pmatrix} \in \R^{(2n+1)\times(2n+3)} \\
+		\end{pmatrix} \in \R^{(2n+1)\times(2n+3)}, \\
 	B^{(a)}_{x,n} &:= 
 		\begin{pmatrix}
 			0 & A^{(a)}_{n,0,4} & & \\
 			A^{(a)}_{n,1,3} & \ddots & \ddots & \\
 			& \ddots & \ddots & A^{(a)}_{n,n-1,4} \\
 			& & A^{(a)}_{n,n,3} & 0
-		\end{pmatrix} \in \R^{(2n+1)\times(2n+1)} \\
+		\end{pmatrix} \in \R^{(2n+1)\times(2n+1)}, \\
 	C^{(a)}_{x,n} &:= 
 		\begin{pmatrix}
 			0 & A^{(a)}_{n,0,2} & & \\
@@ -346,14 +347,14 @@ For $J_y^{(a)}$, the sub-blocks have sub-block-bandwidths $(3,3)$:
 			B^{(a)}_{n,1,5} & \ddots & \ddots & & \\
 			& \ddots & \ddots & \ddots & \\
 			& & B^{(a)}_{n,n,5} & 0 & B^{(a)}_{n,n,6} \\
-		\end{pmatrix} \in \R^{(2n+1)\times(2n+3)} \\
+		\end{pmatrix} \in \R^{(2n+1)\times(2n+3)}, \\
 	B^{(a)}_{y,n} &:= 
 		\begin{pmatrix}
 			0 & B^{(a)}_{n,0,4} & & \\
 			B^{(a)}_{n,1,3} & \ddots & \ddots & \\
 			& \ddots & \ddots & B^{(a)}_{n,n-1,4} \\
 			& & B^{(a)}_{n,n,3} & 0
-		\end{pmatrix} \in \R^{(2n+1)\times(2n+1)} \\
+		\end{pmatrix} \in \R^{(2n+1)\times(2n+1)}, \\
 	C^{(a)}_{y,n} &:= 
 		\begin{pmatrix}
 			0 & B^{(a)}_{n,0,2} & & \\
@@ -389,14 +390,14 @@ For $J_z^{(a)}$, the sub-blocks are diagonal, i.e. have sub-block-bandwidths $(0
 			0 & \ddots & \ddots & & \\
 			& \ddots & \ddots & \ddots & \\
 			& & 0 & \Gamma^{(a)}_{n,n,3} & 0 \\
-		\end{pmatrix} \in \R^{(2n+1)\times(2n+3)} \\
+		\end{pmatrix} \in \R^{(2n+1)\times(2n+3)}, \\
 	B^{(a)}_{z,n} &:= 
 		\begin{pmatrix}
 			\Gamma^{(a)}_{n,0,2} & \\
 			& \ddots & & \\
 			& & \ddots & \\
 			& & & \Gamma^{(a)}_{n,n,2}
-		\end{pmatrix} \in \R^{(2n+1)\times(2n+1)} \\
+		\end{pmatrix} \in \R^{(2n+1)\times(2n+1)}, \\
 	C^{(a)}_{z,n} &:= 
 		\begin{pmatrix}
 			\Gamma^{(a)}_{n,0,1} & 0 & & \\
@@ -467,10 +468,10 @@ where we note $\scopa_0 := \scopa_{0,0,0}(x,y,z) \equiv \genjac_0^{(a,0)} \: \ch
 For each $n = 0,1,2\dots$ let $\Dnt$ be any matrix that is a left inverse of $A_n$, i.e. such that $\Dnt A_n = I_{2n+3}$. Multiplying our system by the preconditioner matrix that is given by the block diagonal matrix of the $\Dnt$'s, we obtain a lower triangular system \cite[p.78]{dunkl2014orthogonal}, which can be expanded to obtain the recurrence for $n = 0,1,2,\dots$:
 \bseqn{
 	\begin{cases}
-		\bigscopta_{-1}(x,y,z) := 0 \\
-		\bigscopta_{0}(x,y,z) := \scopa_0 \\
-		\bigscopta_{n+1}(x,y,z) = -\Dnt (B_n-G_n(x,y,z)) \bigscopta_n(x,y,z) - \Dnt C_n  \, \bigscopta_{n-1}(x,y,z)
-	\end{cases}.
+		\bigscopta_{-1}(x,y,z) := 0, \\
+		\bigscopta_{0}(x,y,z) := \scopa_0, \\
+		\bigscopta_{n+1}(x,y,z) = -\Dnt (B_n-G_n(x,y,z)) \bigscopta_n(x,y,z) - \Dnt C_n  \, \bigscopta_{n-1}(x,y,z).
+	\end{cases}
 }
 
 Note that we can define an explicit $\Dnt$ as follows:
@@ -490,13 +491,13 @@ for $n = 1, 2, \dots$ where again $\Gamma^{(a)}_{n,k,3}$ are defined in \bsrefeq
 		\begin{cases}
 			\frac{1}{\betaa_{n,n,1,6}} & j = 2(2n+1) \\
 			\frac{- \: \betaa_{n,n,1,5}}{\betaa_{n,n,1,6} \: \gammaa_{n, n-1, 3}} & j = 3(2n+1) - 3 \\
-			0 & o/w
+			0 &\text{otherwise},
 		\end{cases} \\
 	\big(\vec{\eta}_{1}\big)_j &= 
 		\begin{cases}
 			\frac{1}{\alphaa_{n,n,6}} & j = 2n+1 \\
 			\frac{- \: \alphaa_{n,n,5}}{\alphaa_{n,n,6} \: \gammaa_{n, n-1, 3}} & j = 3(2n+1) - 2  \text{ and } n > 1 \\
-			0 & o/w
+			0 &\text{otherwise}.
 		\end{cases}
 }
 For $n=0$, we can simply take
@@ -539,12 +540,12 @@ In this section we will derive the entries of spherical partial differential ope
 			\bigscopa_{N,0} \\
 			\vdots \\
 			\bigscopa_{N,N}
-		\end{pmatrix} \in \R^{(N+1)^2} \label{eqn:sc:OPdefNa}
+		\end{pmatrix} \in \R^{(N+1)^2}. \label{eqn:sc:OPdefNa}
 }
 
 We further denote the weighted set of OPs on $\Omega$ by \nomenclature[WvectorNa]{$\bigWNa$}{Vector of the weighted spherical cap OPs up to degree $N$, grouped by order $k$, with parameter $a$}
 \bseqn{
-	\bigWNa(x,y,z) := \genjacw^{(a,0)}(z) \: \bigscopNa(x,y,z),
+	\bigWNa(x,y,z) := \genjacw^{(a,0)}(z) \: \bigscopNa(x,y,z).
 }
 
 The operator matrices we derive here act on coefficient vectors, that represent a function $f(x,y,z)$ defined on $\Omega$ in spectral space -- such a function is approximated by its expansion up to degree $N$: 
@@ -556,12 +557,12 @@ where $\vec f = (f_{n,k,i})$ is the coefficients vector for the function $f$.
 \begin{definition}\label{def:sc:differentialoperators}
 	Let $a$ be a nonnegative parameter, and $\tilde a \ge 2$ be an integer. Define the operator matrices $D_\varphi^{(a)}, \: W_\varphi^{(a)}, \: D_\theta, \: \calL^{(a)\to(a+\tilde a)}, \: \calL_W^{(a)\to(a-\tilde a)}, \: \Delta^{(1)}_W$ according to:
 \bseqn{
-	\rho \pfpx{\varphi}{f} (x,y,z)&= \bigscop_N^{(a+1)}(x,y,z)^\top \: D_\varphi^{(a)} \: \mathbf{f}, \\
-	\rho \ppx{\varphi}[\genjacw^{(a,0)}(z) \: f(x,y,z)] &= \bigW_N^{(a-1)}(x,y)^\top \: W_\varphi^{(a)}\: \mathbf{f}, \\
-	\pfpx{\theta}{f}(x,y,z) &= \bigscopNa(x,y,z)^\top \: D_\theta \: \mathbf{f}, \\
-	\DeltaS f(x,y,z) &= \bigscopN^{(a+\tilde a)}(x,y,z)^\top \: \calL^{(a)\to(a+\tilde a)} \: \mathbf{f}, \\
-	\DeltaS \big( \genjacw^{(a,0)}(z) \: f(x,y,z) \big) &= \bigW_N^{(a-\tilde a)}(x,y,z)^\top \: \calL_W^{(a)\to(a-\tilde a)} \: \mathbf{f},  \quad \text{ (for } a \ge 2 \text{ only)} \\
-	\DeltaS \big( \genjacw^{(1,0)}(z) \: f(x,y,z) \big) &= \bigscopN^{(1)}(x,y,z)^\top \: \Delta^{(1)}_W \: \mathbf{f}, \quad \text{ (for } a = 1 \text{ only)}
+	\rho \pfpx{\varphi}{f} (x,y,z)&= \bigscop_N^{(a+1)}(x,y,z)^\top \: D_\varphi^{(a)} \: \vec{f}, \\
+	\rho \ppx{\varphi}[\genjacw^{(a,0)}(z) \: f(x,y,z)] &= \bigW_N^{(a-1)}(x,y)^\top \: W_\varphi^{(a)}\: \vec{f}, \\
+	\pfpx{\theta}{f}(x,y,z) &= \bigscopNa(x,y,z)^\top \: D_\theta \: \vec{f}, \\
+	\DeltaS f(x,y,z) &= \bigscopN^{(a+\tilde a)}(x,y,z)^\top \: \calL^{(a)\to(a+\tilde a)} \: \vec{f}, \\
+	\DeltaS \big( \genjacw^{(a,0)}(z) \: f(x,y,z) \big) &= \bigW_N^{(a-\tilde a)}(x,y,z)^\top \: \calL_W^{(a)\to(a-\tilde a)} \: \vec{f},  \quad \text{ (for } a \ge 2 \text{ only)} \\
+	\DeltaS \big( \genjacw^{(1,0)}(z) \: f(x,y,z) \big) &= \bigscopN^{(1)}(x,y,z)^\top \: \Delta^{(1)}_W \: \vec{f}, \quad \text{ (for } a = 1 \text{ only)}.
 }
 \end{definition}
 
@@ -570,12 +571,12 @@ The incrementing and decrementing of parameters as seen here is analogous to oth
 \begin{theorem}\label{theorem:sc:sparsityofdifferentialoperators}
 	The operator matrices $D_\varphi^{(a)}, \: W_\varphi^{(a)}, \: D_\theta, \: \calL^{(a)\to(a+\tilde a)}, \: \calL_W^{(a)\to(a-\tilde a)}, \: \Delta^{(1)}_W$ from \bsrefdef{def:sc:differentialoperators} are sparse, with banded-block-banded structure. More specifically:
 \begin{itemize}
-	\item $D_\varphi^{(a)}$ is block-diagonal with sub-block-bandwidths $(2, 4)$
-  	\item $W_\varphi^{(a)}$ is block-diagonal with sub-block-bandwidths $(4, 2)$
-	\item $D_\theta$ is block-diagonal with sub-block-bandwidths $(1, 1)$
-	\item $\calL^{(a)\to(a+\tilde a)}$ is block-diagonal with sub-block-bandwidths $(0, 4)$
-	\item $\calL_W^{(a)\to(a-\tilde a)}$ is block-diagonal with sub-block-bandwidths $(4, 0)$
-	\item $\Delta^{(1)}_W$ is block-diagonal with sub-block-bandwidths $(2, 2)$
+	\item $D_\varphi^{(a)}$ is block-diagonal with sub-block-bandwidths $(2, 4)$.
+  	\item $W_\varphi^{(a)}$ is block-diagonal with sub-block-bandwidths $(4, 2)$.
+	\item $D_\theta$ is block-diagonal with sub-block-bandwidths $(1, 1)$.
+	\item $\calL^{(a)\to(a+\tilde a)}$ is block-diagonal with sub-block-bandwidths $(0, 4)$.
+	\item $\calL_W^{(a)\to(a-\tilde a)}$ is block-diagonal with sub-block-bandwidths $(4, 0)$.
+	\item $\Delta^{(1)}_W$ is block-diagonal with sub-block-bandwidths $(2, 2)$.
 \end{itemize}
 \end{theorem}
 
@@ -586,30 +587,30 @@ In order to show the last part of \bsreftheorem{theorem:sc:sparsityofdifferentia
 \bseqn{
 	\ddx{z}[\genjacw^{(a+1, 2(k+1))} \: \genjacnmk^{(a,2k) \: \prime}] &= \genjacw^{(a+1, 2(k+1))} \: \genjacnmk^{(a,2k) \: \prime \prime} - 2(k+1)z \genjacw^{(a+1, 2k)} \: \genjacnmk^{(a,2k) \: \prime} \\
 	&\quadfour + (a+1) \genjacw^{(a, 2(k+1))} \: \genjacnmk^{(a,2k) \: \prime} \\
-	&= \sum_{m = n-1}^{n+1} \: c_{m,k} \: \genjacw^{(a, 2k)} \: \genjac_{m-k}^{(a,2k)}
+	&= \sum_{m = n-1}^{n+1} \: c_{m,k} \: \genjacw^{(a, 2k)} \: \genjac_{m-k}^{(a,2k)},
 }
 where 
 \bseqn{
-	c_{m,k} = - \frac{1}{\normgenjac^{(a,2k)}} \: \int_\alpha^1 \: \genjacnmk^{(a,2k) \: \prime} \: \genjac_{m-k}^{(a,2k) \: \prime} \: \genjacw^{(a+1, 2(k+1))} \: \D z
+	c_{m,k} = - \frac{1}{\normgenjac^{(a,2k)}} \: \int_\alpha^1 \: \genjacnmk^{(a,2k) \: \prime} \: \genjac_{m-k}^{(a,2k) \: \prime} \: \genjacw^{(a+1, 2(k+1))} \: \D z.
 }
 \end{lemma}
 
 \begin{proof}[Proof of \bsreflemma{lemma:sc:Rsecondderivative}]
 	Since $\ddx{z}[\genjacw^{(a+1, 2(k+1))} \: \genjacnmk^{(a,2k) \: \prime}] = \genjacw^{(a, 2k)} \: r_{n-k+1}$ where $r_{n-k+1}$ is a degree $n - k + 1$ polynomial, we have that 
 \bseqn{
-	\ddx{z}[\genjacw^{(a+1, 2(k+1))} \: \genjacnmk^{(a,2k) \: \prime}] =\sum_{m=0}^{n-k+1} \: \tilde c_{\{n,k\},m} \: \genjacw^{(a, 2k)} \: \genjac_{m}^{(a,2k)}
+	\ddx{z}[\genjacw^{(a+1, 2(k+1))} \: \genjacnmk^{(a,2k) \: \prime}] =\sum_{m=0}^{n-k+1} \: \tilde c_{\{n,k\},m} \: \genjacw^{(a, 2k)} \: \genjac_{m}^{(a,2k)},
 }
 for some coefficients $\tilde c_{\{n,k\},m}$. These coefficients are given by
 \bseqn{
 	\tilde c_{\{n,k\},m} &= \frac{1}{\normgenjac^{(a,2k)}} \: \ip<\ddx{z}[\genjacw^{(a+1, 2(k+1))} \: \genjacnmk^{(a,2k) \: \prime}], \genjac_{m}^{(a,2k)}>_{\genjacw^{(0,0)}} \\
-	&= - \frac{1}{\normgenjac^{(a,2k)}}  \: \int_\alpha^1 \: \genjacnmk^{(a,2k) \: \prime} \: \genjac_{m}^{(a,2k) \: \prime} \: \genjacw^{(a+1, 2(k+1))} \: \D z
+	&= - \frac{1}{\normgenjac^{(a,2k)}}  \: \int_\alpha^1 \: \genjacnmk^{(a,2k) \: \prime} \: \genjac_{m}^{(a,2k) \: \prime} \: \genjacw^{(a+1, 2(k+1))} \: \D z.
 }
 We show that these are zero for $m < n - k - 1$ by integrating twice by parts:
 \bseqn{
 	&\ip<\ddx{z}[\genjacw^{(a+1, 2(k+1))} \: \genjacnmk^{(a,2k) \: \prime}], \genjac_{m}^{(a,2k)}>_{\genjacw^{(0,0)}} \\
 	&\quad \quad \quad = - \int_\alpha^1 \: \genjacnmk^{(a,2k) \: \prime} \: \genjac_{m-k}^{(a,2k) \: \prime} \: \genjacw^{(a+1, 2(k+1))} \: \D z \\
 	&\quad \quad \quad = \int_\alpha^1 \: \genjacnmk^{(a,2k) \: \prime} \: [(a+1) \genjac_{m}^{(a,2k) \: \prime} \: \genjacw^{(0, 2)} \\
-	&\quad \quad \quad \quad \quad \quad \quad \quad \quad \quad - 2(k+1) z \genjac_{m}^{(a,2k) \: \prime} \: \genjacw^{(1, 0)} + \genjac_{m}^{(a,2k) \: \prime \prime} \: \genjacw^{(1, 2)}] \: \genjacw^{(a, 2k)} \: \D z
+	&\quad \quad \quad \quad \quad \quad \quad \quad \quad \quad - 2(k+1) z \genjac_{m}^{(a,2k) \: \prime} \: \genjacw^{(1, 0)} + \genjac_{m}^{(a,2k) \: \prime \prime} \: \genjacw^{(1, 2)}] \: \genjacw^{(a, 2k)} \: \D z,
 }
 which is indeed zero for $m < n - k - 1$ by orthogonality.
 \end{proof}
@@ -622,14 +623,14 @@ For the operator $D_\theta$ for partial differentiation by $\theta$, we simply h
 	&= 
 	\begin{cases}
 		(-1)^{i+1} \: k \: \scopa_{n,k,|i-1|}(x,y,z) & k > 0 \\
-		0 & k = 0
-	\end{cases}.
+		0 & k = 0.
+	\end{cases}
 }
 
 We now proceed with the case for the operator $D_\varphi^{(a)}$ for partial differentiation by $\varphi$. The entries of the operator are given by the coefficients in the expansion 
-$$
-\rhoppphi \scopnkia = \sum_{m=0}^{n+1} \sum_{j=0}^m \sum_{h=0}^1 c_{m,j,h} \: \scopmjh^{(a+1)},
-$$ 
+\bseqn{
+	\rhoppphi \scopnkia = \sum_{m=0}^{n+1} \sum_{j=0}^m \sum_{h=0}^1 c_{m,j,h} \: \scopmjh^{(a+1)},
+}
 where the coefficients are 
 \bseqn{
 	c_{m,j,h} = \norm{\scopmjh^{(a+1)}}^{-2}_{\scop^{(a+1)}} \ip<\rhoppphi \scopnkia, \: \scopmjh^{(a+1)}>_{\scop^{(a+1)}}.
@@ -650,7 +651,7 @@ Then,
 	&\quadfour \cdot \Big( \int_\alpha^1 \: \genjacmmj^{(a+1,2j)} \: \big[ k z \genjacnmk^{(a, 2k)} - \rho^2 \genjacnmk^{(a, 2k) \: \prime} \big] \: \genjacw^{(a+1, k + j)} \: \D z \Big) \\
 	&= \pi \delta_{k,j} \delta_{i,h} \int_\alpha^1 \genjac_{m-k}^{(a+1,2k)} \: \big[ k z \genjacnmk^{(a, 2k)} - \rho^2 \genjacnmk^{(a, 2k) \: \prime} \big] \: \genjacw^{(a+1, 2k)} \: \D z \\
 	&= \pi \delta_{k,j} \delta_{i,h} \int_\alpha^1 \genjacnmk^{(a, 2k)} \: \Big\{  k z \: \genjac_{m-k}^{(a+1,2k)} \: \genjacw^{(1, 0)} + \genjac_{m-k}^{(a+1,2k) \: \prime} \: \genjacw^{(1, 2)}\\
-	&\quadeight + a \: \rho^2 \: \genjac_{m-k}^{(a+1,2k)} - (2k+2) z \: \genjac_{m-k}^{(a+1,2k)} \: \genjacw^{(1, 0)} \Big\} \: \genjacw^{(a, 2k)} \: \D z
+	&\quadeight + a \: \rho^2 \: \genjac_{m-k}^{(a+1,2k)} - (2k+2) z \: \genjac_{m-k}^{(a+1,2k)} \: \genjacw^{(1, 0)} \Big\} \: \genjacw^{(a, 2k)} \: \D z,
 }
 which is zero for $j \ne k$, $h \ne i$, and $m < n - 2$ by orthogonality.
 
@@ -668,11 +669,11 @@ Now,
 	&= \pi \delta_{k,j} \delta_{i,h} \int_\alpha^1 \genjac_{m-k}^{(a-1,2k)} \big[ k z \genjacnmk^{(a, 2k)} \genjacw^{(1, 0)} - \genjacnmk^{(a, 2k) \: \prime} \genjacw^{(1, 2)} - a \genjacnmk^{(a, 2k)} \rho^2 \big] \genjacw^{(a-1, 2k)} \: \D z \\
 	&= \pi \delta_{k,j} \delta_{i,h} \int_\alpha^1 \: \genjacnmk^{(a, 2k)} \: \Big\{  k z \: \genjac_{m-k}^{(a-1,2k)} \: \genjacw^{(1, 0)} - a \: \rho^2 \: \genjac_{m-k}^{(a-1,2k)} + \genjac_{m-k}^{(a-1,2k) \: \prime} \: \genjacw^{(1, 2)} \\
 	&\quadeight \quadtwo + a \: \rho^2 \genjac_{m-k}^{(a-1,2k)} - (2k+2) z \: \genjac_{m-k}^{(a-1,2k)} \: \genjacw^{(1, 0)} \Big\} \genjacw^{(a-1, 2k)} \: \D z \\
-	&= \pi \delta_{k,j} \delta_{i,h} \int_\alpha^1 \genjacnmk^{(a, 2k)} \big[ k z \: \genjac_{m-k}^{(a-1,2k)} + \genjac_{m-k}^{(a-1,2k) \: \prime} \: \rho^2- (2k+2) z \: \genjac_{m-k}^{(a-1,2k)} \big] \genjacw^{(a, 2k)} \: \D z
+	&= \pi \delta_{k,j} \delta_{i,h} \int_\alpha^1 \genjacnmk^{(a, 2k)} \big[ k z \: \genjac_{m-k}^{(a-1,2k)} + \genjac_{m-k}^{(a-1,2k) \: \prime} \: \rho^2- (2k+2) z \: \genjac_{m-k}^{(a-1,2k)} \big] \genjacw^{(a, 2k)} \: \D z,
 }
 which is zero for $j \ne k$, $h \ne i$, and $m < n - 1$ by orthogonality.
 
-We move on to the spherical Laplacian operators. Note that the Laplacian acting on the weighted and non-weighted spherical cap OP $\scopnki^{(a)}$ yield
+We move on to the spherical Laplacian operators. Note that the Laplacian acting on the weighted and non-weighted spherical cap OP $\scopnki^{(a)}$ yields
 \bseqnnumber{
 	&\DeltaS \: \scopnki^{(a)} \nonumber \\
 	&= {1 \over \rho} \ppx{\varphi} \Big( \rho \ppx{\varphi} [\genjacnmk^{(a,2k)}(\cosphi) \: \sin^k\varphi] \Big) \chki(\theta) + \genjacnmk^{(a,2k)}(\cosphi) \: \sin^{k-2}\varphi \pmpxm{\theta}{2} \chki(\theta) \nonumber \\
@@ -691,8 +692,10 @@ and
 }
 
 For the operator $\calL^{(a)\to(a+\tilde a)}$ for the surface Laplacian on a non-weighted space, the entries of the operator are given by the coefficients in the expansion 
-$$\DeltaS \scopnki^{(a)} = \sum_{m=0}^{n} \sum_{j=0}^m \sum_{h=0}^1 c_{m,j,h} \: \scopmjh^{(a + \tilde a)},$$
- where the coefficients are
+\bseqn{
+	\DeltaS \scopnki^{(a)} = \sum_{m=0}^{n} \sum_{j=0}^m \sum_{h=0}^1 c_{m,j,h} \: \scopmjh^{(a + \tilde a)},
+}
+where the coefficients are
 \bseqn{
 	c_{m,j,h} = \norm{\scopmjh^{(a + \tilde a)}}^{-2}_{\scop^{(a + \tilde a)}} \ip<\DeltaS \scopnki^{(a)}, \: \scopmjh^{(a + \tilde a)}>_{\scop^{(a + \tilde a)}}.
 }
@@ -706,7 +709,7 @@ Using \bsrefeqn{eqn:sc:oplaplacian}, and integrating by parts twice, we then hav
 	&\quadeight \quadeight + \ddx{z} [\genjacnmk^{(a,2k) \: \prime} \: \rho^{2(k+1)}] \Big\} \: \D z \\
 	&= \pi \: \delta_{k,j} \: \delta_{i,h} \: \int_\alpha^1 \: \Big\{ -k(k+1) \genjac_{m-k}^{(a+\tilde a,2k)} \: \genjacnmk^{(a,2k)} \: \genjacw^{(a+\tilde a, 2k)} \\
 	&\quadfour \quadtwo \quad - \genjacnmk^{(a,2k) \: \prime} \genjacw^{(a+\tilde a-1, 2k)} \: [\genjac_{m-k}^{(a+\tilde a,2k) \: \prime} \: \genjacw^{(1,0)} + (a + \tilde a) \genjac_{m-k}^{(a+\tilde a,2k)}] \Big\} \: \D z \\
-	&= \pi \: \delta_{k,j} \: \delta_{i,h} \: \int_\alpha^1 \: \genjacnmk^{(a,2k)} \: \genjacw^{(a, 2k)} \: r_{m-k+\tilde a} \: \D z
+	&= \pi \: \delta_{k,j} \: \delta_{i,h} \: \int_\alpha^1 \: \genjacnmk^{(a,2k)} \: \genjacw^{(a, 2k)} \: r_{m-k+\tilde a} \: \D z,
 }
 where $r_{m-k+\tilde a}$ is a degree $m - k + \tilde a$ polynomial in $z$, and so the above is zero for $n  - k > m - k + \tilde a \iff m < n - \tilde a$.
 
@@ -740,7 +743,7 @@ Using \bsrefeqn{eqn:sc:woplaplacian}, and integrating by parts thrice, we then h
 	&\quadeight \quadeight \quadtwo \quad + a (a-1) \rho^2 \big] \\
 	&\quadfour \quadtwo + \genjacnmk^{(a,2k)} \: \genjacw^{(a - 1, 2k+2)} \big[ \genjac_{m-k}^{(a - \tilde a, 2k) \: \prime \prime} \: \rho^2 - 2(k+1) z \: \genjac_{m-k}^{(a - \tilde a, 2k) \: \prime} \big] \\
 	&\quadfour \quadtwo - a \genjacnmk^{(a,2k)} \: \genjac_{m-k}^{(a - \tilde a, 2k)} \: \genjacw^{(a-2, 2k)} \: \big[ (a-1) \rho^2 - 2(k+1) z \: \genjacw^{(1, 0)} \big] \Big\} \: \D z \\
-	&= \pi \: \delta_{k,j} \: \delta_{i,h} \: \int_\alpha^1 \: \genjacnmk^{(a,2k)} \: \genjacw^{(a, 2k)} \: r_{m-k} \: \D z
+	&= \pi \: \delta_{k,j} \: \delta_{i,h} \: \int_\alpha^1 \: \genjacnmk^{(a,2k)} \: \genjacw^{(a, 2k)} \: r_{m-k} \: \D z,
 }
 where $r_{m-k}$ is a degree $m - k$ polynomial in $z$, and so the above is zero for $n - k > m - k \iff m < n$.
 
@@ -759,7 +762,7 @@ Using \bsrefeqn{eqn:sc:woplaplacian} with $a = 1$, and \bsreflemma{lemma:sc:Rsec
 	&\quadeight \quadfour + c_{n-1,k} \genjac_{n-k-1}^{(1, 2k)} + c_{n+1,k} \genjac_{n-k+1}^{(1, 2k)} \Big\} \: \genjacw^{(1, 2k)} \: \D z \\
 	&= - \pi \: \delta_{k,j} \: \delta_{i,h} (\delta_{m,n-1} + \delta_{m,n} + \delta_{m,n+1}) \\
 	&\quadfour \cdot \Big( \int_\alpha^1 \: \Big\{ \genjacnmk^{(1,2k)} \: \genjac_{m-k}^{(1, 2k)} (k(k+1) \genjacw^{(1, 0)} + 2(k+1)z) \\
-	&\quadeight + \genjacnmk^{(1,2k) \: \prime} \: \genjac_{m-k}^{(1,2k) \: \prime} \: \genjacw^{(2, 2(k+1))} \Big\} \: \D z \Big)
+	&\quadeight + \genjacnmk^{(1,2k) \: \prime} \: \genjac_{m-k}^{(1,2k) \: \prime} \: \genjacw^{(2, 2(k+1))} \Big\} \: \D z \Big),
 }
 where the $c_{n-1,k}, c_{n,k}, c_{n+1,k}$ are those derived in \bsreflemma{lemma:sc:Rsecondderivative}.
 \end{proof}
@@ -768,29 +771,29 @@ By applying these differential operators, we are (in some cases) incrementing or
 \begin{definition}\label{def:sc:parametertransformationoperators}
 Define the operator matrices $T^{(a)\to(a+\tilde a)}, \quad T_W^{(a)\to(a-\tilde a)}$ for conversion between non-weighted spaces and weighted spaces respectively according to
 \bseqn{
-	\bigscopNa(x,y,z) &= \Big(T^{(a)\to(a+\tilde a)} \Big)^\top \: \bigscopN^{(a+\tilde a)}(x,y,z) \\
-	\bigWNa(x,y,z) &= \Big(T_W^{(a)\to(a-\tilde a)} \Big)^\top \: \bigW_N^{(a-\tilde a)}(x,y,z)
+	\bigscopNa(x,y,z) &= \Big(T^{(a)\to(a+\tilde a)} \Big)^\top \: \bigscopN^{(a+\tilde a)}(x,y,z), \\
+	\bigWNa(x,y,z) &= \Big(T_W^{(a)\to(a-\tilde a)} \Big)^\top \: \bigW_N^{(a-\tilde a)}(x,y,z).
 }
 \end{definition}
 
 \begin{lemma}\label{lemma:sc:sparsityofparametertransformationoperators}
 The operator matrices in \bsrefdef{def:sc:parametertransformationoperators} are sparse, with banded-block-banded structure. More specifically:
 \begin{itemize}
-	\item $T^{(a)\to(a+\tilde a)}$ is block-diagonal with sub-block bandwidths $(0,2\tilde a)$
-	\item $T_W^{(a)\to(a-\tilde a)}$ is block-diagonal with sub-block bandwidths $(2\tilde a, 0)$
+	\item $T^{(a)\to(a+\tilde a)}$ is block-diagonal with sub-block bandwidths $(0,2\tilde a)$.
+	\item $T_W^{(a)\to(a-\tilde a)}$ is block-diagonal with sub-block bandwidths $(2\tilde a, 0)$.
 \end{itemize}
 \end{lemma}
 
 \begin{proof}
 We proceed with the case for the non-weighted operators $T^{(a)\to(a+\tilde a)}$. Since $\{\scopmjh^{(a+\tilde{a})}\}$ for $m = 0,\dots,n$, $j = 0,\dots,m$, $h = 0,1$ is an orthogonal basis for any degree $n$ polynomial, we can expand $\scopnkia = \sum_{m=0}^{n} \sum_{j=0}^m t_{m,j} \: \scopmjh^{(a+\tilde{a})}$. The coefficients of the expansion are then the entries of the operator matrix. We will show that the only non-zero coefficients are for $k = j$, $i = h$ and $m \ge  n - \tilde a$. Note that
 \bseqn{
-	t_{m,j} = \norm{\scopmjh^{(a+\tilde{a})}}^{-2}_{\scop^{(a+\tilde a)}} \: \ip< \scopnkia, \scopmjh^{(a+\tilde{a})}>_{\scop^{(a+\tilde a)}}.
+	t_{m,j} = \norm{\scopmjh^{(a+\tilde{a})}}^{-2}_{\scop^{(a+\tilde a)}} \: \ip< \scopnkia, \scopmjh^{(a+\tilde{a})}>_{\scop^{(a+\tilde a)}},
 }
 where
 \bseqn{
 	&\ip< \scopnkia, \scopmjh^{(a+\tilde{a})}>_{\scop^{(a+\tilde a)}} \\
 	&= \Big( \int_0^{2\pi} \: \chki(\theta) \: \chjh(\theta) \: \D \theta \Big) \: \Big( \int_\alpha^1 \: \genjacnmk^{(a, 2k)} \: \genjacmmj^{(a+\tilde a,2j)} \: \rho^{k+j} \: \genjacw^{(a + \tilde a, 0)} \: \D z \Big) \\
-	&= \pi \: \delta_{k,j} \: \delta_{i,h} \: \int_\alpha^1 \: \genjacnmk^{(a, 2k)} \: \genjac_{m-k}^{(a+\tilde a,2k)} \: \genjacw^{(a + \tilde a, 2k)} \: \D z
+	&= \pi \: \delta_{k,j} \: \delta_{i,h} \: \int_\alpha^1 \: \genjacnmk^{(a, 2k)} \: \genjac_{m-k}^{(a+\tilde a,2k)} \: \genjacw^{(a + \tilde a, 2k)} \: \D z,
 }
 which is zero for $n > m + \tilde a \iff m < n - \tilde a$. The sparsity argument for the weighted parameter transformation operator follows similarly.
 \end{proof}
@@ -835,11 +838,11 @@ Importantly, this operator will have banded-block-banded structure, and hence wi
 
 Another desirable operator is the biharmonic operator $\DeltaS^2$, for which we assume zero Dirichlet and Neumann conditions. That is, 
 \bseqn{
-	u(x,y,z) &= 0, \quad \pfpx{n}{u}(x,y,z) = \gradS u(x,y,z) \cdot \unitvec{n}(x,y,z) = 0 \quad \text{for } (x,y,z) \in \partial\Omega
+	u(x,y,z) &= 0, \quad \pfpx{n}{u}(x,y,z) = \gradS u(x,y,z) \cdot \unitvec{n}(x,y,z) = 0 \quad \text{for } (x,y,z) \in \partial\Omega,
 }
 where $\partial\Omega$ is the $z=\alpha$ boundary, and $\unitvec{n}(x,y,z)$ is the outward unit normal vector at the point $(x,y,z)$ on the boundary. For the spherical cap $\Omega$, this is simply $\phivec(x,y,z)$. Hence, 
 \bseqn{
-	\gradS u(x,y,z) \cdot \unitvec{n}(x,y,z) = \gradS u(x,y,z) \cdot \phivec(x,y,z) = - \rho(z) \pfpx{z}{u}(x,y,z)
+	\gradS u(x,y,z) \cdot \unitvec{n}(x,y,z) = \gradS u(x,y,z) \cdot \phivec(x,y,z) = - \rho(z) \pfpx{z}{u}(x,y,z),
 } 
 and the boundary conditions simplify to
 \bseqn{
@@ -913,15 +916,15 @@ where $M = M_1 \: M_2$, and the quadrature rule is exact if $f(x,y,z)$ is a poly
 \begin{proof}
 Let $f : \Omega \to \R$. Define the functions $f_e, f_o : \Omega \to \R$ by 
 \bseqn{
-	f_e(x,y,z) &:= \half \Big(f(x, y,z) + f(-x, -y,z)\Big), \quad \forall (x,y,z) \in \Omega\\
-	f_o(x,y,z) &:= \half \Big(f(x, y,z) - f(-x, -y,z)\Big), \quad \forall (x,y,z) \in \Omega
+	f_e(x,y,z) &:= \half \Big(f(x, y,z) + f(-x, -y,z)\Big), \quad \forall (x,y,z) \in \Omega, \\
+	f_o(x,y,z) &:= \half \Big(f(x, y,z) - f(-x, -y,z)\Big), \quad \forall (x,y,z) \in \Omega,
 }
 so that $\xvec \mapsto f_e(\xvec, z)$ for fixed $z$ is an even function, and $\xvec \mapsto f_o(\xvec, z)$ for fixed $z$ is an odd function. Note that if $f$ is a polynomial, then $f_e(\rho(t)x, \rho(t)y, t)$ is a polynomial in $t \in [\alpha,1]$ for fixed $(x,y) \in \R^2$. 
 
 Firstly, we note that
 \bseqn{
 	\int_0^{2\pi} g\big(\cos \theta, \sin\theta\big) \: \D \theta &= \int_{-1}^1 \Big[ g\big(x, \sqrt{1-x^2}\big) + g\big(x, -\sqrt{1-x^2}\big) \Big] \frac{\D x}{\sqrt{1-x^2}} \\
-	&= \int_{-1}^1 \Big[ g\big(x, \sqrt{1-x^2}\big) + g\big(-x, -\sqrt{1-x^2}\big) \Big] \frac{\D x}{\sqrt{1-x^2}}
+	&= \int_{-1}^1 \Big[ g\big(x, \sqrt{1-x^2}\big) + g\big(-x, -\sqrt{1-x^2}\big) \Big] \frac{\D x}{\sqrt{1-x^2}},
 }
 for any function $g$, using a change of variables $x \to -x$ for the second term in the integral. Then, integrating the even function $f_e$ we have
 \bseqn{
@@ -942,7 +945,7 @@ Integrating the odd function $f_o$ results in
 	&\quad \quad = \int_\alpha^1 \genjacw^{(a,0)}(z) \: \Big( \int_0^{2\pi} f_o\big(\rho(z)\cos\theta,\rho(z)\sin\theta, z)\big) \: \D \theta \Big) \: \D z \\
 	&\quad \quad = \int_\alpha^1 \genjacw^{(a,0)}(z) \: \Big( \int_{-1}^1 \Big[ f_o\big(\rho(z)x,\rho(z)\sqrt{1-x^2}, z\big) \\
 	&\quad \quad \quad \quad \quad \quad \quad \quad \quad \quad \quad \quad + f_o\big(-\rho(z)x, - \rho(z)\sqrt{1-x^2}, z\big) \Big] \: \frac{\D x}{\sqrt{1-x^2}} \Big) \: \D z \\
-	&\quad \quad = 0.
+	&\quad \quad = 0,
 }
 since $f_o(x,y,z) = - f_o(-x, -y, z)$. Hence, for a polynomial $f$ in $x,y,z$ of degree $N$,
 \bseqn{
@@ -958,7 +961,7 @@ where $M = M_1 M_2$ and $2M_1 - 1 \ge N, 2M_2 - 1 \ge N$.
 
 Fix $a \in \R$. Then for any function $f : \Omega \to \R$ we can express $f$ by
 \bseqn{
-	f(x,y,z) \approx \sum_{k=0}^N \bigscopNka(x,y,z)^\top \: \vec{f}_k = \bigscopNa(x,y,z)^\top \: \vec{f}
+	f(x,y,z) \approx \sum_{k=0}^N \bigscopNka(x,y,z)^\top \: \vec{f}_k = \bigscopNa(x,y,z)^\top \: \vec{f},
 }
 for N sufficiently large, where $\bigscopNka, \bigscopNa$ is defined in \bsrefeqns{eqn:sc:OPdefNka}{eqn:sc:OPdefNa} and where
 \bseqn{
@@ -989,7 +992,7 @@ Recall from \bsrefeqn{eqn:sc:normscop} that $\norm{\scopnkia}^2_{\scopa} = \norm
 	f_{n,k,i} &= \frac{1}{\normgenjac^{(a,2k)} \: \pi} \sum_{j=1}^{M} w_j \big[ f(x_j, y_j, z_j) \scopnkia(x_j, y_j, z_j) \\
 	&\quadeight \quad + f(-x_j, -y_j, z_j) \scopnkia(-x_j, -y_j, z_j) \big] \\
 	&= \frac{1}{M_2 \: \normgenjac^{(a,2k)}} \sum_{j=1}^{M_1} w^{(t)}_j \sum_{l=1}^{M_2} \big[ f(x_j, y_j, z_j) \scopnkia(x_j, y_j, z_j) \\
-	&\quadeight \quadfour + f(-x_j, -y_j, z_j) \scopnkia(-x_j, -y_j, z_j) \big]
+	&\quadeight \quadfour + f(-x_j, -y_j, z_j) \scopnkia(-x_j, -y_j, z_j) \big],
 }
 where the quadrature nodes and weights are those from \bsreftheorem{theorem:sc:quadrule}, and $M = M_1 M_2$ with $2M_1 - 1 \ge N, M_2 - 1 \ge N$ (i.e. we can choose $M_2 := N + 1$ and $M_1 := \ceil{\frac{N+1}{2}}$).
 
@@ -1020,10 +1023,10 @@ For a function $f$, with coefficients vector $\vec{f}$ for expansion in the $\{\
 }
 The trivariate Clenshaw algorithm works similar to the bivariate Clenshaw algorithm introduced in \cite{olver2019triangle} for expansions in the triangle:
 \bseqn{
-	\quad &\text{1) } \text{Set } \vec{\xi}_{N+2} = \vec{0}, \: \vec{\xi}_{N+2} = \vec{0}. \\
+	\quad &\text{1) } \text{Set } \vec{\xi}_{N+2} = \vec{0}, \: \vec{\xi}_{N+2} = \vec{0} \\
 	\quad &\text{2) } \text{For } n = N:-1:0 \\
 	\quad & \quad \quad \quad \text{set } \vec{\xi}_{n}^T = {\tilde{\vec{f}}_n}^T - \vec{\xi}_{n+1}^T D^T_n (B_n - G_n(x,y,z)) -  \vec{\xi}_{n+2}^T D^T_{n+1}C_{n+1} \\
-	\quad &\text{3) } \text{Output: } f(x,y,z) \approx \vec{\xi}_{0} \: \bigscopta_{0}  = \xi_{0} \: \scopa_0
+	\quad &\text{3) } \text{Output: } f(x,y,z) \approx \vec{\xi}_{0} \: \bigscopta_{0}  = \xi_{0} \: \scopa_0.
 }
 
 
@@ -1042,10 +1045,10 @@ i.e. $\tilde V \tilde{\vec{f}}$ is the coefficients vector for the function $v(x
 
 To this end, let $\tilde{\vec{v}}$ be the coefficients for expansion up to order $N$ in the $\{\scopnki\}$ basis of $v$ (rearranged as in \bsrefsection{section:sc:functionevaluation} so that $v(x,y,z) = \tilde{\vec{v}}^\top \: \bigscopta(x,y,z)$). Denote $X := (J_x^{(a)})^\top$, $Y := (J_y^{(a)})^\top$, and $Z := (J_z^{(a)})^\top$. The operator $\tilde V$ is then the result of the following:
 \bseqn{
-	\quad &\text{1) } \text{Set } \vec{\xi}_{N+2} = \vec{0}, \: \vec{\xi}_{N+2} = \vec{0}. \\
+	\quad &\text{1) } \text{Set } \vec{\xi}_{N+2} = \vec{0}, \: \vec{\xi}_{N+2} = \vec{0} \\
 	\quad &\text{2) } \text{For } n = N:-1:0 \\
 	\quad & \quad \quad \quad \text{set } \vec{\xi}_{n}^T = {\tilde{\vec{v}}_n}^T - \vec{\xi}_{n+1}^T D^T_n \big(B_n - G_n(X, Y, Z)\big) -  \vec{\xi}_{n+2}^T D^T_{n+1}C_{n+1} \\
-	\quad &\text{3) } \text{Output: } \tilde V = v(X, Y, Z) \approx \vec{\xi}_{0} \: \bigscopta_{0}  = \xi_{0} \: \scopa_0
+	\quad &\text{3) } \text{Output: } \tilde V = v(X, Y, Z) \approx \vec{\xi}_{0} \: \bigscopta_{0}  = \xi_{0} \: \scopa_0,
 }
 where at each iteration, $\vec{\xi}_n$ is a vector of matrices\footnote{It may help to think of this symbolically. At each iteration, the entries of $\vec{\xi}_n$ are polynomials in $X$, $Y$, and $Z$. On the final step, $\vec{\xi}_0 = \xi_{0}$ is hence some polynomial expression in $X$, $Y$, and $Z$, which we can then evaluate by inserting the Jacobi matrices.}. Of course, by using rearranged versions of the Jacobi matrices (that act on coefficients $\vec{f}$ that expand the function $f$ in the $\bigscopa$ basis), the same algorithm would return the operator $V$ so that 
 \bseqn{
@@ -1084,21 +1087,21 @@ We now demonstrate how the sparse linear systems constructed as above can be use
 The Poisson equation is the classic problem of finding $u(x,y,z)$ given a function $f(x,y,z)$ such that:
 \bseqnnumber{
 	\begin{cases}
-\DeltaS u(x,y,z) = f(x,y,z) &\quad \text{in } \Omega \\
-		u(x,y,z) = 0& \quad \text{on } \partial \Omega
+		\DeltaS u(x,y,z) = f(x,y,z) &\quad \text{in } \Omega \\
+		u(x,y,z) = 0& \quad \text{on } \partial \Omega,
 	\end{cases}
 	\label{eqn:sc:poisson}
 }
 noting the imposition of zero Dirichlet boundary conditions on $u$.
 
-We can tackle the problem as follows. Choose an $N \in \N$ large enough for the problem, and denote the coefficient vector for expansion of $u$ in the $\bigWNi$ OP basis up to degree $N$ by $\mathbf{u}$, and the coefficient vector for expansion of $f$ in the $\bigscopNi$ OP basis up to degree $N$ by $\mathbf{f}$. Since $f$ is known, we can obtain $\mathbf{f}$ using the quadrature rule in \bsrefsection{section:sc:expandingfunctions}. In matrix-vector notation, our system hence becomes:
+We can tackle the problem as follows. Choose an $N \in \N$ large enough for the problem, and denote the coefficient vector for expansion of $u$ in the $\bigWNi$ OP basis up to degree $N$ by $\vec{u}$, and the coefficient vector for expansion of $f$ in the $\bigscopNi$ OP basis up to degree $N$ by $\vec{f}$. Since $f$ is known, we can obtain $\vec{f}$ using the quadrature rule in \bsrefsection{section:sc:expandingfunctions}. In matrix-vector notation, our system hence becomes:
 \bseqn{
-    \Delta_W^{(1)} \mathbf{u} = \mathbf{f}
+    \Delta_W^{(1)} \vec{u} = \vec{f},
 }
-which can be solved to find $\mathbf{u}$.
+which can be solved to find $\vec{u}$.
 In \bsreffig{fig:sc:poisson} we see the solution to the Poisson equation with zero boundary conditions given in \bsrefeqn{eqn:sc:poisson} in the disk-slice $\Omega$. In \bsreffig{fig:sc:poisson} we also show the norms of each block of calculated coefficients of the approximation for four right-hand sides of the Poisson equation with $N = 200$, that is, $(N+1)^2 = 40,401$ unknowns. The right hand sides we choose here are given by
 \bseqn{
-	f(x,y,z) &= \norm{\Big(x - (\epsilon + 1 / \sqrt{3}), \: y - (\epsilon + 1 / \sqrt{3}), \: z - (\epsilon + 1 / \sqrt{3})\Big)^\top}
+	f(x,y,z) &= \norm{\Big(x - (\epsilon + 1 / \sqrt{3}), \: y - (\epsilon + 1 / \sqrt{3}), \: z - (\epsilon + 1 / \sqrt{3})\Big)^\top},
 }
 for differing choices of $\epsilon$ -- this parameter serves to alter the distance from which we would have a singularity. In the plot, a \enquote{block} is simply the group of coefficients corresponding to OPs of the same degree, and so the plot shows how the norms of these blocks decay as the degree of the expansion increases. Thus, the rate of decay in the coefficients is a proxy for the rate of convergence of the computed solution: as typical of spectral methods, we expect the numerical scheme to converge at the same rate as the coefficients decay. We see that we achieve spectral convergence for these examples.
 
@@ -1129,19 +1132,19 @@ Find $u(x,y)$ given functions $v$, $f : \Omega \to \R$ such that:
 \bseqnnumber{
 	\begin{cases}
     		\DeltaS u(x,y,z) + k^2 \: v(x,y,z) \; u(x,y,z) = f(x,y,z) &\quad \text{in } \Omega \\
-		u(x,y,z) = 0 &\quad \text{on } \partial \Omega
+		u(x,y,z) = 0 &\quad \text{on } \partial \Omega,
 	\end{cases}
 	\label{eqn:sc:helmholtz}
 }
 where $k \in \R$, noting the imposition of zero Dirichlet boundary conditions on $u$.
 
-We can tackle the problem as follows. Denote the coefficient vector for expansion of $u$ in the $\bigWNi$ OP basis up to degree $N$ by $\mathbf{u}$, and the coefficient vector for expansion of $f$ in the $\bigscopNi$ OP basis up to degree $N$ by $\mathbf{f}$. Since $f$ is known, we can obtain  the coefficients $\mathbf{f}$ using the quadrature rule in \bsrefsection{section:sc:expandingfunctions}. 
+We can tackle the problem as follows. Denote the coefficient vector for expansion of $u$ in the $\bigWNi$ OP basis up to degree $N$ by $\vec{u}$, and the coefficient vector for expansion of $f$ in the $\bigscopNi$ OP basis up to degree $N$ by $\vec{f}$. Since $f$ is known, we can obtain  the coefficients $\vec{f}$ using the quadrature rule in \bsrefsection{section:sc:expandingfunctions}. 
 
 Define $X := (J_x^{(0)})^\top$, $Y := (J_y^{(0)})^\top$, $Z := (J_z^{(0)})^\top$. We can obtain the matrix operator for the variable-coefficient function $v(x,y,z)$ by using the Clenshaw algorithm with matrix inputs as the Jacobi matrices $X, Y, Z$, yielding an operator matrix of the same dimension as the input Jacobi matrices \`a la the procedure introduced in \cite{olver2019triangle}. We can denote the resulting operator acting on coefficients in the $\bigscopNo$ space by $v(X, Y, Z)$. In matrix-vector notation, our system hence becomes:
 \bseqn{
-    (\Delta_W^{(1)} + k^2 \:T^{(0)\to(1)} \: V \: T_W^{(1)\to(0)}) \: \mathbf{u} = \mathbf{f}
+    (\Delta_W^{(1)} + k^2 \:T^{(0)\to(1)} \: V \: T_W^{(1)\to(0)}) \: \vec{u} = \vec{f},
 }
-which can be solved to find $\mathbf{u}$. We can see the sparsity and structure of this matrix system in \bsreffig{fig:sc:sparsity} with $v(x,y,z) = zxy^2$ as an example. In \bsreffig{fig:sc:helmholtz} we see the solution to the inhomogeneous variable-coefficient Helmholtz equation with zero boundary conditions given in \bsrefeqn{eqn:sc:helmholtz} in the spherical cap $\Omega$, with $f(x,y,z) = y e^x \genjacw^{(1,0)}(z)$, $v(x,y,z) = 1 - (3(x-x_0)^2 + 5(y-y_0)^2 + 2(z-z_0)^2)$ where $(x_0, z_0) := (0.7, 0.2)$, $y_0 := \sqrt{1 - x_0^2 - z_0^2}$ and $k = 100$. In \bsreffig{fig:sc:helmholtz} we also show the norms of each block of calculated coefficients for the approximation of the solution to the inhomogeneous variable-coefficient Helmholtz equation with various $k$ values. Here, we use $N = 200$, that is, $(N+1)^2 = 40,401$ unknowns. Once again, the rate of decay in the coefficients is a proxy for the rate of convergence of the computed solution, and we see that we achieve spectral convergence.
+which can be solved to find $\vec{u}$. We can see the sparsity and structure of this matrix system in \bsreffig{fig:sc:sparsity} with $v(x,y,z) = zxy^2$ as an example. In \bsreffig{fig:sc:helmholtz} we see the solution to the inhomogeneous variable-coefficient Helmholtz equation with zero boundary conditions given in \bsrefeqn{eqn:sc:helmholtz} in the spherical cap $\Omega$, with $f(x,y,z) = y e^x \genjacw^{(1,0)}(z)$, $v(x,y,z) = 1 - (3(x-x_0)^2 + 5(y-y_0)^2 + 2(z-z_0)^2)$ where $(x_0, z_0) := (0.7, 0.2)$, $y_0 := \sqrt{1 - x_0^2 - z_0^2}$ and $k = 100$. In \bsreffig{fig:sc:helmholtz} we also show the norms of each block of calculated coefficients for the approximation of the solution to the inhomogeneous variable-coefficient Helmholtz equation with various $k$ values. Here, we use $N = 200$, that is, $(N+1)^2 = 40,401$ unknowns. Once again, the rate of decay in the coefficients is a proxy for the rate of convergence of the computed solution, and we see that we achieve spectral convergence.
 
 In \bsreffig{fig:sc:complexity} we plot the time taken\footnote{measured using the \enquote{@belapsed} macro from the BenchmarkTools.jl package \cite{BenchmarkTools.jl-2016} in Julia.} to construct the operator for $\DeltaS + v(x,y,z)$, with a rotationally invariant $v(x,y,z) = v(z) = \cos z$, and solve a zero boundary condition Helmholtz problem. The plot demonstrates that as we increase the degree of approximation $N$, we achieve a complexity of an optimal $\bigO(N^2)$.
 
@@ -1167,7 +1170,7 @@ Our last example is the biharmonic equation. Find $u(x,y,z)$ given a function $f
 \bseqnnumber{
 	\begin{cases}
     		\DeltaS^2 u(x,y,z) = f(x,y,z) &\quad \text{in } \Omega \\
-		u(x,y,z) = 0, \quad \frac{\partial u}{\partial n}(x,y,z) = \grad_S \: u(x,y,z) \cdot \unitvec{n}(x,y,z) = 0 &\quad \text{on } \partial \Omega
+		u(x,y,z) = 0, \quad \frac{\partial u}{\partial n}(x,y,z) = \grad_S \: u(x,y,z) \cdot \unitvec{n}(x,y,z) = 0 &\quad \text{on } \partial \Omega,
 	\end{cases}
 	\label{eqn:sc:biharmonic}
 }
@@ -1180,25 +1183,25 @@ One simple extension is the case where the value on the boundary takes that of a
 \bseqn{
 	\begin{cases}
     		\DeltaS u(x,y,z) + k^2 \: v(x,y,z) \; u(x,y,z) = f(x,y,z) &\quad \text{in } \Omega \\
-		u(x,y,z) = c(x,y) &\quad \text{on } \partial \Omega
+		u(x,y,z) = c(x,y) &\quad \text{on } \partial \Omega,
 	\end{cases}
 }
 is equivalent to letting $u(x,y,z) = \tilde{u}(x,y,z)+ c(x,y)$ and solving
 \bseqn{
 	\begin{cases}
     		\DeltaS \tilde{u}(x,y,z) + k^2 \; v(x,y,z) \tilde{u}(x,y,z) = g(x,y,z) \quad \text{in } \Omega \\
-		\tilde{u}(x,y,z) = 0 \quad \text{on } \partial \Omega
+		\tilde{u}(x,y,z) = 0 \quad \text{on } \partial \Omega,
 	\end{cases}
 }
 for $\tilde u$, where 
 \bseqn{
-	g(x,y,z) &:= f(x,y,z) - k^2 \: v(x,y,z) \: c(x,y) - \DeltaS \: c(x,y)
+	g(x,y,z) &:= f(x,y,z) - k^2 \: v(x,y,z) \: c(x,y) - \DeltaS \: c(x,y),
 }
 for $(x,y,z) \in \Omega$. This new problem is then a zero boundary condition Helmholtz problem with right hand side $g$. Notice that the spherical Laplacian applied to $c(x,y)$, expanded in the $\bigscopN^{(1)}$ basis with coefficients vector $\vec c = (c_{n,k,i})$, is just
 \bseqn{
 	\DeltaS \: c(x,y) &= {1 \over \rho(z)^2} \pmpxm{\theta}{2} c(x,y) \\
 	&= {1 \over \rho(z)^2} \sum_{n=0}^N \sum_{i=0}^1 c_{n,n,i} \: \pmpxm{\theta}{2} \ch_{n,i}(\theta) \\
-	&= - {1 \over \rho(z)^2} \sum_{n=0}^N \sum_{i=0}^1 n^2 \: c_{n,n,i} \: \ch_{n,i}(\theta)
+	&= - {1 \over \rho(z)^2} \sum_{n=0}^N \sum_{i=0}^1 n^2 \: c_{n,n,i} \: \ch_{n,i}(\theta),
 }
 since the coefficients $\{c_{n,k,i}\}$ for such a function are zero for $k < n$ due to the dependence on $x$ and $y$ only, which are precisely the Fourier coefficients of $c(\cos \theta, \sin \theta)$. Thus, since the function $c(x,y)$ is known, it is simple to evaluate $\pmpxm{\theta}{2} c(x,y)$ and hence one can obtain the coefficients for the expansion of $g(x,y,z)$ in the $\bigscopN^{(1)}$ basis in the usual manner.
 
