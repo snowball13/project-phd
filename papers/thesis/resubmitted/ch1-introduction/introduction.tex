@@ -29,19 +29,19 @@ On the other hand, we aim to propose a strictly orthogonal \textit{polynomial} b
 % GENERAL FRAMEWORK
 The construction of the spectral methods in this thesis follow a similar pattern that is worth detailing here as a general framework.
 \begin{itemize}
-	\item \textit{Define the domain of interest via a restriction of one coordinate in terms of the remainder, that uses a function $\rho$ that satisfies one of two conditions.}
+	\item \textit{Define the domain of interest.}
 	
-		For example, for a domain in 2D space, we would define this as $\Omega := \bsset{(x,y) \in \R^2}{\alpha \le x \le \beta, \: \gamma \rho(x) \le y \le \delta \rho(x)}$.
+		It is best to do this via a restriction of one coordinate in terms of the others, using a function $\rho$ that satisfies one of two conditions we will detail later. As an example, for a domain in 2D space, we would define this as $\Omega := \bsset{(x,y) \in \R^2}{\alpha \le x \le \beta, \: \gamma \rho(x) \le y \le \delta \rho(x)}$ for given constants $\alpha, \beta, \gamma, \delta$.
 	
 	\item \textit{Express the multivariate and multi-parameter OPs as polynomials in cartesian coordinates.}
 	
-		The construction of the multivariate OPs takes its inspiration from the Koornwinder approach \cite{koornwinder1975two}. These OPs will be $d$-parameter, meaning that we can construct parameter lowering and raising operators for conversion between the OP bases.
+		The construction of the multivariate OPs takes its inspiration from the Koornwinder approach \cite{koornwinder1975two}. The construction will make use of the function $\rho$. These OPs will be $d$-parameter, meaning that we can construct operators that raise or lower the parameter values, and thus represent conversion between the OP bases.
 	
 	\item \textit{Derive expressions for multiplication of the OPs by the coordinates.}
 	
-	\item \textit{Use these relations to determine the entries to \enquote{Jacobi matrices} $J_x$, etc. that represent multiplication by the coordinates when applied to the degree-ordered vector of OPs $\bigP$.}
+	\item \textit{Use these relations to determine the entries to \enquote{Jacobi matrices}}
 	
-		These Jacobi matrices will be banded-block-banded in structure. In fact, due to the construction, they will be block-tridiagonal:
+		These \enquote{Jacobi matrices} $J_x$, $J_y$, etc. represent multiplication by the coordinates when applied to the degree-ordered vector of OPs, $\bigP$. They will be banded-block-banded in structure -- in fact, due to the construction, they will be block-tridiagonal. Continuing with the 2D example:
 		\bseqn{
 			J_{x/y} &= 
 			\begin{pmatrix}
@@ -54,11 +54,11 @@ The construction of the spectral methods in this thesis follow a similar pattern
 		}
 		The degree-ordered vector of OPs, $\bigP$, can be thought of as being made up of ordered sub-vectors grouped by polynomial degree, $\bigP_n$ for $n \in \No$.
 		
-	\item \textit{Create a three-term recurrence for the vector of degree $n$ OPs by combining the systems $J_x \bigP = x \bigP$, etc.}
+	\item \textit{Create a three-term recurrence for the vector of OPs of degree $n$.}
 	
-		The resulting three-term recurrence will have the form:
+		This is done by combining the systems $J_x \bigP = x \bigP$ and $J_y \bigP = y \bigP$ (and $J_z \bigP = z \bigP$ if in three-dimensional space). The resulting three-term recurrence will have the form:
 		\bseqn{
-			\bigP_{n+1}(x,y) = -\Dnt (B_n-G_n(x,y)) \bigP_n(x,y) - \Dnt C_n  \, \bigP_{n-1}(x,y)
+			\bigP_{n+1}(x,y) = -\Dnt (B_n-G_n(x,y)) \bigP_n(x,y) - \Dnt C_n  \, \bigP_{n-1}(x,y).
 		}
 		Here, the matrices $B_n$, $C_n$ and $G_n$ are defined via:
 		\bseqn{
@@ -84,20 +84,23 @@ The construction of the spectral methods in this thesis follow a similar pattern
 				\begin{pmatrix}
                     			A_{x,n} \\
                     			A_{y,n}
-				\end{pmatrix}, \quad
+				\end{pmatrix}.
 		}
 		
-	\item \textit{Use the multivariate version of the Clenshaw algorithm for evaluation of functions expanded in the OP basis.}
+	\item \textit{Use the multivariate version of the Clenshaw algorithm for evaluation of functions that are expanded in the OP basis.}
 	
-	\item \textit{Derive (sparse) relationships for various differential operations, and relations for incrementing and decrementing the parameter values of the OPs. Hence construct the sparse operator matrices representing these operations.}
+	\item \textit{Derive (sparse) relationships for various differential operations, and relations for raising and lowering the parameter values of the OPs.}
+	
+	\item \textit{Construct the sparse operator matrices representing these operations.}
 		
-		The differential operators may raise or lower parameter values, which is why the basis conversion operator matrices are required. Further operators may be constructed as combinations of others.
+		The differential operators may raise or lower parameter values, which is why the basis conversion operators are required. Further operators can be constructed as combinations of others -- for example, a second derivative would be the multiplication of two first derivative operators. Notably, these operator matrices will be banded-block-banded in structure.
 		
 	\item \textit{Use the \enquote{operator Clenshaw algorithm} to construct operator matrices for the action of multiplying by a general function.}
 	
-		For instance, this would be useful for a variable coefficient in a Helmholtz example.
+		For instance, this would be useful for constructing an operator matrix that represents a variable coefficient in a Helmholtz example.
 \end{itemize}
 
+By following this framework, one will be able to write down a given PDE in spectral space (i.e. as a matrix-vector equation). The variables are given by their coefficients for their expansion in the OP basis, while the differential and other operations are given by their relevant operator matrices. The resulting system's sparsity is a result of the sparse relations of the OPs.
 
 
 The structure of the remainder of thesis is as follows.
