@@ -28,7 +28,7 @@ On the other hand, we aim to propose a strictly orthogonal \textit{polynomial} b
 
 % GENERAL FRAMEWORK
 The construction of the spectral methods in this thesis follow a similar pattern that is worth detailing here as a general framework.
-\begin{itemize}
+\begin{enumerate}
 	\item \textit{Define the domain of interest.}
 	
 		It is best to do this via a restriction of one coordinate in terms of the others, using a function $\rho$ that satisfies one of two conditions we will detail later. As an example, for a domain in 2D space, we would define this as $\Omega := \bsset{(x,y) \in \R^2}{\alpha \le x \le \beta, \: \gamma \rho(x) \le y \le \delta \rho(x)}$ for given constants $\alpha, \beta, \gamma, \delta$.
@@ -98,7 +98,7 @@ The construction of the spectral methods in this thesis follow a similar pattern
 	\item \textit{Use the \enquote{operator Clenshaw algorithm} to construct operator matrices for the action of multiplying by a general function.}
 	
 		For instance, this would be useful for constructing an operator matrix that represents a variable coefficient in a Helmholtz example.
-\end{itemize}
+\end{enumerate}
 
 By following this framework, one will be able to write down a given PDE in spectral space (i.e. as a matrix-vector equation). The variables are given by their coefficients for their expansion in the OP basis, while the differential and other operations are given by their relevant operator matrices. The resulting system's sparsity is a result of the sparse relations of the OPs.
 
