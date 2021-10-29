@@ -938,7 +938,7 @@ The proofs of \bsreftheorem{theorem:ds:sparsityofdifferentialoperators} and \bsr
 
 We now demonstrate how the sparse linear systems constructed as above can be used to efficiently solve PDEs with zero Dirichlet conditions. We consider the Poisson equation, an inhomogeneous variable coefficient Helmholtz equation and the Biharmonic equation, demonstrating the versatility of the approach.
 
-\bstodoinline{Added the following paragraph to explain BCs better.}As mentioned earlier, we can handle these boundary conditions by incorporating them into the chosen basis OP family. The weight $\Wiii(x,y)$ is of course zero on the boundary of $\Omega$, and in fact any polynomial that vanishes on the boundary will have $\Wiii(x,y)$ as a factor. Hence, any function expanded in the $\bigWiii$ basis will satisfy zero Dirichlet conditions. The same argument can be used to see why any function expanded in the $\bigW^{(2,2,2)}$ basis will satisfy zero Neumann conditions too.
+As mentioned earlier, we can handle these boundary conditions by incorporating them into the chosen basis OP family. The weight $\Wiii(x,y)$ is of course zero on the boundary of $\Omega$, and in fact any polynomial that vanishes on the boundary will have $\Wiii(x,y)$ as a factor. Hence, any function expanded in the $\bigWiii$ basis will satisfy zero Dirichlet conditions. The same argument can be used to see why any function expanded in the $\bigW^{(2,2,2)}$ basis will satisfy zero Neumann conditions too.
 
 \subsection{Poisson}
 
@@ -1022,7 +1022,7 @@ The Poisson equation is the classic problem of finding $u(x,y)$ given a function
 }
 noting the imposition of zero Dirichlet boundary conditions on $u$.
 
-\bstodo{Reworded this paragraph to help make the BC incorporation clearer.}We can tackle the problem as follows. Since $u$ vanishes on the boundary, any polynomial expansion will have $\Wiii(x,y)$ as a factor, and so we can denote the coefficient vector for expansion of $u$ in the $\bigWiii$ OP basis up to degree $N$ by $\vec{u}$, while the coefficient vector for expansion of $f$ in the $\bighdopiii$ OP basis up to degree $N$ we can denote by $\vec{f}$. Since $f$ is known, we can obtain $\vec{f}$ using the quadrature rule above. In matrix-vector notation, our system hence becomes:
+We can tackle the problem as follows. Since $u$ vanishes on the boundary, any polynomial expansion will have $\Wiii(x,y)$ as a factor, and so we can denote the coefficient vector for expansion of $u$ in the $\bigWiii$ OP basis up to degree $N$ by $\vec{u}$, while the coefficient vector for expansion of $f$ in the $\bighdopiii$ OP basis up to degree $N$ we can denote by $\vec{f}$. Since $f$ is known, we can obtain $\vec{f}$ using the quadrature rule above. In matrix-vector notation, our system hence becomes:
 \bseqn{
     \laplacewiii \vec{u} = \vec{f},
 }

@@ -2,7 +2,7 @@
 
 \chapter{Spherical harmonics as orthogonal polynomials}\label{CHAPTER:sphericalharmonics}
 
-To introduce ourselves to the world of multidimensional orthogonal polynomials for solving PDEs on the sphere, we can naturally choose to look at the famous spherical harmonics. Our aim here is to express the spherical harmonics as polynomials in three variables $x$, $y$, and $z$ to evaluate functions and solve PDEs on the whole sphere. More precisely, we desire the solution to partial differential equations on the domain \nomenclature[Omega]{$\Omega$}{The domain of interest} \bstodo{Added that this domain is $\bigS^2$}
+To introduce ourselves to the world of multidimensional orthogonal polynomials for solving PDEs on the sphere, we can naturally choose to look at the famous spherical harmonics. Our aim here is to express the spherical harmonics as polynomials in three variables $x$, $y$, and $z$ to evaluate functions and solve PDEs on the whole sphere. More precisely, we desire the solution to partial differential equations on the domain \nomenclature[Omega]{$\Omega$}{The domain of interest}
 \bseqn{
 	\Omega := \bigS^2 = \bsset{(x,y,z) \in \R^3}{x^2 + y^2 = \rho(z)^2},
 }
@@ -31,23 +31,23 @@ The code that allows one to produce the numerical examples in this chapter is pu
 
 \section{Defining the spherical harmonics in three variables}
 
-Before we proceed further, let us build up to our definition of the spherical harmonics. We first need to introduce a few classical orthogonal polynomials. Orthogonal polynomials are defined as such by the condition that each polynomial is orthogonal to each other, with respect to a given inner product, and ordered by degree.\bstodo{added that they are degree ordered} In particular, they are orthogonal with respect to all lower degree polynomials. 
+Before we proceed further, let us build up to our definition of the spherical harmonics. We first need to introduce a few classical orthogonal polynomials. Orthogonal polynomials are defined as such by the condition that each polynomial is orthogonal to each other, with respect to a given inner product, and ordered by degree. In particular, they are orthogonal with respect to all lower degree polynomials. 
 
 On the unit interval, $[-1,1]$, we note that there is a hierarchy of OPs in the sense that \cite[Table 18.3.1, (18.9.15)]{DLMF}: \nomenclature[Pnab]{$P^{(a,b)}_n$}{The degree $n$ Jacobi polynomial (context determines normalized or not) unless otherwise stated}
 \bseqn{
 	& \ddx{x} P^{(a,b)}_l (x) = \half \: (l + a + b + 1) \: P^{(a+1,b+1)}_{l-1}(x), \\
 	\implies & \dmdxm{x}{m} P_l(x) = {(l+m)! \over 2^m \: l!} \: P^{(m,m)}_{l-m}(x),
 }
-where $P^{(a,b)}_l (x)$ is the degree $l$ \textit{Jacobi polynomial} with $a, b > -1$ \bstodo{added the a,b constraint}, and \nomenclature[Pl]{$P_l$}{The degree $l$ Legendre polynomial} $P_l(x) := P^{(0,0)}_l (x)$ is simply the \textit{Legendre polynomial} of degree $l$. Jacobi polynomials are orthogonal with respect to the weight $w(x) = (1-x)^a(1+x)^b$; that is for $l, l' \in \No,$ \nomenclature[Kronecker delta]{$\delta_{n, n'}$}{The Kronecker delta function; $1$ if $n=n'$, else $0$}
+where $P^{(a,b)}_l (x)$ is the degree $l$ \textit{Jacobi polynomial} with $a, b > -1$, and \nomenclature[Pl]{$P_l$}{The degree $l$ Legendre polynomial} $P_l(x) := P^{(0,0)}_l (x)$ is simply the \textit{Legendre polynomial} of degree $l$. Jacobi polynomials are orthogonal with respect to the weight $w(x) = (1-x)^a(1+x)^b$; that is for $l, l' \in \No,$ \nomenclature[Kronecker delta]{$\delta_{n, n'}$}{The Kronecker delta function; $1$ if $n=n'$, else $0$}
 \bseqn{
 	\int_{-1}^1 {P^{(a,b)}_l(x)}^2 \:(1-x)^a(1+x)^b \: \D x &=: \omega_{P,l}^{(a,b)}, \\
 	\int_{-1}^1 P^{(a,b)}_l(x) \: P^{(a,b)}_{l'}(x) \:(1-x)^a(1+x)^b \: \D x &= \omega_{P,l}^{(a,b)} \: \delta_{l, l'},
 }
-where $\delta_{l, l'}$ is the regular Kronecker delta function.\bstodo{clarified that this delta is the Kronecker} For the Jacobi polynomials,
+where $\delta_{l, l'}$ is the regular Kronecker delta function. For the Jacobi polynomials,
 \bseqn{
 	 \omega_{P,l}^{(a,b)} = {2^{a + b + 1} \; \Gamma(l + a + 1) \; \Gamma(l + b + 1) \over (2l + a + b + 1) \; \Gamma(l + a + b + 1) \; \Gamma(l + 1)},
 }
-where $\Gamma(x)$ is the regular Gamma function \cite[(5.2.1)]{DLMF} (with $\Gamma(n) = (n-1)!$ for $n \in \N$). Legendre polynomials are special cases of \textit{Legendre functions} when $l$ is a non-negative integer. Legendre functions are a class of univariate functions that are one set of solutions to the differential equation \bstodo{clarified that they are one set of solutions to the following eqn. Added the x domain.}
+where $\Gamma(x)$ is the regular Gamma function \cite[(5.2.1)]{DLMF} (with $\Gamma(n) = (n-1)!$ for $n \in \N$). Legendre polynomials are special cases of \textit{Legendre functions} when $l$ is a non-negative integer. Legendre functions are a class of univariate functions that are one set of solutions to the differential equation
 \bseqn{
 	(1 - x^2) \dmdxm{x}{2}y - 2x \ddx{x} y + l(l+1)y = 0, \quad x \in [-1,1]
 }
@@ -93,7 +93,7 @@ which can be simplified to
 			1 &\text{if } m < 0.
 		\end{cases}
 }
-The spherical harmonics as defined are then orthonormal with respect to the inner product with uniform measure \nomenclature[conjuagate]{$a^*$}{The complex conjugate of $a \in \C$} \bstodo{Added that the following is $\iint_{\Omega} \Ylmfull \: {Y_{l'}^{m'}(\varphi, \theta)}^{*} \: \D S$.}
+The spherical harmonics as defined are then orthonormal with respect to the inner product with uniform measure \nomenclature[conjuagate]{$a^*$}{The complex conjugate of $a \in \C$}
 \bseqn{
 	&\iint_{\Omega} \Ylmfull \: {Y_{l'}^{m'}(\varphi, \theta)}^{*} \: \D S \\
 	&\quad = \int_0^{2\pi} \int_0^\pi \Ylmfull \: {Y_{l'}^{m'}(\varphi, \theta)}^{*} \: \sinphi \: \D \varphi \: \D \theta \\
@@ -124,7 +124,7 @@ However we reiterate our goal here is to use techniques that can generalise to s
 }
 \end{lemma}
 \begin{proof}
-	The first two results are simply consequences of the relationships established for incrementing and decrementing the parameters of Jacobi polynomials detailed in \cite[(18.9.5), (18.9.6)]{DLMF}, along with the symmetry relation that $P_{n}^{(\alpha, \beta)}(-z) \equiv (-1)^n P_{n}^{(\beta, \alpha)}(z)$. The final one is obtained by rearranging the three-term recurrence in \cite[(18.9.1), (18.9.2)]{DLMF}. \bstodo{Reworded this sentence.}
+	The first two results are simply consequences of the relationships established for incrementing and decrementing the parameters of Jacobi polynomials detailed in \cite[(18.9.5), (18.9.6)]{DLMF}, along with the symmetry relation that $P_{n}^{(\alpha, \beta)}(-z) \equiv (-1)^n P_{n}^{(\beta, \alpha)}(z)$. The final one is obtained by rearranging the three-term recurrence in \cite[(18.9.1), (18.9.2)]{DLMF}.
 \end{proof}
 We thus can present a helpful corollary specific for our needs. \nomenclature[alpha]{$\alpha_{l,m,j}$}{Lower case greek letters with subscripts refer to coefficients in scalar OP relations (unless otherwise stated)}
 \begin{corollary}\label{corollary:jacobirelations}
@@ -431,7 +431,7 @@ For each $l = 0,1,2\dots$ let $\Dlt$ be any matrix that is a left inverse of $A_
 		\SHvec_{l+1}(x,y,z) = -\Dlt (B_l-G_l(x,y,z)) \SHvec_l(x,y,z) - \Dlt C_l  \,\SHvec_{l-1}(x,y,z).
 	\end{cases}
 }
-Since the above holds for any $\Dlt$ that is a left inverse of $A_l$, we are free to choose the $\Dlt$ matrices. In order to attempt to maximise sparsity, we define them in the following way\footnote{There may be a more computationally efficient way of defining these matrices, but in practice we only desire the output of the action of $\Dlt C_l$ and $\Dlt (B_l-G_l(x,y,z))$, and so minimising the resulting number of operations is the goal. The choices of the $\Dlt$ matrices we make in this thesis are designed to do this, but whether there are more computationally efficient ways of defining them is an open question.}.\bstodo{Added footnote to help explain choice of $\Dlt$'s} For $l \in \N$, we can set \bstodo{Tried to reformat the matrix defn to make it clearer.}
+Since the above holds for any $\Dlt$ that is a left inverse of $A_l$, we are free to choose the $\Dlt$ matrices. In order to attempt to maximise sparsity, we define them in the following way\footnote{There may be a more computationally efficient way of defining these matrices, but in practice we only desire the output of the action of $\Dlt C_l$ and $\Dlt (B_l-G_l(x,y,z))$, and so minimising the resulting number of operations is the goal. The choices of the $\Dlt$ matrices we make in this thesis are designed to do this, but whether there are more computationally efficient ways of defining them is an open question.}. For $l \in \N$, we can set
 \bseqnnumber{
 	\Dlt = 
 		\begin{pmatrix}
@@ -484,7 +484,7 @@ where $\SHvecl (x,y,z), \fvec_l \in \C^{2l+1}$ for each $l \in \{0,\dots,N\}$, f
 
 \subsection{Obtaining coefficients}
 
-In coefficient space,\bstodo{Changed "spectral space" to "coefficient space".} we wish to work only with vectors of coefficients for the expansion of a function, to which we can apply operator matrices to that represent differential or other operations. Naturally, we of course need a way to obtain the coefficients $f_{l,m}$. The coefficients can be calculated via the integral
+In coefficient space, we wish to work only with vectors of coefficients for the expansion of a function, to which we can apply operator matrices to that represent differential or other operations. Naturally, we of course need a way to obtain the coefficients $f_{l,m}$. The coefficients can be calculated via the integral
 \bseqn{
 	f_{l,m} = \iint_\Omega f(\costheta \sinphi, \sintheta \sinphi, \cosphi) \: \Ylmfull^* \: \sinphi \: \D \varphi \: \D \theta,
 }
@@ -512,14 +512,14 @@ Let us explain what we mean by this. Suppose $v : \Omega \to \C$ is a function, 
 }
 i.e. $V \fvec$ is the coefficients vector for the expansion of the function $(x,y,z) \mapsto v(x,y,z) f(x,y,z)$ in the spherical harmonic basis.
 
-Let $\vec{v}$ be the coefficients of the expansion of $v$ up to order $N$. The operator $V$ would then be the result of the following \textit{operator Clenshaw algorithm}:\bstodo{Corrected the typo on the last line of the algorithm.}
+Let $\vec{v}$ be the coefficients of the expansion of $v$ up to order $N$. The operator $V$ would then be the result of the following \textit{operator Clenshaw algorithm}:
 \bseqn{
 	\quad &\text{1) } \text{Set } \vec{\xi}_{N+2} = \vec{0}, \: \vec{\xi}_{N+1} = \vec{0} \\
 	\quad &\text{2) } \text{For } n = N:-1:0 \\
 	\quad & \quad \quad \quad \text{set } \vec{\xi}_{n}^T = \vec{v}_n^T - \vec{\xi}_{n+1}^T D^T_n (B_n - G_n(J_x,J_y,J_z)) - \vec{\xi}_{n+2}^T D^T_{n+1}C_{n+1} \\
 	\quad &\text{3) } \text{Output: } V = V(x,y,z) \approx \xi_0 Y_0
 }
-where at each iteration, $\vec{\xi}_n$ is a vector of matrices\footnote{It may help to think of this symbolically. At each iteration, the entries of $\vec{\xi}_n$ are polynomials in $J_x$, $J_y$ and $J_z$. On the final step, $\vec{\xi}_{0} = \xi_{0}$ is hence some polynomial expression in $J_x$, $J_y$ and $J_z$, which we can then evaluate by inserting the Jacobi matrices.} \bstodo{Added footnote to help explain better what the notation here is meaning.}(note that we are abusing notation here a bit, however it is the simplest way to present the algorithm without introducing yet more matrices!).
+where at each iteration, $\vec{\xi}_n$ is a vector of matrices\footnote{It may help to think of this symbolically. At each iteration, the entries of $\vec{\xi}_n$ are polynomials in $J_x$, $J_y$ and $J_z$. On the final step, $\vec{\xi}_{0} = \xi_{0}$ is hence some polynomial expression in $J_x$, $J_y$ and $J_z$, which we can then evaluate by inserting the Jacobi matrices.} (note that we are abusing notation here a bit, however it is the simplest way to present the algorithm without introducing yet more matrices!).
 
 
 
@@ -874,7 +874,7 @@ As for the scalar case, these coefficients detailed above are then the nonzero e
 	\label{fig:sh-spy-jacobi-tangent}
 \end{figure}
 
-The Jacobi matrices are then defined according to the matrices \nomenclature[JT]{$\tangentjacobi_x, \tangentjacobi_y, \tangentjacobi_z$}{The Jacobi matrices for the tangent bundle VSH basis} $\tangentjacobi_x, \tangentjacobi_y, \tangentjacobi_z$ satisfying \bstodo{Added the notation for $\tangentjacobi_x$, etc. to the index.}
+The Jacobi matrices are then defined according to the matrices \nomenclature[JT]{$\tangentjacobi_x, \tangentjacobi_y, \tangentjacobi_z$}{The Jacobi matrices for the tangent bundle VSH basis} $\tangentjacobi_x, \tangentjacobi_y, \tangentjacobi_z$ satisfying
 \bseqnnumber{
 	\tangentjacobi_x \VSHvecfull(x,y,z) &= x \VSHvecfull(x,y,z), \nonumber \\
 	\tangentjacobi_y \VSHvecfull(x,y,z) &= y \VSHvecfull(x,y,z), \label{eqn:tangentjacobimatdef} \\ 
@@ -1200,7 +1200,7 @@ Notice how the iteration also ends at $n=1$ (not $n=0$) here, since the VSHs for
 
 \subsection{Sparse partial differential operators}\label{section:SHdiffoperators}
 
-The framework we have outlined for the spherical harmonics and the vector spherical harmonics allows us to easily and explicitly derive sparse operator matrices for partial differential operators. Of course, not all PDEs can be sparsely represented, however we can do this for key operators such as the spherical gradient, divergence and Laplace--Beltrami, as well as other operators found in examples such as the linearised shallow water equations.\bstodo{Added the comment that not all PDEs operators can be sparsely represented.} These operators will take coefficients of a function's expansion in either the SH or VSH basis, to coefficients in either basis.
+The framework we have outlined for the spherical harmonics and the vector spherical harmonics allows us to easily and explicitly derive sparse operator matrices for partial differential operators. Of course, not all PDEs can be sparsely represented, however we can do this for key operators such as the spherical gradient, divergence and Laplace--Beltrami, as well as other operators found in examples such as the linearised shallow water equations. These operators will take coefficients of a function's expansion in either the SH or VSH basis, to coefficients in either basis.
 
 Let $\uvec$ be a vector-valued function on the tangent bundle of $\Omega$ with coefficients vectors $\uvecc, \uveccperp$ for its expansion in the VSH basis up to order $N \in \N$, and let $f$ be a scalar function on $\Omega$ with coefficients vector $\fvecc$ for its expansion in the SH basis also up to order $N$, i.e.
 \bseqn{
@@ -1251,7 +1251,7 @@ For clarity, we note that $\DeltaS$ is defined in \bsrefeqn{eqn:laplacebeltrami}
 where $\uvec \equiv \phivec \: u_\varphi + \thetavec \: u_\theta$.
 
 \begin{theorem}
-	The operator matrices defined in \bsrefdef{def:SHoperators} are diagonal, and are given by: \bstodo{Tried to make clearer what $\calG$ is here.}
+	The operator matrices defined in \bsrefdef{def:SHoperators} are diagonal, and are given by:
 \bseqn{
 	\calG &= I_{(N+1)^2}, \quad
 	\tilde \calG = 
@@ -1312,7 +1312,7 @@ Now that we have our differential operators, let us apply them in some examples.
 
 \subsection{Heat equation}
 
-\bstodo{added the order used $N=20$ in the figure caption}\begin{figure}[t]
+\begin{figure}[t]
 	\centering % <-- added
 	\centerline{\includegraphics[scale=0.5]{heat-eqn-alpha-0p0238-dt=0p01-nsteps=100-2}}
 	\caption{Four snapshots of the solution $u$ of the heat equation with $\alpha = 1/42$ and a step size of $\Delta t = 0.01$, solved using the BDF2 timestepping method and order $N = 20$. Top Left: Initial conditions (0 timesteps). Top Right: After 25 timesteps. Bottom Left: After 50 timesteps. Bottom Right: After 75 timesteps.}
@@ -1353,7 +1353,7 @@ The snapshots of the solution $u$ in \bsreffig{fig:heateqn} are taken of the ini
 
 \subsection{Linearised shallow water equations}
 
-\bstodo{added the order used $N=20$ in the figure caption}\begin{figure}[t]
+\begin{figure}[t]
 	\centering % <-- added
 	\centerline{\includegraphics[scale=0.5]{linear-swe-H=1-dt=0p01-nsteps=100-arrows-2}}
 	\caption{Four snapshots of the solution for the height $h$ (surface colour) and the wave velocity $u$ (red arrows) of the linearised shallow water equations with $\rotrate = \calH = 1$ and a step size of $\Delta t = 0.01$, solved using the backwards Euler timestepping method (BDF1) and order $N = 20$. The initial conditions are given in \bsrefeqn{eqn:sweics}. Top Left: Initial conditions (0 timesteps). Top Right: After 50 timesteps. Bottom Left: After 75 timesteps. Bottom Right: After 100 timesteps.}

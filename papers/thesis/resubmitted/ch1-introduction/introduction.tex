@@ -1,23 +1,7 @@
 
 \chapter{Introduction}\label{CHAPTER:intro}
 
-\bstodoinline{Any comments in boxes like these indicate changes made.
-
-Aside from where I have marked, I have also:
-
-- Fixed typos pointed out and found myself
-
-- Added commas or full stops after equations
-
-- Changed how commas are presented in equations with \enquote{cases}
-
-- Added round brackets to citations of equation numbers in the DLMF
-
-- Added a dot where citing a page number (eg, p.76)
-
-- Replaced \& with and}
-
-Univariate orthogonal polynomials (hereon also referred to as OPs) have been extensively involved in the development of multiple fields of computational and applied mathematics. For example, univariate OPs have been used to derive spectral methods to numerically solve one-dimensional differential equations (see e.g. \cite{trefethen2000spectral, canuto2007spectral, gottlieb1977numerical, boyd2001chebyshev, mason2002chebyshev, shen2011spectral, olver2013fast}). While there are many famous examples of univariate OPs -- such as the Jacobi polynomials, with special cases of the Legendre polynomials and the Chebyshev polynomials but to name a few of the classical families \cite[\S18.3]{DLMF}\bstodo{Clarified that these families named are all Jacobi} -- the area of multivariate orthogonal polynomials has a smaller array of research. 
+Univariate orthogonal polynomials (hereon also referred to as OPs) have been extensively involved in the development of multiple fields of computational and applied mathematics. For example, univariate OPs have been used to derive spectral methods to numerically solve one-dimensional differential equations (see e.g. \cite{trefethen2000spectral, canuto2007spectral, gottlieb1977numerical, boyd2001chebyshev, mason2002chebyshev, shen2011spectral, olver2013fast}). While there are many famous examples of univariate OPs -- such as the Jacobi polynomials, with special cases of the Legendre polynomials and the Chebyshev polynomials but to name a few of the classical families \cite[\S18.3]{DLMF} -- the area of multivariate orthogonal polynomials has a smaller array of research. 
 
 One could say this is surprising, given that there is a long history of around 150 years associated with multivariate OPs, beginning with Hermite first presenting the multivariate Hermite polynomials in 1865 \cite{appel1926fonctions, ismail2017review}. Zernike polynomials \cite{zernike1934diffraction} were first introduced in 1934, as another example, that are a group of bivariate polynomials orthogonal on a unit circle. Koornwinder in 1975 described a method for constructing two-variable OPs from univariate OPs \cite{koornwinder1975two}. However, few books have been published over the years on the topic of multivariate orthogonal polynomials, with the notable exception of the book by Dunkl and Xu \cite{dunkl2014orthogonal}. As Dumitriu, Edelman and Shuman said in 2007, \enquote{[multivariate orthogonal polynomials] are understudied, underapplied, and important applications may be being missed} \cite{dumitriu2007mops}, while in 2016, Olver opined that \enquote{there is still a long way to go before multivariate orthogonal polynomials can reach their full potential in applications}. He hypothesised that \enquote{[p]art of this neglect may be due to the fact that mutually orthogonal polynomials are not uniquely defined: there is no canonical ordering} and continued \enquote{[e]ven when explicit constructions are known, these are often unwieldy} \cite{olver2016review}.
 
@@ -27,7 +11,7 @@ There are various interpretations of what a \enquote{spectral method} is. It cou
 
 In this thesis we expand upon this knowledge by providing frameworks for similar sparse spectral methods for solving PDEs on other multidimensional domains (notably including the disk-slice and trapezium in 2D, and the spherical cap surface in 3D) that also yield matrices that are what is defined as \enquote{banded-block-banded}. We take inspiration from the work established for the triangle \cite{olver2019triangle} and the unit disk \cite{vasil2016tensor}, which can  be seen as special cases of the disk-slice and trapezium in the framework we present here. The spherical cap work serves to lay a foundation for using spherical caps and spherical bands as elements in a spectral element method for solving PDEs on the whole sphere, as an alternative to the spherical harmonic transform approach that the European Centre for Medium-range Weather Forecasts (ECMWF) use in their weather and climate model \cite{cheong2006dynamical}. 
 
-Spherical harmonics (SHs) are of course a long-established and famous group of functions defined on the surface of a sphere with certain useful properties (for example, they are orthogonal to each other on the unit sphere, have sparse recurrences, and are eigenfunctions of the spherical Laplacian \bstodo{Re-worded the properties}) and as a result are widely used in many scientific fields for solving PDEs including computer graphics (e.g. \cite{moon2008efficient, sloan2013efficient}), astrophysics (e.g. \cite{vasil2019tensor}), quantum theory (e.g. \cite{varshalovich1988quantum}), biochemistry (e.g.\cite{parimal2014application, basko1998application}), geosciences (e.g. \cite{fletcher2017data, hollerbach2013parity}) and meteorology (e.g. \cite{evans1998spherical, rubinstein2015scalar, wedi2013fast, ecmwf2020scalability, courtier1998ecmwf, silberman1954planetary, gottlieb1977numerical}). Spectral methods on the sphere involving spherical harmonics have been used for over 60 years \cite{silberman1954planetary}. Notably, spherical harmonics are also used as basis functions for the spectral transform method that makes up part of the model in the Integrated Forecasting System (IFS), which is used by ECMWF for their forecasts \cite{wedi2013fast}. 
+Spherical harmonics (SHs) are of course a long-established and famous group of functions defined on the surface of a sphere with certain useful properties (for example, they are orthogonal to each other on the unit sphere, have sparse recurrences, and are eigenfunctions of the spherical Laplacian) and as a result are widely used in many scientific fields for solving PDEs including computer graphics (e.g. \cite{moon2008efficient, sloan2013efficient}), astrophysics (e.g. \cite{vasil2019tensor}), quantum theory (e.g. \cite{varshalovich1988quantum}), biochemistry (e.g.\cite{parimal2014application, basko1998application}), geosciences (e.g. \cite{fletcher2017data, hollerbach2013parity}) and meteorology (e.g. \cite{evans1998spherical, rubinstein2015scalar, wedi2013fast, ecmwf2020scalability, courtier1998ecmwf, silberman1954planetary, gottlieb1977numerical}). Spectral methods on the sphere involving spherical harmonics have been used for over 60 years \cite{silberman1954planetary}. Notably, spherical harmonics are also used as basis functions for the spectral transform method that makes up part of the model in the Integrated Forecasting System (IFS), which is used by ECMWF for their forecasts \cite{wedi2013fast}. 
 
 There are other modelling systems using global spectral models too. For example, the AGCM3 model developed by the Canadian Centre for Climate Modelling and Analysis (CCCma) and the Community Earth System Model (CESM) both use a spectral dynamical core\footnote{A \textit{dynamical core} is part of a model that deals with numerically solving the equations of motion on the underlying grid, as opposed to other physical processes.} \cite{hurrell2013community, scinocca2008cccma}, while the Geophysical Fluid Dynamics Laboratory (GFDL) has also developed a global spectral atmospheric model \cite{gordon1982description}.
 
@@ -43,7 +27,6 @@ On the other hand, we aim to propose a strictly orthogonal \textit{polynomial} b
 
 
 % GENERAL FRAMEWORK
-\bstodoinline{The following is the added "roadmap"}
 The construction of the spectral methods in this thesis follow a similar pattern that is worth detailing here as a general framework.
 \begin{enumerate}
 	\item \textit{Define the domain of interest.}
@@ -118,7 +101,6 @@ The construction of the spectral methods in this thesis follow a similar pattern
 \end{enumerate}
 
 By following this framework, one will be able to write down a given PDE in spectral space (i.e. as a matrix-vector equation). The variables are given by their coefficients for their expansion in the OP basis, while the differential and other operations are given by their relevant operator matrices. The resulting system's sparsity is a result of the sparse relations of the OPs.
-\bstodoinline{End of added roadmap}
 
 
 The structure of the remainder of thesis is as follows.
